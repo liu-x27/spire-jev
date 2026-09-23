@@ -27,6 +27,7 @@ const { values } = parseArgs({
     cards: { type: "string", default: "take" },
     choices: { type: "string", default: "first" },
     ascension: { type: "string", default: "0" },
+    port: { type: "string", default: "47100" },
   },
 });
 if (!values.tag) throw new Error("--tag is required");
@@ -47,7 +48,7 @@ seeds.forEach((seed, i) => chunks[Math.floor((i * n) / seeds.length)]!.push(seed
 const t0 = Date.now();
 const parts = await Promise.all(
   chunks.map((chunk, i) => {
-    const port = 47100 + i;
+    const port = Number(values.port) + i;
     const out = path.join(runs, `eval-${values.tag}-${port}.json`);
     const log = fs.openSync(path.join(logs, `eval-${values.tag}-${port}.log`), "w");
     const child = spawn(

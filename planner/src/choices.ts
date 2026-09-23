@@ -100,6 +100,9 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   const copies = deck.filter((c) => base(c) === card).length;
   if (card === "BATTLE_TRANCE" && copies >= 1) v *= 0.5;
   if (card === "TREMBLE" && copies >= 2) return -1;
+  // §3.5 "too many of one card": the fourth and fifth Pommel Strike or Taunt (seen in the A0 runs)
+  // are worth less than a card the deck lacks; each copy already held takes a fifth off.
+  if (card !== "BATTLE_TRANCE" && card !== "TREMBLE") v *= Math.pow(0.8, copies);
   if (act === 0) {
     // §10.1.3: an AoE card when the deck has none.
     if (AOE.has(card) && count(deck, AOE) === 0) v += 0.15;
