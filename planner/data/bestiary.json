@@ -1,0 +1,170 @@
+{
+ "ASSASSIN_RUBY_RAIDER": {
+  "turns": 20,
+  "perTurn": 10
+ },
+ "AXE_RUBY_RAIDER": {
+  "turns": 34,
+  "perTurn": 6.6
+ },
+ "BOWLBUG_EGG": {
+  "turns": 2,
+  "perTurn": 7
+ },
+ "BOWLBUG_NECTAR": {
+  "turns": 7,
+  "perTurn": 3.9
+ },
+ "BOWLBUG_ROCK": {
+  "turns": 13,
+  "perTurn": 12.5
+ },
+ "BOWLBUG_SILK": {
+  "turns": 9,
+  "perTurn": 3.6
+ },
+ "BRUTE_RUBY_RAIDER": {
+  "turns": 28,
+  "perTurn": 4.4
+ },
+ "BYGONE_EFFIGY": {
+  "turns": 3,
+  "perTurn": 8
+ },
+ "BYRDONIS": {
+  "turns": 57,
+  "perTurn": 17.5
+ },
+ "CHOMPER": {
+  "turns": 12,
+  "perTurn": 8
+ },
+ "CROSSBOW_RUBY_RAIDER": {
+  "turns": 10,
+  "perTurn": 2.8
+ },
+ "CUBEX_CONSTRUCT": {
+  "turns": 20,
+  "perTurn": 9.6
+ },
+ "ENTOMANCER": {
+  "turns": 12,
+  "perTurn": 17.3
+ },
+ "EXOSKELETON": {
+  "turns": 17,
+  "perTurn": 4.2
+ },
+ "EYE_WITH_TEETH": {
+  "turns": 3,
+  "perTurn": 0
+ },
+ "FLYCONID": {
+  "turns": 17,
+  "perTurn": 7.9
+ },
+ "FOGMOG": {
+  "turns": 4,
+  "perTurn": 8
+ },
+ "FUZZY_WURM_CRAWLER": {
+  "turns": 17,
+  "perTurn": 7.8
+ },
+ "HUNTER_KILLER": {
+  "turns": 10,
+  "perTurn": 14.7
+ },
+ "INKLET": {
+  "turns": 100,
+  "perTurn": 5
+ },
+ "LEAF_SLIME_M": {
+  "turns": 23,
+  "perTurn": 2.8
+ },
+ "LEAF_SLIME_S": {
+  "turns": 39,
+  "perTurn": 1.4
+ },
+ "LOUSE_PROGENITOR": {
+  "turns": 3,
+  "perTurn": 9.3
+ },
+ "MAWLER": {
+  "turns": 68,
+  "perTurn": 10.3
+ },
+ "MYTE": {
+  "turns": 5,
+  "perTurn": 5
+ },
+ "NIBBIT": {
+  "turns": 136,
+  "perTurn": 6.2
+ },
+ "PARAFRIGHT": {
+  "turns": 4,
+  "perTurn": 18.3
+ },
+ "PHROG_PARASITE": {
+  "turns": 4,
+  "perTurn": 9
+ },
+ "SHRINKER_BEETLE": {
+  "turns": 44,
+  "perTurn": 5.3
+ },
+ "SLITHERING_STRANGLER": {
+  "turns": 3,
+  "perTurn": 2.3
+ },
+ "SLUMBERING_BEETLE": {
+  "turns": 7,
+  "perTurn": 10.9
+ },
+ "SNAPPING_JAXFRUIT": {
+  "turns": 11,
+  "perTurn": 5.5
+ },
+ "SPINY_TOAD": {
+  "turns": 4,
+  "perTurn": 10
+ },
+ "THE_OBSCURA": {
+  "turns": 14,
+  "perTurn": 6.1
+ },
+ "THIEVING_HOPPER": {
+  "turns": 3,
+  "perTurn": 13.3
+ },
+ "TRACKER_RUBY_RAIDER": {
+  "turns": 12,
+  "perTurn": 2.7
+ },
+ "TUNNELER": {
+  "turns": 4,
+  "perTurn": 8
+ },
+ "TWIG_SLIME_M": {
+  "turns": 21,
+  "perTurn": 4.7
+ },
+ "TWIG_SLIME_S": {
+  "turns": 23,
+  "perTurn": 4
+ },
+ "VANTOM": {
+  "turns": 128,
+  "perTurn": 13.6
+ },
+ "VINE_SHAMBLER": {
+  "turns": 9,
+  "perTurn": 12
+ },
+ "WRIGGLER": {
+  "turns": 28,
+  "perTurn": 2.4
+ }
+}

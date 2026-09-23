@@ -2,6 +2,7 @@
  * Plays real fights in a sandboxed game and checks the simulator against it.
  *
  *   node src/run-fights.ts [--policy planner|naive] [--runs 3] [--seed 1] [--max-fights 30] [--port 47100] [--cards skip|take]
+ *                          [--weights '{"future":0.5}'] [--out runs/x.json]
  *
  * One headless game per run: an Ironclad run on a fixed seed, fixed choices
  * outside combat, and every combat fought by the chosen policy until the run
@@ -25,10 +26,13 @@ import { parseArgs } from "node:util";
 import { Game, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
-import { actionId, planTurn } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
 import { type Action, type Card, fromObservation, hpLoss, play } from "./sim.ts";
 
 type Policy = "planner" | "naive";
+
+/** The planner's evaluation weights for this run: the defaults, with --weights on top. */
+let weights: Weights = DEFAULT_WEIGHTS;
 
 export interface FightLog {
   seed: string;
@@ -55,6 +59,8 @@ export interface FightLog {
   endTurn: { turn: number; predicted: number; actual: number; before: string }[];
   /** Action ids the policy chose that the game did not offer. */
   illegal: string[];
+  /** How often each card was played. */
+  cardsPlayed: Record<string, number>;
 }
 
 const label = (c: Card) => `${c.id}${c.upgrades > 0 ? "+" : ""}`;
@@ -122,7 +128,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
   const log: FightLog = {
     seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id), relics: o.relics, relicVars: o.relic_vars ?? {},
     won: false, hpStart: o.player_hp, hpEnd: o.player_hp, hpLost: 0, maxHp: o.player_max_hp,
-    turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [],
+    turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [], cardsPlayed: {},
   };
   logs.push(log);
   let cur = start;
@@ -134,7 +140,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
 
     let a: Action;
     if (policy === "planner") {
-      const plan = planTurn(s);
+      const plan = planTurn(s, weights);
       log.planMs.push(plan.ms);
       log.nodes.push(plan.nodes);
       if (plan.truncated) log.truncated++;
@@ -159,6 +165,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
     if (a.kind === "play") {
       log.plays++;
       const card = s.hand[a.hand]!;
+      log.cardsPlayed[label(card)] = (log.cardsPlayed[label(card)] ?? 0) + 1;
       const predicted = play(s, a);
       if (!inCombat && after.phase !== "game_over") log.hpLost += Math.max(0, obs.player_hp - predicted.player.hp);
       if (inCombat) {
@@ -258,9 +265,12 @@ async function main(): Promise<void> {
       "max-fights": { type: "string", default: "30" },
       port: { type: "string", default: "47100" },
       cards: { type: "string", default: "skip" },
+      weights: { type: "string", default: "{}" },
+      out: { type: "string" },
     },
   });
   const policy = values.policy as Policy;
+  weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
   if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
   const repo = path.resolve(import.meta.dirname, "..", "..");
   const sandbox = path.join(repo, "sandbox", `p${values.port}`);
@@ -284,9 +294,9 @@ async function main(): Promise<void> {
 
   const out = path.join(repo, "planner", "runs");
   fs.mkdirSync(out, { recursive: true });
-  const file = path.join(out, `${policy}-${values.cards}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
+  const file = values.out ? path.resolve(values.out) : path.join(out, `${policy}-${values.cards}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
   const cards = Object.fromEntries([...catalog].sort(([a], [b]) => a.localeCompare(b)));
-  fs.writeFileSync(file, JSON.stringify({ fights: logs, cards }, null, 1));
+  fs.writeFileSync(file, JSON.stringify({ policy, weights, fights: logs, cards }, null, 1));
   console.log(`\n${summarise(policy, logs)}\n\nlog: ${file}`);
 }
 

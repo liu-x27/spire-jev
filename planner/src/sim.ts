@@ -457,6 +457,12 @@ const SPECIAL: Record<string, Rule> = {
   // Hits twice if the target is Vulnerable.
   DISMANTLE: (s, c, t) => strike(s, one(t), dmg(s, c), t && has(t, "VULNERABLE") ? 2 : 1),
   // Strength for the player, and a little for the target.
+  // Exhausts the rest of the hand and hits once for every card it exhausted.
+  FIEND_FIRE: (s, c, t) => {
+    const n = s.hand.length;
+    for (const h of s.hand.splice(0)) exhaustCard(s, h);
+    strike(s, one(t), dmg(s, c), n);
+  },
   FIGHT_ME: (s, c, t) => {
     strike(s, one(t), dmg(s, c), num(c, "Repeat") || 1);
     applyPower(s, s.player, "STRENGTH", num(c, "StrengthPower"));

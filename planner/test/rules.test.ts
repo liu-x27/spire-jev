@@ -254,3 +254,12 @@ test("tuning fork blocks on the tenth skill, counting the ones before this fight
   assert.equal(ninth.player.block, 5);
   assert.equal(play(ninth, { kind: "play", hand: 0 }).player.block, 17);
 });
+
+test("fiend fire exhausts the rest of the hand and hits once for each", () => {
+  const fire = { ...card("FIEND_FIRE", "Attack", "AnyEnemy", { Damage: 7 }, 2), keywords: ["Exhaust"] };
+  const wound = { ...card("WOUND", "Status", "None", {}), keywords: ["Unplayable"] };
+  const after = at(state([fire, wound, wound, STRIKE]), 0);
+  assert.equal(after.enemies[0]!.hp, 59);
+  assert.equal(after.exhaust.length, 4);
+  assert.equal(after.hand.length, 0);
+});

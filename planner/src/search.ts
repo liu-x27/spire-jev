@@ -11,7 +11,8 @@
  * cards are real, not guessed at.
  */
 
-import { type Action, actions, hpLoss, play, type State, stateKey } from "./sim.ts";
+import { type Beast, loadBestiary } from "./bestiary.ts";
+import { type Action, actions, type Card, type Enemy, hpLoss, play, type State, stateKey } from "./sim.ts";
 
 export interface Weights {
   /** Per point of HP the enemies' attacks will take this turn. */
@@ -26,9 +27,109 @@ export interface Weights {
   strength: number;
   /** Per card drawn this turn and not yet known. */
   drawn: number;
+  /**
+   * Per point of the damage the enemies left alive are expected to deal before
+   * they die (futureDamage); 0 leaves the rest of the fight out, as the first
+   * version did.
+   */
+  future: number;
 }
 
-export const DEFAULT_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5 };
+/** The first version: this turn only. */
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0 };
+export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
+
+/** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
+export interface Pace {
+  perTurn: number;
+  perHit: number;
+  /** Block that comes every turn without a card: Metallicize, Feel No Pain, Barricade. */
+  blockPerTurn: number;
+  /** Block still to come from Plating, which gives a stack less every turn. */
+  blockToCome: number;
+}
+
+const BESTIARY: Record<string, Beast> = loadBestiary();
+
+const HAND = 5;
+
+function cardDamage(c: Card): { damage: number; hits: number } {
+  if (c.type !== "Attack") return { damage: 0, hits: 0 };
+  const per = c.vars["Damage"] ?? c.calc?.["CalculatedDamage"] ?? c.vars["CalculationBase"] ?? 0;
+  const hits = c.id === "TWIN_STRIKE" ? 2 : Math.max(1, c.vars["Repeat"] ?? 1);
+  return { damage: per * hits, hits };
+}
+
+/**
+ * The deck's pace, from every card still in the fight (hand, draw and discard
+ * piles): the average card's damage over a five-card hand, a quarter off for
+ * the energy and the blocks a turn also needs, and Strength on every hit —
+ * Strength for the turn only (Setup Strike) left out.
+ */
+export function deckPace(s: State): Pace {
+  const cards = [...s.hand, ...s.draw, ...s.discard];
+  let damage = 0;
+  let hits = 0;
+  for (const c of cards) {
+    const d = cardDamage(c);
+    damage += d.damage;
+    hits += d.hits;
+  }
+  const n = Math.max(1, cards.length);
+  const p = s.player.powers;
+  const strength = (p["STRENGTH"] ?? 0) - (p["SETUP_STRIKE"] ?? 0);
+  const hitsPerTurn = (hits / n) * HAND * 0.75;
+  // Powers in play work every turn: Juggernaut hits for every block gained (about one and a half a turn).
+  const perTurn = Math.max(4, (damage / n) * HAND * 0.75 + strength * hitsPerTurn + (p["JUGGERNAUT"] ?? 0) * 1.5);
+  const perHit = Math.max(1, (hits > 0 ? damage / hits : 6) + strength);
+  // Feel No Pain blocks for every card exhausted (about one every other turn); Barricade keeps some block over.
+  const blockPerTurn = (p["METALLICIZE"] ?? 0) + (p["FEEL_NO_PAIN"] ?? 0) * 0.5 + ((p["BARRICADE"] ?? 0) > 0 ? 3 : 0);
+  const plating = Math.max(0, p["PLATING"] ?? 0);
+  return { perTurn, perHit, blockPerTurn, blockToCome: (plating * (plating - 1)) / 2 };
+}
+
+/**
+ * An enemy's damage per turn from here on: what its intents show, or what the
+ * bestiary says the monster averages, whichever is more — the intent shows
+ * one turn, and some turns are quiet ones. A monster the bestiary has not
+ * seen, on a turn it does not attack, is guessed from its size and strength.
+ */
+export function threat(e: Enemy): number {
+  let attack = 0;
+  for (const i of e.intents) if (i.type === "Attack" || i.type === "DeathBlow") attack += i.damage * Math.max(1, i.hits);
+  const seen = BESTIARY[e.model]?.perTurn;
+  if (seen !== undefined) return Math.max(attack, seen);
+  if (attack > 0) return attack;
+  return Math.max(5, 0.12 * e.maxHp) + Math.max(0, e.powers["STRENGTH"] ?? 0);
+}
+
+/**
+ * What the enemies left alive will do before they die, if the rest of the
+ * fight goes at the deck's pace: each enemy's damage per turn times the turns
+ * until it is dead, killing first the one that does most per turn it takes to
+ * kill (Smith's rule — the order that makes the sum smallest). A stack of
+ * Slippery is a hit that takes 1 HP instead of a full one; Vulnerable left
+ * after this enemy turn makes those turns deal half again as much; Weak left
+ * takes a quarter off those turns of its damage.
+ */
+export function futureDamage(s: State, pace: Pace = deckPace(s)): number {
+  const left = s.enemies.filter((e) => e.alive).map((e) => {
+    const hp = e.hp + Math.max(0, e.powers["SLIPPERY"] ?? 0) * Math.max(0, pace.perHit - 1);
+    const vulnerable = Math.max(0, (e.powers["VULNERABLE"] ?? 0) - 1);
+    const fast = pace.perTurn * 1.5;
+    const turns = hp <= vulnerable * fast ? hp / fast : vulnerable + (hp - vulnerable * fast) / pace.perTurn;
+    return { turns, perTurn: threat(e), weak: Math.max(0, (e.powers["WEAK"] ?? 0) - 1) };
+  });
+  left.sort((a, b) => b.perTurn / Math.max(1e-6, b.turns) - a.perTurn / Math.max(1e-6, a.turns));
+  let clock = 0;
+  let total = 0;
+  for (const e of left) {
+    clock += e.turns;
+    total += e.perTurn * clock - 0.25 * e.perTurn * Math.min(e.weak, clock);
+  }
+  // Block that comes on its own takes its share, over as many turns as the fight has left.
+  return Math.max(0, total - pace.blockPerTurn * clock - Math.min(pace.blockToCome, total));
+}
 
 const WIN = 1e6;
 
@@ -41,6 +142,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   if (loss >= s.player.hp) return -WIN - enemyHp;
 
   let score = -loss * w.hpLoss - enemyHp * w.enemyHp;
+  if (w.future > 0) score -= futureDamage(s) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
     const attacking = e.intents.some((i) => i.type === "Attack");
