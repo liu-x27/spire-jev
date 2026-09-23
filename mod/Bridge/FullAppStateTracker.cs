@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -26,6 +27,27 @@ public static class FullAppStateTracker
     /// a card outside combat, or one whose cost depends on state that is not
     /// there, reports what it can rather than failing the whole observation.
     /// </summary>
+    // spire-jev: a power's dynamic vars, and the numbers its own class keeps
+    // (fields declared on the concrete power, not on PowerModel).
+    private static Dictionary<string, double> DescribePowerVars(PowerModel power)
+    {
+        var vars = new Dictionary<string, double>();
+        try { foreach (var pair in power.DynamicVars) vars[pair.Key] = (double)pair.Value.BaseValue; } catch { }
+        try
+        {
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+            foreach (var field in power.GetType().GetFields(flags))
+            {
+                object? value = field.GetValue(power);
+                if (value is decimal d) vars[field.Name] = (double)d;
+                else if (value is int i) vars[field.Name] = i;
+                else if (value is bool b) vars[field.Name] = b ? 1 : 0;
+            }
+        }
+        catch { }
+        return vars;
+    }
+
     private static CardObservationDto DescribeCard(CardModel card, int index, bool canPlay)
     {
         var dto = new CardObservationDto
@@ -87,6 +109,8 @@ public static class FullAppStateTracker
             foreach (var power in player.Creature.Powers)
             {
                 obs.PlayerPowers[power.Id.Entry] = power.Amount;
+                var vars = DescribePowerVars(power);
+                if (vars.Count > 0) obs.PlayerPowerVars[power.Id.Entry] = vars;
             }
 
             foreach (var card in player.Deck.Cards)
@@ -184,6 +208,8 @@ public static class FullAppStateTracker
                     foreach (var p in enemy.Powers)
                     {
                         enemyDto.Powers[p.Id.Entry] = p.Amount;
+                        var vars = DescribePowerVars(p);
+                        if (vars.Count > 0) enemyDto.PowerVars[p.Id.Entry] = vars;
                     }
                     // spire-jev: the move's intents, with attack damage as the
                     // game computes it against the player.
@@ -376,7 +402,7 @@ public static class FullAppStateTracker
             }
             obs.Room = roomObs;
         }
-        else if (phase == "deck_card_select")
+        else if (phase == "deck_card_select" || phase == "simple_card_select")
         {
             var roomObs = new RoomObservationDto { RoomType = "DeckCardSelect" };
             if (contextObject is IReadOnlyList<CardModel> selectableCards)

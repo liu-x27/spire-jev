@@ -88,6 +88,11 @@ public sealed class ObservationDto
     [JsonPropertyName("player_powers")]
     public Dictionary<string, int> PlayerPowers { get; set; } = new();
 
+    // spire-jev: each power's own numbers beside its amount (Shrink's damage
+    // decrease, say), for the powers whose effect is not just the amount.
+    [JsonPropertyName("player_power_vars")]
+    public Dictionary<string, Dictionary<string, double>> PlayerPowerVars { get; set; } = new();
+
     [JsonPropertyName("deck_cards")]
     public List<string> DeckCards { get; set; } = new();
 
@@ -207,6 +212,9 @@ public sealed class EnemyObservationDto
 
     [JsonPropertyName("powers")]
     public Dictionary<string, int> Powers { get; set; } = new();
+
+    [JsonPropertyName("power_vars")]
+    public Dictionary<string, Dictionary<string, double>> PowerVars { get; set; } = new();
 
     // spire-jev: what the move will do, as the game shows it — attack damage
     // per hit against the player, with strength, weak and vulnerable applied.
