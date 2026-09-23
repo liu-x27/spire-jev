@@ -190,6 +190,10 @@ public sealed class CardObservationDto
     [JsonPropertyName("card_type")]
     public string CardType { get; set; } = "";
 
+    // spire-jev: for choosing cards outside combat.
+    [JsonPropertyName("rarity")]
+    public string Rarity { get; set; } = "";
+
     // spire-jev, hand cards only: the card glows gold when its condition holds
     // (Spite once you have lost HP this turn), and a calculated var's value as
     // the game computes it now (Body Slam's damage from your block).

@@ -14,6 +14,7 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
+using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace Sts2.NativeSim.FullAppBridge;
@@ -78,6 +79,7 @@ public static class FullAppStateTracker
             CardType = card.Type.ToString(),
         };
         try { dto.CurrentCost = card.EnergyCost.GetResolved(); } catch { dto.CurrentCost = dto.Cost; }
+        try { dto.Rarity = card.Rarity.ToString(); } catch { }
         try
         {
             foreach (var keyword in card.Keywords) dto.Keywords.Add(keyword.ToString());
@@ -368,6 +370,8 @@ public static class FullAppStateTracker
             var roomObs = new RoomObservationDto { RoomType = "CardReward" };
             if (contextObject is IReadOnlyList<CardModel> cardOptions)
             {
+                // spire-jev: each offered card as combat describes it, numbers and all.
+                roomObs.Details["cards"] = cardOptions.Select((c, i) => DescribeCard(c, i, false)).ToList();
                 for (int i = 0; i < cardOptions.Count; i++)
                 {
                     CardModel card = cardOptions[i];
@@ -486,8 +490,14 @@ public static class FullAppStateTracker
             if (contextObject is IEnumerable<object> merchantEntries)
             {
                 int idx = 0;
+                var shopCards = new Dictionary<string, object?>();
+                roomObs.Details["cards"] = shopCards;
                 foreach (var entry in merchantEntries)
                 {
+                    if (entry is MerchantCardEntry { CreationResult.Card: { } offered })
+                    {
+                        try { shopCards[idx.ToString()] = DescribeCard(offered, idx, false); } catch { }
+                    }
                     string entryType = entry.GetType().Name.Replace("MerchantEntry", "");
                     string itemId = entry switch
                     {
@@ -530,11 +540,31 @@ public static class FullAppStateTracker
         else if (phase == "event")
         {
             var roomObs = new RoomObservationDto { RoomType = "Event" };
+            // spire-jev: which event, and what each option says and does.
+            try
+            {
+                var room = RunManager.Instance?.DebugOnlyGetState()?.BaseRoom as EventRoom;
+                roomObs.Details["event_id"] = room?.CanonicalEvent?.Id.Entry;
+            }
+            catch { }
+            var described = new List<Dictionary<string, object?>>();
+            roomObs.Details["options"] = described;
             if (contextObject is IEnumerable<object> eventOptions)
             {
                 int idx = 0;
                 foreach (var opt in eventOptions)
                 {
+                    if (opt is EventOption option)
+                    {
+                        var d = new Dictionary<string, object?> { ["index"] = idx };
+                        try { d["text_key"] = option.TextKey; } catch { }
+                        try { d["title"] = option.Title?.GetFormattedText(); } catch { }
+                        try { d["description"] = option.Description?.GetFormattedText(); } catch { }
+                        try { d["locked"] = option.IsLocked; d["proceed"] = option.IsProceed; } catch { }
+                        try { d["relic"] = option.Relic?.Id.Entry; } catch { }
+                        try { if (player is not null && option.WillKillPlayer is not null) d["kills"] = option.WillKillPlayer(player); } catch { }
+                        described.Add(d);
+                    }
                     roomObs.Options.Add(idx.ToString());
                     legalActions.Add(new LegalActionDto
                     {

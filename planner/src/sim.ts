@@ -670,9 +670,14 @@ export function incomingDamage(s: State): number {
   return total;
 }
 
-/** Block the player will have when the enemies attack: Plating adds its amount at the end of the turn. */
+/**
+ * Block the player will have when the enemies attack: Plating adds its amount
+ * at the end of the turn, and Feel No Pain blocks for every Ethereal card
+ * (Dazed) that the end of the turn exhausts from the hand.
+ */
 export function endOfTurnBlock(s: State): number {
-  return s.player.block + Math.max(0, s.player.powers["PLATING"] ?? 0);
+  const ethereal = s.hand.filter((c) => c.keywords.includes("Ethereal")).length;
+  return s.player.block + Math.max(0, s.player.powers["PLATING"] ?? 0) + ethereal * Math.max(0, s.player.powers["FEEL_NO_PAIN"] ?? 0);
 }
 
 /**
@@ -680,10 +685,14 @@ export function endOfTurnBlock(s: State): number {
  * player at the end of the turn and block takes it like an attack.
  */
 export function hpLoss(s: State): number {
+  // Sandpit (The Insatiable) devours the player when it runs out.
+  if (s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
   const constrict = Math.max(0, s.player.powers["CONSTRICT"] ?? 0);
   // A status card left in hand that deals damage does it at the end of the turn, into block (Infection).
   const statuses = s.hand.reduce((a, c) => a + (c.type === "Status" ? c.vars["Damage"] ?? 0 : 0), 0);
-  return Math.max(0, incomingDamage(s) + constrict + statuses - endOfTurnBlock(s));
+  // Crimson Mantle costs HP every turn, past block.
+  const mantle = s.player.powers["CRIMSON_MANTLE"] ? s.player.powerVars?.["CRIMSON_MANTLE"]?.["SelfDamage"] ?? 1 : 0;
+  return Math.max(0, incomingDamage(s) + constrict + statuses - endOfTurnBlock(s)) + mantle;
 }
 
 /** A key that is equal for states search should treat as the same. */

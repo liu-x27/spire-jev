@@ -40,8 +40,13 @@ test("slippery counts as HP the deck has to chew through", () => {
 
 test("the enemy that does most per turn it takes to kill is counted as killed first", () => {
   const s = state([], 0, [foe(1, 60, 4), foe(2, 20, 12)]);
-  // Pace 11.25: the 20 HP one is gone in 1.78 turns, the other at 7.1.
-  assert.equal(Math.round(futureDamage(s) * 100) / 100, Math.round((12 * (20 / 11.25) + 4 * (80 / 11.25)) * 100) / 100);
+  // Pace 11.25: the 20 HP one is gone in 1.78 turns, the other at 7.1; each attacks half a turn less than it lives.
+  assert.equal(Math.round(futureDamage(s) * 100) / 100, Math.round((12 * (20 / 11.25 - 0.5) + 4 * (80 / 11.25 - 0.5)) * 100) / 100);
+});
+
+test("an enemy the deck kills next turn will not attack again", () => {
+  // The Mawler at 7 HP: the planner hit it instead of blocking the 21 it showed.
+  assert.equal(futureDamage(state([], 0, [foe(1, 5, 21)])), 0);
 });
 
 test("against a hard hitter the fight's length is worth more than a block", () => {

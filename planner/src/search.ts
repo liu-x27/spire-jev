@@ -107,7 +107,11 @@ export function threat(e: Enemy): number {
  * What the enemies left alive will do before they die, if the rest of the
  * fight goes at the deck's pace: each enemy's damage per turn times the turns
  * until it is dead, killing first the one that does most per turn it takes to
- * kill (Smith's rule — the order that makes the sum smallest). A stack of
+ * kill (Smith's rule — the order that makes the sum smallest). An enemy the
+ * deck kills during a turn does not attack in it, so it attacks for half a
+ * turn less than it lives: one that dies next turn does not attack again (a
+ * Mawler at 7 HP was counted as 10 more damage, and the planner hit it
+ * instead of blocking its 21). A stack of
  * Slippery is a hit that takes 1 HP instead of a full one; Vulnerable left
  * after this enemy turn makes those turns deal half again as much; Weak left
  * takes a quarter off those turns of its damage.
@@ -125,7 +129,8 @@ export function futureDamage(s: State, pace: Pace = deckPace(s)): number {
   let total = 0;
   for (const e of left) {
     clock += e.turns;
-    total += e.perTurn * clock - 0.25 * e.perTurn * Math.min(e.weak, clock);
+    const attacks = Math.max(0, clock - 0.5);
+    total += e.perTurn * attacks - 0.25 * e.perTurn * Math.min(e.weak, attacks);
   }
   // Block that comes on its own takes its share, over as many turns as the fight has left.
   return Math.max(0, total - pace.blockPerTurn * clock - Math.min(pace.blockToCome, total));

@@ -65,6 +65,20 @@ export interface FightLog {
 
 const label = (c: Card) => `${c.id}${c.upgrades > 0 ? "+" : ""}`;
 
+/** Every non-combat screen met, as the game describes it, and what was chosen: what phase 2's choices are written from. */
+export interface RoomLog {
+  seed: string;
+  floor: number;
+  phase: string;
+  hp: number;
+  maxHp: number;
+  gold: number;
+  deck: string[];
+  room: Observation["room"];
+  chosen: string;
+}
+const rooms: RoomLog[] = [];
+
 /** Every card seen, as the game describes it: what a card's own rule is written from. */
 const catalog = new Map<string, Omit<CardObs, "index" | "can_play">>();
 function collect(o: Observation): void {
@@ -173,7 +187,9 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       } else if (after.phase !== "game_over" && predicted.enemies.some((e) => e.alive)) {
         log.mismatches.push({ card: label(card), field: "combat.ended", predicted: "ongoing", actual: after.phase, before: brief(obs) });
       }
-    } else {
+    } else if (inCombat || after.phase === "game_over") {
+      // (A fight that ends in the enemies' turn — one escapes, or dies to
+      // Flame Barrier — shows HP after the win's heal: nothing to compare.)
       log.turns++;
       // HP cannot fall below 0: a lethal turn shows only the HP there was.
       const predicted = Math.min(hpLoss(s), s.player.hp);
@@ -205,7 +221,12 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       cur = next;
       continue;
     }
-    cur = await game.step(routine(cur.observation, cur.legal_actions, takeCards));
+    const o = cur.observation;
+    const chosen = routine(o, cur.legal_actions, takeCards);
+    if (o.phase !== "map" && o.phase !== "rewards") {
+      rooms.push({ seed, floor: o.floor, phase: o.phase, hp: o.player_hp, maxHp: o.player_max_hp, gold: o.gold, deck: o.deck_cards, room: o.room, chosen });
+    }
+    cur = await game.step(chosen);
   }
 }
 
@@ -296,7 +317,7 @@ async function main(): Promise<void> {
   fs.mkdirSync(out, { recursive: true });
   const file = values.out ? path.resolve(values.out) : path.join(out, `${policy}-${values.cards}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
   const cards = Object.fromEntries([...catalog].sort(([a], [b]) => a.localeCompare(b)));
-  fs.writeFileSync(file, JSON.stringify({ policy, weights, fights: logs, cards }, null, 1));
+  fs.writeFileSync(file, JSON.stringify({ policy, weights, fights: logs, cards, rooms }, null, 1));
   console.log(`\n${summarise(policy, logs)}\n\nlog: ${file}`);
 }
 

@@ -62,19 +62,21 @@ const parts = await Promise.all(
 );
 
 const fights: FightLog[] = [];
+const rooms: unknown[] = [];
 let weights: unknown;
 for (const file of parts) {
   if (!fs.existsSync(file)) {
     console.log(`missing ${file}: see sandbox/eval-${values.tag}-*.log`);
     continue;
   }
-  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[] };
+  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[]; rooms?: unknown[] };
   weights = part.weights;
   fights.push(...part.fights);
+  rooms.push(...(part.rooms ?? []));
   fs.rmSync(file);
 }
 const merged = path.join(runs, `eval-${values.tag}.json`);
-fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, weights, fights }, null, 1));
+fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, weights, fights, rooms }, null, 1));
 
 const bySeed = new Map<string, FightLog[]>();
 for (const f of fights) bySeed.set(f.seed, [...(bySeed.get(f.seed) ?? []), f]);
