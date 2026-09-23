@@ -194,6 +194,22 @@ public sealed class CardObservationDto
 
     [JsonPropertyName("calculated")]
     public Dictionary<string, int> Calculated { get; set; } = new();
+
+    // spire-jev: an enchantment changes a card's numbers for the rest of the
+    // run (Nutritious Soup's on Strikes). Its id and amount, and every var
+    // whose enchanted value is not its base value.
+    [JsonPropertyName("enchantment")]
+    public string Enchantment { get; set; } = "";
+
+    [JsonPropertyName("enchantment_amount")]
+    public int EnchantmentAmount { get; set; }
+
+    [JsonPropertyName("enchanted")]
+    public Dictionary<string, int> Enchanted { get; set; } = new();
+
+    // spire-jev, hand cards only: numbers the card's own class keeps (Thrash's extra damage).
+    [JsonPropertyName("fields")]
+    public Dictionary<string, double> Fields { get; set; } = new();
 }
 
 public sealed class EnemyObservationDto

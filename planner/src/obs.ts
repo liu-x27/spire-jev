@@ -19,6 +19,12 @@ export interface CardObs {
   glows?: boolean;
   /** Hand cards: a calculated var's value as the game computes it now. */
   calculated?: Record<string, number>;
+  /** An enchantment on the card, and the vars it changed from their base. */
+  enchantment?: string;
+  enchantment_amount?: number;
+  enchanted?: Record<string, number>;
+  /** Hand cards: numbers the card's own class keeps (Thrash's extra damage). */
+  fields?: Record<string, number>;
 }
 
 export interface IntentObs {

@@ -141,3 +141,25 @@ test("feel no pain blocks when a card is exhausted, and juggernaut hits back whe
   assert.equal(after.enemies[0]!.hp, 34);
   assert.equal(after.exact, true);
 });
+
+test("tender takes strength and dexterity after each card, not before it", () => {
+  const s = state([STRIKE, STRIKE]);
+  s.player.powers["TENDER"] = 1;
+  const once = at(s, 0);
+  assert.equal(once.enemies[0]!.hp, 74);
+  assert.equal(once.player.powers["STRENGTH"], -1);
+  assert.equal(once.player.powers["DEXTERITY"], -1);
+  assert.equal(at(once, 0).enemies[0]!.hp, 69);
+});
+
+test("burrowed goes when the block is broken", () => {
+  const tunneler = foe(23);
+  tunneler.block = 1;
+  tunneler.powers["BURROWED"] = 1;
+  assert.equal(at(state([STRIKE], tunneler), 0).enemies[0]!.powers["BURROWED"], undefined);
+});
+
+test("an enchanted card plays with its enchanted numbers", () => {
+  const s = state([{ ...STRIKE, vars: { Damage: 9 }, enchantment: "SHARP" }]);
+  assert.equal(at(s, 0).enemies[0]!.hp, 71);
+});

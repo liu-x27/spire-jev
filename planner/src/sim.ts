@@ -30,6 +30,10 @@ export interface Card {
   glows: boolean;
   /** Calculated vars as the game computed them at the observation: Perfected Strike's damage. */
   calc?: Readonly<Record<string, number>>;
+  /** The card's enchantment, if it has one; its vars are already the enchanted ones. */
+  enchantment?: string;
+  /** Numbers the card's own class keeps, for hand cards: Thrash's extra damage. */
+  fields?: Readonly<Record<string, number>>;
 }
 
 export interface Unit {
@@ -97,11 +101,14 @@ function cardOf(c: CardObs, energy?: number): Card {
     type: c.card_type,
     target: c.target_type,
     keywords: c.keywords,
-    vars: c.vars,
+    // An enchantment's numbers are the card's numbers for the rest of the run.
+    vars: c.enchanted && Object.keys(c.enchanted).length > 0 ? { ...c.vars, ...c.enchanted } : c.vars,
     upgrades: c.upgrades,
     locked: energy !== undefined && !c.can_play && (c.costs_x || c.current_cost <= energy),
     glows: c.glows ?? false,
     ...(c.calculated && Object.keys(c.calculated).length > 0 ? { calc: c.calculated } : {}),
+    ...(c.enchantment ? { enchantment: c.enchantment } : {}),
+    ...(c.fields && Object.keys(c.fields).length > 0 ? { fields: c.fields } : {}),
   };
 }
 
@@ -190,7 +197,10 @@ export function blockGain(base: number, u: Unit): number {
 
 function hit(target: Enemy, damage: number): void {
   const absorbed = Math.min(target.block, damage);
+  const hadBlock = target.block > 0;
   target.block -= absorbed;
+  // Burrowed (Tunneler) goes when its block is broken.
+  if (hadBlock && target.block === 0) delete target.powers["BURROWED"];
   let lost = damage - absorbed;
   // Slippery (Inklet): a hit takes at most 1 HP, and uses up a stack.
   if (lost > 0 && has(target, "SLIPPERY")) {
@@ -476,6 +486,11 @@ const SPECIAL: Record<string, Rule> = {
     gainBlock(s, blockGain(num(c, "Block"), s.player));
     exhaustOne(s);
   },
+  // Hits twice with its damage and what it has gained, and exhausts a card from hand.
+  THRASH: (s, c, t) => {
+    strike(s, one(t), num(c, "Damage") + (c.fields?.["_extraDamage"] ?? 0), 2);
+    exhaustOne(s);
+  },
   TWIN_STRIKE: (s, c, t) => strike(s, one(t), num(c, "Damage"), 2),
   // Weak, then Vulnerable, each for its one Power number.
   UPPERCUT: (s, c, t) => {
@@ -538,6 +553,12 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   else standard(s, card, target, x);
   // Rage: block for every attack played this turn, not changed by Dexterity or Frail.
   if (card.type === "Attack" && has(s.player, "RAGE")) gainBlock(s, s.player.powers["RAGE"] ?? 0);
+  // Tender (Hunter Killer): every card played takes that much Strength and Dexterity, after it resolves.
+  const tender = s.player.powers["TENDER"] ?? 0;
+  if (tender > 0) {
+    addPower(s.player, "STRENGTH", -tender);
+    addPower(s.player, "DEXTERITY", -tender);
+  }
 
   if (card.type === "Power") {
     // In play for the rest of the combat; not in any pile.

@@ -277,11 +277,65 @@ public static class FullAppBridgeMod
     {
         await WaitHelper.Until(() => NMapScreen.Instance != null && NMapScreen.Instance.IsOpen, ct, TimeSpan.FromSeconds(15), "Map screen not active");
 
-        NMapScreen mapScreen = NMapScreen.Instance!;
         RunManager runManager = RunManager.Instance!;
-        RunState runState = runManager.DebugOnlyGetState()!;
 
-        var allMapPoints = UiHelper.FindAll<NMapPoint>(mapScreen);
+        // spire-jev: right after a boss the map screen opens on the act that
+        // just ended, and a moment later it is rebuilt for the next one, which
+        // disposes every point on it. Offer points only once two looks a
+        // quarter of a second apart agree, and look again before clicking.
+        List<NMapPoint> travelableNodes = await SettledTravelableNodesAsync(ct);
+        var reachablePoints = travelableNodes.Select(n => n.Point).ToList();
+
+        string actionId = await FullAppBridgeServer.WaitForCoordinatorActionAsync("map", isTerminal: false, isVictory: false, reachablePoints);
+        string[] parts = actionId.Split(':');
+        int rawIdx = int.Parse(parts[1]);
+
+        if (travelableNodes.Count == 0 || travelableNodes.Any(n => !GodotObject.IsInstanceValid(n)))
+            travelableNodes = await SettledTravelableNodesAsync(ct);
+        if (travelableNodes.Count == 0)
+            throw new InvalidOperationException("No map point to travel to");
+
+        int branchIdx = (rawIdx >= 1 && rawIdx <= travelableNodes.Count) ? rawIdx - 1 : rawIdx;
+        if (branchIdx < 0 || branchIdx >= travelableNodes.Count)
+            branchIdx = 0;
+
+        NMapPoint chosenNode = travelableNodes[branchIdx];
+
+        var roomEnteredTcs = new TaskCompletionSource<bool>();
+        Action onRoomEntered = () => roomEnteredTcs.TrySetResult(true);
+        runManager.RoomEntered += onRoomEntered;
+
+        try
+        {
+            await UiHelper.Click(chosenNode, 0);
+            await WaitHelper.ForTask(roomEnteredTcs.Task, ct, TimeSpan.FromSeconds(15), "Room was not entered after map selection");
+        }
+        finally
+        {
+            runManager.RoomEntered -= onRoomEntered;
+        }
+    }
+
+    private static async Task<List<NMapPoint>> SettledTravelableNodesAsync(CancellationToken ct)
+    {
+        List<NMapPoint> nodes = TravelableNodes();
+        for (int tries = 0; tries < 20; tries++)
+        {
+            await Task.Delay(250, ct);
+            List<NMapPoint> again = TravelableNodes();
+            if (again.Count > 0 && again.SequenceEqual(nodes)) return again;
+            nodes = again;
+        }
+        return nodes;
+    }
+
+    private static List<NMapPoint> TravelableNodes()
+    {
+        NMapScreen? mapScreen = NMapScreen.Instance;
+        RunState? runState = RunManager.Instance?.DebugOnlyGetState();
+        if (mapScreen is null || !GodotObject.IsInstanceValid(mapScreen) || runState is null) return new List<NMapPoint>();
+
+        var allMapPoints = UiHelper.FindAll<NMapPoint>(mapScreen).Where(p => GodotObject.IsInstanceValid(p)).ToList();
         List<NMapPoint> travelableNodes;
 
         if (runState.VisitedMapCoords.Count == 0)
@@ -319,30 +373,7 @@ public static class FullAppBridgeMod
                 .ToList();
         }
 
-        var reachablePoints = travelableNodes.Select(n => n.Point).ToList();
-
-        string actionId = await FullAppBridgeServer.WaitForCoordinatorActionAsync("map", isTerminal: false, isVictory: false, reachablePoints);
-        string[] parts = actionId.Split(':');
-        int rawIdx = int.Parse(parts[1]);
-        int branchIdx = (rawIdx >= 1 && rawIdx <= travelableNodes.Count) ? rawIdx - 1 : rawIdx;
-        if (branchIdx < 0 || branchIdx >= travelableNodes.Count)
-            branchIdx = 0;
-
-        NMapPoint chosenNode = travelableNodes[branchIdx];
-
-        var roomEnteredTcs = new TaskCompletionSource<bool>();
-        Action onRoomEntered = () => roomEnteredTcs.TrySetResult(true);
-        runManager.RoomEntered += onRoomEntered;
-
-        try
-        {
-            await UiHelper.Click(chosenNode, 0);
-            await WaitHelper.ForTask(roomEnteredTcs.Task, ct, TimeSpan.FromSeconds(15), "Room was not entered after map selection");
-        }
-        finally
-        {
-            runManager.RoomEntered -= onRoomEntered;
-        }
+        return travelableNodes;
     }
 
     private static T? GetTopScreen<T>() where T : class

@@ -74,8 +74,34 @@ public static class FullAppStateTracker
             foreach (var pair in card.DynamicVars) dto.Vars[pair.Key] = (int)pair.Value.BaseValue;
         }
         catch { }
+        try
+        {
+            if (card.Enchantment is { } enchantment)
+            {
+                dto.Enchantment = enchantment.Id.Entry;
+                dto.EnchantmentAmount = enchantment.Amount;
+            }
+            foreach (var pair in card.DynamicVars)
+            {
+                int enchanted = (int)pair.Value.EnchantedValue;
+                if (enchanted != (int)pair.Value.BaseValue) dto.Enchanted[pair.Key] = enchanted;
+            }
+        }
+        catch { }
         if (inHand)
         {
+            try
+            {
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+                foreach (var field in card.GetType().GetFields(flags))
+                {
+                    object? value = field.GetValue(card);
+                    if (value is decimal d) dto.Fields[field.Name] = (double)d;
+                    else if (value is int i) dto.Fields[field.Name] = i;
+                    else if (value is bool b) dto.Fields[field.Name] = b ? 1 : 0;
+                }
+            }
+            catch { }
             try { dto.GlowsGold = card.ShouldGlowGold; } catch { }
             try
             {
