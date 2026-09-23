@@ -19,7 +19,7 @@ function enemy(hp: number, attack: number, hits = 1): Enemy {
 function state(hand: Card[], energy: number, foe: Enemy, playerHp = 80): State {
   return {
     player: { hp: playerHp, maxHp: 80, block: 0, powers: {} },
-    energy, hand, draw: [], discard: [], exhaust: [], enemies: [foe], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [],
+    energy, hand, draw: [], discard: [], exhaust: [], enemies: [foe], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0,
   };
 }
 

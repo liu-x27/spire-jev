@@ -18,7 +18,7 @@ function foe(hp: number, attack = 0): Enemy {
 function state(hand: Card[], e: Enemy = foe(80)): State {
   return {
     player: { hp: 80, maxHp: 80, block: 0, powers: {} },
-    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [],
+    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0,
   };
 }
 const at = (s: State, hand: number) => play(s, { kind: "play", hand, target: 1 });
@@ -162,4 +162,85 @@ test("burrowed goes when the block is broken", () => {
 test("an enchanted card plays with its enchanted numbers", () => {
   const s = state([{ ...STRIKE, vars: { Damage: 9 }, enchantment: "SHARP" }]);
   assert.equal(at(s, 0).enemies[0]!.hp, 71);
+});
+
+test("strike dummy counts for strikes with rules of their own", () => {
+  const s = state([card("TWIN_STRIKE", "Attack", "AnyEnemy", { Damage: 5 })]);
+  s.relics = ["STRIKE_DUMMY"];
+  assert.equal(at(s, 0).enemies[0]!.hp, 64);
+});
+
+test("flutter halves attacks on it and loses a stack a hit", () => {
+  const hopper = foe(30);
+  hopper.powers["FLUTTER"] = 5;
+  const s = state([STRIKE], hopper);
+  s.player.powers["STRENGTH"] = 3;
+  const after = at(s, 0);
+  assert.equal(after.enemies[0]!.hp, 26);
+  assert.equal(after.enemies[0]!.powers["FLUTTER"], 4);
+});
+
+test("thrash exhausts an attack from hand and leaves skills alone", () => {
+  const thrash = card("THRASH", "Attack", "AnyEnemy", { Damage: 4 });
+  const tremble = card("TREMBLE", "Skill", "AnyEnemy", { VulnerablePower: 3 });
+  assert.equal(at(state([thrash, tremble]), 0).exhaust.length, 0);
+  assert.equal(at(state([thrash, STRIKE]), 0).exhaust.length, 1);
+});
+
+test("daughter of the wind blocks 1 for every attack", () => {
+  const s = state([STRIKE]);
+  s.relics = ["DAUGHTER_OF_THE_WIND"];
+  assert.equal(at(s, 0).player.block, 1);
+});
+
+test("a corrupted card costs its player HP when played", () => {
+  const s = state([{ ...STRIKE, enchantment: "CORRUPTED", enchantmentVars: { _damageAmount: 2 } }]);
+  s.player.block = 6;
+  const after = at(s, 0);
+  assert.equal(after.player.hp, 78);
+  assert.equal(after.player.block, 6);
+  assert.equal(after.lostHp, true);
+});
+
+test("slow adds 10% for every card played this turn", () => {
+  const effigy = foe(82);
+  effigy.powers["SLOW"] = 1;
+  effigy.powers["VULNERABLE"] = 1;
+  // As seen on seed 11: two cards played, 82 HP, Vulnerable — 6 x 1.5 x 1.2 = 10.8, and it took 10.
+  effigy.powerVars = { SLOW: { SlowAmount: 2 } };
+  const s = state([STRIKE, STRIKE], effigy);
+  const once = at(s, 0);
+  assert.equal(once.enemies[0]!.hp, 72);
+  assert.equal(at(once, 0).enemies[0]!.hp, 61);
+});
+
+test("minions go when only minions are left", () => {
+  const leader = foe(5);
+  const eye = { ...foe(2), id: 2, powers: { MINION: 1 } };
+  const s = state([STRIKE], leader);
+  s.enemies.push(eye);
+  const after = at(s, 0);
+  assert.equal(after.enemies.every((e) => !e.alive), true);
+});
+
+test("curl up blocks once the card that hurt it is done", () => {
+  const louse = foe(136);
+  louse.powers["CURL_UP"] = 14;
+  const twin = card("TWIN_STRIKE", "Attack", "AnyEnemy", { Damage: 5 });
+  const after = at(state([twin], louse), 0);
+  assert.equal(after.enemies[0]!.hp, 126);
+  assert.equal(after.enemies[0]!.block, 14);
+  assert.equal(after.enemies[0]!.powers["CURL_UP"], undefined);
+});
+
+test("unrelenting makes the next attack free, and only the next", () => {
+  const unrelenting = card("UNRELENTING", "Attack", "AnyEnemy", { Damage: 14 }, 2);
+  const s = state([unrelenting, STRIKE, STRIKE]);
+  s.energy = 2;
+  const after = at(s, 0);
+  assert.equal(after.energy, 0);
+  const free = at(after, 0);
+  assert.equal(free.energy, 0);
+  assert.equal(free.player.powers["FREE_ATTACK"], 0);
+  assert.equal(free.hand.length, 1);
 });

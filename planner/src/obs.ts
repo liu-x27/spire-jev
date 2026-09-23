@@ -23,6 +23,7 @@ export interface CardObs {
   enchantment?: string;
   enchantment_amount?: number;
   enchanted?: Record<string, number>;
+  enchantment_vars?: Record<string, number>;
   /** Hand cards: numbers the card's own class keeps (Thrash's extra damage). */
   fields?: Record<string, number>;
 }
@@ -74,6 +75,8 @@ export interface Observation {
   player_energy: number;
   player_powers: Record<string, number>;
   player_power_vars?: Record<string, Record<string, number>>;
+  /** Each relic's numbers and counters: Tuning Fork's skills played so far. */
+  relic_vars?: Record<string, Record<string, number>>;
   deck_cards: string[];
   relics: string[];
   potions: string[];

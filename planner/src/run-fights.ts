@@ -35,6 +35,8 @@ export interface FightLog {
   floor: number;
   enemies: string[];
   relics: string[];
+  /** Relics' numbers and counters when the fight began. */
+  relicVars: Record<string, Record<string, number>>;
   won: boolean;
   hpStart: number;
   /** After the fight, so after relics that heal on a win (Burning Blood). */
@@ -77,7 +79,7 @@ function brief(o: Observation): string {
   const player = `P ${o.player_hp}hp ${o.player_block}blk ${o.player_energy}e [${pw(o.player_powers, o.player_power_vars)}]`;
   const enemies = (o.combat?.enemies ?? []).filter((e) => e.is_alive).map((e) =>
     `E${e.combat_id} ${e.model_id} ${e.hp}hp ${e.block}blk [${pw(e.powers, e.power_vars)}] ${e.intents.map((i) => i.type + (i.damage ? `${i.damage}x${i.hits}` : "")).join("+")}`);
-  const hand = `H[${(o.combat?.hand ?? []).map((c) => c.card_id + (c.upgrades > 0 ? "+" : "")).join(",")}] draw ${o.combat?.draw_pile.length ?? 0} discard ${o.combat?.discard_pile.length ?? 0} exhaust ${o.combat?.exhaust_pile.length ?? 0}`;
+  const hand = `H[${(o.combat?.hand ?? []).map((c) => c.card_id + (c.upgrades > 0 ? "+" : "") + (c.enchantment ? `~${c.enchantment}` : "")).join(",")}] draw ${o.combat?.draw_pile.length ?? 0} discard ${o.combat?.discard_pile.length ?? 0} exhaust ${o.combat?.exhaust_pile.length ?? 0}`;
   return [player, hand, ...enemies].join(" | ");
 }
 
@@ -118,7 +120,7 @@ function routine(obs: Observation, legal: LegalAction[], takeCards: boolean): st
 async function fight(game: Game, start: StepResult, policy: Policy, seed: string, logs: FightLog[]): Promise<{ log: FightLog; next: StepResult }> {
   const o = start.observation;
   const log: FightLog = {
-    seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id), relics: o.relics,
+    seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id), relics: o.relics, relicVars: o.relic_vars ?? {},
     won: false, hpStart: o.player_hp, hpEnd: o.player_hp, hpLost: 0, maxHp: o.player_max_hp,
     turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [],
   };

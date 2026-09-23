@@ -99,6 +99,10 @@ public sealed class ObservationDto
     [JsonPropertyName("relics")]
     public List<string> Relics { get; set; } = new();
 
+    // spire-jev: each relic's numbers and counters (Tuning Fork's skills played so far).
+    [JsonPropertyName("relic_vars")]
+    public Dictionary<string, Dictionary<string, double>> RelicVars { get; set; } = new();
+
     [JsonPropertyName("potions")]
     public List<string> Potions { get; set; } = new();
 
@@ -206,6 +210,10 @@ public sealed class CardObservationDto
 
     [JsonPropertyName("enchanted")]
     public Dictionary<string, int> Enchanted { get; set; } = new();
+
+    // The enchantment's own numbers (Corrupted's damage to you).
+    [JsonPropertyName("enchantment_vars")]
+    public Dictionary<string, double> EnchantmentVars { get; set; } = new();
 
     // spire-jev, hand cards only: numbers the card's own class keeps (Thrash's extra damage).
     [JsonPropertyName("fields")]

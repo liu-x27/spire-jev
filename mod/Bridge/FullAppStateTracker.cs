@@ -34,19 +34,34 @@ public static class FullAppStateTracker
     {
         var vars = new Dictionary<string, double>();
         try { foreach (var pair in power.DynamicVars) vars[pair.Key] = (double)pair.Value.BaseValue; } catch { }
+        AddDeclaredNumbers(power, vars);
+        return vars;
+    }
+
+    private static Dictionary<string, double> DescribeRelicVars(RelicModel relic)
+    {
+        var vars = new Dictionary<string, double>();
+        try { foreach (var pair in relic.DynamicVars) vars[pair.Key] = (double)pair.Value.BaseValue; } catch { }
+        try { if (relic.ShowCounter) vars["DisplayAmount"] = relic.DisplayAmount; } catch { }
+        AddDeclaredNumbers(relic, vars);
+        return vars;
+    }
+
+    // The numbers a model's own class keeps: fields declared on the concrete type.
+    private static void AddDeclaredNumbers(object model, Dictionary<string, double> into)
+    {
         try
         {
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
-            foreach (var field in power.GetType().GetFields(flags))
+            foreach (var field in model.GetType().GetFields(flags))
             {
-                object? value = field.GetValue(power);
-                if (value is decimal d) vars[field.Name] = (double)d;
-                else if (value is int i) vars[field.Name] = i;
-                else if (value is bool b) vars[field.Name] = b ? 1 : 0;
+                object? value = field.GetValue(model);
+                if (value is decimal d) into[field.Name] = (double)d;
+                else if (value is int i) into[field.Name] = i;
+                else if (value is bool b) into[field.Name] = b ? 1 : 0;
             }
         }
         catch { }
-        return vars;
     }
 
     private static CardObservationDto DescribeCard(CardModel card, int index, bool canPlay, bool inHand = false)
@@ -80,6 +95,7 @@ public static class FullAppStateTracker
             {
                 dto.Enchantment = enchantment.Id.Entry;
                 dto.EnchantmentAmount = enchantment.Amount;
+                AddDeclaredNumbers(enchantment, dto.EnchantmentVars);
             }
             foreach (var pair in card.DynamicVars)
             {
@@ -162,6 +178,8 @@ public static class FullAppStateTracker
             foreach (var relic in player.Relics)
             {
                 obs.Relics.Add(relic.Id.Entry);
+                var relicVars = DescribeRelicVars(relic);
+                if (relicVars.Count > 0) obs.RelicVars[relic.Id.Entry] = relicVars;
             }
 
             for (int slot = 0; slot < player.PotionSlots.Count; slot++)
