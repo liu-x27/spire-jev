@@ -18,7 +18,7 @@ function foe(hp: number, attack = 0): Enemy {
 function state(hand: Card[], e: Enemy = foe(80)): State {
   return {
     player: { hp: 80, maxHp: 80, block: 0, powers: {} },
-    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0,
+    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0, unmovableUsed: false,
   };
 }
 const at = (s: State, hand: number) => play(s, { kind: "play", hand, target: 1 });
@@ -262,4 +262,41 @@ test("fiend fire exhausts the rest of the hand and hits once for each", () => {
   assert.equal(after.enemies[0]!.hp, 59);
   assert.equal(after.exhaust.length, 4);
   assert.equal(after.hand.length, 0);
+});
+
+test("unmovable doubles the first block a card gives each turn, and only that", () => {
+  const defend = card("DEFEND_IRONCLAD", "Skill", "Self", { Block: 5 });
+  const s = state([defend, defend]);
+  s.player.powers["UNMOVABLE"] = 1;
+  const once = play(s, { kind: "play", hand: 0 });
+  assert.equal(once.player.block, 10);
+  assert.equal(play(once, { kind: "play", hand: 0 }).player.block, 15);
+});
+
+test("vigor goes into the next attack and is spent", () => {
+  const s = state([STRIKE, STRIKE]);
+  s.player.powers["VIGOR"] = 8;
+  const once = at(s, 0);
+  assert.equal(once.enemies[0]!.hp, 66);
+  assert.equal(once.player.powers["VIGOR"], undefined);
+  assert.equal(at(once, 0).enemies[0]!.hp, 60);
+});
+
+test("gremlin horn gives energy and a card for a kill", () => {
+  const s = state([STRIKE], foe(5));
+  s.relics = ["GREMLIN_HORN"];
+  s.energy = 1;
+  const after = at(s, 0);
+  assert.equal(after.energy, 1);
+  assert.equal(after.drawn, 1);
+});
+
+test("stoke makes its new cards without touching the piles", () => {
+  const stoke = card("STOKE", "Skill", "Self", {});
+  const s = state([stoke, STRIKE, STRIKE]);
+  s.draw = [];
+  s.discard = [STRIKE, STRIKE, STRIKE];
+  const after = play(s, { kind: "play", hand: 0 });
+  assert.equal(after.drawn, 2);
+  assert.equal(after.discard.length, 4);
 });

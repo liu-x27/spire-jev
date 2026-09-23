@@ -14,7 +14,7 @@ function state(hand: Card[]): State {
     player: { hp: 80, maxHp: 80, block: 0, powers: {} },
     energy: 3, hand, draw: [], discard: [], exhaust: [],
     enemies: [{ id: 1, model: "NIBBIT", hp: 44, maxHp: 44, block: 0, alive: true, powers: {}, weakAtStart: false, startStrength: 0, intents: [] }],
-    drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0,
+    drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0, unmovableUsed: false,
   };
 }
 

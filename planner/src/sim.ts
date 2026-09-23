@@ -82,6 +82,8 @@ export interface State {
   played: number;
   /** Skills played since the observation (Tuning Fork counts them). */
   skills: number;
+  /** Unmovable has doubled a card's block this turn already (taken as so if there is block at the observation). */
+  unmovableUsed: boolean;
 }
 
 export type Action = { kind: "play"; hand: number; target?: number } | { kind: "end" };
@@ -163,6 +165,7 @@ export function fromObservation(obs: Observation): State {
     ...(obs.relic_vars ? { relicVars: obs.relic_vars } : {}),
     played: 0,
     skills: 0,
+    unmovableUsed: obs.player_block > 0,
   };
 }
 
@@ -184,6 +187,7 @@ function clone(s: State): State {
     ...(s.relicVars ? { relicVars: s.relicVars } : {}),
     played: s.played,
     skills: s.skills,
+    unmovableUsed: s.unmovableUsed,
   };
 }
 
@@ -327,8 +331,13 @@ function applyPower(s: State, u: Unit, key: string, n: number): boolean {
  * Block for the player. Juggernaut answers every gain with its damage to a
  * random enemy — which one is only known when there is one left.
  */
-function gainBlock(s: State, n: number): void {
+function gainBlock(s: State, n: number, fromCard = false): void {
   if (n <= 0) return;
+  // Unmovable: the first block a card gives each turn is doubled.
+  if (fromCard && has(s.player, "UNMOVABLE") && !s.unmovableUsed) {
+    n *= 2;
+    s.unmovableUsed = true;
+  }
   s.player.block += n;
   const juggernaut = s.player.powers["JUGGERNAUT"] ?? 0;
   if (juggernaut <= 0) return;
@@ -366,6 +375,11 @@ const APPLIED_BY: Record<string, string> = { SHRINK: "SHRINKER_BEETLE", CONSTRIC
 function died(s: State, e: Enemy): void {
   for (const [power, model] of Object.entries(APPLIED_BY)) {
     if (e.model === model && !s.enemies.some((o) => o.alive && o.model === model)) delete s.player.powers[power];
+  }
+  // Gremlin Horn: every enemy's death gives energy and a card.
+  if (s.relics.includes("GREMLIN_HORN")) {
+    s.energy += s.relicVars?.["GREMLIN_HORN"]?.["Energy"] ?? 1;
+    draw(s, s.relicVars?.["GREMLIN_HORN"]?.["Cards"] ?? 1);
   }
   // Minions (Eye with Teeth) go when nothing but minions is left, and the fight is won.
   const alive = s.enemies.filter((o) => o.alive);
@@ -416,6 +430,8 @@ function damageOf(s: State, card: Card): number | undefined {
   // Body Slam: its extra damage per point of block, and block changes within the turn.
   else if (card.id === "BODY_SLAM") damage = (v["CalculationBase"] ?? 0) + (v["ExtraDamage"] ?? 0) * s.player.block;
   else damage = card.calc?.["CalculatedDamage"] ?? v["CalculationBase"];
+  // Vigor (Akabeko): the next attack played deals that much more.
+  if (damage !== undefined && card.type === "Attack") damage += Math.max(0, s.player.powers["VIGOR"] ?? 0);
   // Strike Dummy: more for every Strike, added like strength.
   if (damage !== undefined && card.id.includes("STRIKE") && s.relics.includes("STRIKE_DUMMY")) {
     damage += s.relicVars?.["STRIKE_DUMMY"]?.["ExtraDamage"] ?? 3;
@@ -439,7 +455,7 @@ const SPECIAL: Record<string, Rule> = {
   },
   // Upgrades a card in hand, by a choice made for us: its new numbers are not known.
   ARMAMENTS: (s, c) => {
-    gainBlock(s, blockGain(num(c, "Block"), s.player));
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     s.exact = false;
   },
   BATTLE_TRANCE: (s, c) => {
@@ -451,12 +467,30 @@ const SPECIAL: Record<string, Rule> = {
     draw(s, num(c, "Cards"));
   },
   COLOSSUS: (s, c) => {
-    gainBlock(s, blockGain(num(c, "Block"), s.player));
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     applyPower(s, s.player, "COLOSSUS", num(c, "Colossus"));
   },
   // Hits twice if the target is Vulnerable.
   DISMANTLE: (s, c, t) => strike(s, one(t), dmg(s, c), t && has(t, "VULNERABLE") ? 2 : 1),
   // Strength for the player, and a little for the target.
+  // Lose HP, gain Strength, exhaust a card from hand (chosen as exhaustOne does).
+  BRAND: (s, c) => {
+    s.player.hp -= num(c, "HpLoss");
+    if (num(c, "HpLoss") > 0) s.lostHp = true;
+    applyPower(s, s.player, "STRENGTH", num(c, "StrengthPower"));
+    exhaustOne(s);
+  },
+  // Max HP for energy and cards.
+  BRIGHTEST_FLAME: (s, c) => {
+    s.player.maxHp -= num(c, "MaxHp");
+    s.player.hp = Math.min(s.player.hp, s.player.maxHp);
+    s.energy += num(c, "Energy");
+    draw(s, num(c, "Cards"));
+  },
+  // Frees the player a turn from The Insatiable's Sandpit.
+  FRANTIC_ESCAPE: (s) => {
+    for (const e of s.enemies) if (e.alive && (e.powers["SANDPIT"] ?? 0) > 0) addPower(e, "SANDPIT", 1);
+  },
   // Exhausts the rest of the hand and hits once for every card it exhausted.
   FIEND_FIRE: (s, c, t) => {
     const n = s.hand.length;
@@ -470,11 +504,11 @@ const SPECIAL: Record<string, Rule> = {
   },
   // Blocks again if a card was exhausted this turn (the game makes it glow).
   EVIL_EYE: (s, c) => {
-    gainBlock(s, blockGain(num(c, "Block"), s.player));
-    if (s.exhaustedThisTurn) gainBlock(s, blockGain(num(c, "Block"), s.player));
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
+    if (s.exhaustedThisTurn) gainBlock(s, blockGain(num(c, "Block"), s.player), true);
   },
   FLAME_BARRIER: (s, c) => {
-    gainBlock(s, blockGain(num(c, "Block"), s.player));
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     applyPower(s, s.player, "FLAME_BARRIER", num(c, "DamageBack"));
   },
   // Plays the top card of the draw pile, which the player cannot see, and exhausts it.
@@ -503,7 +537,7 @@ const SPECIAL: Record<string, Rule> = {
   },
   // Its cards and energy come next turn, not now.
   RELAX: (s, c) => {
-    gainBlock(s, blockGain(num(c, "Block"), s.player));
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     applyPower(s, s.player, "DRAW_CARDS_NEXT_TURN", num(c, "Cards"));
     applyPower(s, s.player, "ENERGY_NEXT_TURN", num(c, "Energy"));
   },
@@ -517,7 +551,7 @@ const SPECIAL: Record<string, Rule> = {
     s.hand = s.hand.filter((h) => h.type === "Attack");
     for (const h of gone) {
       exhaustCard(s, h);
-      gainBlock(s, blockGain(num(c, "Block"), s.player));
+      gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     }
   },
   // Strength for the turn: the strength goes to the player, not the target.
@@ -533,21 +567,28 @@ const SPECIAL: Record<string, Rule> = {
   },
   // Hits again only if the player lost HP this turn.
   SPITE: (s, c, t) => strike(s, one(t), dmg(s, c), s.lostHp ? num(c, "Repeat") || 1 : 1),
-  // Exhausts the rest of the hand and draws as many.
+  // Exhausts the rest of the hand and makes as many new cards: made, not drawn, so no pile is touched.
   STOKE: (s) => {
     const n = s.hand.length;
     for (const h of s.hand.splice(0)) exhaustCard(s, h);
-    draw(s, n);
+    s.drawn += Math.min(n, HAND_LIMIT);
+  },
+  // Hits, then draws until it draws a card that is not an attack: how many is not known.
+  PILLAGE: (s, c, t) => {
+    strike(s, one(t), dmg(s, c), 1);
+    draw(s, 2);
+    s.exact = false;
   },
   TRUE_GRIT: (s, c) => {
-    gainBlock(s, blockGain(num(c, "Block"), s.player));
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     exhaustOne(s);
   },
   // Hits twice with its damage and what it has gained, and exhausts a card from hand.
   // Hits twice with its damage and what it has gained, and exhausts a random
   // attack from hand — none if there is no attack there (Tremble stayed).
   THRASH: (s, c, t) => {
-    strike(s, one(t), dmg(s, c) + (c.fields?.["_extraDamage"] ?? 0), 2);
+    // (Its _extraDamage field is not in the hits: Thrash dealt 2 x 10 with 4 damage and 6 Strength.)
+    strike(s, one(t), dmg(s, c), 2);
     const attacks = s.hand.filter((h) => h.type === "Attack");
     if (attacks.length === 0) return;
     if (new Set(attacks.map((h) => `${h.id}.${h.upgrades}`)).size > 1) s.exact = false;
@@ -576,7 +617,7 @@ function standard(s: State, card: Card, target: Enemy | undefined, x: number): v
 
   const damage = damageOf(s, card);
   if (damage !== undefined && card.type === "Attack") strike(s, victims, damage, repeat);
-  if (v["Block"] !== undefined) gainBlock(s, blockGain(v["Block"], s.player));
+  if (v["Block"] !== undefined) gainBlock(s, blockGain(v["Block"], s.player), true);
 
   // A var named for a power is that power: on the player for a card that
   // targets itself (Inflame's Strength), else on whoever the card hits.
@@ -623,6 +664,11 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   if (card.enchantment === "CORRUPTED") {
     s.player.hp -= card.enchantmentVars?.["_damageAmount"] ?? 2;
     s.lostHp = true;
+  }
+  if (card.type === "Attack") delete s.player.powers["VIGOR"];
+  // Vital Spark (Infested Prism): every skill played taints the player.
+  if (card.type === "Skill") {
+    for (const e of s.enemies) if (e.alive && has(e, "VITAL_SPARK")) addPower(s.player, "TAINTED", e.powers["VITAL_SPARK"] ?? 0);
   }
   // Juggling copies an attack into the hand by how many attacks came before it this turn, which the model does not see.
   if (card.type === "Attack" && has(s.player, "JUGGLING")) s.exact = false;
