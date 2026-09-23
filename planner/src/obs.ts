@@ -81,6 +81,8 @@ export interface Observation {
   relics: string[];
   potions: string[];
   potion_slots?: number;
+  /** The run's ascension, as the game has it. */
+  ascension?: number;
   potion_details?: { slot: number; id: string; rarity?: string; target?: string; usage?: string; vars?: Record<string, number> }[];
   combat: CombatObs | null;
   room: { room_type: string; options: string[]; details: Record<string, unknown> } | null;

@@ -2,7 +2,7 @@
  * Plays real fights in a sandboxed game and checks the simulator against it.
  *
  *   node src/run-fights.ts [--policy planner|naive] [--runs 3] [--seed 1] [--max-fights 30] [--port 47100] [--cards skip|take]
- *                          [--weights '{"future":0.5}'] [--out runs/x.json] [--choices first|rules]
+ *                          [--weights '{"future":0.5}'] [--out runs/x.json] [--choices first|rules] [--ascension 10]
  *
  * One headless game per run: an Ironclad run on a fixed seed, fixed choices
  * outside combat, and every combat fought by the chosen policy until the run
@@ -330,11 +330,12 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
 const MAX_STEPS = 2000;
 
 let useRules = false;
+let ascension = 0;
 /** Drink potions the planner cannot model, where it counts (on with --choices rules). */
 let usePotions = false;
 
 async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[]): Promise<void> {
-  let cur = await game.startRun(seed);
+  let cur = await game.startRun(seed, ascension);
   let fights = 0;
   for (let steps = 0; !cur.observation.is_terminal && steps < MAX_STEPS; steps++) {
     if (cur.observation.phase === "combat" && cur.observation.combat) {
@@ -418,11 +419,13 @@ async function main(): Promise<void> {
       weights: { type: "string", default: "{}" },
       out: { type: "string" },
       choices: { type: "string", default: "first" },
+      ascension: { type: "string", default: "0" },
     },
   });
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
   useRules = values.choices === "rules";
+  ascension = Number(values.ascension);
   usePotions = useRules;
   if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
   const repo = path.resolve(import.meta.dirname, "..", "..");

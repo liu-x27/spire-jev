@@ -153,6 +153,13 @@ public static class FullAppBridgeServer
             case "observe":
                 return CurrentObservation;
 
+            // spire-jev: acts, encounter pools and monster numbers (this ascension's), and the current map.
+            case "catalog":
+                return GameCatalog.Catalog();
+
+            case "map":
+                return GameCatalog.Map();
+
             case "legal_actions":
                 return CurrentLegalActions;
 

@@ -177,7 +177,7 @@ export function worstCard(ids: readonly string[], deck: readonly string[]): numb
   const blockCards = deck.filter((c) => ["SHRUG_IT_OFF", "FLAME_BARRIER", "TAUNT", "TRUE_GRIT", "COLOSSUS", "EVIL_EYE", "IMPERVIOUS", "UNMOVABLE", "CRIMSON_MANTLE", "SECOND_WIND", "IRON_WAVE"].includes(base(c))).length;
   const order = (id: string) => {
     const c = base(id);
-    if (/CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK|WOUND|DAZED|SLIMED|BURN|INFECTION/.test(c)) return 0;
+    if (/CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK|ASCENDERS_BANE|WOUND|DAZED|SLIMED|BURN|INFECTION/.test(c)) return 0;
     if (c === "DEFEND_IRONCLAD") return blockCards >= 3 ? 1 : 2;
     if (c === "STRIKE_IRONCLAD") return blockCards >= 3 ? 2 : 1;
     if (c === "BASH") return 50;
@@ -197,7 +197,7 @@ export function chooseCardSelect(o: Observation, legal: LegalAction[]): string {
   return offers[worstCard(ids, o.deck_cards)]!.action_id;
 }
 
-const REMOVABLE = /STRIKE_IRONCLAD|DEFEND_IRONCLAD|CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK/;
+const REMOVABLE = /STRIKE_IRONCLAD|DEFEND_IRONCLAD|CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK|ASCENDERS_BANE/;
 
 /**
  * §5, §10.3: removal first while there is a Strike, Defend or curse to take

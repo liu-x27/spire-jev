@@ -77,6 +77,8 @@ public static class FullAppBridgeMod
         TryPatchPrefix(harmony, typeof(VictoryRoomHandler), nameof(VictoryRoomHandler.HandleAsync), nameof(HandleVictoryRoomAsync));
         TryPatchPrefix(harmony, typeof(GameOverScreenHandler), nameof(GameOverScreenHandler.HandleAsync), nameof(HandleGameOverAsync));
         TryPatchPrefix(harmony, typeof(AutoSlayer), "WaitForRewardsScreenAsync", nameof(HandleWaitForRewardsScreenAsync));
+        // spire-jev: every new run is made here, whoever starts it (AutoSlay starts ours at ascension 0).
+        TryPatchPrefix(harmony, typeof(RunState), nameof(RunState.CreateForNewRun), nameof(OnCreateForNewRun));
 
         FullAppBridgeServer.Start(port, portFile);
     }
@@ -135,6 +137,16 @@ public static class FullAppBridgeMod
         _autoSlayer.Start(seed, logFile);
     }
 
+    private static void OnCreateForNewRun(ref int ascensionLevel)
+    {
+        int requested = FullAppBridgeServer.RequestedAscension;
+        if (requested > 0 && ascensionLevel != requested)
+        {
+            GD.Print($"[spire-jev] new run at ascension {requested} (was asked for {ascensionLevel})");
+            ascensionLevel = requested;
+        }
+    }
+
     private static void OnBeginRunForAllPlayers(StartRunLobby __instance)
     {
         if (NGame.Instance is not null)
@@ -161,6 +173,28 @@ public static class FullAppBridgeMod
             {
                 GD.PrintErr($"[FullAppBridge] Failed to set character {requested}: {ex.Message}");
             }
+        }
+
+        // spire-jev: the ascension start_run asked for was accepted and never applied. After the
+        // character (setting one resets the lobby's ascension to what that character has unlocked),
+        // and past the sandbox profile's unlocks: lift MaxAscension, then set Ascension.
+        int ascension = FullAppBridgeServer.RequestedAscension;
+        if (ascension > 0)
+        {
+            try
+            {
+                void SetInt(string name)
+                {
+                    var prop = typeof(StartRunLobby).GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (prop?.SetMethod != null) prop.SetValue(__instance, ascension);
+                    else typeof(StartRunLobby).GetField($"<{name}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(__instance, ascension);
+                }
+                SetInt("MaxAscension");
+                SetInt("Ascension");
+                __instance.SyncAscensionChange(ascension);
+                GD.Print($"[spire-jev] ascension requested {ascension}, lobby now {__instance.Ascension} (max {__instance.MaxAscension})");
+            }
+            catch (Exception ex) { GD.PrintErr($"[spire-jev] ascension {ascension}: {ex.Message}"); }
         }
     }
 
