@@ -1,0 +1,10 @@
+{
+  "name": "spire-jev-planner",
+  "private": true,
+  "type": "module",
+  "description": "Turn planner and runner for Slay the Spire 2, driving the game through mod/Bridge. No dependencies: Node runs the TypeScript directly.",
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "typecheck": "node ../../agent-app/node_modules/typescript/bin/tsc -p ."
+  }
+}
