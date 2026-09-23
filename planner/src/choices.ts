@@ -375,3 +375,27 @@ export function chooseSelect(o: Observation, legal: LegalAction[]): string {
 }
 
 const act = (id: string): LegalAction => ({ action_id: id, action_type: id.split(":")[0]!, description: "" });
+
+/**
+ * The next map node, by its type, from HP and gold (§5 route to shops at
+ * 150+ gold; §7 rest sites when low; elites only when healthy enough to take
+ * a relic's worth of risk). The bridge offers the reachable nodes of the
+ * next row only, so this looks one step ahead.
+ */
+export function chooseMap(o: Observation, legal: LegalAction[]): string {
+  const offers = legal.filter((a) => a.action_id.startsWith("choose_map:"));
+  if (offers.length === 0) return legal[0]!.action_id;
+  const share = hpShare(o);
+  const score = (type: string): number => {
+    if (/Rest/i.test(type)) return share < 0.5 ? 6 : share < 0.7 ? 3.5 : 2.5;
+    if (/Shop|Merchant/i.test(type)) return o.gold >= 150 ? 5 : 1;
+    if (/Elite/i.test(type)) return share >= 0.75 && o.floor >= 5 ? 4 : share >= 0.6 ? 2 : 0;
+    if (/Treasure/i.test(type)) return 4;
+    if (/Unknown|Event/i.test(type)) return share < 0.5 ? 3.2 : 3;
+    if (/Monster/i.test(type)) return share < 0.4 ? 2.5 : 3.1;
+    return 2;
+  };
+  let best = offers[0]!;
+  for (const a of offers) if (score(a.action_id.split(":")[2] ?? "") > score(best.action_id.split(":")[2] ?? "")) best = a;
+  return best.action_id;
+}

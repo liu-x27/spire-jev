@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseRest, chooseShop, chooseUpgrade, worstCard } from "../src/choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, worstCard } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
@@ -81,4 +81,12 @@ test("the card select after an enchant takes a good card; after a transform, a b
   assert.equal(chooseCardSelectFor(obs(), select), "choose_card_select:1:POMMEL_STRIKE");
   chooseEvent(eventObs("SYMBIOTE", [{ key: "KILL_WITH_FIRE", description: "选择一张牌变化。" }]), eventLegal(1));
   assert.equal(chooseCardSelectFor(obs(), select), "choose_card_select:0:STRIKE_IRONCLAD");
+});
+
+test("the map: a rest site when hurt, a shop with gold, an elite only when healthy", () => {
+  const legal = [act("choose_map:1:Monster"), act("choose_map:2:Elite"), act("choose_map:3:RestSite"), act("choose_map:4:Shop")];
+  assert.equal(chooseMap(obs({ player_hp: 30, floor: 8 }), legal), "choose_map:3:RestSite");
+  assert.equal(chooseMap(obs({ player_hp: 70, gold: 200, floor: 8 }), legal), "choose_map:4:Shop");
+  assert.equal(chooseMap(obs({ player_hp: 75, gold: 50, floor: 8 }), legal), "choose_map:2:Elite");
+  assert.equal(chooseMap(obs({ player_hp: 55, gold: 50, floor: 8 }), [act("choose_map:1:Monster"), act("choose_map:2:Elite")]), "choose_map:1:Monster");
 });

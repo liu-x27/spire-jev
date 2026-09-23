@@ -64,3 +64,10 @@ test("against a hard hitter the fight's length is worth more than a block", () =
   assert.equal(actionId(planTurn(s, TURN_WEIGHTS).actions[0]!), "play_card:1");
   assert.equal(actionId(planTurn(s, { ...TURN_WEIGHTS, future: 0.5 }).actions[0]!), "play_card:0:target:1");
 });
+
+test("frantic escape is played while the sandpit still has turns, not kept for the last one", () => {
+  const escape = card("FRANTIC_ESCAPE", "Skill", "Self", {});
+  const s = state([escape, STRIKE], 1, [foe(1, 270, 0)]);
+  s.enemies[0]!.powers["SANDPIT"] = 3;
+  assert.equal(actionId(planTurn(s).actions[0]!), "play_card:0");
+});

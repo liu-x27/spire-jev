@@ -29,7 +29,7 @@ import { parseArgs } from "node:util";
 import { Game, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseRest, chooseSelect, chooseShop, chooseUpgrade, wantsPotion } from "./choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseSelect, chooseShop, chooseUpgrade, wantsPotion } from "./choices.ts";
 import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
 import { type Action, type Card, drink, fromObservation, hpLoss, play } from "./sim.ts";
 
@@ -153,6 +153,8 @@ function rules(obs: Observation, legal: LegalAction[]): string {
       return chooseCardSelectFor(obs, legal);
     case "card_select":
       return chooseSelect(obs, legal);
+    case "map":
+      return chooseMap(obs, legal);
     default:
       return first;
   }

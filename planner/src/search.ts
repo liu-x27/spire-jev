@@ -174,6 +174,8 @@ export function futureDamage(s: State, pace: Pace = deckPace(s), blockAware = fa
 }
 
 const WIN = 1e6;
+/** What a turn of Sandpit short of the kill costs, in HP. */
+const SANDPIT_TURN = 20;
 
 /** How good it is to end the turn in state `s`. */
 export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
@@ -192,6 +194,15 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   }
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
   score += s.drawn * w.drawn;
+  // Sandpit (The Insatiable) devours the player when it runs out, and only
+  // Frantic Escape winds it back: every turn short of the turns the deck needs
+  // to kill it is a Frantic Escape still to find. Without this a turn-only
+  // planner keeps the escape until the last turn, and dies holding it.
+  const pits = alive.filter((e) => (e.powers["SANDPIT"] ?? 0) > 0);
+  if (pits.length > 0) {
+    const pace = deckPace(s).perTurn;
+    for (const e of pits) score -= SANDPIT_TURN * Math.max(0, e.hp / pace - (e.powers["SANDPIT"] ?? 0));
+  }
   return score;
 }
 
