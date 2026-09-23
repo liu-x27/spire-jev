@@ -65,6 +65,52 @@ public static class FullAppStateTracker
         catch { }
     }
 
+    private static Dictionary<string, object?> LookAhead(MapPoint start)
+    {
+        var nearest = new Dictionary<string, int>();
+        var frontier = new List<MapPoint> { start };
+        var seen = new HashSet<MapPoint> { start };
+        for (int depth = 0; depth < 12 && frontier.Count > 0; depth++)
+        {
+            var next = new List<MapPoint>();
+            foreach (MapPoint point in frontier)
+            {
+                string type = point.PointType.ToString();
+                if (!nearest.ContainsKey(type)) nearest[type] = depth;
+                foreach (MapPoint child in point.Children)
+                {
+                    if (seen.Add(child)) next.Add(child);
+                }
+            }
+            frontier = next;
+        }
+        // Fights (Monster, Elite) on the way to the next rest site or boss: fewest and most over the
+        // paths, each point worked out once (the map is a DAG; paths are exponential, points are not).
+        var memo = new Dictionary<MapPoint, (int least, int most)>();
+        (int least, int most) From(MapPoint point)
+        {
+            if (point.PointType is MapPointType.RestSite or MapPointType.Boss) return (0, 0);
+            if (memo.TryGetValue(point, out var known)) return known;
+            int here = point.PointType is MapPointType.Monster or MapPointType.Elite ? 1 : 0;
+            int lo = int.MaxValue, hi = 0;
+            foreach (MapPoint child in point.Children)
+            {
+                var (l, h) = From(child);
+                lo = Math.Min(lo, l);
+                hi = Math.Max(hi, h);
+            }
+            var result = lo == int.MaxValue ? (here, here) : (here + lo, here + hi);
+            memo[point] = result;
+            return result;
+        }
+        var (fewest, mostFights) = From(start);
+        var d = new Dictionary<string, object?>();
+        foreach (var pair in nearest) d[pair.Key] = pair.Value;
+        d["fights_to_rest_min"] = fewest;
+        d["fights_to_rest_max"] = mostFights;
+        return d;
+    }
+
     private static CardObservationDto DescribeCard(CardModel card, int index, bool canPlay, bool inHand = false)
     {
         var dto = new CardObservationDto
@@ -361,6 +407,12 @@ public static class FullAppStateTracker
             var roomObs = new RoomObservationDto { RoomType = "Map" };
             if (contextObject is List<MapPoint> reachablePoints)
             {
+                // spire-jev: what lies beyond each choice — rows to the nearest rest
+                // site, shop, elite and treasure, and the fewest and most fights on
+                // the way to the next rest site or the boss.
+                var ahead = new List<Dictionary<string, object?>>();
+                foreach (MapPoint start in reachablePoints) ahead.Add(LookAhead(start));
+                roomObs.Details["lookahead"] = ahead;
                 for (int i = 0; i < reachablePoints.Count; i++)
                 {
                     MapPoint point = reachablePoints[i];

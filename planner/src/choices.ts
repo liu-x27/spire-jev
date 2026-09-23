@@ -398,7 +398,25 @@ export function chooseMap(o: Observation, legal: LegalAction[]): string {
     if (/Monster/i.test(type)) return share < 0.4 ? 2.5 : 3.1;
     return 2;
   };
-  let best = offers[0]!;
-  for (const a of offers) if (score(a.action_id.split(":")[2] ?? "") > score(best.action_id.split(":")[2] ?? "")) best = a;
-  return best.action_id;
+  // What lies beyond each choice (the bridge's lookahead, one entry per offered node, in order):
+  // hurt, the branch with the fewest fights before a rest site; with gold, a shop close by;
+  // healthy, an elite within reach.
+  const ahead = ((o.room?.details ?? {}) as { lookahead?: Record<string, number>[] }).lookahead ?? [];
+  const beyond = (i: number): number => {
+    const l = ahead[i];
+    if (!l) return 0;
+    let b = 0;
+    const fights = l["fights_to_rest_min"] ?? 0;
+    if (share < 0.5) b -= 1.2 * fights + 0.3 * (l["RestSite"] ?? 6);
+    else if (share < 0.7) b -= 0.5 * fights;
+    if (o.gold >= 150) b -= 0.3 * (l["Shop"] ?? 6);
+    if (share >= 0.8 && (l["Elite"] ?? 9) <= 3) b += 0.3;
+    return b;
+  };
+  const total = (a: LegalAction, i: number) => score(a.action_id.split(":")[2] ?? "") + beyond(Number(a.metadata?.["node_index"] ?? i));
+  let best = 0;
+  offers.forEach((a, i) => {
+    if (total(a, i) > total(offers[best]!, best)) best = i;
+  });
+  return offers[best]!.action_id;
 }

@@ -90,3 +90,9 @@ test("the map: a rest site when hurt, a shop with gold, an elite only when healt
   assert.equal(chooseMap(obs({ player_hp: 75, gold: 50, floor: 8 }), legal), "choose_map:2:Elite");
   assert.equal(chooseMap(obs({ player_hp: 55, gold: 50, floor: 8 }), [act("choose_map:1:Monster"), act("choose_map:2:Elite")]), "choose_map:1:Monster");
 });
+
+test("the map looks beyond the next node: hurt, the way with fewer fights before a rest site", () => {
+  const legal = [act("choose_map:1:Monster"), act("choose_map:2:Monster")];
+  const room = { room_type: "Map", options: [], details: { lookahead: [{ RestSite: 4, fights_to_rest_min: 3 }, { RestSite: 2, fights_to_rest_min: 1 }] } };
+  assert.equal(chooseMap(obs({ player_hp: 30, room }), legal), "choose_map:2:Monster");
+});
