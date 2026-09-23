@@ -80,6 +80,8 @@ export interface Observation {
   deck_cards: string[];
   relics: string[];
   potions: string[];
+  potion_slots?: number;
+  potion_details?: { slot: number; id: string; rarity?: string; target?: string; usage?: string; vars?: Record<string, number> }[];
   combat: CombatObs | null;
   room: { room_type: string; options: string[]; details: Record<string, unknown> } | null;
 }

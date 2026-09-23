@@ -184,12 +184,25 @@ public static class FullAppStateTracker
                 if (relicVars.Count > 0) obs.RelicVars[relic.Id.Entry] = relicVars;
             }
 
+            obs.PotionSlots = player.PotionSlots.Count;
             for (int slot = 0; slot < player.PotionSlots.Count; slot++)
             {
                 var pot = player.PotionSlots[slot];
                 if (pot is not null)
                 {
                     obs.Potions.Add(pot.Id.Entry);
+                    var d = new Dictionary<string, object?> { ["slot"] = slot, ["id"] = pot.Id.Entry };
+                    try { d["rarity"] = pot.Rarity.ToString(); } catch { }
+                    try { d["target"] = pot.TargetType.ToString(); } catch { }
+                    try { d["usage"] = pot.Usage.ToString(); } catch { }
+                    try
+                    {
+                        var vars = new Dictionary<string, int>();
+                        foreach (var pair in pot.DynamicVars) vars[pair.Key] = (int)pair.Value.BaseValue;
+                        d["vars"] = vars;
+                    }
+                    catch { }
+                    obs.PotionDetails.Add(d);
                 }
             }
         }
@@ -461,6 +474,28 @@ public static class FullAppStateTracker
                         Metadata = new Dictionary<string, object?> { ["card_index"] = i, ["card_id"] = card.Id.Entry }
                     });
                 }
+            }
+            obs.Room = roomObs;
+        }
+        else if (phase == "card_select" && contextObject is CardSelectContext select)
+        {
+            // spire-jev: a card selection the game asked its selector for (CardSelectBridge).
+            var roomObs = new RoomObservationDto { RoomType = "CardSelect" };
+            roomObs.Details["purpose"] = select.Purpose;
+            roomObs.Details["min"] = select.MinSelect;
+            roomObs.Details["max"] = select.MaxSelect;
+            roomObs.Details["cards"] = select.Cards.Select((c, i) => DescribeCard(c, i, false)).ToList();
+            for (int i = 0; i < select.Cards.Count; i++)
+            {
+                CardModel card = select.Cards[i];
+                roomObs.Options.Add(card.Id.Entry);
+                legalActions.Add(new LegalActionDto
+                {
+                    ActionId = $"choose_card_select:{i}:{card.Id.Entry}",
+                    ActionType = "choose_card_select",
+                    Description = $"Select {card.Id.Entry} ({select.Purpose})",
+                    Metadata = new Dictionary<string, object?> { ["card_index"] = i, ["card_id"] = card.Id.Entry, ["upgrades"] = card.CurrentUpgradeLevel }
+                });
             }
             obs.Room = roomObs;
         }

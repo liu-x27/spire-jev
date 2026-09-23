@@ -106,6 +106,13 @@ public sealed class ObservationDto
     [JsonPropertyName("potions")]
     public List<string> Potions { get; set; } = new();
 
+    // spire-jev: how many slots there are, and each potion held with its numbers.
+    [JsonPropertyName("potion_slots")]
+    public int PotionSlots { get; set; }
+
+    [JsonPropertyName("potion_details")]
+    public List<Dictionary<string, object?>> PotionDetails { get; set; } = new();
+
     [JsonPropertyName("combat")]
     public CombatObservationDto? Combat { get; set; }
 

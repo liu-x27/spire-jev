@@ -212,7 +212,11 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   const removal = stock.find((a) => /remov/i.test(type(a)));
   const topCard = cards[0];
   if (topCard && topCard.v >= 0.85) return topCard.a.action_id;
-  if (removal && o.deck_cards.some((c) => REMOVABLE.test(c))) return removal.action_id;
+  if (removal && o.deck_cards.some((c) => REMOVABLE.test(c))) {
+    // The card select that follows is the removal's, whatever an event left behind.
+    resetCardSelect();
+    return removal.action_id;
+  }
   if (topCard && topCard.v >= 0.65) return topCard.a.action_id;
   const relic = stock.filter((a) => type(a) === "Relic").sort((x, y) => price(x) - price(y))[0];
   if (relic && o.gold - price(relic) >= 0) return relic.action_id;
@@ -325,3 +329,49 @@ export function chooseCardSelectFor(o: Observation, legal: LegalAction[]): strin
   selectFor = "worst";
   return offers[best]!.action_id;
 }
+
+/** Card selects from here on take the worst card (a removal), until an event says otherwise. */
+export function resetCardSelect(): void {
+  selectFor = "worst";
+}
+
+const WORST_FOR = /Removal|Transformation|Discard|Generic/;
+const UPGRADE_FOR = /Upgrade/;
+
+/**
+ * A selection the game asked its selector for, outside combat, by what it is
+ * for (the bridge names the CardSelectCmd method: FromDeckForRemoval,
+ * FromDeckForUpgrade, FromDeckForEnchantment, FromDeckForTransformation, …):
+ * the worst cards to lose, the best to upgrade or enchant or take.
+ */
+export function chooseSelect(o: Observation, legal: LegalAction[]): string {
+  const details = (o.room?.details ?? {}) as { purpose?: string; min?: number; max?: number };
+  const offers = legal.filter((a) => a.action_id.startsWith("choose_card_select:"));
+  if (offers.length === 0) return legal[0]!.action_id;
+  const ids = offers.map((a) => a.action_id.split(":")[2] ?? "");
+  const purpose = details.purpose ?? "";
+  const min = details.min ?? 1;
+  const max = Math.max(1, details.max ?? 1);
+  let order: number[];
+  if (WORST_FOR.test(purpose)) {
+    // Worst first: take the worst, then the worst of the rest, and so on.
+    const left = ids.map((_, i) => i);
+    order = [];
+    while (left.length > 0) {
+      const w = worstCard(left.map((i) => ids[i]!), o.deck_cards);
+      order.push(left.splice(w, 1)[0]!);
+    }
+  } else if (UPGRADE_FOR.test(purpose)) {
+    const upgrades = ids.map((id, i) => act(`choose_upgrade:${i}:${id}`));
+    const best = chooseUpgrade(o, upgrades);
+    const first = Number(best.split(":")[1]);
+    order = [first, ...ids.map((_, i) => i).filter((i) => i !== first)];
+  } else {
+    order = ids.map((_, i) => i).sort((a, b) => cardValue(ids[b]!, actOf(o), o.deck_cards) - cardValue(ids[a]!, actOf(o), o.deck_cards));
+  }
+  const k = Math.max(min, WORST_FOR.test(purpose) ? max : 1);
+  if (k <= 1) return offers[order[0]!]!.action_id;
+  return `choose_cards:${order.slice(0, k).join(",")}`;
+}
+
+const act = (id: string): LegalAction => ({ action_id: id, action_type: id.split(":")[0]!, description: "" });

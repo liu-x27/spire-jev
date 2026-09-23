@@ -25,6 +25,7 @@ const { values } = parseArgs({
     seeds: { type: "string", default: "1-15" },
     sandboxes: { type: "string", default: "4" },
     cards: { type: "string", default: "take" },
+    choices: { type: "string", default: "first" },
   },
 });
 if (!values.tag) throw new Error("--tag is required");
@@ -53,7 +54,7 @@ const parts = await Promise.all(
       [
         path.join(here, "src", "run-fights.ts"),
         "--policy", values.policy, "--runs", String(chunk.length), "--seed", String(chunk[0]),
-        "--port", String(port), "--cards", values.cards, "--weights", values.weights, "--out", out,
+        "--port", String(port), "--cards", values.cards, "--weights", values.weights, "--out", out, "--choices", values.choices,
       ],
       { cwd: here, stdio: ["ignore", log, log] },
     );

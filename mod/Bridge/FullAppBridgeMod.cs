@@ -58,6 +58,7 @@ public static class FullAppBridgeMod
 
         Harmony harmony = new("sts2-native-sim.full-app-bridge");
         PresentationSuppression.Apply(harmony);
+        CardSelectBridge.Apply(harmony);
 
         TryPatchPostfix(harmony, typeof(NGame), "LaunchMainMenu", nameof(OnMainMenuLaunched));
         TryPatchPrefix(harmony, typeof(StartRunLobby), "BeginRunForAllPlayersIfAllReady", nameof(OnBeginRunForAllPlayers));

@@ -2,7 +2,7 @@
  * Plays real fights in a sandboxed game and checks the simulator against it.
  *
  *   node src/run-fights.ts [--policy planner|naive] [--runs 3] [--seed 1] [--max-fights 30] [--port 47100] [--cards skip|take]
- *                          [--weights '{"future":0.5}'] [--out runs/x.json]
+ *                          [--weights '{"future":0.5}'] [--out runs/x.json] [--choices first|rules]
  *
  * One headless game per run: an Ironclad run on a fixed seed, fixed choices
  * outside combat, and every combat fought by the chosen policy until the run
@@ -14,7 +14,10 @@
  * the same fights on the same seed: take gold, skip cards, potions and relics,
  * heal at rest sites, the first map node, the first event option, leave shops.
  * `--cards take` takes the first card offered instead, which is what puts
- * cards other than the starter deck in front of the simulator.
+ * cards other than the starter deck in front of the simulator. `--choices
+ * rules` makes every choice outside combat by choices.ts instead (card
+ * rewards, the shop, rest sites, upgrades, events, card selects, potions):
+ * phase 2's baseline, measured against the fixed choices on the same seeds.
  *
  * The naive policy is the baseline: the first playable card, on the first
  * enemy, until nothing is playable.
@@ -26,6 +29,7 @@ import { parseArgs } from "node:util";
 import { Game, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseRest, chooseSelect, chooseShop, chooseUpgrade, wantsPotion } from "./choices.ts";
 import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
 import { type Action, type Card, fromObservation, hpLoss, play } from "./sim.ts";
 
@@ -115,6 +119,43 @@ function naive(legal: LegalAction[]): Action {
   return parseAction(first ? first.action_id : "end_turn");
 }
 
+let skippedCardsOn = -1;
+
+/** Everything outside combat by choices.ts's rules; the map stays the first node, so seeds stay comparable up to the first difference. */
+function rules(obs: Observation, legal: LegalAction[]): string {
+  const ids = legal.map((a) => a.action_id);
+  const find = (re: RegExp) => ids.find((i) => re.test(i));
+  const first = ids[0];
+  if (first === undefined) throw new Error(`no legal action in phase ${obs.phase}`);
+  switch (obs.phase) {
+    case "rewards":
+      // A card reward skipped on this floor stays on the screen: do not open it again.
+      return find(/^choose_reward:\d+:Gold$/) ?? (skippedCardsOn !== obs.floor ? find(/^choose_reward:\d+:Card$/) : undefined)
+        ?? (wantsPotion(obs, obs.potion_slots ?? 3) ? find(/^choose_reward:\d+:Potion$/) : undefined)
+        ?? find(/^choose_reward:\d+:Relic$/) ?? find(/^proceed$/) ?? first;
+    case "card_reward": {
+      const pick = chooseCardReward(obs, legal);
+      if (pick === "skip_card") skippedCardsOn = obs.floor;
+      return pick;
+    }
+    case "rest_site":
+      return chooseRest(obs, legal);
+    case "shop":
+      return chooseShop(obs, legal);
+    case "deck_upgrade":
+      return chooseUpgrade(obs, legal);
+    case "event":
+      return chooseEvent(obs, legal);
+    case "deck_card_select":
+    case "simple_card_select":
+      return chooseCardSelectFor(obs, legal);
+    case "card_select":
+      return chooseSelect(obs, legal);
+    default:
+      return first;
+  }
+}
+
 /** Everything outside combat: fixed, so both policies walk the same run. */
 function routine(obs: Observation, legal: LegalAction[], takeCards: boolean): string {
   const ids = legal.map((a) => a.action_id);
@@ -134,6 +175,33 @@ function routine(obs: Observation, legal: LegalAction[], takeCards: boolean): st
       // map: the first node; event: the first option; treasure, upgrades, card selects: the first.
       return first;
   }
+}
+
+/**
+ * A selection a card asks for mid-fight (True Grit+ or Burning Pact from the
+ * hand, Headbutt from the discard pile, Armaments' upgrade), chosen the way
+ * sim.ts assumes it is, so the prediction stays the play: a status or curse
+ * from the hand, else its last card; the discard pile's first card; the best
+ * card to upgrade.
+ */
+function combatSelect(obs: Observation, legal: LegalAction[]): string {
+  const details = (obs.room?.details ?? {}) as { purpose?: string; cards?: CardObs[] };
+  const cards = details.cards ?? [];
+  const offers = legal.filter((a) => a.action_id.startsWith("choose_card_select:"));
+  if (offers.length === 0) return legal[0]?.action_id ?? "proceed";
+  const purpose = details.purpose ?? "";
+  let i = 0;
+  if (/^FromHand(ForDiscard)?$/.test(purpose)) {
+    const junk = cards.findIndex((c) => c.card_type === "Status" || c.card_type === "Curse");
+    i = junk >= 0 ? junk : offers.length - 1;
+  } else if (/Upgrade/.test(purpose)) {
+    let best = -Infinity;
+    cards.forEach((c, j) => {
+      const v = cardValue(c.card_id, 0, obs.deck_cards);
+      if (v > best) [best, i] = [v, j];
+    });
+  }
+  return offers[Math.min(i, offers.length - 1)]!.action_id;
 }
 
 /** One fight, logged into `logs` as it goes, so a game that dies mid-fight still leaves what it did. */
@@ -171,7 +239,11 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       id = "end_turn";
     }
 
-    const next = await game.step(id);
+    let next = await game.step(id);
+    // A card that asks for a selection stops the step there; answer it and read the play's outcome after.
+    for (let guard = 0; next.observation.phase === "card_select" && guard < 10; guard++) {
+      next = await game.step(combatSelect(next.observation, next.legal_actions));
+    }
     const after = next.observation;
     const inCombat = after.phase === "combat" && after.combat !== null;
     // Once the fight is won the HP shown already includes the heal for winning.
@@ -204,6 +276,8 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
 
 const MAX_STEPS = 2000;
 
+let useRules = false;
+
 async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[]): Promise<void> {
   let cur = await game.startRun(seed);
   let fights = 0;
@@ -222,7 +296,7 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       continue;
     }
     const o = cur.observation;
-    const chosen = routine(o, cur.legal_actions, takeCards);
+    const chosen = useRules ? rules(o, cur.legal_actions) : routine(o, cur.legal_actions, takeCards);
     if (o.phase !== "map" && o.phase !== "rewards") {
       rooms.push({ seed, floor: o.floor, phase: o.phase, hp: o.player_hp, maxHp: o.player_max_hp, gold: o.gold, deck: o.deck_cards, room: o.room, chosen });
     }
@@ -288,10 +362,12 @@ async function main(): Promise<void> {
       cards: { type: "string", default: "skip" },
       weights: { type: "string", default: "{}" },
       out: { type: "string" },
+      choices: { type: "string", default: "first" },
     },
   });
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
+  useRules = values.choices === "rules";
   if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
   const repo = path.resolve(import.meta.dirname, "..", "..");
   const sandbox = path.join(repo, "sandbox", `p${values.port}`);
