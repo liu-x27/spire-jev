@@ -3,3 +3,4 @@ third_party/
 bin/
 obj/
 *.log
+sandbox/

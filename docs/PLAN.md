@@ -71,6 +71,20 @@ states, and only a simulator is fast enough for that.
    c. Does headless combat on the real DLL work on v0.111.0 (the
       divine-sts2 route)? If yes, the game's own code is the simulator and no
       card has to be reimplemented. If not, a reimplemented Ironclad subset.
+   **Result, 2026-09-23.** (a) SDK 9.0.318 in `.tools/dotnet9`. (b) divine-sts2's
+   FullAppBridge builds against v0.111.0 with no errors, and the shipped game
+   runs headless in a sandbox (`tools/spike_fullapp.py`: hardlinked exe/pck,
+   junctioned data, own `mods/` and APPDATA; real install and saves untouched).
+   Bridge up in 2-6 s; `start_run` ~8 s; an Ironclad run reaches combat; a card
+   play takes 17-63 ms and an end turn ~0.7 s through the bridge. A leftover
+   `current_run.save` crashes the next `start_run`, so saves are cleared per
+   launch. (c) Not needed for now: this bridge is too slow to search on
+   (divine-sts2 measured p50 36 ms, p95 714 ms per step), so the planner gets
+   its own turn simulator and the bridge is the check on it.
+   Missing from the bridge's observation, needed by a planner: intent damage
+   and hit count (only the move id is given), card numbers after modifiers,
+   draw-pile contents (only a count), power details.
+
 1. **Combat planner, Ironclad**, measured headless: fights won, HP lost, and
    planning time per turn.
 2. **Non-combat decisions**: rules alone vs rules + judge, measured.
