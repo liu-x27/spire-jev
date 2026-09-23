@@ -185,7 +185,11 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   const loss = hpLoss(s);
   if (loss >= s.player.hp) return -WIN - enemyHp;
 
-  let score = -loss * w.hpLoss - enemyHp * w.enemyHp - s.potionsUsed * potionCost(s, w);
+  // A stack of Slippery (Vantom) is a hit that will take 1 HP instead of a
+  // full one: count it as the HP it hides, so stripping it is worth playing.
+  const slippery = alive.reduce((a, e) => a + Math.max(0, e.powers["SLIPPERY"] ?? 0), 0);
+  const hidden = slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0;
+  let score = -loss * w.hpLoss - (enemyHp + hidden) * w.enemyHp - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;

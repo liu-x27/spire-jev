@@ -71,3 +71,11 @@ test("frantic escape is played while the sandpit still has turns, not kept for t
   s.enemies[0]!.powers["SANDPIT"] = 3;
   assert.equal(actionId(planTurn(s).actions[0]!), "play_card:0");
 });
+
+test("against slippery, stripping stacks is worth more than a block that saves little", () => {
+  const twin = card("TWIN_STRIKE", "Attack", "AnyEnemy", { Damage: 5 });
+  const vantom = foe(1, 170, 3);
+  vantom.powers["SLIPPERY"] = 6;
+  const s = state([twin, DEFEND], 1, [vantom]);
+  assert.equal(actionId(planTurn(s).actions[0]!), "play_card:0:target:1");
+});

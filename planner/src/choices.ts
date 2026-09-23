@@ -128,7 +128,8 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
 
 /**
  * §7, §10.5: smith at 65%+ of max HP; rest at 40% or below, or under 25 HP
- * (35 before the boss); between, smith unless the boss is next.
+ * (35 before the boss); between, smith unless the boss is next (then rest
+ * below 85%, ours, from the boss fights lost).
  */
 export function chooseRest(o: Observation, legal: LegalAction[]): string {
   const find = (re: RegExp) => legal.find((a) => re.test(a.action_id))?.action_id;
@@ -136,7 +137,9 @@ export function chooseRest(o: Observation, legal: LegalAction[]): string {
   const smith = find(/^choose_rest:.*smith/i);
   const share = o.player_hp / Math.max(1, o.player_max_hp);
   const bossNext = [16, 32, 48].includes(o.floor);
-  const rest = share <= 0.4 || o.player_hp < (bossNext ? 35 : 25) || (bossNext && share < 0.65);
+  // Before the boss, rest below 85%: the act 1 boss fights lost ended with Vantom at 12-37 HP after
+  // coming in at about 73%, and a rest (30% of max HP) is worth more there than one upgrade.
+  const rest = share <= 0.4 || o.player_hp < (bossNext ? 35 : 25) || (bossNext && share < 0.85);
   return (rest ? heal ?? smith : smith ?? heal) ?? legal[0]!.action_id;
 }
 
