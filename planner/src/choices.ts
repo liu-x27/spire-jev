@@ -397,7 +397,12 @@ export function chooseMap(o: Observation, legal: LegalAction[]): string {
   const score = (type: string): number => {
     if (/Rest/i.test(type)) return share < 0.5 ? 6 : share < 0.7 ? 3.5 : 2.5;
     if (/Shop|Merchant/i.test(type)) return o.gold >= 150 ? 5 : 1;
-    if (/Elite/i.test(type)) return share >= 0.75 && o.floor >= 5 ? 4 : share >= 0.6 ? 2 : 0;
+    // A1+ has eight elites a map (A10-reference §3), and act 1 elites end most A10 runs that fail
+    // (Byrdonis 17 of 45 in our first A10 runs, coming in at 56 HP on average): only near full HP.
+    if (/Elite/i.test(type)) {
+      if ((o.ascension ?? 0) >= 1) return share >= 0.9 ? 3 : share >= 0.75 ? 1.5 : 0;
+      return share >= 0.75 && o.floor >= 5 ? 4 : share >= 0.6 ? 2 : 0;
+    }
     if (/Treasure/i.test(type)) return 4;
     if (/Unknown|Event/i.test(type)) return share < 0.5 ? 3.2 : 3;
     if (/Monster/i.test(type)) return share < 0.4 ? 2.5 : 3.1;

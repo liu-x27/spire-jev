@@ -210,7 +210,10 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
 
 /** Potions that work by themselves (Fairy in a Bottle saves a death), or are worth more kept. */
 const KEEP_POTIONS = new Set(["FAIRY_IN_A_BOTTLE"]);
-const BOSSES = new Set(["VANTOM", "THE_INSATIABLE", "QUEEN", "TEST_SUBJECT", "AEONGLASS"]);
+const BOSSES = new Set(["VANTOM", "THE_KIN", "CEREMONIAL_BEAST", "WATERFALL_GIANT", "LAGAVULIN_MATRIARCH", "SOUL_FYSH",
+  "KNOWLEDGE_DEMON", "KAISER_CRAB", "THE_INSATIABLE", "QUEEN", "TEST_SUBJECT", "AEONGLASS"]);
+/** Elites by act (A10-reference): a potion is drunk in them once HP is under half. */
+const ELITES = /^(PHROG_PARASITE|BYGONE_EFFIGY|BYRDONIS|TERROR_EEL|PHANTASMAL_GARDENER|SKULKING_COLONY|DECIMILLIPEDE_SEGMENT_\w+|INFESTED_PRISM|ENTOMANCER|FLAIL_KNIGHT|SPECTRAL_KNIGHT|MAGI_KNIGHT|MECHA_KNIGHT|SOUL_NEXUS)$/;
 
 /**
  * §10.8: a potion the planner cannot model is still worth drinking where it
@@ -222,7 +225,9 @@ const BOSSES = new Set(["VANTOM", "THE_INSATIABLE", "QUEEN", "TEST_SUBJECT", "AE
 function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, legal: LegalAction[], hopeless: boolean, tried: Set<string>): string | undefined {
   const boss = s.enemies.some((e) => e.alive && (BOSSES.has(e.model) || e.maxHp >= 250));
   const turn = obs.combat?.turn ?? 1;
-  if (!(hopeless || (boss && turn <= 2))) return undefined;
+  const elite = s.enemies.some((e) => e.alive && ELITES.test(e.model));
+  const hurt = s.player.hp < 0.5 * s.player.maxHp;
+  if (!(hopeless || (boss && turn <= 2) || (elite && hurt))) return undefined;
   const byHp = [...s.enemies].filter((e) => e.alive).sort((a, b) => a.hp - b.hp);
   // A potion tried this turn and still held was refused: not again this turn.
   const uses = legal.filter((a) => a.action_id.startsWith("use_potion:") && !KEEP_POTIONS.has(String(a.metadata?.["potion_id"] ?? ""))
