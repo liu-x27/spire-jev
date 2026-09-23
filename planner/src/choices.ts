@@ -136,7 +136,8 @@ export function chooseRest(o: Observation, legal: LegalAction[]): string {
   const heal = find(/^choose_rest:.*heal/i);
   const smith = find(/^choose_rest:.*smith/i);
   const share = o.player_hp / Math.max(1, o.player_max_hp);
-  const bossNext = [16, 32, 48].includes(o.floor);
+  // The rest site before each boss: acts have 17, 16 and 15 floors (the game's catalog), bosses on 17, 33, 48.
+  const bossNext = [16, 32, 47].includes(o.floor);
   // Before the boss, rest below 85%: the act 1 boss fights lost ended with Vantom at 12-37 HP after
   // coming in at about 73%, and a rest (30% of max HP) is worth more there than one upgrade.
   const rest = share <= 0.4 || o.player_hp < (bossNext ? 35 : 25) || (bossNext && share < 0.85);
@@ -197,7 +198,8 @@ export function chooseCardSelect(o: Observation, legal: LegalAction[]): string {
   return offers[worstCard(ids, o.deck_cards)]!.action_id;
 }
 
-const REMOVABLE = /STRIKE_IRONCLAD|DEFEND_IRONCLAD|CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK|ASCENDERS_BANE/;
+// (Ascender's Bane, A5, cannot be removed: not a reason to buy a removal.)
+const REMOVABLE = /STRIKE_IRONCLAD|DEFEND_IRONCLAD|CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK/;
 
 /**
  * §5, §10.3: removal first while there is a Strike, Defend or curse to take

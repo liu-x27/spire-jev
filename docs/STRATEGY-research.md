@@ -769,6 +769,7 @@ From [wiki][wiki-potlist]. The numbers are the wiki's at the time of reading; th
 | Rest heals 30% | Same as StS1; confirmed ([wiki][wiki-rest]) |
 | Burning Blood heals 6 | Same as StS1 ([wiki][wiki-ic]) |
 | Slippery, Tender, Personal Hive, Illusion revive, Territorial | **StS2-specific monsters** ([wiki][wiki-vantom]) |
+| "Get Artifact / debuff immunity for debuff bosses" | **StS1 only.** In StS2 players cannot obtain Artifact ([wiki][wiki-artifact], [Steam][st-immunity]). See §9c.2. |
 | Enchantments, Ancients, quest cards (Byrdonis Egg, Spoils Map) | **StS2-specific** ([umap], [wiki rest][wiki-rest]) |
 
 ---
@@ -886,6 +887,217 @@ UT picks and deltas; Jorbs' top Elo; the relics the data favours.
 | **VAKUU** (act 3) | Whispering Earring (+1 energy; Vakuu plays your first turn), Music Box (Ethereal copy of your first Attack each turn), Fiddle, Jeweled Mask, Choices Paradox, Preserved Fog, Lord's Parasol, Distinguished Cape, Sere Talon, Blood-Soaked Rose | Whispering Earring: Jorbs #1 (IC 89%) but UT −12 (`[disputed]`). UT: Music Box +5, Fiddle +6. Jeweled Mask is the most picked (74%) with a −4 delta. |
 
 All relic effects in this table are from the [Untapped Ancient relic pages][ur-anc], v0.111 wording where beta differs.
+
+---
+
+## 9c. Act 3 (Glory): the fights that end runs
+
+**Sources used:**
+
+- **Untapped encounter pages:** moves and HP, readable at the Default / A8 / A9+ settings, plus Ironclad death rates at A7+ ([UT enemies][ut-enemies]). The numbers below are **Default**.
+- **Wiki monster pages:** mechanics text and version history.
+- **Flare's boss guide on Untapped** ([UT bosses guide][ubosses]). Undated, 2026. Written before Aeonglass replaced Doormaker, though it mentions the v0.102 beta.
+- **Jorbs' encounter sheet:** Ironclad, v0.98–0.106.1, mostly A10 ([sheet][jsheet]).
+- **Steam threads.**
+
+### 9c.1 The act (current pool, v0.107.1 and later)
+
+From [wiki Glory][wiki-glory]:
+
+- 13 rooms in total.
+- **First 2 fights** come from a weak pool: Devoted Sculptor, 3 Scrolls of Biting, or Living Shield + Turret Operator.
+- **Hallways:** Axebot, Construct Menagerie, Fabricator, Frog Knight, Globe Head, Owl Magistrate, 4 Scrolls of Biting, Slimed Berserker, The Lost and Forgotten.
+- **Elites:** Knight Gang, Mecha Knight, Soul Nexus.
+- **Bosses:** **Queen, Test Subject, Aeonglass.** Aeonglass replaced Doormaker in v0.107.1.
+- At A10 you fight two bosses, and scaling resets between them ([Untapped ascension guide][uasc]).
+
+| Fight | Ironclad death rate, UT A7+ (fights) | Jorbs as Ironclad: fights / avg damage taken / avg turns / deaths |
+|---|---|---|
+| Aeonglass (boss) | **34%** (12,000) | 3 / 32 / 7.3 / 0 |
+| Test Subject (boss) | **33%** (13,000) | 30 / 28.9 / 9.5 / 6.7% |
+| Queen (boss) | **29%** (13,000) | 33 / 31.5 / 8.4 / 0 |
+| Mecha Knight (elite) | 6% | 38 / 14.9 / 6.3 / 0 |
+| Soul Nexus (elite) | 6% | 40 / 22.2 / 5.7 / 0 |
+| Knight Gang (elite) | 5% | 40 / 16.2 / 4.5 / 0 |
+| Owl Magistrate | 4% | 3 / 8.3 / 3.0 / 0 |
+| Frog Knight / Slimed Berserker / Many Scrolls of Biting | 3% each | 8 / 11.1 / 4.8; 5 / 4.2 / 6.6; 2 / 5 / 3 |
+| Axebot | 2% | 1 fight |
+
+The Act 3 bosses are where Ironclad runs die, even for A7+ players `[data]`. Jorbs never lost to the Queen in 33 A10 fights, but his fights last 8 to 10 turns. That means you need a real engine, not a burst.
+
+### 9c.2 Players cannot get Artifact in StS2
+
+This is a major difference from StS1.
+
+- The wiki's Artifact page (updated 2026-09-01) says only enemies can currently obtain it ([wiki Artifact][wiki-artifact]).
+- A Steam thread confirms there is no player debuff immunity, and says this is deliberate, because "several bosses" apply 99 Weak and/or Vulnerable ([Steam: immunity][st-immunity]).
+- I scanned all relic, card and potion texts on Untapped and found no player-side debuff removal.
+
+So guide advice to "use Artifact charges" against the Queen ([STS2 Companion][comp-queen]; a search summary) is **StS1 lore. Ignore it.**
+
+What does help:
+
+- **Frail only reduces Block from cards.** Block from buffs and powers (Plating, Rage and others) and from relics is unaffected ([wiki Frail][wiki-frail]). For Ironclad that means Crimson Mantle, Feel No Pain, Stone Armor (Plating), Rage and block relics are Frail-proof. `[one]` + card text.
+- **Weak** reduces your attack damage. Non-attack damage (Inferno pings, Juggernaut, Flame Barrier reflection) is presumably unaffected. `[inference]`: verify in the sim.
+- **Enemies with Artifact:** Mecha Knight (3), Aeonglass (3), and the Constructs. Each debuff you apply uses up one stack, so strip them with cheap debuffs before Dominate, Uppercut or Tremble matter. Jorbs notes Vulnerable removes an Artifact charge ([UT event: Bugslayer][uev-bs]); Baalorlord says the same of Uppercut ([Baalorlord][btl]).
+
+### 9c.3 THE QUEEN (Act 3 boss, floor 48)
+
+Sources: [UT encounter][ut-queen]; [wiki Queen][wiki-queen]; [Flare][ubosses]; [Selphie, 2026-04-16][selphie-queen].
+
+**Enemies:**
+
+- **Queen:** 400 HP (419 at A8). Has no attack while the Torch Head lives.
+- **Torch Head Amalgam:** 199 HP (211 at A8). It is a **Minion**: "Minions abandon combat without their leader". So **killing the Queen ends the fight**. No source lists a revive for the Torch Head, unlike the Parafright or Test Subject.
+
+**The Queen's script:**
+
+| Turn | Move | Effect |
+|---|---|---|
+| 1 | Malicious / "Puppet Strings" | 3 **Chains of Binding** on you. Each turn, the first 3 cards you draw are **Bound**, and only one Bound card can be played per turn. They are un-Bound at end of turn. Cards drawn *after* those three are free. |
+| 2 | You Are Mine | **99 Frail, 99 Weak, 99 Vulnerable**, effectively permanent |
+| 3+, while the Torch Head lives | Burn Bright for Me, every turn | Queen gains 20 Block; allies gain +1 Strength. Flare says this includes herself and the Torch Head. |
+| After the Torch Head dies | cycle | Off with Your Head 3×5 (4×5 at A9) → Execution 15 (18) → Empower +2 Strength → repeat |
+
+**The Torch Head's cycle:** Tackle 18 (19 at A8), then Tackle 18. Then it loops Beam 8×3 → Tackle 14 (15) → Tackle 14 (15). Its Strength grows +1 per turn, and your Vulnerable multiplies each hit by 1.5. That fits what the bot has seen: 18–26 single hits and 9–16×3.
+
+**Timing, from the script:** your turn 1 is clean. Turn 2 has Bound. From turn 3 on you are Frail, Weak and Vulnerable.
+
+**How strong players plan it:**
+
+- **Plan A: kill the Torch Head first.** This is the consensus:
+  - [Steam: Tips for Queen][st-queen-tips] and [Steam: Ironclad and the Queen][st-queen-ic]
+  - [Steam: busted?][st-queen-busted]: "The minion does the majority of the damage"
+  - [Selphie][selphie-queen]
+  - [Duckie's Steam guide][steam-bossguide]: killing it resets the scaling, and the Queen then buffs only herself
+
+  `[several]`
+- **Plan B: race the Queen.**
+  - Selphie: kill the minion first unless you can kill the Queen within about 5 turns.
+  - One Steam reply: that means about 400 damage in 4 turns, into her +20 Block per turn.
+  - Another reply: leave the minion low and hit the Queen while you can still block the minion.
+
+  `[several]`
+- **Card draw is the counter to Bound.**
+  - "You really need card draw for her" ([Steam: busted?][st-queen-busted]); also [Steam: Tips][st-queen-tips] and Flare ("requires strong card draw").
+  - Auto-play effects that bypass the hand limit are strong ([Steam][st-queen-busted]).
+  - For Ironclad the draw cards are Pommel Strike, Battle Trance, Offering, Burning Pact, Dark Embrace and Pael's Blood. The likely auto-play cards are Havoc, Stampede, Hellraiser and Cascade. `[several]` for draw; `[inference]` for which Ironclad cards bypass Bound.
+- **Winning Ironclad builds mentioned:** Body Slam, heavy block (Barricade, Demon Form), and a Barricade + Corruption + FNP + Demon Form scaling deck ([Steam: Ironclad and the Queen][st-queen-ic], [Steam: cheese][st-queen-cheese]). `[one]` each.
+
+### 9c.4 TEST SUBJECT (Act 3 boss)
+
+Sources: [UT][ut-ts], [wiki][wiki-ts], [Flare][ubosses].
+
+The fight has three phases. Between phases it is **stunned for one turn**, which gives you a free setup turn. Its Strength and statuses reset each phase.
+
+| Phase | HP | Power | Moves |
+|---|---|---|---|
+| 1 | 100 (111 at A8) | **Enrage 2** (3 at A9): +2 Strength whenever you play a **Skill** | Alternates Bite 20 (22) and Skull Bash 14 + 1 Vulnerable |
+| 2 | revives with 200 | **Painful Stabs**: Wounds into your discard for each hit of unblocked damage | Multi-Claw 10×3, +1 hit each use |
+| 3 | revives with 300 | **Nemesis**: Intangible every other turn | Lacerate 10×3 → Big Pounce 45 → Burning Growl (3 Burns, +2 Strength) |
+
+Tactics:
+
+- **Phase 1:** Ironclad's block cards are Skills, so every Defend or Shrug It Off feeds Enrage. Use attacks and Powers, and end phase 1 fast. `[inference]` from Enrage.
+- **Phase 2:** block every Multi-Claw fully. Each unblocked hit adds Wounds. ([Flare][ubosses])
+- **Phase 3:** save your burst, potions and debuffs for the non-Intangible turns. "Either end him in 3 turns or die" ([Steam: whats the play][st-ts]).
+- Set up Powers during phases 1 and 2 and the stun turns ([same thread][st-ts]). One Ironclad win reported 20+ Strength via Rupture and Bloodletting.
+- The +1 enemy Strength from Fight Me! doesn't carry between phases ([Steam: A10 Act 3][st-a3]).
+
+`[several]`
+
+### 9c.5 AEONGLASS (Act 3 boss, since v0.107.1)
+
+Sources: [UT][ut-aeon], [wiki][wiki-aeon].
+
+- 512 HP (535 at A8), with **3 Artifact**.
+- **Withering Presence:** every **6** cards you play, a **Wither** goes into your hand. Wither is Unplayable, and deals 3 damage to you at the end of your turn if it is still in your hand. It gets worse as Withers are upgraded.
+- Cycle: **Ebb** 22 (26) + 33 Block → **Eye Lasers** 11×2 → **Increasing Intensity**. That last move puts a Wither+X in your discard, gives it +2+X Strength, and upgrades every Wither.
+- The Wither numbers changed across betas. An older Steam thread describes Withers every 4 non-status cards, costing 1 to play ([Steam: Aeonglass][st-aeon]).
+
+Tactics:
+
+- Exhaust Withers: the wiki names Stoke. True Grit, Burning Pact, Second Wind, Fiend Fire and Ashwater also work (card text).
+- Prefer fewer, bigger cards, to slow the 6-card counter.
+- Burst it down within 2–3 deck cycles, rather than turtling ([Steam][st-aeon]). A bigger deck reshuffles Withers less often.
+- Strip the Artifact before your key debuffs.
+
+`[several]` + `[inference]`. It has the highest Ironclad death rate of the three bosses (34%). The old **Doormaker** is described in [Flare's guide][ubosses] but is not in the v0.111 pool.
+
+### 9c.6 Act 3 elites
+
+- **Knight Gang** (Flail Knight 101, Spectral Knight 93, Magi Knight 82 HP; 276 total) ([UT][ut-knights], [wiki][wiki-kg]).
+  - **Spectral Knight** opens with **Hex**: "While Spectral Knight is alive, ALL your cards are Ethereal", so any card still in hand at end of turn is exhausted. Then it alternates Soul Slash 15 and Soul Flame 3×3.
+  - **Magi Knight** starts with Power Shield (6 damage + 5 Block), then **Dampen**: while it lives, all your upgraded cards are downgraded. Then it loops Ram 10 → Prep (5 Block) → **Magic Bomb 35**. The first Bomb lands on its **5th turn**.
+  - **Flail Knight:** Ram 15 first, then random, never War Chant (+3 Strength) twice in a row: Flail 9×2 or Ram 15.
+  - **Kill order is deck-dependent** ([Steam: Magi + Spectral][st-knights]):
+    - Magi first if you rely on upgrades ("downgrades directly reduce your output"), or to dodge the Bomb.
+    - Spectral first if you rely on keeping cards in hand.
+    - Ironclad tolerates losing upgrades better than some classes. Under Hex, exhausting feeds FNP. `[inference]`
+  - AoE helps. One Steam player advises skipping Act 3 elites unless your deck is well ahead.
+- **Mecha Knight** (300 HP; **3 Artifact**) ([UT][ut-mecha], [wiki][wiki-mecha]).
+  - Opens with Charge 25.
+  - Then loops: Flamethrower (4 **Burns** into your *hand*; **since v0.111 it also deals 8 damage**, 12 at A9) → Windup (15 Block + 5 Strength) → Heavy Cleave 35 (plus accumulated Strength).
+  - Burn: Unplayable, 2 damage at end of turn if it's in your hand.
+  - Tactics: exhaust the Burns (True Grit, Burning Pact, Second Wind; FNP). Save Impervious, Flame Barrier or Mangle for Heavy Cleave. Strip the Artifact before Uppercut or Dominate. `[inference]` from mechanics.
+- **Soul Nexus** (234 HP) ([UT][ut-soul]).
+  - Random moves, never the same twice in a row: Soul Burn 29, Maelstrom 6×4, or Drain Life 18 + 2 Vulnerable + 2 Weak.
+  - Tactics: race it. Block Soul Burn. Flame Barrier or Mangle against Maelstrom. Jorbs takes the most damage here of the three elites (22). `[inference]` + `[data]`
+
+### 9c.7 Act 3 hallways the bot has met
+
+Sources: [UT encounters][ut-enemies]; [wiki Owl][wiki-owl].
+
+| Encounter | Key mechanics (Default numbers) | Tactics |
+|---|---|---|
+| **Owl Magistrate** (231 HP) | Fixed cycle: Scrutiny 16 → Peck Assault 4×6 → Judicial Flight (**Soar**: takes 50% less attack damage until it lands) → Verdict 33 + 4 Vulnerable, which ends the Soar | Flame Barrier or Mangle on Peck Assault. **Don't attack into Soar.** Use that turn to block or set up for Verdict. `[inference]` from the move text |
+| **Frog Knight** (191 HP, **15 Plating**) | Tongue Lash 13 + 2 Frail → Strike Down Evil 21 → For the Queen +5 Strength. **Beetle Charge 35** the first time it drops below half HP. | Plating gives it Block every turn, so use Vulnerable and big hits. Time the half-HP crossing: either burst from above 50% straight to dead, or cross it on a turn when you can block 35+. `[inference]` |
+| **Scrolls of Biting** (3 weak / 4 normal, 30–37 HP each) | **Paper Cuts**: unblocked attack damage costs you **max HP**. Chomp 14, More Teeth +2 Strength, Chew 5×2. | **AoE** (Conflagration, Whirlwind, Breakthrough, Howl). Block fully, since every unblocked hit costs max HP. `[inference]` |
+| **Slimed Berserker** (261 HP) | Vomit Ichor (10 **Slimed** into your discard; Slimed costs 1: draw 1, Exhaust) → Furious Pummeling 4×4 → Leeching Hug (3 Weak on you, +3 Strength for it) → Aggressive 30 | Play Slimed when energy is spare: it cycles, and triggers FNP and Ashen Strike. Flame Barrier on Pummeling. Block the 30. `[inference]` |
+| **Axebot** (70–78 HP, **Stock 2**) | When killed, a new Axebot replaces it (2 respawns). Each respawn opens with Boot Up: 10 Block + 3 / 6 Strength. Hammer Uppercut 12 + 2 Weak + 2 Frail; One-Two 9×2. **v0.111 buff:** Uppercut 14 (18), One-Two 10 (11)×2, +10 max HP per respawn ([wiki v0.111][wiki-111]). | Effectively about 3 bodies and 230+ HP. You need sustained damage; the respawns come with Block and extra Strength. `[inference]` |
+
+### 9c.8 What an Ironclad deck needs by Act 3
+
+1. **A scaling engine** that is running by turn 2–3 and **re-establishes itself** after the Test Subject's phase resets and between the A10 double bosses:
+   - Dominate + Vulnerable (the most-cited A10 scaling)
+   - Strength via Rupture and self-damage, or Demon Form (now +3)
+   - Thrash / Ashen Strike
+   - An exhaust engine: True Grit+, FNP, Burning Pact, Dark Embrace
+
+   Sources: [Steam: A10 Act 3][st-a3], [Untapped ascension guide][uasc], [Jorbs][jtl]. `[several]`
+2. **Card draw:** 2–3 or more draw effects, as the Queen's counter and in general.
+   - Pommel Strike+, Battle Trance, Offering, Burning Pact, Dark Embrace; Pael's Blood.
+   - `[several]`
+3. **Big-hit mitigation.** Act 3 throws 25–45 single hits:
+   - Mecha Knight 35 plus its Strength
+   - Test Subject 45
+   - Magic Bomb 35
+   - Verdict 33
+   - Beetle Charge 35
+   - Aggressive 30
+   - Soul Burn 29
+
+   It also throws multi-hits: Peck Assault 4×6, Maelstrom 6×4, Multi-Claw 10×3+. Tools:
+   - Impervious
+   - Flame Barrier (for multi-hits)
+   - **Mangle** ("Mangle blocks most multi-hit Act 3 attacks", [Steam: A10 Act 3][st-a3])
+   - Unmovable
+   - Weak via Uppercut
+   - Frail-proof power block for the Queen: Crimson Mantle, FNP, Plating, Rage
+
+   `[several]`
+4. **Status handling:** Burns (Mecha Knight, Test Subject phase 3), Wounds (Test Subject phase 2), Withers (Aeonglass), Slimed (Berserker). Tools: True Grit+, Burning Pact, Second Wind, Fiend Fire, Stoke; FNP as the payoff; Ashwater. `[several]`
+5. **AoE:** needed for Scrolls of Biting, Knight Gang, Construct Menagerie and Fabricator, and to hit both Queen targets: Conflagration, Whirlwind, Breakthrough, Howl, Inferno. `[inference]` + encounter lists.
+6. **Artifact:** not obtainable, so plan the Queen around permanent debuffs (§9c.2). Against enemy Artifact, carry at least one cheap debuff (Tremble, Taunt, Thunderclap) to spend stacks.
+7. **Act 3 card-reward data** (UT A7+, Act 3 run-win delta) `[data]`:
+   - **Positive:** Barricade +7 (picked 35%), Body Slam +5, Offering +5, FNP +4, Dark Embrace +4, Stoke +3, Burning Pact +2, Forgotten Ritual +2, Uppercut +2, Stone Armor +2.
+   - **Clearly negative:** Cinder −16, Primal Force −16, Breakthrough −14, Hemokinesis −14, Rampage −14, Stomp −13, Dismantle −11, Spite −11, Armaments −10, Infernal Blade −10, Iron Wave −10, Unrelenting −9, and Anger, Bludgeon, Inflame, Inferno, Flame Barrier, Howl, Stampede and Twin Strike at −8.
+
+   In Act 3, **add engine and block-payoff cards, and stop adding frontload commons.** The Act 3 smith run-deltas are highest for Burning Pact +8, Drum of Battle +8, Bloodletting +6, Vicious +6, and Tremble, Spite and Rupture at +5 ([Untapped stats][ustat]).
+8. **Potions for the Act 3 boss:** Act 3 shop buy rates are highest for Fairy in a Bottle 37%, Blood Potion 31%, Power Potion 30%, Entropic Brew 26% and Duplicator 24% ([UT potion pages][upot]). Jorbs uses 0.7–1 potion per Act 3 boss fight ([sheet][jsheet]).
+   - For the Queen, potions are not cards, so Bound can't stop them. `[inference]`
+   - Draw potions (Swift, Cure All, Gambler's Brew) add *unbound* cards. `[inference]`
+   - Shackling (−7 Strength to all enemies) or Weak Potion on the Torch Head's big turns. `[inference]`
 
 ---
 
@@ -1082,6 +1294,67 @@ to hard-code:
 7. **DARV:** Runic Pyramid > Pandora's Box, if ≥5 Strikes and Defends remain > Astrolabe > the rest. `[several]` `[data]`
 8. **Act 3, TANX:** Crossbow or Sai first. **NONUPEIPE:** Brilliant Scarf, Beautiful Bracelet or Glitter. **VAKUU:** Music Box or Fiddle. Treat Whispering Earring as `[disputed]`. `[data]`
 
+### 10.10 Act 3 (Glory)
+
+1. **No Artifact.** Never plan on preventing the Queen's debuffs. There is no player Artifact or debuff removal in StS2. `[several]` ([wiki][wiki-artifact], [Steam][st-immunity])
+2. **Queen: pick a target on turn 1.**
+   - Estimate the damage you can deal to the Queen over the next 4 turns, net of her +20 Block per turn. If it is ≥ her HP, race the Queen; her death ends the fight because the Torch Head is a Minion.
+   - Otherwise **kill the Torch Head first**.
+   - Re-evaluate each turn: "Torch Head dead" switches the Queen to her own attack cycle.
+
+   `[several]`
+3. **Queen timing:**
+   - Spend your turns 1–2 (before You Are Mine) on Powers and scaling: Demon Form, Inferno, Crimson Mantle, FNP, Rupture, Unmovable, Barricade. Also use the biggest attacks, which get no Weak penalty yet.
+   - From turn 3 on, model incoming damage ×1.5, your attack damage ×0.75, and block from cards ×0.75. Block from powers and relics is unaffected.
+
+   `[one]` for the Frail rule, `[inference]` for the timing.
+4. **Bound modelling (simulator requirement).**
+   - The first 3 cards drawn each turn are Bound, and only 1 Bound card can be played.
+   - Cards drawn later in the turn are free, so play draw effects (Pommel Strike, Battle Trance, Offering, Burning Pact) early.
+   - Rank Bound candidates by value and play the single best one.
+
+   `[several]` (mechanics) + `[inference]` (the policy)
+5. **Queen deck check at the Act 3 campfire / Act 3 card rewards.** If the Act 3 boss is the Queen (visible on the map), value draw and Frail-proof block (Crimson Mantle, FNP, Stone Armor, Rage) above other options of similar value. `[several]` (draw) / `[inference]` (block)
+6. **Test Subject:**
+   - Phase 1: don't play Skills unless forced (each gives +2 Strength), and use attacks and Powers.
+   - Phase 2: fully block every Multi-Claw.
+   - Phase 3: keep potions and burst for the non-Intangible turns.
+   - Use the stun turns between phases for setup.
+
+   `[several]`
+7. **Aeonglass:**
+   - Track the cards-played counter; every 6th card adds a Wither to your hand. Prefer fewer, higher-impact cards.
+   - Exhaust Withers before ending the turn (True Grit+, Burning Pact, Second Wind, Fiend Fire, Stoke, Ashwater).
+   - Spend its 3 Artifact with cheap debuffs before the important ones.
+
+   `[several]` + `[inference]`
+8. **Knight Gang:**
+   - Kill **Magi Knight** (82 HP) before its 5th turn (Magic Bomb 35), or earlier if upgrades matter to the deck (Dampen).
+   - If the deck relies on keeping cards in hand, kill **Spectral Knight** first (Hex makes all your cards Ethereal).
+   - Flail Knight last. Use AoE.
+
+   `[several]` (Steam, deck-dependent)
+9. **Mecha Knight:**
+   - Opening turn: block the Charge 25.
+   - Flamethrower turn: expect 4 Burns in hand, plus 8 damage in v0.111; exhaust or play around the Burns.
+   - Windup turn is the free damage turn.
+   - Heavy Cleave (35 + Strength): Impervious, Mangle or Flame Barrier.
+   - Strip the Artifact first.
+
+   `[inference]` from mechanics
+10. **Soul Nexus:** race. Keep 29+ block for Soul Burn, and use Flame Barrier or Mangle for Maelstrom (6×4). `[inference]`
+11. **Owl Magistrate:**
+    - On the turn after Judicial Flight (Soar active), don't attack. Block or set up for Verdict (33 + 4 Vulnerable).
+    - Flame Barrier on Peck Assault (4×6).
+
+    `[inference]` from move text
+12. **Frog Knight:** don't cross 50% HP on a turn when you can't absorb Beetle Charge (35). Otherwise burst from above half to dead. `[inference]`
+13. **Scrolls of Biting:** use AoE first, and prioritise full block, because unblocked hits cost max HP. `[inference]`
+14. **Slimed Berserker:** play Slimed when energy is left over (1 energy: draw 1, Exhaust). Flame Barrier on Furious Pummeling. `[inference]`
+15. **Axebot:** budget for 3 bodies. Don't spend burst potions on the first body. `[inference]`
+16. **Act 3 card rewards:** prefer engine and payoff cards: Offering, FNP (with exhaust), Dark Embrace, Stoke, Burning Pact, Forgotten Ritual, Uppercut, Barricade / Body Slam (only with a block engine), Crimson Mantle, Impervious. Skip frontload commons: Breakthrough, Hemokinesis, Cinder, Anger, Iron Wave, Unrelenting, Dismantle, Spite, Stomp, Rampage, Twin Strike, Bludgeon. `[data]`
+17. **Potions:** arrive at the Act 3 boss with at least 2 potions. For the Queen, draw potions add unbound cards, and potions themselves ignore Bound. `[inference]`
+
 ---
 
 ## 11. Gaps and caveats (honest assessment)
@@ -1105,6 +1378,13 @@ to hard-code:
   Events are covered by Jorbs' choice data plus Jorbs/Baalorlord comments on 19 events. Ancients have Untapped pick data, but it pools all characters and uses main-branch versions of several relics that the beta changed. Jorbs' Ancient Elo and the Untapped population often disagree, especially on Pael.
 
   Shop and potion strategy is thin: data plus low-quality guides.
+- **Act 3 unknowns to check in the simulator:**
+  - that the Torch Head never revives
+  - that Weak doesn't reduce non-attack damage (Inferno, Juggernaut, Flame Barrier)
+  - which auto-play cards (Havoc, Stampede, Hellraiser, Cascade) bypass Bound
+  - the exact Wither numbers on v0.111
+
+  The Queen and Test Subject numbers come from Untapped's Default setting, which matches the wiki's base values. Glory hallways had no top-player commentary; their tactics are my inferences from move text.
 
 ---
 
@@ -1127,6 +1407,7 @@ to hard-code:
 | noob, comp-*, fxl, opgg-obs, pcgamer-vantom, hk-space, front, codex-* | Various guide and database sites | 2026-03 to 07 | C (use with care) |
 | ur-anc, uev-* | Untapped Ancient relic pages (Ancient Choice stats) and event pages (Jorbs and Baalorlord comments) | read 2026-09-23 | A− (data) / A (comments) |
 | n1-rel, bb-anc, ds-anc, front-anc | nat1 relic tier list / BrokenBuilds Act 2 Ancient guide / DualShockers Ancient ranking / sts2front (search summary) | 2026-05-19 / 05-03, updated 07-28 / 05-12 / – | B− / C / C / C |
+| ut-*, ubosses, wiki-glory/queen/ts/aeon/kg/mecha/owl/artifact/frail, st-queen-*, st-ts, st-a3, st-aeon, st-knights, st-immunity, steam-bossguide, selphie-queen, comp-queen | Act 3 sources: Untapped encounter pages and Flare's boss guide; wiki monster and mechanic pages; Steam threads and Duckie's guide; Selphie; STS2 Companion | 2026-03 to 09 (Steam threads Mar–May 2026) | A (UT/wiki data) / B (Flare) / B− (Steam) / C (Selphie, Companion: Companion's Artifact advice is StS1 lore) |
 | gs-*, sohu | Chinese: GamerSky, Sohu | 2026-03-09 / 03-10 | C (partly StS1-contaminated) |
 
 [jtl]: https://sts2.untapped.gg/en/tier-list/6b3390b7-bcbc-4ebc-ae78-ae9a400c66dc
@@ -1240,3 +1521,32 @@ to hard-code:
 [bb-anc]: https://brokenbuilds.gg/slay-the-spire-2/guides/slay-the-spire-2-act-2-boss-relic-guide
 [ds-anc]: https://www.dualshockers.com/slay-the-spire-2-best-ancients-ranked/
 [front-anc]: https://sts2front.com/tips/ancients-blessings-guide/
+[ut-enemies]: https://sts2.untapped.gg/en/enemies
+[ut-queen]: https://sts2.untapped.gg/en/enemies/encounters/queen-boss
+[ut-ts]: https://sts2.untapped.gg/en/enemies/encounters/test-subject-boss
+[ut-aeon]: https://sts2.untapped.gg/en/enemies/encounters/aeonglass-boss
+[ut-knights]: https://sts2.untapped.gg/en/enemies/encounters/knights-elite
+[ut-mecha]: https://sts2.untapped.gg/en/enemies/encounters/mecha-knight-elite
+[ut-soul]: https://sts2.untapped.gg/en/enemies/encounters/soul-nexus-elite
+[ubosses]: https://sts2.untapped.gg/en/guides/bosses-intro
+[wiki-glory]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Glory
+[wiki-artifact]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Artifact
+[wiki-frail]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Frail
+[wiki-queen]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Queen
+[wiki-ts]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Test_Subject
+[wiki-aeon]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Aeonglass
+[wiki-kg]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Knight_Gang
+[wiki-mecha]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Mecha_Knight
+[wiki-owl]: https://slaythespire.wiki.gg/wiki/Slay_the_Spire_2:Owl_Magistrate
+[st-immunity]: https://steamcommunity.com/app/2868840/discussions/0/832747471494980081/
+[st-queen-tips]: https://steamcommunity.com/app/2868840/discussions/0/798964766335927637/
+[st-queen-ic]: https://steamcommunity.com/app/2868840/discussions/0/802341195824203069/
+[st-queen-busted]: https://steamcommunity.com/app/2868840/discussions/0/802341528343289945/
+[st-queen-cheese]: https://steamcommunity.com/app/2868840/discussions/0/802341528343184436/
+[st-ts]: https://steamcommunity.com/app/2868840/discussions/0/802341528343381513/
+[st-a3]: https://steamcommunity.com/app/2868840/discussions/0/798966340582963322/
+[st-aeon]: https://steamcommunity.com/app/2868840/discussions/0/839501596191800702/
+[st-knights]: https://steamcommunity.com/app/2868840/discussions/0/798965575663544295/
+[steam-bossguide]: https://steamcommunity.com/sharedfiles/filedetails/?id=3712603582
+[selphie-queen]: https://selphie1999gaming.com/game-guides/slay-the-spire-2/slay-the-spire-2-bound-defeating-the-queen-boss/
+[comp-queen]: https://www.sts2companion.com/bosses/queen
