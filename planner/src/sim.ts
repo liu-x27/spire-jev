@@ -336,12 +336,39 @@ export function actions(s: State): Action[] {
   return out;
 }
 
+/**
+ * Potions whose effect is not what their numbers say, from the runs. The
+ * temporary ones leave a power named after themselves that takes the effect
+ * back at the end of the turn.
+ */
+const POTION_SPECIAL: Record<string, (s: State, n: number) => void> = {
+  FLEX_POTION: (s, n) => {
+    applyPower(s, s.player, "STRENGTH", n);
+    addPower(s.player, "FLEX_POTION", n);
+  },
+  SPEED_POTION: (s, n) => {
+    applyPower(s, s.player, "DEXTERITY", n);
+    addPower(s.player, "SPEED_POTION", n);
+  },
+  // Takes Strength from every enemy for the turn (Artifact blocks it).
+  SHACKLING_POTION: (s, n) => {
+    for (const e of s.enemies) if (e.alive && applyPower(s, e, "STRENGTH", -n)) addPower(e, "SHACKLING_POTION", n);
+  },
+  // Shuffles the discard pile into the draw pile, then draws.
+  BOTTLED_POTENTIAL: (s, n) => {
+    s.draw.push(...s.discard);
+    s.discard = [];
+    draw(s, n);
+  },
+};
+
 /** The numbers a potion can have that the model knows what to do with. */
 const POTION_VARS = /^(Damage|Block|Energy|Cards|Heal|HpLoss|Repeat|\w+Power)$/;
 
 /** A potion the model can drink in a fight: one whose every number it understands. */
 export function drinkable(p: Potion): boolean {
   if (/OutOfCombat|Automatic|None/i.test(p.usage)) return false;
+  if (POTION_SPECIAL[p.id]) return true;
   const names = Object.keys(p.vars);
   return names.length > 0 && names.every((n) => POTION_VARS.test(n));
 }
@@ -360,6 +387,11 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
   s.potions.splice(i, 1);
   s.potionsUsed++;
   const v = p.vars;
+  const special = POTION_SPECIAL[p.id];
+  if (special) {
+    special(s, v["Cards"] ?? Object.values(v)[0] ?? 0);
+    return s;
+  }
   const target = a.target === undefined ? undefined : s.enemies.find((e) => e.id === a.target);
   const atEnemies = p.target === "AnyEnemy" || p.target === "AllEnemies" || p.target === "RandomEnemy";
   const victims = p.target === "AllEnemies" ? s.enemies.filter((e) => e.alive) : p.target === "RandomEnemy" ? s.enemies.filter((e) => e.alive).slice(0, 1) : one(target);

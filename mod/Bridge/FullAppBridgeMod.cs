@@ -734,7 +734,20 @@ public static class FullAppBridgeMod
             if (runState == null || runState.BaseRoom == null || runState.BaseRoom.RoomType != RoomType.Event) break;
 
             var optionButtons = UiHelper.FindAll<NEventOptionButton>(eventRoom).Where(b => b.Option != null && !b.Option.IsLocked).ToList();
-            if (optionButtons.Count == 0) break;
+            if (optionButtons.Count == 0)
+            {
+                // spire-jev: some events (the Ancients after a boss among them)
+                // show their options a moment after the room opens; leaving at
+                // once left AutoSlay waiting for a proceed button that never came.
+                bool appeared = false;
+                for (int wait = 0; wait < 50 && !appeared && GodotObject.IsInstanceValid(eventRoom); wait++)
+                {
+                    await Task.Delay(100);
+                    appeared = UiHelper.FindAll<NEventOptionButton>(eventRoom).Any(b => b.Option != null && !b.Option.IsLocked);
+                }
+                if (!appeared) break;
+                continue;
+            }
 
             string actionId = await FullAppBridgeServer.WaitForCoordinatorActionAsync("event", isTerminal: false, isVictory: false, optionButtons.Select(b => b.Option).ToList());
 
