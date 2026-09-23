@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cardValue, chooseCardReward, chooseRest, chooseShop, chooseUpgrade, worstCard } from "../src/choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseRest, chooseShop, chooseUpgrade, worstCard } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
@@ -54,4 +54,31 @@ test("the shop buys the removal before an ordinary card, and an S-tier card befo
   assert.equal(chooseShop(obs({ phase: "shop" }), [twin, removal, act("shop_leave")]), removal.action_id);
   assert.equal(chooseShop(obs({ phase: "shop", gold: 200 }), [twin, removal, offering, act("shop_leave")]), offering.action_id);
   assert.equal(chooseShop(obs({ phase: "shop", deck_cards: ["BASH"] }), [twin, removal, act("shop_leave")]), "shop_leave");
+});
+
+const eventObs = (id: string, options: { key: string; description?: string; kills?: boolean }[], over: Partial<Observation> = {}): Observation =>
+  obs({
+    phase: "event",
+    room: { room_type: "Event", options: [], details: { event_id: id, options: options.map((x, index) => ({ index, text_key: `${id}.pages.INITIAL.options.${x.key}`, title: x.key, description: x.description ?? "", locked: false, proceed: false, kills: x.kills ?? false })) } },
+    ...over,
+  });
+const eventLegal = (n: number) => Array.from({ length: n }, (_, i) => act(`choose_event:${i}`));
+
+test("events: the rule's option by its key, whatever its place", () => {
+  assert.equal(chooseEvent(eventObs("BYRDONIS_NEST", [{ key: "TAKE" }, { key: "EAT" }]), eventLegal(2)), "choose_event:1");
+  const cheese = [{ key: "GORGE" }, { key: "SEARCH" }];
+  assert.equal(chooseEvent(eventObs("ROOM_FULL_OF_CHEESE", cheese, { player_hp: 70 }), eventLegal(2)), "choose_event:1");
+  assert.equal(chooseEvent(eventObs("ROOM_FULL_OF_CHEESE", cheese, { player_hp: 45 }), eventLegal(2)), "choose_event:0");
+});
+
+test("an event with no rule never takes the option that kills", () => {
+  assert.equal(chooseEvent(eventObs("SOMETHING_NEW", [{ key: "JUMP", kills: true }, { key: "WALK" }]), eventLegal(2)), "choose_event:1");
+});
+
+test("the card select after an enchant takes a good card; after a transform, a bad one", () => {
+  const select = [act("choose_card_select:0:STRIKE_IRONCLAD"), act("choose_card_select:1:POMMEL_STRIKE")];
+  chooseEvent(eventObs("SELF_HELP_BOOK", [{ key: "READ_THE_BACK", description: "选择一张攻击牌附魔：锋利2。" }]), eventLegal(1));
+  assert.equal(chooseCardSelectFor(obs(), select), "choose_card_select:1:POMMEL_STRIKE");
+  chooseEvent(eventObs("SYMBIOTE", [{ key: "KILL_WITH_FIRE", description: "选择一张牌变化。" }]), eventLegal(1));
+  assert.equal(chooseCardSelectFor(obs(), select), "choose_card_select:0:STRIKE_IRONCLAD");
 });

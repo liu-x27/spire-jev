@@ -227,3 +227,101 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
 export function wantsPotion(o: Observation, slots = 3): boolean {
   return o.potions.filter((p) => p && p !== "EMPTY").length < slots;
 }
+
+interface EventOptionObs {
+  index: number;
+  text_key?: string;
+  title?: string;
+  description?: string;
+  locked?: boolean;
+  proceed?: boolean;
+  relic?: string | null;
+  kills?: boolean;
+}
+
+const hpShare = (o: Observation) => o.player_hp / Math.max(1, o.player_max_hp);
+const blockCount = (deck: readonly string[]) =>
+  deck.filter((c) => ["SHRUG_IT_OFF", "FLAME_BARRIER", "TAUNT", "TRUE_GRIT", "COLOSSUS", "EVIL_EYE", "IMPERVIOUS", "UNMOVABLE", "CRIMSON_MANTLE", "SECOND_WIND", "IRON_WAVE"].includes(base(c))).length;
+
+/**
+ * §6, §10.4: the option to take at each event, by the event's id and the
+ * options' keys (the part of text_key after "options."). The Ancients'
+ * orders (TEZCATARA, PAEL) are §9b/§10.9's rankings for Ironclad.
+ */
+const EVENTS: Record<string, (o: Observation, keys: readonly string[]) => string | undefined> = {
+  BYRDONIS_NEST: () => "EAT",
+  SAPPHIRE_SEED: () => "EAT",
+  WOOD_CARVINGS: () => "BIRD",
+  MORPHIC_GROVE: (o) => (o.gold < 60 ? "GROUP" : "LONER"),
+  // §9b: the relic, Clumsy and all, by default.
+  THIS_OR_THAT: () => "ORNATE",
+  FIELD_OF_MAN_SIZED_HOLES: () => "RESIST",
+  LOST_WISP: () => "SEARCH",
+  WHISPERING_HOLLOW: (o) => (hpShare(o) > 0.5 ? "HUG" : "GOLD"),
+  SYMBIOTE: () => "KILL_WITH_FIRE",
+  ROOM_FULL_OF_CHEESE: (o) => (o.player_hp - 14 >= 0.5 * o.player_max_hp ? "SEARCH" : "GORGE"),
+  TEA_MASTER: () => "TEA_OF_DISCOURTESY",
+  THE_LANTERN_KEY: () => "RETURN_THE_KEY",
+  SELF_HELP_BOOK: () => "READ_THE_BACK",
+  WELCOME_TO_WONGOS: (o) => (o.gold >= 100 ? "BARGAIN_BIN" : "LEAVE"),
+  SPIRIT_GRAFTER: (o) => (hpShare(o) > 0.35 ? "REJECTION" : "LET_IT_IN"),
+  ZEN_WEAVER: (o) => (o.gold >= 250 ? "ARACHNID_ACUPUNCTURE" : o.gold >= 125 ? "EMOTIONAL_AWARENESS" : undefined),
+  AMALGAMATOR: (o) => (blockCount(o.deck_cards) >= 3 ? "COMBINE_DEFENDS" : "COMBINE_STRIKES"),
+  // §9b: pay 5 HP to choose between two dolls; never take one at random while HP allows.
+  DOLL_ROOM: (o) => (o.player_hp > 15 ? "TAKE_SOME_TIME" : "RANDOM"),
+  // Slippery Bridge names the card it will take in text only: reroll once while healthy, then cross.
+  SLIPPERY_BRIDGE: (o, keys) => (keys.includes("HOLD_ON_0") && hpShare(o) > 0.6 ? "HOLD_ON_0" : "OVERCOME"),
+  // §9b: keep reaching deeper (5 HP a step) while HP stays at half or more, then take the prize.
+  COLOSSAL_FLOWER: (o, keys) => {
+    const deeper = keys.find((k) => k.startsWith("REACH_DEEPER_"));
+    return deeper && o.player_hp - 5 >= 0.5 * o.player_max_hp ? deeper : keys.find((k) => k.startsWith("EXTRACT_"));
+  },
+  // §10.9. Nutritious Soup only with four Strikes left to enchant.
+  TEZCATARA: (o, keys) => {
+    const strikes = o.deck_cards.filter((c) => base(c) === "STRIKE_IRONCLAD").length;
+    const order = ["TOASTY_MITTENS", "STORYBOOK", "SEAL_OF_GOLD", "VERY_HOT_COCOA", ...(strikes >= 4 ? ["NUTRITIOUS_SOUP"] : []),
+      "PUMPKIN_CANDLE", "BIIIG_HUG", "YUMMY_COOKIE", "NUTRITIOUS_SOUP", "GOLDEN_COMPASS", "TOY_BOX"];
+    return order.find((k) => keys.includes(k));
+  },
+  // §10.9 (disputed: Jorbs prefers Claw and Growth; the population data and two guides put Blood and Legion first).
+  PAEL: (o, keys) => {
+    const defends = o.deck_cards.filter((c) => base(c) === "DEFEND_IRONCLAD").length;
+    const claw = defends >= 3 && o.deck_cards.some((c) => ["FEEL_NO_PAIN", "EVIL_EYE", "ASHEN_STRIKE", "DARK_EMBRACE"].includes(base(c)));
+    const order = ["PAELS_BLOOD", ...(claw ? ["PAELS_CLAW"] : []), "PAELS_LEGION", "PAELS_GROWTH", "PAELS_FLESH", "PAELS_TEARS", "PAELS_HORN", "PAELS_CLAW", "PAELS_TOOTH"];
+    return order.find((k) => keys.includes(k));
+  },
+};
+
+/** What the card select after an event is for: the best card to improve, or the worst to lose. */
+let selectFor: "best" | "worst" = "worst";
+
+export function chooseEvent(o: Observation, legal: LegalAction[]): string {
+  const details = (o.room?.details ?? {}) as { event_id?: string; options?: EventOptionObs[] };
+  const options = (details.options ?? []).filter((x) => !x.locked);
+  const key = (x: EventOptionObs) => (x.text_key ?? "").split(".options.").pop() ?? "";
+  const byKey = (k: string | undefined) => (k === undefined ? undefined : options.find((x) => key(x) === k));
+  const rule = details.event_id ? EVENTS[details.event_id] : undefined;
+  let pick = byKey(rule?.(o, options.map(key)));
+  if (!pick) {
+    // No rule: an option that cannot kill, and costs no HP while HP is under half.
+    pick = options.find((x) => !x.kills && !x.proceed && !(hpShare(o) < 0.5 && /生命|HP/.test(x.description ?? ""))) ?? options[0];
+  }
+  if (!pick) return legal.find((a) => a.action_id === "proceed")?.action_id ?? legal[0]!.action_id;
+  const text = `${pick.title ?? ""} ${pick.description ?? ""}`;
+  selectFor = /附魔|升级|克隆|enchant|upgrade|clone/i.test(text) && !/移除|变化|remove|transform/i.test(text) ? "best" : "worst";
+  return legal.find((a) => a.action_id === `choose_event:${pick.index}`)?.action_id ?? legal[0]!.action_id;
+}
+
+/** A card select: the worst card for a removal or transform, the best for an enchant or upgrade. */
+export function chooseCardSelectFor(o: Observation, legal: LegalAction[]): string {
+  const offers = legal.filter((a) => a.action_id.startsWith("choose_card_select:"));
+  if (offers.length === 0) return legal[0]!.action_id;
+  const ids = offers.map((a) => a.action_id.split(":")[2] ?? "");
+  if (selectFor === "worst") return offers[worstCard(ids, o.deck_cards)]!.action_id;
+  let best = 0;
+  ids.forEach((id, i) => {
+    if (cardValue(id, actOf(o), o.deck_cards) > cardValue(ids[best]!, actOf(o), o.deck_cards)) best = i;
+  });
+  selectFor = "worst";
+  return offers[best]!.action_id;
+}
