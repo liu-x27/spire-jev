@@ -29,6 +29,16 @@ test("the deck's pace comes from every card still in the fight", () => {
   // 3 strikes and 3 defends: 3 damage a card, over a five-card hand, a quarter off.
   assert.equal(pace.perTurn, 11.25);
   assert.equal(pace.perHit, 6);
+  // 3 defends of 5 over 6 cards, half a hand.
+  assert.equal(pace.cardBlock, 6.25);
+});
+
+test("counting block, an enemy the deck out-blocks puts no pressure on the fight", () => {
+  const nibbit = state([], 0, [foe(1, 40, 6)]);
+  assert.equal(futureDamage(nibbit, undefined, true), 0);
+  const brute = state([], 0, [foe(1, 40, 16)]);
+  assert.ok(futureDamage(brute, undefined, true) > 0);
+  assert.ok(futureDamage(brute, undefined, true) < futureDamage(brute));
 });
 
 test("slippery counts as HP the deck has to chew through", () => {

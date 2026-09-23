@@ -33,10 +33,16 @@ export interface Weights {
    * version did.
    */
   future: number;
+  /**
+   * 1: the future counts only what gets past the block the deck makes every
+   * turn (futureDamage's blockAware), so an enemy the deck out-blocks puts
+   * no pressure on the fight's length; 0: all of it, as first written.
+   */
+  futureBlock: number;
 }
 
 /** The first version: this turn only. */
-export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0 };
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0 };
 export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
 
 /** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
@@ -47,6 +53,8 @@ export interface Pace {
   blockPerTurn: number;
   /** Block still to come from Plating, which gives a stack less every turn. */
   blockToCome: number;
+  /** Block the deck's cards make in a turn: the average card's block over half a hand (the other half attacks). */
+  cardBlock: number;
 }
 
 const BESTIARY: Record<string, Beast> = loadBestiary();
@@ -70,10 +78,15 @@ export function deckPace(s: State): Pace {
   const cards = [...s.hand, ...s.draw, ...s.discard];
   let damage = 0;
   let hits = 0;
+  let block = 0;
+  let blockers = 0;
   for (const c of cards) {
     const d = cardDamage(c);
     damage += d.damage;
     hits += d.hits;
+    const b = c.vars["Block"] ?? 0;
+    block += b;
+    if (b > 0) blockers++;
   }
   const n = Math.max(1, cards.length);
   const p = s.player.powers;
@@ -85,7 +98,8 @@ export function deckPace(s: State): Pace {
   // Feel No Pain blocks for every card exhausted (about one every other turn); Barricade keeps some block over.
   const blockPerTurn = (p["METALLICIZE"] ?? 0) + (p["FEEL_NO_PAIN"] ?? 0) * 0.5 + ((p["BARRICADE"] ?? 0) > 0 ? 3 : 0);
   const plating = Math.max(0, p["PLATING"] ?? 0);
-  return { perTurn, perHit, blockPerTurn, blockToCome: (plating * (plating - 1)) / 2 };
+  const cardBlock = (block / n) * HAND * 0.5 + (p["DEXTERITY"] ?? 0) * (blockers / n) * HAND * 0.5;
+  return { perTurn, perHit, blockPerTurn, blockToCome: (plating * (plating - 1)) / 2, cardBlock: Math.max(0, cardBlock) };
 }
 
 /**
@@ -116,7 +130,7 @@ export function threat(e: Enemy): number {
  * after this enemy turn makes those turns deal half again as much; Weak left
  * takes a quarter off those turns of its damage.
  */
-export function futureDamage(s: State, pace: Pace = deckPace(s)): number {
+export function futureDamage(s: State, pace: Pace = deckPace(s), blockAware = false): number {
   const left = s.enemies.filter((e) => e.alive).map((e) => {
     const hp = e.hp + Math.max(0, e.powers["SLIPPERY"] ?? 0) * Math.max(0, pace.perHit - 1);
     const vulnerable = Math.max(0, (e.powers["VULNERABLE"] ?? 0) - 1);
@@ -125,6 +139,23 @@ export function futureDamage(s: State, pace: Pace = deckPace(s)): number {
     return { turns, perTurn: threat(e), weak: Math.max(0, (e.powers["WEAK"] ?? 0) - 1) };
   });
   left.sort((a, b) => b.perTurn / Math.max(1e-6, b.turns) - a.perTurn / Math.max(1e-6, a.turns));
+  if (blockAware) {
+    // Turn by turn, the enemies still alive hit for their sum and the deck's
+    // block takes its share: what gets through, over each stretch between kills.
+    const guard = pace.cardBlock + pace.blockPerTurn;
+    let clock = 0;
+    let before = 0;
+    let total = 0;
+    let incoming = left.reduce((a, e) => a + e.perTurn, 0);
+    for (const e of left) {
+      clock += e.turns;
+      const attacks = Math.max(0, clock - 0.5);
+      total += (attacks - before) * Math.max(0, incoming - guard);
+      before = attacks;
+      incoming -= e.perTurn;
+    }
+    return Math.max(0, total - Math.min(pace.blockToCome, total));
+  }
   let clock = 0;
   let total = 0;
   for (const e of left) {
@@ -147,7 +178,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   if (loss >= s.player.hp) return -WIN - enemyHp;
 
   let score = -loss * w.hpLoss - enemyHp * w.enemyHp;
-  if (w.future > 0) score -= futureDamage(s) * w.future;
+  if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
     const attacking = e.intents.some((i) => i.type === "Attack");
