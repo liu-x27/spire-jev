@@ -123,7 +123,43 @@ states, and only a simulator is fast enough for that.
      2. Potions are never used. Enemy HP after the enemies' turn is not
      checked (Flame Barrier's damage back is not modelled). Next: the
      evaluation weights (1.4), with the scaling enemies as the cases.
-2. **Non-combat decisions**: rules alone vs rules + judge, measured.
+   - *1.4, evaluation weights — a negative result.* A Vantom post-mortem
+     showed turns 1-3 spent blocking small hits while Slippery made each
+     attack worth 1 HP. The evaluation got an optional term for the rest of
+     the fight (`futureDamage` in search.ts: each enemy's damage per turn,
+     from its intent or its average in `data/bestiary.json`, times the turns
+     the deck needs to kill it, killed in Smith's-rule order; Slippery as HP
+     to chew through; optionally only what gets past the deck's block). On
+     the tuning seeds 1-15 it looked good (floors reached 18.3 → 21.3 at
+     weight 0.5; 0.25, 0.75, 1.0 no better), but on held-out seeds 16-45 —
+     which the bestiary was not built from — it was no better (18.6, 18.6,
+     block-aware 17.4) and lost 7-10% more HP in the fights both played. The
+     default stays this turn only; the term stays in the code, off. Tools:
+     `src/eval.ts` (one configuration over many seeds, four sandboxes at
+     once) and `src/compare.ts` (two configurations, fight for fight).
+     Lesson kept: judge on held-out seeds, and on HP lost in shared fights,
+     which has far less noise than floors reached.
+
+2. **Non-combat decisions**, started 2026-09-23 night. Research in
+   `docs/STRATEGY-research.md` (tier lists of two top players, Untapped's
+   pick rates by act, the wiki, Jorbs' run spreadsheet; ~70 checkable rules,
+   each tagged by how well it is supported). `src/choices.ts` makes the
+   choices by those rules — card rewards (half tier lists, half act pick
+   rate; always/never lists; AoE, multi-hit and early-damage needs in act 1;
+   skip below a per-act threshold), shop (removal first, S-tier cards, no
+   filler), rest (smith at 65%+, rest at 40%), upgrade order, events by id
+   and option key (22 events and the two act 2 Ancients seen so far), and
+   every card selection by what it is for. The bridge now hands every card
+   selection to us (AutoSlay's selector picked at random: upgrades,
+   removals, event transforms and in-fight selections were all random until
+   then). `run-fights.ts --choices rules`; potions are picked up when there
+   is a slot but not yet drunk.
+   **Result, seeds 1-45** (none used to write the rules; same planner, turn
+   weights): mean floor reached 18.4 with the fixed choices, **21.6** with
+   the rules — further on 24 seeds, shorter on 10 (sign test p ≈ 0.02);
+   11 runs reached the act 2 boss (none before). Over the 478 fights both
+   played, HP lost fell 16% (8362 → 6999) and wins rose 443 → 457.
+   Still to measure: rules alone vs rules + judge; potions drunk; the map.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
