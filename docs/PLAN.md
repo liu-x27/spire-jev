@@ -87,6 +87,42 @@ states, and only a simulator is fast enough for that.
 
 1. **Combat planner, Ironclad**, measured headless: fights won, HP lost, and
    planning time per turn.
+   **Progress, 2026-09-23.** `planner/` (TypeScript, no npm dependencies):
+   `sim.ts` models a turn from the numbers the bridge reports, `search.ts`
+   tries every play order (equal states merged, identical cards offered once),
+   scores every stopping point, plays only the first action and plans again.
+   It does not look at the draw pile's order — the player cannot — so a draw
+   is a count of unknown cards and a card that plays an unseen one (Havoc) is
+   approximate, and the plan says so. `run-fights.ts` plays real fights in the
+   sandbox and, after every card, compares the prediction with the game:
+   `node src/run-fights.ts --policy planner|naive --runs 5 --seed 1 --port 47100 [--cards take]`
+   (two ports run two sandboxes side by side; logs in `planner/runs/`, each
+   with a catalogue of every card seen and the state before every mismatch).
+   - *Against a naive policy* (first playable card), same seeds so the same
+     fights, card rewards skipped, 5 seeds: over the 28 fights both played the
+     planner lost 396 HP to naive's 672 and won 28 to 23; death floors averaged
+     10.4 against 7.6. (Before the card rules below; to be rerun.)
+   - *The simulator against the game*, card rewards taken so the deck grows,
+     15 seeds reaching act 2: 169 fights, 2482 cards, 42 fields that differ —
+     all on the four things modelled approximately on purpose (Sword
+     Boomerang's random targets, Havoc's unseen card, Juggernaut's random
+     target with more than one enemy, Juggling's count of earlier attacks).
+     End-of-turn HP loss exact in 734 of 734 turns. Seeds 1-5 went from 94
+     differing fields to 11, seeds 6-10 from 165 to 23, one batch of rules at
+     a time, each rule written from what the game did and pinned by a test
+     (`test/rules.test.ts`, 43 tests in all).
+   - *Time*: planning p50 0.05 ms, p95 under 0.5 ms, max 7 ms; at most 884
+     states; never truncated.
+   - *Bridge fixes found on the way*: after the act 1 boss the map is rebuilt
+     under the bridge and it clicked a disposed point (runs ended at floor 17);
+     simple card selects offered no actions. It now also reports each power's,
+     relic's and enchantment's own numbers, a hand card's gold glow and its
+     calculated values.
+   - *Known limits*: the planner sees one turn, so it loses to enemies that
+     grow — Vantom (act 1 boss, Slippery 8+) ended 8 of the 15 runs, Byrdonis
+     2. Potions are never used. Enemy HP after the enemies' turn is not
+     checked (Flame Barrier's damage back is not modelled). Next: the
+     evaluation weights (1.4), with the scaling enemies as the cases.
 2. **Non-combat decisions**: rules alone vs rules + judge, measured.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
