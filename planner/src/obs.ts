@@ -15,6 +15,10 @@ export interface CardObs {
   keywords: string[];
   vars: Record<string, number>;
   card_type: string;
+  /** Hand cards: the card glows gold, its condition holds (Spite once you have lost HP this turn). */
+  glows?: boolean;
+  /** Hand cards: a calculated var's value as the game computes it now. */
+  calculated?: Record<string, number>;
 }
 
 export interface IntentObs {

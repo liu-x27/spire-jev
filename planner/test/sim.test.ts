@@ -4,7 +4,7 @@ import { actionId, planTurn } from "../src/search.ts";
 import { attackDamage, type Card, type Enemy, hpLoss, play, powerKey, type State } from "../src/sim.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
-  id, cost, costsX: false, type, target, keywords: [], vars, upgrades: 0, locked: false,
+  id, cost, costsX: false, type, target, keywords: [], vars, upgrades: 0, locked: false, glows: false,
 });
 const STRIKE = card("STRIKE_IRONCLAD", "Attack", "AnyEnemy", { Damage: 6 });
 const DEFEND = card("DEFEND_IRONCLAD", "Skill", "Self", { Block: 5 });
@@ -12,14 +12,14 @@ const BASH = card("BASH", "Attack", "AnyEnemy", { Damage: 8, VulnerablePower: 2 
 
 function enemy(hp: number, attack: number, hits = 1): Enemy {
   return {
-    id: 1, model: "NIBBIT", hp, maxHp: hp, block: 0, alive: true, powers: {}, weakAtStart: false,
+    id: 1, model: "NIBBIT", hp, maxHp: hp, block: 0, alive: true, powers: {}, weakAtStart: false, startStrength: 0,
     intents: [{ type: "Attack", damage: attack, hits }],
   };
 }
 function state(hand: Card[], energy: number, foe: Enemy, playerHp = 80): State {
   return {
     player: { hp: playerHp, maxHp: 80, block: 0, powers: {} },
-    energy, hand, draw: [], discard: [], exhaust: [], enemies: [foe], drawn: 0, exact: true,
+    energy, hand, draw: [], discard: [], exhaust: [], enemies: [foe], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [],
   };
 }
 
@@ -73,6 +73,16 @@ test("plating is block at the end of the turn", () => {
   s.player.block = 5;
   s.player.powers["PLATING"] = 4;
   assert.equal(hpLoss(s), 6);
+});
+
+test("drawing from an empty draw pile takes the discard pile back first (seen on Pommel Strike)", () => {
+  const POMMEL = card("POMMEL_STRIKE", "Attack", "AnyEnemy", { Damage: 9, Cards: 1 });
+  const s = state([POMMEL], 1, enemy(40, 0));
+  s.discard = [STRIKE, STRIKE, DEFEND];
+  const after = play(s, { kind: "play", hand: 0, target: 1 });
+  assert.equal(after.drawn, 1);
+  assert.equal(after.draw.length, 2);
+  assert.deepEqual(after.discard.map((c) => c.id), ["POMMEL_STRIKE"]);
 });
 
 test("takes the kill when it is there", () => {

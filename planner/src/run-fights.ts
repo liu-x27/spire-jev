@@ -24,7 +24,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { Game, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
-import type { LegalAction, Observation } from "./obs.ts";
+import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { actionId, planTurn } from "./search.ts";
 import { type Action, type Card, fromObservation, hpLoss, play } from "./sim.ts";
 
@@ -34,6 +34,7 @@ export interface FightLog {
   seed: string;
   floor: number;
   enemies: string[];
+  relics: string[];
   won: boolean;
   hpStart: number;
   /** After the fight, so after relics that heal on a win (Burning Blood). */
@@ -56,6 +57,19 @@ export interface FightLog {
 
 const label = (c: Card) => `${c.id}${c.upgrades > 0 ? "+" : ""}`;
 
+/** Every card seen, as the game describes it: what a card's own rule is written from. */
+const catalog = new Map<string, Omit<CardObs, "index" | "can_play">>();
+function collect(o: Observation): void {
+  const c = o.combat;
+  if (!c) return;
+  for (const card of [...c.hand, ...c.draw_pile, ...c.discard_pile, ...c.exhaust_pile]) {
+    const key = `${card.card_id}${card.upgrades > 0 ? "+" : ""}`;
+    if (catalog.has(key)) continue;
+    const { index: _index, can_play: _canPlay, ...rest } = card;
+    catalog.set(key, rest);
+  }
+}
+
 /** One line of the state that matters for a mismatch: HP, block, powers and their numbers, intents. */
 function brief(o: Observation): string {
   const pw = (p: Record<string, number>, v: Record<string, Record<string, number>> | undefined) =>
@@ -63,7 +77,8 @@ function brief(o: Observation): string {
   const player = `P ${o.player_hp}hp ${o.player_block}blk ${o.player_energy}e [${pw(o.player_powers, o.player_power_vars)}]`;
   const enemies = (o.combat?.enemies ?? []).filter((e) => e.is_alive).map((e) =>
     `E${e.combat_id} ${e.model_id} ${e.hp}hp ${e.block}blk [${pw(e.powers, e.power_vars)}] ${e.intents.map((i) => i.type + (i.damage ? `${i.damage}x${i.hits}` : "")).join("+")}`);
-  return [player, ...enemies].join(" | ");
+  const hand = `H[${(o.combat?.hand ?? []).map((c) => c.card_id + (c.upgrades > 0 ? "+" : "")).join(",")}] draw ${o.combat?.draw_pile.length ?? 0} discard ${o.combat?.discard_pile.length ?? 0} exhaust ${o.combat?.exhaust_pile.length ?? 0}`;
+  return [player, hand, ...enemies].join(" | ");
 }
 
 function parseAction(id: string): Action {
@@ -99,16 +114,19 @@ function routine(obs: Observation, legal: LegalAction[], takeCards: boolean): st
   }
 }
 
-async function fight(game: Game, start: StepResult, policy: Policy, seed: string): Promise<{ log: FightLog; next: StepResult }> {
+/** One fight, logged into `logs` as it goes, so a game that dies mid-fight still leaves what it did. */
+async function fight(game: Game, start: StepResult, policy: Policy, seed: string, logs: FightLog[]): Promise<{ log: FightLog; next: StepResult }> {
   const o = start.observation;
   const log: FightLog = {
-    seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id),
+    seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id), relics: o.relics,
     won: false, hpStart: o.player_hp, hpEnd: o.player_hp, hpLost: 0, maxHp: o.player_max_hp,
     turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [],
   };
+  logs.push(log);
   let cur = start;
   while (cur.observation.phase === "combat" && cur.observation.combat) {
     const obs = cur.observation;
+    collect(obs);
     const s = fromObservation(obs);
     const legal = new Set(cur.legal_actions.map((a) => a.action_id));
 
@@ -144,7 +162,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       if (inCombat) {
         for (const m of compare(label(card), predicted, fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
       } else if (after.phase !== "game_over" && predicted.enemies.some((e) => e.alive)) {
-        log.mismatches.push({ card: label(card), field: "combat.ended", predicted: "ongoing", actual: after.phase });
+        log.mismatches.push({ card: label(card), field: "combat.ended", predicted: "ongoing", actual: after.phase, before: brief(obs) });
       }
     } else {
       log.turns++;
@@ -167,8 +185,7 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
   for (let steps = 0; !cur.observation.is_terminal && steps < MAX_STEPS; steps++) {
     if (cur.observation.phase === "combat" && cur.observation.combat) {
       if (fights++ >= maxFights) return;
-      const { log, next } = await fight(game, cur, policy, seed);
-      logs.push(log);
+      const { log, next } = await fight(game, cur, policy, seed, logs);
       const ms = log.planMs.length ? ` plan p95 ${pct(log.planMs, 0.95).toFixed(2)} ms` : "";
       console.log(
         `  floor ${String(log.floor).padStart(2)} ${log.won ? "won " : "LOST"} ${log.enemies.join("+").padEnd(28)}` +
@@ -266,7 +283,8 @@ async function main(): Promise<void> {
   const out = path.join(repo, "planner", "runs");
   fs.mkdirSync(out, { recursive: true });
   const file = path.join(out, `${policy}-${values.cards}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
-  fs.writeFileSync(file, JSON.stringify(logs, null, 1));
+  const cards = Object.fromEntries([...catalog].sort(([a], [b]) => a.localeCompare(b)));
+  fs.writeFileSync(file, JSON.stringify({ fights: logs, cards }, null, 1));
   console.log(`\n${summarise(policy, logs)}\n\nlog: ${file}`);
 }
 
