@@ -80,6 +80,8 @@ export interface State {
   relicVars?: Readonly<Record<string, Record<string, number>>>;
   /** Cards played since the observation (Slow counts them). */
   played: number;
+  /** Skills played since the observation (Tuning Fork counts them). */
+  skills: number;
 }
 
 export type Action = { kind: "play"; hand: number; target?: number } | { kind: "end" };
@@ -160,6 +162,7 @@ export function fromObservation(obs: Observation): State {
     relics: obs.relics,
     ...(obs.relic_vars ? { relicVars: obs.relic_vars } : {}),
     played: 0,
+    skills: 0,
   };
 }
 
@@ -180,6 +183,7 @@ function clone(s: State): State {
     relics: s.relics,
     ...(s.relicVars ? { relicVars: s.relicVars } : {}),
     played: s.played,
+    skills: s.skills,
   };
 }
 
@@ -412,8 +416,10 @@ function damageOf(s: State, card: Card): number | undefined {
   // Body Slam: its extra damage per point of block, and block changes within the turn.
   else if (card.id === "BODY_SLAM") damage = (v["CalculationBase"] ?? 0) + (v["ExtraDamage"] ?? 0) * s.player.block;
   else damage = card.calc?.["CalculatedDamage"] ?? v["CalculationBase"];
-  // Strike Dummy: 3 more for every Strike, added like strength.
-  if (damage !== undefined && card.id.includes("STRIKE") && s.relics.includes("STRIKE_DUMMY")) damage += 3;
+  // Strike Dummy: more for every Strike, added like strength.
+  if (damage !== undefined && card.id.includes("STRIKE") && s.relics.includes("STRIKE_DUMMY")) {
+    damage += s.relicVars?.["STRIKE_DUMMY"]?.["ExtraDamage"] ?? 3;
+  }
   return damage;
 }
 
@@ -615,6 +621,12 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   // Juggling copies an attack into the hand by how many attacks came before it this turn, which the model does not see.
   if (card.type === "Attack" && has(s.player, "JUGGLING")) s.exact = false;
   s.played++;
+  // Tuning Fork: block for every tenth skill, counted across fights.
+  if (card.type === "Skill") {
+    s.skills++;
+    const fork = s.relics.includes("TUNING_FORK") ? s.relicVars?.["TUNING_FORK"] : undefined;
+    if (fork && ((fork["_skillsPlayed"] ?? 0) + s.skills) % (fork["Cards"] || 10) === 0) gainBlock(s, fork["Block"] ?? 7);
+  }
   // Tender (Hunter Killer): every card played takes that much Strength and Dexterity, after it resolves.
   const tender = s.player.powers["TENDER"] ?? 0;
   if (tender > 0) {
@@ -673,5 +685,5 @@ export function stateKey(s: State): string {
   const hand = s.hand.map((c) => `${c.id}.${c.upgrades}.${c.cost}`).sort().join(",");
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}`;
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}`;
 }

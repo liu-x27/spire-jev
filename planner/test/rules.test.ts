@@ -18,7 +18,7 @@ function foe(hp: number, attack = 0): Enemy {
 function state(hand: Card[], e: Enemy = foe(80)): State {
   return {
     player: { hp: 80, maxHp: 80, block: 0, powers: {} },
-    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0,
+    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0,
   };
 }
 const at = (s: State, hand: number) => play(s, { kind: "play", hand, target: 1 });
@@ -243,4 +243,14 @@ test("unrelenting makes the next attack free, and only the next", () => {
   assert.equal(free.energy, 0);
   assert.equal(free.player.powers["FREE_ATTACK"], 0);
   assert.equal(free.hand.length, 1);
+});
+
+test("tuning fork blocks on the tenth skill, counting the ones before this fight", () => {
+  const defend = card("DEFEND_IRONCLAD", "Skill", "Self", { Block: 5 });
+  const s = state([defend, defend]);
+  s.relics = ["TUNING_FORK"];
+  s.relicVars = { TUNING_FORK: { Cards: 10, Block: 7, _skillsPlayed: 8 } };
+  const ninth = play(s, { kind: "play", hand: 0 });
+  assert.equal(ninth.player.block, 5);
+  assert.equal(play(ninth, { kind: "play", hand: 0 }).player.block, 17);
 });
