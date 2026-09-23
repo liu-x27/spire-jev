@@ -12,7 +12,7 @@
  */
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
-import { type Action, actions, type Card, type Enemy, hpLoss, play, type State, stateKey } from "./sim.ts";
+import { type Action, actions, type Card, drink, type Enemy, hpLoss, play, type State, stateKey } from "./sim.ts";
 
 export interface Weights {
   /** Per point of HP the enemies' attacks will take this turn. */
@@ -39,10 +39,16 @@ export interface Weights {
    * no pressure on the fight's length; 0: all of it, as first written.
    */
   futureBlock: number;
+  /**
+   * What drinking a potion costs, in HP: it is gone for later fights. A
+   * third of it in a fight with an enemy of 100 max HP or more (a boss or an
+   * elite), and less again when the belt is full (the next one would be lost).
+   */
+  potion: number;
 }
 
 /** The first version: this turn only. */
-export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0 };
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10 };
 export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
 
 /** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
@@ -177,7 +183,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   const loss = hpLoss(s);
   if (loss >= s.player.hp) return -WIN - enemyHp;
 
-  let score = -loss * w.hpLoss - enemyHp * w.enemyHp;
+  let score = -loss * w.hpLoss - enemyHp * w.enemyHp - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
@@ -187,6 +193,12 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
   score += s.drawn * w.drawn;
   return score;
+}
+
+function potionCost(s: State, w: Weights): number {
+  const big = s.enemies.some((e) => e.maxHp >= 100);
+  const full = s.potions.length + s.potionsUsed >= s.potionSlots;
+  return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1);
 }
 
 export interface Plan {
@@ -219,7 +231,7 @@ export function planTurn(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 
     }
     for (const a of actions(s)) {
       if (a.kind === "end") continue;
-      const next = play(s, a);
+      const next = a.kind === "potion" ? drink(s, a) : play(s, a);
       const key = stateKey(next);
       if (seen.has(key)) continue;
       seen.add(key);
@@ -234,5 +246,7 @@ export function planTurn(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 
 /** The bridge's id for an action, against the current hand's indices. */
 export function actionId(a: Action): string {
   if (a.kind === "end") return "end_turn";
+  // A potion drunk on the player needs the player's combat id, which the runner reads off the legal actions.
+  if (a.kind === "potion") return a.target === undefined ? `use_potion:${a.slot}` : `use_potion:${a.slot}:target:${a.target}`;
   return a.target === undefined ? `play_card:${a.hand}` : `play_card:${a.hand}:target:${a.target}`;
 }

@@ -20,7 +20,7 @@ function state(hand: Card[], energy: number, enemies: Enemy[]): State {
   return {
     player: { hp: 80, maxHp: 80, block: 0, powers: {} },
     energy, hand, draw: [STRIKE, STRIKE, DEFEND, DEFEND], discard: [], exhaust: [], enemies, drawn: 0, exact: true,
-    lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0, unmovableUsed: false,
+    lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0, unmovableUsed: false, potions: [], potionSlots: 3, potionsUsed: 0,
   };
 }
 

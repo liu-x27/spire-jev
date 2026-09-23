@@ -84,9 +84,23 @@ export interface State {
   skills: number;
   /** Unmovable has doubled a card's block this turn already (taken as so if there is block at the observation). */
   unmovableUsed: boolean;
+  /** Potions held, and how many slots there are. */
+  potions: Potion[];
+  potionSlots: number;
+  /** Potions drunk since the observation (the evaluation charges for each). */
+  potionsUsed: number;
 }
 
-export type Action = { kind: "play"; hand: number; target?: number } | { kind: "end" };
+export type Action = { kind: "play"; hand: number; target?: number } | { kind: "potion"; slot: number; target?: number } | { kind: "end" };
+
+/** A potion held, as the bridge describes it. */
+export interface Potion {
+  slot: number;
+  id: string;
+  target: string;
+  usage: string;
+  vars: Readonly<Record<string, number>>;
+}
 
 /** "VulnerablePower", "VULNERABLE_POWER", "vulnerable" → "VULNERABLE". */
 export function powerKey(name: string): string {
@@ -166,6 +180,9 @@ export function fromObservation(obs: Observation): State {
     played: 0,
     skills: 0,
     unmovableUsed: obs.player_block > 0,
+    potions: (obs.potion_details ?? []).map((p) => ({ slot: p.slot, id: p.id, target: p.target ?? "None", usage: p.usage ?? "", vars: p.vars ?? {} })),
+    potionSlots: obs.potion_slots ?? 3,
+    potionsUsed: 0,
   };
 }
 
@@ -188,6 +205,9 @@ function clone(s: State): State {
     played: s.played,
     skills: s.skills,
     unmovableUsed: s.unmovableUsed,
+    potions: s.potions.slice(),
+    potionSlots: s.potionSlots,
+    potionsUsed: s.potionsUsed,
   };
 }
 
@@ -304,8 +324,69 @@ export function actions(s: State): Action[] {
       out.push({ kind: "play", hand: i });
     }
   });
+  for (const p of s.potions) {
+    if (!drinkable(p)) continue;
+    if (p.target === "AnyEnemy") {
+      for (const e of s.enemies) if (e.alive) out.push({ kind: "potion", slot: p.slot, target: e.id });
+    } else {
+      out.push({ kind: "potion", slot: p.slot });
+    }
+  }
   out.push({ kind: "end" });
   return out;
+}
+
+/** The numbers a potion can have that the model knows what to do with. */
+const POTION_VARS = /^(Damage|Block|Energy|Cards|Heal|HpLoss|Repeat|\w+Power)$/;
+
+/** A potion the model can drink in a fight: one whose every number it understands. */
+export function drinkable(p: Potion): boolean {
+  if (/OutOfCombat|Automatic|None/i.test(p.usage)) return false;
+  const names = Object.keys(p.vars);
+  return names.length > 0 && names.every((n) => POTION_VARS.test(n));
+}
+
+/**
+ * Drink a potion: its numbers, flat (a potion's damage and block are not the
+ * player's attack or card block, so Strength, Dexterity and Vulnerable are
+ * left out until the game says otherwise); a power on the player unless the
+ * potion is thrown at enemies.
+ */
+export function drink(s0: State, a: Action & { kind: "potion" }): State {
+  const s = clone(s0);
+  const i = s.potions.findIndex((p) => p.slot === a.slot);
+  const p = s.potions[i];
+  if (!p) throw new Error(`no potion in slot ${a.slot}`);
+  s.potions.splice(i, 1);
+  s.potionsUsed++;
+  const v = p.vars;
+  const target = a.target === undefined ? undefined : s.enemies.find((e) => e.id === a.target);
+  const atEnemies = p.target === "AnyEnemy" || p.target === "AllEnemies" || p.target === "RandomEnemy";
+  const victims = p.target === "AllEnemies" ? s.enemies.filter((e) => e.alive) : p.target === "RandomEnemy" ? s.enemies.filter((e) => e.alive).slice(0, 1) : one(target);
+  if (p.target === "RandomEnemy") s.exact = false;
+  if (v["Damage"] !== undefined) {
+    for (let r = 0; r < (v["Repeat"] ?? 1); r++) for (const e of victims) if (e.alive) {
+      hit(e, v["Damage"]);
+      if (!e.alive) died(s, e);
+    }
+  }
+  if (v["Block"] !== undefined) gainBlock(s, v["Block"]);
+  for (const [name, n] of Object.entries(v)) {
+    if (!name.endsWith("Power") || name === "Power") continue;
+    if (atEnemies) {
+      for (const e of victims) if (e.alive) applyPower(s, e, powerKey(name), n);
+    } else {
+      applyPower(s, s.player, powerKey(name), n);
+    }
+  }
+  if (v["Energy"] !== undefined) s.energy += v["Energy"];
+  if (v["Heal"] !== undefined) s.player.hp = Math.min(s.player.maxHp, s.player.hp + v["Heal"]);
+  if (v["HpLoss"] !== undefined && v["HpLoss"] > 0) {
+    s.player.hp -= v["HpLoss"];
+    s.lostHp = true;
+  }
+  if (v["Cards"] !== undefined) draw(s, v["Cards"]);
+  return s;
 }
 
 /** Debuffs Artifact blocks, a stack each. */
@@ -746,5 +827,6 @@ export function stateKey(s: State): string {
   const hand = s.hand.map((c) => `${c.id}.${c.upgrades}.${c.cost}`).sort().join(",");
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}`;
+  const potions = s.potions.map((p) => p.slot).join(",");
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}`;
 }

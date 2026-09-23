@@ -31,7 +31,7 @@ import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseRest, chooseSelect, chooseShop, chooseUpgrade, wantsPotion } from "./choices.ts";
 import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
-import { type Action, type Card, fromObservation, hpLoss, play } from "./sim.ts";
+import { type Action, type Card, drink, fromObservation, hpLoss, play } from "./sim.ts";
 
 type Policy = "planner" | "naive";
 
@@ -45,6 +45,8 @@ export interface FightLog {
   relics: string[];
   /** Relics' numbers and counters when the fight began. */
   relicVars: Record<string, Record<string, number>>;
+  /** Potions held when the fight began. */
+  potions: string[];
   won: boolean;
   hpStart: number;
   /** After the fight, so after relics that heal on a win (Burning Blood). */
@@ -208,7 +210,7 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
 async function fight(game: Game, start: StepResult, policy: Policy, seed: string, logs: FightLog[]): Promise<{ log: FightLog; next: StepResult }> {
   const o = start.observation;
   const log: FightLog = {
-    seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id), relics: o.relics, relicVars: o.relic_vars ?? {},
+    seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id), relics: o.relics, relicVars: o.relic_vars ?? {}, potions: o.potions,
     won: false, hpStart: o.player_hp, hpEnd: o.player_hp, hpLost: 0, maxHp: o.player_max_hp,
     turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [], cardsPlayed: {},
   };
@@ -232,9 +234,15 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       a = naive(cur.legal_actions);
     }
     let id = actionId(a);
+    // A potion drunk on the player is offered with the player's combat id as its target.
+    if (a.kind === "potion" && !legal.has(id)) {
+      const prefix = `use_potion:${a.slot}`;
+      id = [...legal].find((l) => l.startsWith(prefix)) ?? id;
+    }
     if (!legal.has(id)) {
       const card = a.kind === "play" ? s.hand[a.hand] : undefined;
-      log.illegal.push(`${id}${card ? ` (${label(card)})` : ""}`);
+      const slot = a.kind === "potion" ? a.slot : -1;
+      log.illegal.push(`${id}${card ? ` (${label(card)})` : slot >= 0 ? ` (${s.potions.find((p) => p.slot === slot)?.id})` : ""}`);
       a = { kind: "end" };
       id = "end_turn";
     }
@@ -259,6 +267,10 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       } else if (after.phase !== "game_over" && predicted.enemies.some((e) => e.alive)) {
         log.mismatches.push({ card: label(card), field: "combat.ended", predicted: "ongoing", actual: after.phase, before: brief(obs) });
       }
+    } else if (a.kind === "potion") {
+      const potion = s.potions.find((p) => p.slot === a.slot)?.id ?? "?";
+      log.cardsPlayed[`POTION:${potion}`] = (log.cardsPlayed[`POTION:${potion}`] ?? 0) + 1;
+      if (inCombat) for (const m of compare(`POTION:${potion}`, drink(s, a), fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
     } else if (inCombat || after.phase === "game_over") {
       // (A fight that ends in the enemies' turn — one escapes, or dies to
       // Flame Barrier — shows HP after the win's heal: nothing to compare.)

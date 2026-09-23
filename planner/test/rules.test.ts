@@ -1,7 +1,8 @@
 // Card rules, each as the game showed it in a coverage run (planner/runs).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { type Card, type Enemy, hpLoss, play, type State } from "../src/sim.ts";
+import { actions, type Card, drink, type Enemy, hpLoss, play, type State } from "../src/sim.ts";
+import { planTurn } from "../src/search.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
   id, cost, costsX: false, type, target, keywords: [], vars, upgrades: 0, locked: false, glows: false,
@@ -18,7 +19,7 @@ function foe(hp: number, attack = 0): Enemy {
 function state(hand: Card[], e: Enemy = foe(80)): State {
   return {
     player: { hp: 80, maxHp: 80, block: 0, powers: {} },
-    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0, unmovableUsed: false,
+    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies: [e], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0, unmovableUsed: false, potions: [], potionSlots: 3, potionsUsed: 0,
   };
 }
 const at = (s: State, hand: number) => play(s, { kind: "play", hand, target: 1 });
@@ -299,4 +300,32 @@ test("stoke makes its new cards without touching the piles", () => {
   const after = play(s, { kind: "play", hand: 0 });
   assert.equal(after.drawn, 2);
   assert.equal(after.discard.length, 4);
+});
+
+test("potions: a thrown one hits the target it is thrown at, a drunk one works on the player", () => {
+  const s = state([], foe(40));
+  s.potions = [
+    { slot: 0, id: "FIRE_POTION", target: "AnyEnemy", usage: "CombatOnly", vars: { Damage: 20 } },
+    { slot: 1, id: "STRENGTH_POTION", target: "Self", usage: "CombatOnly", vars: { StrengthPower: 2 } },
+    { slot: 2, id: "WEAK_POTION", target: "AnyEnemy", usage: "CombatOnly", vars: { WeakPower: 3 } },
+  ];
+  const acts = actions(s).filter((a) => a.kind === "potion");
+  assert.deepEqual(acts, [{ kind: "potion", slot: 0, target: 1 }, { kind: "potion", slot: 1 }, { kind: "potion", slot: 2, target: 1 }]);
+  const fire = drink(s, { kind: "potion", slot: 0, target: 1 });
+  assert.equal(fire.enemies[0]!.hp, 20);
+  assert.equal(fire.potions.length, 2);
+  assert.equal(drink(s, { kind: "potion", slot: 1 }).player.powers["STRENGTH"], 2);
+  const weak = drink(s, { kind: "potion", slot: 2, target: 1 });
+  assert.equal(weak.enemies[0]!.powers["WEAK"], 3);
+  assert.equal(weak.player.powers["WEAK"], undefined);
+});
+
+test("a potion is drunk when it saves the fight, and kept when it only saves a little", () => {
+  const s = state([], foe(10, 30));
+  s.player.hp = 20;
+  s.potions = [{ slot: 0, id: "BLOCK_POTION", target: "Self", usage: "CombatOnly", vars: { Block: 12 } }];
+  assert.equal(planTurn(s).actions[0]!.kind, "potion");
+  const calm = state([], foe(10, 4));
+  calm.potions = s.potions;
+  assert.equal(planTurn(calm).actions[0]!.kind, "end");
 });
