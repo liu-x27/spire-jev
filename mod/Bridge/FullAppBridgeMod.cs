@@ -745,7 +745,39 @@ public static class FullAppBridgeMod
                     await Task.Delay(100);
                     appeared = UiHelper.FindAll<NEventOptionButton>(eventRoom).Any(b => b.Option != null && !b.Option.IsLocked);
                 }
-                if (!appeared) break;
+                if (!appeared)
+                {
+                    // spire-jev: say which event this is and what its room holds, to handle it next time.
+                    try
+                    {
+                        string id = (RunManager.Instance?.DebugOnlyGetState()?.BaseRoom as MegaCrit.Sts2.Core.Rooms.EventRoom)?.CanonicalEvent?.Id.Entry ?? "?";
+                        var kinds = new SortedSet<string>();
+                        void Walk(Node n, int depth)
+                        {
+                            kinds.Add(n.GetType().Name);
+                            if (depth < 6) foreach (Node c in n.GetChildren()) Walk(c, depth + 1);
+                        }
+                        Walk(eventRoom, 0);
+                        GD.Print($"[spire-jev] event {id} shows no option buttons; its room holds: {string.Join(", ", kinds)}");
+                    }
+                    catch (Exception ex) { GD.PrintErr($"[spire-jev] event diagnosis failed: {ex.Message}"); }
+                    // An event with a room of its own and a proceed button (FAKE_MERCHANT's
+                    // shop): leave by the button, since AutoSlay waits for an option that is not there.
+                    var proceed = UiHelper.FindFirst<NProceedButton>(eventRoom);
+                    if (proceed != null && GodotObject.IsInstanceValid(proceed))
+                    {
+                        // The fake merchant enables its button when its room has loaded, which
+                        // headless may not tell it: tell it, give it a moment, then click regardless.
+                        foreach (Node custom in UiHelper.FindAll<Control>(eventRoom).Where(c => c.GetType().Name == "NFakeMerchant"))
+                        {
+                            try { custom.GetType().GetMethod("AfterRoomIsLoaded")?.Invoke(custom, null); } catch { }
+                        }
+                        for (int wait = 0; wait < 20 && !proceed.IsEnabled; wait++) await Task.Delay(100);
+                        await UiHelper.Click(proceed, 0);
+                        await Task.Delay(50);
+                    }
+                    break;
+                }
                 continue;
             }
 
