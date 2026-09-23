@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Entities.Merchant;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Events;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -48,7 +49,7 @@ public static class FullAppStateTracker
         return vars;
     }
 
-    private static CardObservationDto DescribeCard(CardModel card, int index, bool canPlay)
+    private static CardObservationDto DescribeCard(CardModel card, int index, bool canPlay, bool inHand = false)
     {
         var dto = new CardObservationDto
         {
@@ -73,6 +74,19 @@ public static class FullAppStateTracker
             foreach (var pair in card.DynamicVars) dto.Vars[pair.Key] = (int)pair.Value.BaseValue;
         }
         catch { }
+        if (inHand)
+        {
+            try { dto.GlowsGold = card.ShouldGlowGold; } catch { }
+            try
+            {
+                Creature? target = card.CombatState?.HittableEnemies.FirstOrDefault();
+                foreach (var pair in card.DynamicVars)
+                {
+                    if (pair.Value is CalculatedVar calculated) dto.Calculated[pair.Key] = (int)calculated.Calculate(target!);
+                }
+            }
+            catch { }
+        }
         return dto;
     }
 
@@ -158,7 +172,7 @@ public static class FullAppStateTracker
             {
                 CardModel card = handCards[i];
                 bool canPlay = card.CanPlay();
-                combatObs.Hand.Add(DescribeCard(card, i, canPlay));
+                combatObs.Hand.Add(DescribeCard(card, i, canPlay, inHand: true));
 
                 if (canPlay)
                 {

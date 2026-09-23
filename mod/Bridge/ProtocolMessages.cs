@@ -185,6 +185,15 @@ public sealed class CardObservationDto
 
     [JsonPropertyName("card_type")]
     public string CardType { get; set; } = "";
+
+    // spire-jev, hand cards only: the card glows gold when its condition holds
+    // (Spite once you have lost HP this turn), and a calculated var's value as
+    // the game computes it now (Body Slam's damage from your block).
+    [JsonPropertyName("glows")]
+    public bool GlowsGold { get; set; }
+
+    [JsonPropertyName("calculated")]
+    public Dictionary<string, int> Calculated { get; set; } = new();
 }
 
 public sealed class EnemyObservationDto
