@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The game-side bridge: state out, actions in, over line-delimited JSON on
+       TCP. Derived from divine-sts2's FullAppBridge (MIT, see
+       ../LICENSE-divine-sts2); extended with what a planner needs. -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>spire-jev-bridge</AssemblyName>
+    <RootNamespace>Sts2.NativeSim.FullAppBridge</RootNamespace>
+    <GameDataDir Condition="'$(GameDataDir)' == ''">D:\SteamLibrary\steamapps\common\Slay the Spire 2\data_sts2_windows_x86_64</GameDataDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="sts2" HintPath="$(GameDataDir)\sts2.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(GameDataDir)\0Harmony.dll" Private="false" />
+    <Reference Include="GodotSharp" HintPath="$(GameDataDir)\GodotSharp.dll" Private="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="spire-jev-bridge.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="Package" AfterTargets="Build">
+    <MakeDir Directories="$(OutputPath)package" />
+    <Copy SourceFiles="$(TargetPath);spire-jev-bridge.json" DestinationFolder="$(OutputPath)package" />
+  </Target>
+</Project>

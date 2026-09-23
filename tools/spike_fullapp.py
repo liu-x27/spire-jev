@@ -7,8 +7,7 @@ and APPDATA/LOCALAPPDATA pointed into the sandbox, so the real install, saves,
 settings and Steam are not touched. Then: hello, start an Ironclad run,
 observe, list legal actions, play one card, observe again, close.
 
-The bridge mod is divine-sts2's FullAppBridge (MIT), built from source in
-third_party/. The sandbox layout follows its full_app_client.py, except that
+The bridge mod is mod/Bridge, derived from divine-sts2's FullAppBridge (MIT). The sandbox layout follows its full_app_client.py, except that
 the settings file is written fresh rather than copied from the real profile.
 
 Run: python tools/spike_fullapp.py
@@ -26,7 +25,7 @@ from pathlib import Path
 GAME = Path(r"D:\SteamLibrary\steamapps\common\Slay the Spire 2")
 REPO = Path(__file__).resolve().parent.parent
 SANDBOX = REPO / "sandbox" / "w0"
-MOD_PACKAGE = REPO / "third_party" / "divine-sts2" / "src" / "Sts2.NativeSim.FullAppBridge" / "bin" / "Release" / "net9.0" / "package"
+MOD_PACKAGE = REPO / "mod" / "Bridge" / "bin" / "Release" / "net9.0" / "package"
 PORT = 47100
 
 
@@ -41,7 +40,9 @@ def prepare() -> None:
         if (GAME / d).exists() and not dest.exists():
             subprocess.run(f'cmd /c mklink /J "{dest}" "{GAME / d}"', shell=True, check=True, stdout=subprocess.DEVNULL)
 
-    mod_dir = SANDBOX / "mods" / "sts2-full-app-bridge"
+    # Only our bridge: an older copy left in mods/ would load beside it.
+    shutil.rmtree(SANDBOX / "mods", ignore_errors=True)
+    mod_dir = SANDBOX / "mods" / "spire-jev-bridge"
     mod_dir.mkdir(parents=True, exist_ok=True)
     for f in MOD_PACKAGE.glob("*"):
         shutil.copy2(f, mod_dir / f.name)

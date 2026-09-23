@@ -1,0 +1,10 @@
+{
+  "id": "spire-jev-bridge",
+  "name": "spire-jev bridge",
+  "author": "spire-jev (derived from divine-sts2, MIT)",
+  "description": "Observation and control over local TCP for a headless planner. Presentation-only patches; no gameplay changes.",
+  "version": "0.1.0",
+  "has_pck": false,
+  "has_dll": true,
+  "affects_gameplay": false
+}

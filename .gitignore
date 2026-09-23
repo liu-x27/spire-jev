@@ -4,3 +4,9 @@ bin/
 obj/
 *.log
 sandbox/
+tools/inspect/bin/
+tools/inspect/obj/
+mod/Bridge/bin/
+mod/Bridge/obj/
+mod/build.log
+tools/inspect/build.log
