@@ -31,7 +31,7 @@ import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseSelect, chooseShop, chooseUpgrade, wantsPotion } from "./choices.ts";
 import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
-import { type Action, type Card, drink, fromObservation, hpLoss, play } from "./sim.ts";
+import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, play } from "./sim.ts";
 
 type Policy = "planner" | "naive";
 
@@ -198,7 +198,7 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
   if (/^FromHand(ForDiscard)?$/.test(purpose)) {
     const junk = cards.findIndex((c) => c.card_type === "Status" || c.card_type === "Curse");
     i = junk >= 0 ? junk : offers.length - 1;
-  } else if (/Upgrade/.test(purpose)) {
+  } else if (/Upgrade|ChooseACard|SimpleGrid|Bundle/.test(purpose)) {
     let best = -Infinity;
     cards.forEach((c, j) => {
       const v = cardValue(c.card_id, 0, obs.deck_cards);
@@ -206,6 +206,33 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
     });
   }
   return offers[Math.min(i, offers.length - 1)]!.action_id;
+}
+
+/** Potions that work by themselves (Fairy in a Bottle saves a death), or are worth more kept. */
+const KEEP_POTIONS = new Set(["FAIRY_IN_A_BOTTLE"]);
+const BOSSES = new Set(["VANTOM", "THE_INSATIABLE", "QUEEN", "TEST_SUBJECT", "AEONGLASS"]);
+
+/**
+ * §10.8: a potion the planner cannot model is still worth drinking where it
+ * counts — dying with a full belt was the rule, not the exception (2-5
+ * potions held at almost every death). In a boss fight, drink them in the
+ * first two turns; in any fight, drink before a turn no play survives.
+ * Thrown potions go at the enemy with the least HP.
+ */
+function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, legal: LegalAction[], hopeless: boolean, tried: Set<string>): string | undefined {
+  const boss = s.enemies.some((e) => e.alive && (BOSSES.has(e.model) || e.maxHp >= 250));
+  const turn = obs.combat?.turn ?? 1;
+  if (!(hopeless || (boss && turn <= 2))) return undefined;
+  const byHp = [...s.enemies].filter((e) => e.alive).sort((a, b) => a.hp - b.hp);
+  // A potion tried this turn and still held was refused: not again this turn.
+  const uses = legal.filter((a) => a.action_id.startsWith("use_potion:") && !KEEP_POTIONS.has(String(a.metadata?.["potion_id"] ?? ""))
+    && !tried.has(`${turn}:${a.action_id.split(":")[1]}`));
+  for (const a of uses) {
+    const target = a.metadata?.["target_id"];
+    if (target === undefined || !s.enemies.some((e) => e.id === Number(target))) return a.action_id;
+    if (Number(target) === byHp[0]?.id) return a.action_id;
+  }
+  return uses[0]?.action_id;
 }
 
 /** One fight, logged into `logs` as it goes, so a game that dies mid-fight still leaves what it did. */
@@ -217,6 +244,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
     turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [], cardsPlayed: {},
   };
   logs.push(log);
+  const tried = new Set<string>();
   let cur = start;
   while (cur.observation.phase === "combat" && cur.observation.combat) {
     const obs = cur.observation;
@@ -225,6 +253,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
     const legal = new Set(cur.legal_actions.map((a) => a.action_id));
 
     let a: Action;
+    let urged: string | undefined;
     if (policy === "planner") {
       const plan = planTurn(s, weights);
       log.planMs.push(plan.ms);
@@ -232,10 +261,18 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       if (plan.truncated) log.truncated++;
       if (!plan.exact) log.inexact++;
       a = plan.actions[0] ?? { kind: "end" };
+      // A potion the planner does not model, where it counts (the plan's own potions come first).
+      if (a.kind !== "potion" && usePotions) urged = potionUrge(obs, s, cur.legal_actions, plan.score < -5e5, tried);
     } else {
       a = naive(cur.legal_actions);
     }
     let id = actionId(a);
+    if (urged) {
+      const slot = Number(urged.split(":")[1]);
+      tried.add(`${obs.combat?.turn ?? 1}:${slot}`);
+      a = urged.includes(":target:") ? { kind: "potion", slot, target: Number(urged.split(":")[3]) } : { kind: "potion", slot };
+      id = urged;
+    }
     // A potion drunk on the player is offered with the player's combat id as its target.
     if (a.kind === "potion" && !legal.has(id)) {
       const prefix = `use_potion:${a.slot}`;
@@ -270,9 +307,11 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
         log.mismatches.push({ card: label(card), field: "combat.ended", predicted: "ongoing", actual: after.phase, before: brief(obs) });
       }
     } else if (a.kind === "potion") {
-      const potion = s.potions.find((p) => p.slot === a.slot)?.id ?? "?";
+      const held = s.potions.find((p) => p.slot === a.slot);
+      const potion = held?.id ?? "?";
       log.cardsPlayed[`POTION:${potion}`] = (log.cardsPlayed[`POTION:${potion}`] ?? 0) + 1;
-      if (inCombat) for (const m of compare(`POTION:${potion}`, drink(s, a), fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
+      // Only the potions the model can drink are held to its prediction.
+      if (inCombat && held && drinkable(held)) for (const m of compare(`POTION:${potion}`, drink(s, a), fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
     } else if (inCombat || after.phase === "game_over") {
       // (A fight that ends in the enemies' turn — one escapes, or dies to
       // Flame Barrier — shows HP after the win's heal: nothing to compare.)
@@ -291,6 +330,8 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
 const MAX_STEPS = 2000;
 
 let useRules = false;
+/** Drink potions the planner cannot model, where it counts (on with --choices rules). */
+let usePotions = false;
 
 async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[]): Promise<void> {
   let cur = await game.startRun(seed);
@@ -382,6 +423,7 @@ async function main(): Promise<void> {
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
   useRules = values.choices === "rules";
+  usePotions = useRules;
   if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
   const repo = path.resolve(import.meta.dirname, "..", "..");
   const sandbox = path.join(repo, "sandbox", `p${values.port}`);
