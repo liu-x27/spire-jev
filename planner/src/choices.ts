@@ -288,9 +288,16 @@ const REMOVABLE = /STRIKE_IRONCLAD|DEFEND_IRONCLAD|CURSE|INJURY|CLUMSY|SPORE_MIN
  * out, unless an S-tier card is on sale; then a card worth taking; relics
  * when there is gold for them; potions in act 3 only; then leave.
  */
+/**
+ * Relics that open a screen the shop cannot answer: Orrery's five card
+ * rewards (base2-a0 seed 35 bought it on floor 37 and the run stalled).
+ */
+const SHOP_NEVER = new Set(["ORRERY"]);
+
 export function chooseShop(o: Observation, legal: LegalAction[]): string {
   const leave = legal.find((a) => a.action_id === "shop_leave")?.action_id ?? legal[0]!.action_id;
-  const stock = legal.filter((a) => a.action_id.startsWith("shop_buy:") && a.metadata?.["stocked"] !== false && a.metadata?.["affordable"] !== false);
+  const stock = legal.filter((a) => a.action_id.startsWith("shop_buy:") && a.metadata?.["stocked"] !== false && a.metadata?.["affordable"] !== false
+    && !SHOP_NEVER.has(String(a.metadata?.["item_id"] ?? "")));
   const price = (a: LegalAction) => Number(a.metadata?.["price"] ?? 9999);
   // The bridge names entries by class: MerchantCardEntry, MerchantCardRemovalEntry, MerchantRelicEntry, MerchantPotionEntry.
   const type = (a: LegalAction) => String(a.metadata?.["entry_type"] ?? "").replace(/^Merchant/, "").replace(/Entry$/, "");
