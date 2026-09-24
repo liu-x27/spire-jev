@@ -260,8 +260,9 @@ export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
   const idOf = (a: LegalAction) => base(a.action_id.split(":")[2] ?? "");
   const rank = (a: LegalAction) => {
     const id = idOf(a);
-    // smith2: the order winners upgraded in (docs/a10-upgrades-research.md), payoffs only with support.
-    if (flags.has("smith2")) {
+    // smith2 (and smithorder, the order alone — smith2's rest thresholds cost Vantom its HP: 11/26
+    // with 82% coming in, against 17/28 at 94%): the order winners upgraded in, payoffs only with support.
+    if (flags.has("smith2") || flags.has("smithorder")) {
       const p = profile(o.deck_cards);
       const unsupported = ((id === "BODY_SLAM" || id === "BARRICADE" || id === "JUGGERNAUT") && p.block < 4) || (id === "RUPTURE" && p.selfDamage < 2);
       const i = SMITH_ORDER2.indexOf(id);
