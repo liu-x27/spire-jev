@@ -108,9 +108,85 @@ export function useScalingFromAct1(on: boolean): void {
   scalingFromAct1 = on;
 }
 
+/**
+ * packages2 (astra-review-2 change 1): contributions a deck can use, kept apart.
+ * - Damage scaling and defensive scaling are separate: Crimson Mantle or
+ *   Unmovable "scaling" stopped the deck asking for damage, and the act 2
+ *   decks dealt 27-36 a turn to an Insatiable that needs ~49.
+ * - A conditional payoff needs its support first: Rupture was taken with no
+ *   self-damage in the deck (seed 25) because it counted as a Strength card.
+ * - Draw is draw: Bloodletting is HP for energy; Shrug It Off draws.
+ * - Once the deck lacks damage scaling, frontload commons it already has
+ *   several of give way (Pommel 34/38, Taunt 23/34, Anger 19/28 taken).
+ * - Act 2 without AoE takes it: half the act 2 hallway deaths were to groups.
+ */
+let packages2 = false;
+export function usePackages2(on: boolean): void {
+  packages2 = on;
+}
+const DRAW2 = set("POMMEL_STRIKE", "BATTLE_TRANCE", "OFFERING", "BURNING_PACT", "DARK_EMBRACE", "SHRUG_IT_OFF");
+const FRONTLOAD = set("POMMEL_STRIKE", "ANGER", "TAUNT", "TWIN_STRIKE", "HEADBUTT", "IRON_WAVE", "SWORD_BOOMERANG", "PERFECTED_STRIKE", "TREMBLE", "BREAKTHROUGH");
+const AOE2 = set("CONFLAGRATION", "BREAKTHROUGH", "WHIRLWIND", "HOWL_FROM_BEYOND", "THUNDERCLAP", "INFERNO");
+
+/** Damage that grows over a long fight, counting the conditional kinds only with their support. */
+export function damageScaling(deck: readonly string[]): number {
+  const ids = deck.map(base);
+  const p = profile(deck);
+  const n = (c: string) => ids.filter((x) => x === c).length;
+  return n("DEMON_FORM") + n("INFLAME") + n("THRASH") + n("CRUELTY") + n("STOKE")
+    + (p.vulnerable >= 1 ? n("DOMINATE") : 0)
+    + (p.selfDamage >= 2 ? n("RUPTURE") + n("INFERNO") : 0)
+    + (p.exhaust >= 2 ? n("ASHEN_STRIKE") : 0)
+    + (p.block >= 4 ? n("JUGGERNAUT") : 0);
+}
+
+/** Whether adding `card` gives the deck damage scaling it could use. */
+function scalesDamage(card: string, p: DeckProfile): boolean {
+  if (["DEMON_FORM", "INFLAME", "THRASH", "CRUELTY", "STOKE"].includes(card)) return true;
+  if (card === "DOMINATE") return p.vulnerable >= 1;
+  if (card === "RUPTURE" || card === "INFERNO") return p.selfDamage >= 2;
+  if (card === "ASHEN_STRIKE") return p.exhaust >= 2;
+  if (card === "JUGGERNAUT") return p.block >= 4;
+  return false;
+}
+
+function packageBonus2(card: string, act: number, deck: readonly string[]): number {
+  const p = profile(deck);
+  const ids = deck.map(base);
+  const has = (c: string) => ids.includes(c);
+  let b = 0;
+  // Payoffs, for the support already there; nothing without it.
+  if (EXHAUST_PAYOFFS.has(card) && p.exhaust >= 2) b += 0.08 * Math.min(4, p.exhaust);
+  if (VULNERABLE_PAYOFFS.has(card) && p.vulnerable >= 1) b += 0.06 * Math.min(3, p.vulnerable);
+  if (card === "RUPTURE" || card === "SPITE" || card === "TEAR_ASUNDER") b += p.selfDamage >= 2 ? 0.08 * Math.min(4, p.selfDamage) : -0.1;
+  if (card === "INFERNO") b += 0.06 * Math.min(4, p.selfDamage);
+  if (card === "BODY_SLAM") b += p.block >= 4 ? 0.04 * Math.min(6, p.block) + (has("BARRICADE") ? 0.2 : 0) : -0.1;
+  if (card === "BARRICADE") b += p.block >= 4 ? 0.03 * Math.min(6, p.block) + (has("BODY_SLAM") || has("JUGGERNAUT") ? 0.15 : 0) : 0;
+  if (card === "JUGGERNAUT") b += p.block >= 4 ? 0.03 * Math.min(6, p.block) : 0;
+  if (MULTI_HITS.has(card)) b += 0.05 * Math.min(2, ids.filter((c) => ["DOMINATE", "INFLAME", "DEMON_FORM", "SETUP_STRIKE", "FIGHT_ME"].includes(c)).length);
+  if (["INFLAME", "DEMON_FORM", "DOMINATE"].includes(card)) b += 0.04 * Math.min(3, p.multiHits);
+  // Enablers, once their payoff is in.
+  if (EXHAUST_SOURCES.has(card) && p.exhaustPayoffs > 0) b += 0.08;
+  if (VULNERABLE_SOURCES.has(card) && p.vulnerablePayoffs > 0) b += 0.06;
+  if (SELF_DAMAGE.has(card) && p.selfDamagePayoffs > 0) b += 0.08;
+  if (BLOCK.has(card) && p.blockPayoffs > 0) b += 0.05;
+  // What the deck lacks, from act 2.
+  if (act >= 1) {
+    const scaling = damageScaling(deck);
+    if (scaling === 0 && scalesDamage(card, p)) b += act === 1 ? 0.2 : 0.25;
+    if (scaling === 0 && FRONTLOAD.has(card) && ids.filter((c) => FRONTLOAD.has(c)).length >= 4) b -= 0.1;
+    const draw = ids.filter((c) => DRAW2.has(c)).length;
+    if (draw < 2 && DRAW2.has(card)) b += 0.08;
+    if (act === 1 && !ids.some((c) => AOE2.has(c)) && AOE2.has(card)) b += 0.1;
+  }
+  if (act >= 2 && p.bigHitAnswers === 0 && BIG_HIT_ANSWERS.has(card)) b += 0.08;
+  return b;
+}
+
 /** What a card adds to a deck beyond its own rating, for act 0-2. */
 export function packageBonus(id: string, act: number, deck: readonly string[]): number {
   const card = base(id);
+  if (packages2) return packageBonus2(card, act, deck);
   const p = profile(deck);
   const has = (c: string) => deck.some((d) => base(d) === c);
   let b = 0;

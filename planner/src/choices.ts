@@ -11,7 +11,7 @@
  */
 
 import { type MapPoint, planPath } from "./path.ts";
-import { packageBonus, useScalingFromAct1 } from "./packages.ts";
+import { packageBonus, usePackages2, useScalingFromAct1 } from "./packages.ts";
 import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
@@ -88,6 +88,7 @@ export function setFlags(names: readonly string[]): void {
   flags.clear();
   for (const n of names) if (n) flags.add(n);
   useScalingFromAct1(flags.has("scale1"));
+  usePackages2(flags.has("packages2"));
 }
 export const hasFlag = (name: string) => flags.has(name);
 const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number] }> = {
@@ -151,7 +152,7 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
     if (DAMAGE.has(card) && count(deck, DAMAGE) < 2) v += rules2 ? 0.25 : 0.1;
   }
   // packages: what the card adds to this deck as part of an archetype, and what the deck still lacks.
-  if (flags.has("packages")) v += packageBonus(card, act, deck);
+  if (flags.has("packages") || flags.has("packages2")) v += packageBonus(card, act, deck);
   return v;
 }
 

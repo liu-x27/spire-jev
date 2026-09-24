@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { packageBonus, profile, useScalingFromAct1 } from "../src/packages.ts";
+import { damageScaling, packageBonus, profile, usePackages2, useScalingFromAct1 } from "../src/packages.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
 
@@ -35,5 +35,25 @@ test("scale1: in act 1, once there are two damage cards, scaling is wanted", () 
     assert.equal(packageBonus("DEMON_FORM", 0, STARTER), starterOff, "not before the damage cards");
   } finally {
     useScalingFromAct1(false);
+  }
+});
+
+test("packages2: payoffs need support, defensive scaling does not stop the call for damage", () => {
+  usePackages2(true);
+  try {
+    // Rupture with no self-damage is worse than nothing; with two sources it is wanted.
+    assert.ok(packageBonus("RUPTURE", 1, [...STARTER, "TWIN_STRIKE", "ANGER"]) < 0);
+    assert.ok(packageBonus("RUPTURE", 1, [...STARTER, "OFFERING", "BLOODLETTING"]) > 0.1);
+    // A deck with Crimson Mantle (defensive) still wants damage scaling in act 2.
+    const mantle = [...STARTER, "CRIMSON_MANTLE", "POMMEL_STRIKE"];
+    assert.ok(packageBonus("INFLAME", 1, mantle) >= 0.2);
+    assert.equal(damageScaling(mantle), 0);
+    // Bloodletting is not draw; Shrug It Off is.
+    assert.ok(packageBonus("SHRUG_IT_OFF", 1, STARTER) > packageBonus("BLOODLETTING", 1, STARTER));
+    // Frontload commons give way once the deck has four and no damage scaling.
+    const frontload = [...STARTER, "POMMEL_STRIKE", "ANGER", "TAUNT", "TWIN_STRIKE"];
+    assert.ok(packageBonus("ANGER", 1, frontload) < 0);
+  } finally {
+    usePackages2(false);
   }
 });
