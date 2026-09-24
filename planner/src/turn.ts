@@ -103,8 +103,10 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
   }
   // Chains of Binding (the Queen): the first cards drawn each turn, as many as its amount, are Bound.
   const binding = Math.max(0, powers["CHAINS_OF_BINDING"] ?? 0);
+  // Mind Rot (the Knowledge Demon's curse; IL: MindRotPower.ModifyHandDraw): the turn's draw, less its amount.
+  const handDraw = Math.max(0, 5 - Math.max(0, powers["MIND_ROT"] ?? 0));
   let pile = shuffle(s.draw.slice(), rng);
-  for (let i = 0; i < 5 + extraDraw && hand.length < HAND_LIMIT; i++) {
+  for (let i = 0; i < handDraw + extraDraw && hand.length < HAND_LIMIT; i++) {
     if (pile.length === 0) {
       if (discard.length === 0) break;
       pile = shuffle(discard, rng);
@@ -127,9 +129,43 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
         weakAtStart: weak, vulnerableAtStart: (ep["VULNERABLE"] ?? 0) > 0,
       };
     }
+    // A killed Test Subject respawns: the next form at full HP, Painful Stabs in the second (Multi
+    // Claw 11x3), Nemesis in the third (Lacerate 11x3), whose Intangible comes the first turn.
+    if (!e.alive && (e.revive ?? 0) > 0) {
+      const third = (e.powers["PAINFUL_STABS"] ?? 0) > 0;
+      const { revive: _revive, ...form } = e;
+      return {
+        ...form, alive: true, hp: e.revive!, maxHp: e.revive!, block: 0,
+        powers: third ? { NEMESIS: 1, INTANGIBLE: 1 } : { ADAPTABLE: 1, PAINFUL_STABS: 1 },
+        intents: [{ type: "Attack", damage: 11, hits: 3 }],
+        weakAtStart: false, startStrength: 0, vulnerableAtStart: false,
+      };
+    }
     if (!e.alive) return { ...e, powers: { ...e.powers } };
     const ep = { ...e.powers };
     tick(ep, ["WEAK", "VULNERABLE"]);
+    // Intangible goes a stack at the end of the enemies' turn (Soul Fysh's Fade covers one player
+    // turn); Nemesis (the Test Subject's third form) puts it on every other turn (IL: NemesisPower).
+    const intangible = (ep["INTANGIBLE"] ?? 0) > 0;
+    tick(ep, ["INTANGIBLE"]);
+    if ((ep["NEMESIS"] ?? 0) > 0) {
+      if (intangible) delete ep["INTANGIBLE"];
+      else ep["INTANGIBLE"] = 1;
+    }
+    // The Lagavulin Matriarch asleep (IL: AsleepPower, PlatingPower): Plating loses a stack from her
+    // second turn and gives its amount in block at her turn's end; after her third turn she wakes,
+    // Plating gone first.
+    let sleepBlock = 0;
+    if ((ep["ASLEEP"] ?? 0) > 0) {
+      if (ep["ASLEEP"]! <= 1) {
+        delete ep["PLATING"];
+        delete ep["ASLEEP"];
+      } else {
+        ep["ASLEEP"] = ep["ASLEEP"]! - 1;
+        if ((s.turn ?? 1) >= 2 && (ep["PLATING"] ?? 0) > 0) ep["PLATING"] = ep["PLATING"]! - 1;
+        sleepBlock = Math.max(0, ep["PLATING"] ?? 0);
+      }
+    }
     // Strength every turn: Byrdonis's Territorial, a Ritual.
     for (const k of ["TERRITORIAL", "RITUAL"]) if ((ep[k] ?? 0) > 0) ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
     // The Waterfall Giant's Steam Eruption grows 3 every turn, and its Heal turn gives back 15
@@ -139,21 +175,27 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     // Stone Calendar: 52 to every enemy at the end of turn 7.
     const calendar = (s.turn ?? 1) === 7 ? relic("STONE_CALENDAR", "Damage", 52) : 0;
     const hp = Math.min(e.maxHp, e.hp + heal) - calendar;
+    const { asleep: _asleep, behindAtStart: _behind, ...rest } = e;
+    const sleeping = (ep["ASLEEP"] ?? 0) > 0;
     return {
-      ...e, powers: ep, block: 0, hp: Math.max(0, hp), alive: hp > 0,
-      intents: foresee(e, turn),
+      ...rest, powers: ep, block: sleepBlock, hp: Math.max(0, hp), alive: hp > 0,
+      intents: sleeping ? [{ type: "Sleep", damage: 0, hits: 0 }] : foresee(e, turn),
       weakAtStart: (ep["WEAK"] ?? 0) > 0,
       startStrength: ep["STRENGTH"] ?? 0,
       vulnerableAtStart: (ep["VULNERABLE"] ?? 0) > 0,
       skittishUsed: false,
       shellTaken: 0,
+      ...(sleeping ? { asleep: { turns: ep["ASLEEP"]!, hp: Math.max(0, hp) } } : {}),
     };
   });
 
+  // Sloth counts the cards of a turn: the next starts at 0 (IL: SlothPower.BeforeSideTurnStart).
+  const powerVars = s.player.powerVars?.["SLOTH"] ? { ...s.player.powerVars, SLOTH: { ...s.player.powerVars["SLOTH"], _cardsPlayedThisTurn: 0 } } : s.player.powerVars;
   const next: State = {
-    player: { ...s.player, hp: Math.min(s.player.maxHp, hp + regen), block, powers },
+    player: { ...s.player, hp: Math.min(s.player.maxHp, hp + regen), block, powers, ...(powerVars ? { powerVars } : {}) },
     energy,
     turn,
+    ...(s.facing !== undefined ? { facing: s.facing } : {}),
     colossusAtStart: (powers["COLOSSUS"] ?? 0) > 0,
     ...(s.maxEnergy !== undefined ? { maxEnergy: s.maxEnergy } : {}),
     hand,

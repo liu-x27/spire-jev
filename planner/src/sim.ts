@@ -76,6 +76,16 @@ export interface Enemy extends Unit {
   skittishUsed?: boolean;
   /** HP Hardened Shell (Skulking Colony) has let through this turn. */
   shellTaken?: number;
+  /**
+   * Test Subject (Adaptable; IL: AdaptablePower.AfterDeath, RESPAWN_MOVE): killed in its first or
+   * second form it lies at 0 HP, untargetable, its Strength, Enrage and debuffs gone, and on the
+   * enemies' turn comes back in the next form at this HP, doing nothing else.
+   */
+  revive?: number;
+  /** Surrounded (Kaiser Crab): this claw was behind the player at the observation, its shown attack ×1.5 already. */
+  behindAtStart?: boolean;
+  /** Lagavulin Matriarch asleep at the observation: the enemy turns she had left to sleep, and her HP then. */
+  asleep?: { turns: number; hp: number };
 }
 
 export interface State {
@@ -125,6 +135,11 @@ export interface State {
   boundPlayed?: boolean;
   /** Second lives spent since the observation: a death Lizard Tail or Fairy in a Bottle undid. */
   revivals?: number;
+  /**
+   * Surrounded (Kaiser Crab; IL: SurroundedPower.UpdateDirection): the claw the player faces, the
+   * one last targeted by a card or potion; the other is behind and deals ×1.5.
+   */
+  facing?: number;
 }
 
 export type Action = { kind: "play"; hand: number; target?: number } | { kind: "potion"; slot: number; target?: number } | { kind: "end" };
@@ -178,6 +193,12 @@ export function fromObservation(obs: Observation): State {
   const c = obs.combat;
   if (!c) throw new Error("not in combat");
   const powerVars = powersOf(obs.player_power_vars ?? {});
+  // Surrounded (Kaiser Crab): the claw the player faces, by _facing (Right 0: the claw with Back
+  // Attack Right; Left 1). With one claw left the player faces it, and nothing is behind.
+  const claws = c.enemies.filter((e) => e.is_alive && e.hp > 0 && ((e.powers["BACK_ATTACK_LEFT_POWER"] ?? 0) > 0 || (e.powers["BACK_ATTACK_RIGHT_POWER"] ?? 0) > 0));
+  const surrounded = (obs.player_powers["SURROUNDED_POWER"] ?? 0) > 0 && claws.length > 0;
+  const facingSide = (obs.player_power_vars?.["SURROUNDED_POWER"]?.["_facing"] ?? 0) === 1 ? "BACK_ATTACK_LEFT_POWER" : "BACK_ATTACK_RIGHT_POWER";
+  const faced = claws.length === 1 ? claws[0] : claws.find((e) => (e.powers[facingSide] ?? 0) > 0);
   return {
     player: {
       hp: obs.player_hp, maxHp: obs.player_max_hp, block: obs.player_block,
@@ -218,8 +239,13 @@ export function fromObservation(obs: Observation): State {
         ...((powers["SKITTISH"] ?? 0) > 0 && ((e.power_vars?.["SKITTISH_POWER"]?.["hasGainedBlockThisTurn"] ?? (e.block > 0 ? 1 : 0)) > 0) ? { skittishUsed: true } : {}),
         ...((powers["HARDENED_SHELL"] ?? 0) > 0 ? { shellTaken: e.power_vars?.["HARDENED_SHELL_POWER"]?.["damageReceivedThisTurn"] ?? 0 } : {}),
         ...(dying ? { deathBlow: blow ? blow.damage * Math.max(1, blow.hits) : Math.max(0, powers["STEAM_ERUPTION"] ?? 0), blowNow: blow !== undefined } : {}),
+        // A Test Subject killed in its first or second form: 0 HP, Adaptable kept, its Respawn to come.
+        ...(e.model_id === "TEST_SUBJECT" && e.hp <= 0 && (powers["ADAPTABLE"] ?? 0) > 0 ? { revive: nextForm(e.max_hp) } : {}),
+        ...(surrounded && claws.length > 1 && claws.includes(e) && e !== faced ? { behindAtStart: true } : {}),
+        ...((powers["ASLEEP"] ?? 0) > 0 ? { asleep: { turns: powers["ASLEEP"]!, hp: e.hp } } : {}),
       };
     }),
+    ...(surrounded && faced ? { facing: faced.combat_id } : {}),
     colossusAtStart: (obs.player_powers["COLOSSUS_POWER"] ?? 0) > 0,
     drawn: 0,
     exact: true,
@@ -264,10 +290,31 @@ function clone(s: State): State {
     potionsUsed: s.potionsUsed,
     ...(s.boundPlayed ? { boundPlayed: true } : {}),
     ...(s.revivals ? { revivals: s.revivals } : {}),
+    ...(s.facing !== undefined ? { facing: s.facing } : {}),
   };
 }
 
+/** The Test Subject's forms by max HP (A8+: 111, 212, 313; below: 100, 200, 300): the one after each. */
+const NEXT_FORM: Record<number, number> = { 111: 212, 212: 313, 100: 200, 200: 300 };
+const nextForm = (maxHp: number) => NEXT_FORM[maxHp] ?? 212;
+
+/**
+ * HP a Test Subject has still to show after its current form: phase 1 (and the dead window after it)
+ * 212 + 313, phase 2 313, phase 3 none. Counted with the enemies' HP, so killing a form is progress
+ * and not a win: the evaluation's total falls by what the kill took, and no more.
+ */
+export function formsToCome(e: Enemy): number {
+  if (e.model !== "TEST_SUBJECT" || !has(e, "ADAPTABLE")) return 0;
+  let total = 0;
+  for (let hp = e.maxHp; NEXT_FORM[hp] !== undefined; hp = NEXT_FORM[hp]!) total += NEXT_FORM[hp]!;
+  return total;
+}
+
 const has = (u: Unit, p: string) => (u.powers[p] ?? 0) > 0;
+/** A Kaiser Crab claw: Surrounded's back attack is its. */
+const isClaw = (e: Enemy) => has(e, "BACK_ATTACK_LEFT") || has(e, "BACK_ATTACK_RIGHT");
+/** Surrounded: this claw is behind the player now, and deals ×1.5 (with two claws up). */
+const behind = (s: State, e: Enemy) => s.facing !== undefined && e.id !== s.facing && e.alive && isClaw(e);
 /** Shrink shows an amount of -1: it is on for as long as it is there at all. */
 const present = (u: Unit, p: string) => (u.powers[p] ?? 0) !== 0;
 const powerVar = (u: Unit, p: string, name: string, fallback: number) => u.powerVars?.[p]?.[name] ?? fallback;
@@ -300,12 +347,22 @@ export function blockGain(base: number, u: Unit): number {
 }
 
 function hit(target: Enemy, damage: number): number {
+  // Intangible (Soul Fysh's Fade, the Test Subject's Nemesis; IL: IntangiblePower.ModifyDamageCap):
+  // every damage instance is 1, after the other modifiers and before block.
+  if (has(target, "INTANGIBLE")) damage = Math.min(damage, 1);
   const absorbed = Math.min(target.block, damage);
   const hadBlock = target.block > 0;
   target.block -= absorbed;
   // Burrowed (Tunneler) goes when its block is broken.
   if (hadBlock && target.block === 0) delete target.powers["BURROWED"];
   let lost = damage - absorbed;
+  // Asleep (Lagavulin Matriarch; IL: AsleepPower.AfterDamageReceived): damage past her block wakes
+  // her: Plating and Asleep go, her block stays, and she is stunned for this turn (Slash next).
+  if (lost > 0 && has(target, "ASLEEP")) {
+    delete target.powers["PLATING"];
+    delete target.powers["ASLEEP"];
+    target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+  }
   // Slippery (Inklet): a hit takes at most 1 HP, and uses up a stack.
   if (lost > 0 && has(target, "SLIPPERY")) {
     lost = 1;
@@ -325,6 +382,15 @@ function hit(target: Enemy, damage: number): number {
     target.shellTaken = (target.shellTaken ?? 0) + lost;
   }
   target.hp -= lost;
+  // Plow (Ceremonial Beast; IL: PlowPower.AfterDamageReceived): HP lost that leaves it at or under
+  // its amount (A10: 160) breaks it. Its Strength goes, temporary losses with it (not given back),
+  // the move it showed becomes a stun, and Plow is gone; Beast Cry, Stomp and Crush follow.
+  if (lost > 0 && has(target, "PLOW") && target.hp <= (target.powers["PLOW"] ?? 0)) {
+    delete target.powers["PLOW"];
+    delete target.powers["STRENGTH"];
+    delete target.powers["MANGLE"];
+    target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+  }
   if (target.hp <= 0) {
     target.hp = 0;
     target.alive = false;
@@ -333,12 +399,32 @@ function hit(target: Enemy, damage: number): number {
       target.deathBlow = Math.max(0, target.powers["STEAM_ERUPTION"] ?? 0);
       target.blowNow = false;
     }
+    // A Test Subject in its first or second form respawns on the enemies' turn: every power but
+    // Adaptable and Painful Stabs is stripped (Enrage and its Strength, the player's debuffs), and
+    // the move it showed becomes the Respawn, which does no damage.
+    if (target.model === "TEST_SUBJECT" && has(target, "ADAPTABLE")) {
+      target.revive = nextForm(target.maxHp);
+      for (const p of Object.keys(target.powers)) if (p !== "ADAPTABLE" && p !== "PAINFUL_STABS") delete target.powers[p];
+      target.intents = [{ type: "Heal", damage: 0, hits: 0 }, { type: "Buff", damage: 0, hits: 0 }];
+    }
   }
   return lost;
 }
 
 /** The most cards a hand holds; a draw past it does not happen. */
 const HAND_LIMIT = 10;
+
+/**
+ * A Wither as Aeonglass's Withering Presence makes it: unplayable, and all the player's Withers share
+ * one level (IL: every Increasing Intensity upgrades them, 3 + 3 a level), so it deals what one
+ * already in the piles does, else what the turn says (the level is Increasing Intensities so far,
+ * one every third enemy turn).
+ */
+function witherCard(s: State): Card {
+  const seen = [...s.hand, ...s.draw, ...s.discard, ...s.exhaust].find((c) => c.id === "WITHER");
+  const damage = seen?.vars["Damage"] ?? 3 + 3 * Math.floor(((s.turn ?? 1) - 1) / 3);
+  return { id: "WITHER", cost: -1, costsX: false, type: "Status", target: "None", keywords: ["Unplayable"], vars: { Damage: damage }, upgrades: 0, locked: false, glows: false };
+}
 
 /**
  * Draw `k` cards. Which cards come is not known — the draw pile's order is
@@ -381,6 +467,12 @@ function takeFromDraw(s: State): Card | undefined {
 export function playable(s: State, card: Card): boolean {
   if (card.locked || card.keywords.includes("Unplayable")) return false;
   if (card.bound && s.boundPlayed) return false;
+  // Ringing (Ceremonial Beast's Beast Cry; IL: RingingPower.ShouldPlay): one card this turn. Once it
+  // is played the game refuses the rest (can_play), which is what the next observation shows.
+  if (has(s.player, "RINGING") && s.played > 0) return false;
+  // Sloth (the Knowledge Demon's curse; IL: SlothPower.ShouldPlay): at most its amount of cards a
+  // turn, counted in _cardsPlayedThisTurn.
+  if (has(s.player, "SLOTH") && s.played + powerVar(s.player, "SLOTH", "_cardsPlayedThisTurn", 0) >= s.player.powers["SLOTH"]!) return false;
   // A status without Unplayable can be played (Slimed); a curse cannot.
   if (card.type === "Curse") return false;
   return card.costsX || costOf(s, card) <= s.energy;
@@ -485,6 +577,8 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
     return s;
   }
   const target = a.target === undefined ? undefined : s.enemies.find((e) => e.id === a.target);
+  // Surrounded: a potion thrown at a claw turns the player to face it (IL: BeforePotionUsed).
+  if (target && s.facing !== undefined && isClaw(target)) s.facing = target.id;
   const atEnemies = p.target === "AnyEnemy" || p.target === "AllEnemies" || p.target === "RandomEnemy";
   const victims = p.target === "AllEnemies" ? s.enemies.filter((e) => e.alive) : p.target === "RandomEnemy" ? s.enemies.filter((e) => e.alive).slice(0, 1) : one(target);
   if (p.target === "RandomEnemy") s.exact = false;
@@ -657,6 +751,18 @@ function died(s: State, e: Enemy): void {
     addPower(o, "STRENGTH", o.powers["RAVENOUS"]!);
     o.intents = [];
   }
+  // Crab Rage (Kaiser Crab; IL: CrabRagePower.AfterDeath): the claw left gains its Strength and
+  // Block (A10: 6 and 99), once; and Surrounded turns the player to face it, so nothing is behind.
+  for (const o of s.enemies) {
+    if (o === e || !o.alive || !has(o, "CRAB_RAGE")) continue;
+    addPower(o, "STRENGTH", powerVar(o, "CRAB_RAGE", "StrengthPower", 6));
+    o.block += powerVar(o, "CRAB_RAGE", "Block", 99);
+    delete o.powers["CRAB_RAGE"];
+  }
+  if (s.facing !== undefined) {
+    const claws = s.enemies.filter((o) => o.alive && isClaw(o));
+    if (claws.length === 1) s.facing = claws[0]!.id;
+  }
   for (const [power, model] of Object.entries(APPLIED_BY)) {
     if (e.model === model && !s.enemies.some((o) => o.alive && o.model === model)) delete s.player.powers[power];
   }
@@ -770,6 +876,9 @@ type Rule = (s: State, card: Card, target: Enemy | undefined) => void;
 
 /** Cards whose effect is not what their numbers say, each written from what the game did. */
 const SPECIAL: Record<string, Rule> = {
+  // Beckon (Soul Fysh): played, it does nothing and goes to the discard pile; its HpLoss is what it
+  // costs if still in hand at the end of the turn (hpLoss), not when played.
+  BECKON: () => {},
   // Strength at the start of each turn to come, none now: its StrengthPower var is the amount a
   // turn (26 mismatches: the model gave the Strength at once, the game a DEMON_FORM power).
   DEMON_FORM: (s, c) => {
@@ -995,6 +1104,8 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   s.energy -= card.costsX ? s.energy : costOf(s, card);
   if (card.type === "Attack" && has(s.player, "FREE_ATTACK")) addPower(s.player, "FREE_ATTACK", -1);
   const target = a.target === undefined ? undefined : s.enemies.find((e) => e.id === a.target);
+  // Surrounded: a card played at a claw turns the player to face it, before the card resolves.
+  if (target && s.facing !== undefined && isClaw(target)) s.facing = target.id;
 
   const special = SPECIAL[card.id];
   if (special) special(s, card, target);
@@ -1006,13 +1117,27 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   // Corrupted: the enchantment hurts whoever plays the card, through block.
   if (card.enchantment === "CORRUPTED") loseHp(s, card.enchantmentVars?.["_damageAmount"] ?? 2);
   if (card.type === "Attack") delete s.player.powers["VIGOR"];
-  // Vital Spark (Infested Prism): every skill played taints the player.
+  // Vital Spark (Infested Prism): every skill played taints the player. Enrage (Test Subject): every
+  // skill played gives it its amount in Strength (A10: 3; the replays, a Defend at a time).
   if (card.type === "Skill") {
     for (const e of s.enemies) if (e.alive && has(e, "VITAL_SPARK")) addPower(s.player, "TAINTED", e.powers["VITAL_SPARK"] ?? 0);
+    for (const e of s.enemies) if (e.alive && has(e, "ENRAGE")) addPower(e, "STRENGTH", e.powers["ENRAGE"]!);
   }
   // Juggling copies an attack into the hand by how many attacks came before it this turn, which the model does not see.
   if (card.type === "Attack" && has(s.player, "JUGGLING")) s.exact = false;
   s.played++;
+  // Withering Presence (Aeonglass; IL: WitheringPresencePower.AfterCardPlayed): CardsLeft counts the
+  // cards played, across turns; the one that takes it to 0 puts a Wither into the hand (the discard
+  // pile if the hand is full), and it starts again at 6. A Wither held deals its Damage at the end
+  // of the turn.
+  for (const e of s.enemies) {
+    if (!e.alive || !present(e, "WITHERING_PRESENCE")) continue;
+    const left = powerVar(e, "WITHERING_PRESENCE", "CardsLeft", 6);
+    if (s.played < left || (s.played - left) % 6 !== 0) continue;
+    const wither = witherCard(s);
+    if (s.hand.length + s.drawn < HAND_LIMIT) s.hand.push(wither);
+    else s.discard.push(wither);
+  }
   // Tuning Fork: block for every tenth skill, counted across fights.
   if (card.type === "Skill") {
     s.skills++;
@@ -1055,9 +1180,13 @@ export function incomingDamage(s: State): number {
       continue;
     }
     const strength = (e.powers["STRENGTH"] ?? 0) - e.startStrength;
+    // Surrounded (Kaiser Crab): the claw behind the player deals ×1.5; the shown damage has it if the
+    // claw was behind at the observation. The player turned since: put it on, or take it off.
+    const back = behind(s, e);
+    const turned = (per: number) => (back && !e.behindAtStart ? Math.floor(per * 1.5) : !back && e.behindAtStart ? Math.ceil(per / 1.5) : per);
     for (const i of e.intents) {
       if (i.type !== "Attack" && i.type !== "DeathBlow") continue;
-      total += cut(Math.max(0, i.damage + strength)) * Math.max(1, i.hits);
+      total += cut(turned(Math.max(0, i.damage + strength))) * Math.max(1, i.hits);
     }
   }
   return total;
@@ -1081,11 +1210,17 @@ export function hpLoss(s: State): number {
   // Sandpit (The Insatiable) devours the player when it runs out.
   if (s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
   const constrict = Math.max(0, s.player.powers["CONSTRICT"] ?? 0);
-  // A status card left in hand that deals damage does it at the end of the turn, into block (Infection).
+  // A status card left in hand that deals damage does it at the end of the turn, into block
+  // (Infection, Burn, Aeonglass's Wither).
   const statuses = s.hand.reduce((a, c) => a + (c.type === "Status" ? c.vars["Damage"] ?? 0 : 0), 0);
-  // Crimson Mantle costs HP every turn, past block.
+  // Disintegration (the Knowledge Demon's curse; IL: DisintegrationPower.AfterSideTurnEndLate): its
+  // amount at the end of the player's turn, into block, before the enemies act.
+  const disintegration = Math.max(0, s.player.powers["DISINTEGRATION"] ?? 0);
+  // Crimson Mantle costs HP every turn, past block; so does every Beckon (Soul Fysh) still in hand,
+  // 6 each, unblockable.
   const mantle = s.player.powers["CRIMSON_MANTLE"] ? s.player.powerVars?.["CRIMSON_MANTLE"]?.["SelfDamage"] ?? 1 : 0;
-  return Math.max(0, incomingDamage(s) + constrict + statuses - endOfTurnBlock(s)) + mantle;
+  const beckons = s.hand.reduce((a, c) => a + (c.id === "BECKON" ? c.vars["HpLoss"] ?? 6 : 0), 0);
+  return Math.max(0, incomingDamage(s) + constrict + statuses + disintegration - endOfTurnBlock(s)) + mantle + beckons;
 }
 
 /**
@@ -1117,5 +1252,5 @@ export function stateKey(s: State): string {
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
   const potions = s.potions.map((p) => p.slot).join(",");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}`;
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}`;
 }

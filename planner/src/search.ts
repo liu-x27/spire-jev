@@ -12,7 +12,7 @@
  */
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
-import { type Action, actions, type Card, drink, type Enemy, endOfTurnRevival, hpLoss, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
+import { type Action, actions, type Card, drink, type Enemy, endOfTurnRevival, formsToCome, hpLoss, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -251,8 +251,26 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   const spent = (s.revivals ?? 0) * REVIVE_COST * s.player.maxHp;
   // Nothing alive, but a killed Waterfall Giant still to strike: the win is living through it.
   const blows = s.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
-  if (alive.length === 0 && !blows) return WIN + (s.player.hp - spent) * 10;
-  const enemyHp = alive.reduce((a, e) => a + e.hp, 0);
+  // Nothing alive, but a Test Subject to respawn: no win, the next form's HP still to take.
+  const reviving = s.enemies.some((e) => !e.alive && (e.revive ?? 0) > 0);
+  if (alive.length === 0 && !blows && !reviving) return WIN + (s.player.hp - spent) * 10;
+  // The Test Subject's forms to come count with its HP (sim.ts formsToCome), so a kill is worth what
+  // it took and no more. sleep: damage into a Lagavulin Matriarch asleep for two more turns is worth
+  // nothing (her HP as it was), and waking her costs WAKE_COST.
+  let enemyHp = alive.reduce((a, e) => a + e.hp, 0) + s.enemies.reduce((a, e) => a + formsToCome(e), 0);
+  // kin: The Kin's followers are minions, gone when the Priest dies (IL: MinionPower), so their HP is
+  // none of what the fight needs; hitting one is worth only the hit it saves this turn.
+  if (bossRules.kin && alive.some((e) => e.model === "KIN_PRIEST")) {
+    enemyHp -= alive.reduce((a, e) => a + (e.model === "KIN_FOLLOWER" ? e.hp : 0), 0);
+  }
+  let woken = 0;
+  if (bossRules.sleep) {
+    for (const e of s.enemies) {
+      if (!e.asleep || e.asleep.turns < 2) continue;
+      enemyHp += Math.max(0, e.asleep.hp - e.hp);
+      if (e.alive && (e.powers["ASLEEP"] ?? 0) <= 0) woken++;
+    }
+  }
   const loss = hpLoss(s);
   // A death this turn is the end only with nothing to bring the player back (seed 17's Queen fight:
   // the model saw a certain death on turn 5, and Lizard Tail won it). The revival is worth its HP,
@@ -263,8 +281,8 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     if (back === undefined) return -WIN - enemyHp;
     hpLeft = back.hp - REVIVE_COST * s.player.maxHp;
   }
-  hpLeft -= spent;
-  if (alive.length === 0) {
+  hpLeft -= spent + woken * WAKE_COST;
+  if (alive.length === 0 && !reviving) {
     // The blow lands this turn and the player lives: won. It lands next turn: as good as won, by
     // how much HP it leaves (a blow that looks lethal still depends on next turn's draw).
     // A potion costs what it does elsewhere, on this scale of 10 a point of HP.
@@ -435,6 +453,20 @@ export function useGiantRules(potions: boolean, margin: boolean): void {
   giantPotions = potions;
   giantMargin = margin;
 }
+
+/**
+ * --flags sleep: a Lagavulin Matriarch asleep for two more enemy turns is left asleep (IL:
+ * AsleepPower). Woken by damage she is stunned a turn and then runs her cycle; asleep she wakes by
+ * herself after her third turn. Either way she acts the same number of turns before the kill, so
+ * waking her early buys nothing, and the turns she sleeps are free ones for the player's powers.
+ */
+const bossRules = { sleep: false, kin: false };
+export function useBossRules(rules: { sleep: boolean; kin?: boolean }): void {
+  bossRules.sleep = rules.sleep;
+  bossRules.kin = rules.kin ?? false;
+}
+/** sleep: what waking the Matriarch early costs, in HP: a tie-break toward letting her sleep. */
+const WAKE_COST = 6;
 const giantAlive = (s: State) => s.enemies.some((e) => e.alive && e.model === "WATERFALL_GIANT");
 
 /**

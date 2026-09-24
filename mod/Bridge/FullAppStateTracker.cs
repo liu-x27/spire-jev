@@ -35,7 +35,8 @@ public static class FullAppStateTracker
     {
         var vars = new Dictionary<string, double>();
         try { foreach (var pair in power.DynamicVars) vars[pair.Key] = (double)pair.Value.BaseValue; } catch { }
-        AddDeclaredNumbers(power, vars);
+        // Enums too: Surrounded's _facing (Right 0, Left 1), which claw the player faces.
+        AddDeclaredNumbers(power, vars, enums: true);
         // The counters a power keeps in its internal data (Hardened Shell's damageReceivedThisTurn,
         // Skittish's hasGainedBlockThisTurn, Chains of Binding's boundCardPlayed), where their names
         // are not taken already.
@@ -76,7 +77,7 @@ public static class FullAppStateTracker
     }
 
     // The numbers a model's own class keeps: fields declared on the concrete type.
-    private static void AddDeclaredNumbers(object model, Dictionary<string, double> into)
+    private static void AddDeclaredNumbers(object model, Dictionary<string, double> into, bool enums = false)
     {
         try
         {
@@ -87,6 +88,7 @@ public static class FullAppStateTracker
                 if (value is decimal d) into[field.Name] = (double)d;
                 else if (value is int i) into[field.Name] = i;
                 else if (value is bool b) into[field.Name] = b ? 1 : 0;
+                else if (enums && value is Enum e) into[field.Name] = Convert.ToInt64(e);
             }
         }
         catch { }

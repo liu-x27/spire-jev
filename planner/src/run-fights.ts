@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useGiantRules, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, type Weights } from "./search.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
 
@@ -220,6 +220,12 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
   if (offers.length === 0) return legal[0]?.action_id ?? "proceed";
   const purpose = details.purpose ?? "";
   let i = 0;
+  // The Knowledge Demon's Curse of Knowledge (IL: a choose-a-card screen on its turn, no skip):
+  // Disintegration 6/7/8 at the end of every turn, stacking, or Mind Rot, Sloth, Waste Away. curse:
+  // Sloth (3 cards a turn; these decks play 3-4) over a second Disintegration (13 a turn with the
+  // first); Disintegration over Mind Rot (a card a turn) and over Waste Away (an energy a turn).
+  const sloth = cards.findIndex((c) => c.card_id === "SLOTH");
+  if (hasFlag("curse") && sloth >= 0 && cards.some((c) => c.card_id === "DISINTEGRATION")) return offers[Math.min(sloth, offers.length - 1)]!.action_id;
   if (/^FromHand(ForDiscard)?$/.test(purpose)) {
     i = cards.length ? junkIndex(cards.map((c) => ({ id: c.card_id, type: c.card_type }))) : offers.length - 1;
   } else if (/Upgrade|ChooseACard|SimpleGrid|Bundle/.test(purpose)) {
@@ -260,9 +266,17 @@ const ELITES = /^(PHROG_PARASITE|BYGONE_EFFIGY|BYRDONIS|TERROR_EEL|PHANTASMAL_GA
 function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, legal: LegalAction[], hopeless: boolean, tried: Set<string>): string | undefined {
   const boss = s.enemies.some((e) => e.alive && (BOSSES.has(e.model) || e.maxHp >= 250));
   const turn = obs.combat?.turn ?? 1;
+  // The boss fight's turn. sleep: the Lagavulin Matriarch's begins when she wakes, after her third
+  // turn (search.ts useBossRules): nothing drunk while she sleeps, and her first two turns awake
+  // are the boss's first two.
+  let bossTurn = turn;
+  if (hasFlag("sleep") && s.enemies.some((e) => e.model === "LAGAVULIN_MATRIARCH")) {
+    if (!hopeless && s.enemies.some((e) => e.alive && (e.powers["ASLEEP"] ?? 0) >= 2)) return undefined;
+    bossTurn = Math.max(1, turn - 2);
+  }
   const elite = s.enemies.some((e) => e.alive && ELITES.test(e.model));
   const hurt = s.player.hp < 0.5 * s.player.maxHp;
-  if (!(hopeless || (boss && turn <= 2) || (elite && hurt))) return undefined;
+  if (!(hopeless || (boss && bossTurn <= 2) || (elite && hurt))) return undefined;
   const byHp = [...s.enemies].filter((e) => e.alive).sort((a, b) => a.hp - b.hp);
   // A potion tried this turn and still held was refused: not again this turn.
   // Only potions the search cannot model — it already weighs the ones it can (a Block Potion was
@@ -273,7 +287,7 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   // losing lines at 4.5 (Liquid Bronze 2.7 vs 13, Clarity 3 vs 10.5): one turn sees a fight-long
   // buff as a turn's worth. Not the heals or block (wasted at full HP or with no attack coming), and
   // not single-hit damage while Slippery would take it down to 1.
-  const early = hasFlag("potions2") && boss && turn <= 2;
+  const early = hasFlag("potions2") && boss && bossTurn <= 2;
   const giant = hasFlag("wgpot") && s.enemies.some((e) => e.alive && e.model === "WATERFALL_GIANT");
   const slippery = s.enemies.some((e) => e.alive && (e.powers["SLIPPERY"] ?? 0) > 0);
   const id = (a: LegalAction) => String(a.metadata?.["potion_id"] ?? "");
@@ -635,6 +649,7 @@ async function main(): Promise<void> {
   useRules2(values.choices === "rules2");
   setFlags(values.flags.split(","));
   useGiantRules(hasFlag("wgpot"), hasFlag("wghp"));
+  useBossRules({ sleep: hasFlag("sleep"), kin: hasFlag("kin") });
   ascension = Number(values.ascension);
   setIntentAscension(ascension);
   usePotions = useRules;
