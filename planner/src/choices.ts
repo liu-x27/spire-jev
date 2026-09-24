@@ -15,6 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
+import { bossForAct, sparScore } from "./spar.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -194,8 +195,37 @@ const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, num
   packages: [0.46, 0.495, 0.47],
 };
 
+/**
+ * spar (astra-review-3 #2, marginal contribution): what adding each card does to the deck against
+ * the act's boss, played out in the simulator (spar.ts) — the same shuffles for every candidate.
+ */
+const SPAR_SAMPLES = 32;
+const sparBase = new Map<string, number>();
+function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[]): number {
+  const boss = bossForAct(act);
+  const key = `${act}/${floor}/${deck.join(",")}`;
+  let base = sparBase.get(key);
+  if (base === undefined) {
+    if (sparBase.size > 64) sparBase.clear();
+    base = sparScore(deck, boss, SPAR_SAMPLES, floor);
+    sparBase.set(key, base);
+  }
+  return sparScore(change([...deck]), boss, SPAR_SAMPLES, floor) - base;
+}
+
 export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
   const offers = legal.filter((a) => a.action_id.startsWith("choose_card:"));
+  if (flags.has("spar") && offers.length > 0) {
+    let best: { id: string; gain: number } | undefined;
+    for (const a of offers) {
+      const card = String(a.metadata?.["card_id"] ?? a.action_id.split(":")[2]);
+      if (cardValue(card, actOf(o), o.deck_cards) < 0) continue; // never-take list
+      const gain = sparGain(o.deck_cards, actOf(o), o.floor, (d) => [...d, card]);
+      if (!best || gain > best.gain) best = { id: a.action_id, gain };
+    }
+    if (best && best.gain >= 5) return best.id;
+    return legal.find((a) => a.action_id === "skip_card")?.action_id ?? best?.id ?? legal[0]!.action_id;
+  }
   let best: { id: string; v: number } | undefined;
   for (const a of offers) {
     const card = String(a.metadata?.["card_id"] ?? a.action_id.split(":")[2]);
@@ -384,6 +414,18 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   if (relics[0] && relics[0].surplus > 100) return relics[0].a.action_id;
   // shop2 (astra-review-2 #2): a card that fills a gap comes before the removal. Removals took 65%
   // of A10 shop gold while eight affordable Inflames were passed over.
+  // spar: the shop's cards and the removal on one scale, what each does to the deck against the boss.
+  if (flags.has("spar")) {
+    const worst = o.deck_cards[worstCard(o.deck_cards, o.deck_cards)];
+    const options = [
+      ...cards.map((c) => ({ a: c.a, gain: c.v < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, (d) => [...d, item(c.a)]) })),
+      ...(removal && worst && REMOVABLE.test(worst) ? [{ a: removal, gain: sparGain(o.deck_cards, actOf(o), o.floor, (d) => { d.splice(d.indexOf(worst), 1); return d; }) }] : []),
+    ].sort((x, y) => y.gain - x.gain);
+    if (options[0] && options[0].gain >= 5) {
+      if (/remov/i.test(type(options[0].a))) resetCardSelect();
+      return options[0].a.action_id;
+    }
+  }
   const shop2 = flags.has("shop2");
   if (shop2) {
     const need = cards.find((c) => c.v >= 0.5 && fillsNeed(item(c.a), actOf(o), o.deck_cards));

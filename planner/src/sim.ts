@@ -128,7 +128,7 @@ function powersOf<T>(raw: Record<string, T>): Record<string, T> {
 }
 
 /** `energy` only for the hand: pile cards are never asked whether they can be played. */
-function cardOf(c: CardObs, energy?: number): Card {
+export function cardOf(c: CardObs, energy?: number): Card {
   return {
     id: c.card_id,
     cost: c.current_cost,
@@ -289,11 +289,23 @@ const HAND_LIMIT = 10;
  * takes the discard pile back first, as the game does, and the card being
  * played is not in the discard pile yet when it draws.
  */
+/**
+ * Known draws (spar.ts, a deck played out against a model boss): a card drawn goes into the hand.
+ * Planning never sets this — the player does not see the draw pile's order, and neither does the
+ * planner: its draws stay unknown cards.
+ */
+let knownDraws = false;
+export function setKnownDraws(on: boolean): void {
+  knownDraws = on;
+}
+
 export function draw(s: State, k: number): void {
   if (has(s.player, "NO_DRAW")) return;
   for (let n = Math.min(k, HAND_LIMIT - s.hand.length - s.drawn); n > 0; n--) {
-    if (!takeFromDraw(s)) return;
-    s.drawn++;
+    const card = takeFromDraw(s);
+    if (!card) return;
+    if (knownDraws) s.hand.push({ ...card, locked: false });
+    else s.drawn++;
   }
 }
 

@@ -69,13 +69,16 @@ const parts = await Promise.all(
 const fights: FightLog[] = [];
 const rooms: unknown[] = [];
 const ends: { seed: string; victory: boolean }[] = [];
+/** Every card seen, as the game described it (spar.ts builds its catalogue from these). */
+const cards: Record<string, unknown> = {};
 let weights: unknown;
 for (const file of parts) {
   if (!fs.existsSync(file)) {
     console.log(`missing ${file}: see sandbox/eval-${values.tag}-*.log`);
     continue;
   }
-  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[]; rooms?: unknown[]; ends?: { seed: string; victory: boolean }[] };
+  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[]; rooms?: unknown[]; ends?: { seed: string; victory: boolean }[]; cards?: Record<string, unknown> };
+  for (const [k, v] of Object.entries(part.cards ?? {})) cards[k] ??= v;
   weights = part.weights;
   fights.push(...part.fights);
   rooms.push(...(part.rooms ?? []));
@@ -83,7 +86,7 @@ for (const file of parts) {
   fs.rmSync(file);
 }
 const merged = path.join(runs, `eval-${values.tag}.json`);
-fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, choices: values.choices, ascension: Number(values.ascension), flags: values.flags, weights, fights, rooms, ends }, null, 1));
+fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, choices: values.choices, ascension: Number(values.ascension), flags: values.flags, weights, fights, rooms, ends, cards }, null, 1));
 
 const bySeed = new Map<string, FightLog[]>();
 for (const f of fights) bySeed.set(f.seed, [...(bySeed.get(f.seed) ?? []), f]);
