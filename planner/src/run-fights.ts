@@ -26,7 +26,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { Game, type StepResult } from "./bridge.ts";
+import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
@@ -409,8 +409,12 @@ let ascension = 0;
 /** Drink potions the planner cannot model, where it counts (on with --choices rules). */
 let usePotions = false;
 
-async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[]): Promise<void> {
-  let cur = await game.startRun(seed, ascension);
+/** Floors whose map screen's save is copied into runs/saves (--capture). */
+let capture = new Set<number>();
+
+async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[], resume = false, sandbox = ""): Promise<void> {
+  let cur = await game.startRun(seed, ascension, resume);
+  const captured = new Set<number>();
   let fights = 0;
   for (let steps = 0; !cur.observation.is_terminal && steps < MAX_STEPS; steps++) {
     if (cur.observation.phase === "combat" && cur.observation.combat) {
@@ -427,6 +431,15 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       continue;
     }
     const o = cur.observation;
+    if (o.phase === "map" && capture.has(o.floor) && !captured.has(o.floor) && sandbox) {
+      captured.add(o.floor);
+      const from = path.join(savesDir(sandbox), "current_run.save");
+      if (fs.existsSync(from)) {
+        const dir = path.resolve(import.meta.dirname, "..", "runs", "saves");
+        fs.mkdirSync(dir, { recursive: true });
+        fs.copyFileSync(from, path.join(dir, `${seed}-a${ascension}-f${o.floor}.save`));
+      }
+    }
     let chosen: string;
     if (useRules && o.phase === "map" && hasFlag("pathdp")) {
       const map = (await game.call("map")) as { points?: MapPoint[] };
@@ -546,8 +559,13 @@ async function main(): Promise<void> {
       choices: { type: "string", default: "first" },
       ascension: { type: "string", default: "0" },
       flags: { type: "string", default: "" },
+      // Copy the run's save when the map is shown on these floors (comma-separated), into runs/saves/.
+      capture: { type: "string", default: "" },
+      // Continue a saved run instead of starting one (a file from --capture; --runs 1).
+      resume: { type: "string" },
     },
   });
+  capture = new Set(values.capture.split(",").filter(Boolean).map(Number));
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
   useRules = values.choices === "rules" || values.choices === "rules2";
@@ -567,8 +585,8 @@ async function main(): Promise<void> {
     const t0 = Date.now();
     let game: Game | undefined;
     try {
-      game = await Game.launch(sandbox, Number(values.port));
-      await playRun(game, seed, policy, Number(values["max-fights"]), values.cards === "take", logs);
+      game = await Game.launch(sandbox, Number(values.port), values.resume);
+      await playRun(game, seed, policy, Number(values["max-fights"]), values.cards === "take", logs, values.resume !== undefined, sandbox);
       // The history file is written as the run ends: give it a moment, then take the game's word.
       for (let wait = 0; wait < 10; wait++) {
         const win = historyWin(sandbox, seed, t0);

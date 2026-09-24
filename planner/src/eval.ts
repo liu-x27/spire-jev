@@ -28,6 +28,7 @@ const { values } = parseArgs({
     choices: { type: "string", default: "first" },
     ascension: { type: "string", default: "0" },
     flags: { type: "string", default: "" },
+    capture: { type: "string", default: "" },
     port: { type: "string", default: "47100" },
   },
 });
@@ -57,7 +58,7 @@ const parts = await Promise.all(
       [
         path.join(here, "src", "run-fights.ts"),
         "--policy", values.policy, "--runs", String(chunk.length), "--seed", String(chunk[0]),
-        "--port", String(port), "--cards", values.cards, "--weights", values.weights, "--out", out, "--choices", values.choices, "--ascension", values.ascension, "--flags", values.flags,
+        "--port", String(port), "--cards", values.cards, "--weights", values.weights, "--out", out, "--choices", values.choices, "--ascension", values.ascension, "--flags", values.flags, "--capture", values.capture,
       ],
       { cwd: here, stdio: ["ignore", log, log] },
     );

@@ -20,7 +20,10 @@ const REPO = path.resolve(import.meta.dirname, "..", "..");
 // SPIRE_JEV_MOD: another build of the bridge (dotnet build -c Staging), so runs already going keep theirs.
 const MOD_PACKAGE = process.env["SPIRE_JEV_MOD"] ?? path.join(REPO, "mod", "Bridge", "bin", "Release", "net9.0", "package");
 
-function prepare(sandbox: string): void {
+/** The profile's save folder in a sandbox: current_run.save is the run in progress. */
+export const savesDir = (sandbox: string) => path.join(sandbox, "userdata", "SlayTheSpire2", "default", "1", "modded", "profile1", "saves");
+
+function prepare(sandbox: string, resume?: string): void {
   fs.mkdirSync(sandbox, { recursive: true });
   for (const name of fs.readdirSync(GAME)) {
     const src = path.join(GAME, name);
@@ -51,6 +54,8 @@ function prepare(sandbox: string): void {
     show_card_indices: false, show_mp_drawings: true, show_run_timer: false, text_effects_enabled: true, upload_data: false,
   };
   fs.writeFileSync(path.join(saves, "prefs.save"), JSON.stringify(prefs, null, 2));
+  // A saved run to continue (start_run with "continue"): a boss fight replayed from before it.
+  if (resume) fs.copyFileSync(resume, path.join(saves, "current_run.save"));
 
   const settingsDir = path.join(sandbox, "userdata", "SlayTheSpire2", "default", "1");
   fs.mkdirSync(settingsDir, { recursive: true });
@@ -77,8 +82,8 @@ export class Game {
   }
 
   /** Start a headless game in `sandbox` and connect to its bridge. */
-  static async launch(sandbox: string, port: number): Promise<Game> {
-    prepare(sandbox);
+  static async launch(sandbox: string, port: number, resume?: string): Promise<Game> {
+    prepare(sandbox, resume);
     const portFile = path.join(sandbox, "userdata", "bridge_port.txt");
     fs.rmSync(portFile, { force: true });
     const child = spawn(
@@ -143,8 +148,8 @@ export class Game {
     return reply.result as T;
   }
 
-  startRun(seed: string, ascension = 0) {
-    return this.call<StepResult>("start_run", { seed, character: "IRONCLAD", ascension });
+  startRun(seed: string, ascension = 0, resume = false) {
+    return this.call<StepResult>("start_run", { seed, character: "IRONCLAD", ascension, ...(resume ? { continue: true } : {}) });
   }
   observe() {
     return this.call<Observation>("observe");

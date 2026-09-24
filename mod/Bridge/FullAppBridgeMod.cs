@@ -77,6 +77,7 @@ public static class FullAppBridgeMod
         TryPatchPrefix(harmony, typeof(VictoryRoomHandler), nameof(VictoryRoomHandler.HandleAsync), nameof(HandleVictoryRoomAsync));
         TryPatchPrefix(harmony, typeof(GameOverScreenHandler), nameof(GameOverScreenHandler.HandleAsync), nameof(HandleGameOverAsync));
         TryPatchPrefix(harmony, typeof(AutoSlayer), "WaitForRewardsScreenAsync", nameof(HandleWaitForRewardsScreenAsync));
+        TryPatchPrefix(harmony, typeof(AutoSlayer), "PlayMainMenuAsync", nameof(HandlePlayMainMenuAsync));
         // spire-jev: every new run is made here, whoever starts it (AutoSlay starts ours at ascension 0).
         TryPatchPrefix(harmony, typeof(RunState), nameof(RunState.CreateForNewRun), nameof(OnCreateForNewRun));
 
@@ -135,6 +136,55 @@ public static class FullAppBridgeMod
 
         _autoSlayer = new AutoSlayer();
         _autoSlayer.Start(seed, logFile);
+    }
+
+    /// <summary>
+    /// spire-jev: with start_run's "continue", press the main menu's Continue instead of starting a
+    /// new run, so a saved run (copied into the profile before launch) resumes where it was saved —
+    /// a boss fight replayed from the rest site before it, as often as needed.
+    /// </summary>
+    private static bool HandlePlayMainMenuAsync(ref Task __result)
+    {
+        if (!FullAppBridgeServer.ContinueRequested) return true;
+        __result = ContinueFromMainMenuAsync();
+        return false;
+    }
+
+    private static async Task ContinueFromMainMenuAsync()
+    {
+        var tree = (SceneTree)Engine.GetMainLoop();
+        Node? menu = null;
+        for (int i = 0; i < 300 && menu == null; i++)
+        {
+            menu = FindNode(tree.Root, n => n.GetType().Name == "NMainMenu");
+            if (menu == null) await Task.Delay(100);
+        }
+        if (menu == null) throw new InvalidOperationException("[spire-jev] continue: no main menu");
+        // Let the menu read the save and show its Continue info before pressing it.
+        await Task.Delay(500);
+        MethodInfo? press = menu.GetType().GetMethod("OnContinueButtonPressedAsync", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (press == null) throw new InvalidOperationException("[spire-jev] continue: no OnContinueButtonPressedAsync");
+        object?[] args = press.GetParameters().Select(p => p.HasDefaultValue ? p.DefaultValue : (p.ParameterType.IsValueType ? Activator.CreateInstance(p.ParameterType) : null)).ToArray();
+        GD.Print("[spire-jev] continue: pressing Continue");
+        if (press.Invoke(menu, args) is Task pressed) await pressed;
+        // The run is loaded once the game has a run state again.
+        for (int i = 0; i < 600; i++)
+        {
+            if (RunManager.Instance?.DebugOnlyGetState() != null) break;
+            await Task.Delay(100);
+        }
+        GD.Print("[spire-jev] continue: run resumed");
+    }
+
+    private static Node? FindNode(Node root, Func<Node, bool> test)
+    {
+        if (test(root)) return root;
+        foreach (Node child in root.GetChildren())
+        {
+            Node? found = FindNode(child, test);
+            if (found != null) return found;
+        }
+        return null;
     }
 
     private static void OnCreateForNewRun(ref int ascensionLevel)

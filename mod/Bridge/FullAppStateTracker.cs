@@ -217,9 +217,11 @@ public static class FullAppStateTracker
                 if (vars.Count > 0) obs.PlayerPowerVars[power.Id.Entry] = vars;
             }
 
+            // spire-jev: an upgraded card as "ID+", as the fights and rewards report it (the deck list
+            // had no upgrades, so rules could not tell Pommel Strike+ from Pommel Strike).
             foreach (var card in player.Deck.Cards)
             {
-                obs.DeckCards.Add(card.Id.Entry);
+                obs.DeckCards.Add(card.CurrentUpgradeLevel > 0 ? card.Id.Entry + "+" : card.Id.Entry);
             }
             obs.DeckCards.Sort();
 

@@ -28,6 +28,8 @@ public static class FullAppBridgeServer
     public static string RequestedCharacter { get; private set; } = "IRONCLAD";
     public static int RequestedAscension { get; private set; } = 0;
     public static bool IsRunStarted { get; private set; }
+    /// <summary>spire-jev: start_run with "continue": resume the run in the profile's save instead of a new one.</summary>
+    public static bool ContinueRequested { get; private set; }
 
     public static void Start(int preferredPort, string portFilePath)
     {
@@ -132,6 +134,8 @@ public static class FullAppBridgeServer
                         RequestedCharacter = c.ToString()!;
                     if (parameters.TryGetValue("ascension", out var a) && a is not null && int.TryParse(a.ToString(), out int asc))
                         RequestedAscension = asc;
+                    if (parameters.TryGetValue("continue", out var k) && k is not null && bool.TryParse(k.ToString(), out bool resume))
+                        ContinueRequested = resume;
                 }
 
                 _initialBoundaryTcs = new TaskCompletionSource<bool>();
