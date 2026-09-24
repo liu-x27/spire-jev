@@ -29,6 +29,20 @@ export interface PathContext {
   gold: number;
   /** How much more an elite costs this deck than the average (upgrade2: 1.4 before it has three attacks). */
   eliteScale?: number;
+  /** elitedeath: an elite's chance to end the run is at least what the bot's own runs show (ELITE_DEATH). */
+  eliteDeath?: boolean;
+}
+
+/**
+ * elitedeath: how often an elite ended the run, from the bot's own A10 runs on the veteran profile
+ * (vet-base, vet-dev0, vet-conf0; 182 act 1 elites, 67 in act 2): act 1 on floors 5-9 27 of 65 (42%),
+ * 10-12 11 of 56 (20%), 13-16 6 of 61 (10%); act 2 25 of 67 (37%, entered at 52% HP). Entering under
+ * 60% HP doubled it (12 of 25 in act 1). The HP model alone put an act 1 elite at 67 HP near 9%:
+ * a deck that cannot beat one loses everything, not its average. Re-measure as the bot improves.
+ */
+function eliteDeathRate(act: number, row: number, hp: number, max: number): number {
+  const base = act === 0 ? (row <= 8 ? 0.42 : row <= 11 ? 0.2 : 0.1) : act === 1 ? 0.3 : 0.25;
+  return Math.min(0.8, hp < 0.6 * max ? base * 2 : base);
 }
 
 /** HP an ordinary fight takes, acts 1-3 at A0 (fix1-a0 without its elites); ×1.38 at A10. */
@@ -66,9 +80,9 @@ export function planPath(points: readonly MapPoint[], offers: readonly { col: nu
   const memo = new Map<string, number>();
 
   const boss = (hp: number) => BOSS * Math.min(1, Math.max(0, (hp - 0.25 * max) / (0.7 * max)));
-  const fight = (hp: number, loss: number, reward: number, next: (hp: number) => number) => {
+  const fight = (hp: number, loss: number, reward: number, next: (hp: number) => number, atLeast = 0) => {
     const sigma = 0.7 * loss;
-    const die = 1 - phi((hp - loss) / sigma);
+    const die = Math.max(atLeast, 1 - phi((hp - loss) / sigma));
     const after = Math.max(1, Math.round(hp - loss));
     return (1 - die) * (reward + next(after)) - die * DEATH;
   };
@@ -81,7 +95,10 @@ export function planPath(points: readonly MapPoint[], offers: readonly { col: nu
     const children = p.children.map(([c, r]) => byKey.get(key(c, r))).filter((q): q is MapPoint => q !== undefined);
     const next = (h: number) => (children.length ? Math.max(...children.map((q) => value(q, h))) : boss(h));
     let v: number;
-    if (/Elite/i.test(p.type)) v = fight(hp, monster * ELITE_TIMES * (ctx.eliteScale ?? 1), VALUE.relic + VALUE.card, next);
+    if (/Elite/i.test(p.type)) {
+      const atLeast = ctx.eliteDeath ? eliteDeathRate(ctx.act, p.row, hp, max) : 0;
+      v = fight(hp, monster * ELITE_TIMES * (ctx.eliteScale ?? 1), VALUE.relic + VALUE.card, next, atLeast);
+    }
     else if (/Monster/i.test(p.type)) v = fight(hp, monster, VALUE.card, next);
     else if (/Rest/i.test(p.type)) v = Math.max(next(hp + Math.round(0.3 * max)), VALUE.upgrade + next(hp));
     else if (/Shop|Merchant/i.test(p.type)) {

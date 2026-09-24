@@ -646,7 +646,7 @@ export function chooseMapByPath(o: Observation, legal: LegalAction[], points: re
   // upgrade2 (astra-review-2 #4): the path sees the deck — an elite costs more before it has three attacks of its own.
   const attacks = o.deck_cards.filter((c) => DAMAGE.has(base(c)) || MULTI_HIT.has(base(c))).length;
   const eliteScale = flags.has("upgrade2") && attacks < 3 ? 1.4 : 1;
-  const plan = planPath(points, at, { hp: o.player_hp, maxHp: o.player_max_hp, act: actOf(o), ascension: o.ascension ?? 0, gold: o.gold, eliteScale });
+  const plan = planPath(points, at, { hp: o.player_hp, maxHp: o.player_max_hp, act: actOf(o), ascension: o.ascension ?? 0, gold: o.gold, eliteScale, eliteDeath: flags.has("elitedeath") });
   if (!Number.isFinite(plan.values[plan.best]!)) return chooseMap(o, legal);
   return offers[plan.best]!.action_id;
 }
