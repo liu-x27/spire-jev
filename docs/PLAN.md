@@ -192,9 +192,26 @@ states, and only a simulator is fast enough for that.
      Queen fight. The bridge reports that ending as a loss (The Architect
      takes the last HP before the game-over screen), so runs now read the
      verdict from the history file.
-   - Batch 3, queued: `--flags restbudget` (heal when the heal lasts to the
-     boss), `--flags pathdp` (whole-map dynamic programming, `src/path.ts`),
-     `--weights {"long":1}` (a big enemy's HP at its damage a turn over ours).
+   - `--flags restbudget` (heal when the heal lasts to the boss): A10 18.4 vs
+     17.5 (5/4 seeds), Vantom beaten 12/21 vs 8/21, HP coming to Vantom 70 vs
+     62; 39 of 41 mid-act rests healed, and fights cost 7% more HP (fewer
+     upgrades). Candidate.
+   - `--flags pathdp` (whole-map dynamic programming over (point, HP),
+     `src/path.ts`): **A10 21.9 vs 17.5, further on 15 seeds, shorter on 6;
+     28 of 30 runs reach Vantom (21 before), 8 reach The Insatiable (2)**.
+     Act 1 elites 23 (lost 1) against 31 (lost 7); relics at Vantom 2.9 vs
+     3.0 — it drops the elites it would lose, not the relics. Adopted. Vantom
+     itself is still won 39% of the time, and The Insatiable never at A10.
+   - `--weights {"long":1}` (a big enemy's HP at its damage a turn over
+     ours): measuring.
+   - Next: rules2 + pathdp + restbudget together, then `--flags packages`
+     (cards valued as parts of a deck, `src/packages.ts`), `long` and
+     `--flags relicvalue` (`docs/relic-tiers.md`) one at a time on top.
+   - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
+     scored as the revival (seed 17's Queen fight).
+   - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
+     option throws in `NEventOptionButton.OnRelease`; the only seed that meets
+     it. Orrery (card rewards inside the shop) stalled seed 35; not bought now.
    - Fixed outright: in-fight exhausts from hand took The Insatiable's
      Frantic Escapes first (they are status cards).
 3. **Whole runs against the real game** in fast mode; README, GIF.
