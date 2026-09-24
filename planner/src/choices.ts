@@ -12,6 +12,7 @@
 
 import { type MapPoint, planPath } from "./path.ts";
 import { fillsNeed, packageBonus, usePackages2, useScalingFromAct1 } from "./packages.ts";
+import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
@@ -131,8 +132,11 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   const card = base(id);
   if (NEVER.has(card)) return -1;
   const row = CARDS[card] ?? (rules2 ? EXTRA_CARDS[card] : undefined);
-  let v = row ? 0.5 * ([...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5)) + 0.5 * (row.pick[act] / 100) : 0.3;
-  if (ALWAYS.has(card)) v = Math.max(v, 0.9);
+  // elo: strong A10 players' own verdict (cardstats.ts), 0.5 = as good as skipping; the tier table
+  // for cards the data lacks. (They rate Anger -302 and Body Slam -197 against skipping, Offering +314.)
+  const fromElo = flags.has("elo") ? eloValue(card) : undefined;
+  let v = fromElo ?? (row ? 0.5 * ([...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5)) + 0.5 * (row.pick[act] / 100) : 0.3);
+  if (ALWAYS.has(card) && fromElo === undefined) v = Math.max(v, 0.9);
   // §10.1.10, §3.5: the first Battle Trance, not the second; two Trembles at most.
   const copies = deck.filter((c) => base(c) === card).length;
   if (card === "BATTLE_TRANCE" && copies >= 1) v *= 0.5;
@@ -178,7 +182,8 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
     const v = cardValue(card, actOf(o), o.deck_cards);
     if (!best || v > best.v) best = { id: a.action_id, v };
   }
-  const skipBelow = flags.has("pickrate") ? (flags.has("packages") ? SKIP_CALIBRATED.packages : SKIP_CALIBRATED.plain) : SKIP_BELOW;
+  const skipBelow: readonly [number, number, number] = flags.has("elo") ? [0.5, 0.5, 0.5]
+    : flags.has("pickrate") ? (flags.has("packages") ? SKIP_CALIBRATED.packages : SKIP_CALIBRATED.plain) : SKIP_BELOW;
   if (best && best.v >= skipBelow[actOf(o)]) return best.id;
   return legal.find((a) => a.action_id === "skip_card")?.action_id ?? best?.id ?? legal[0]!.action_id;
 }
