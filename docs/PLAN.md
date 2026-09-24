@@ -295,6 +295,23 @@ states, and only a simulator is fast enough for that.
      keepbasics+shop2 40 and 5, elo2+packages2+shop2 41 and 5. On the
      confirmation saves packages2+shop2 did not replicate (26 and 2 vs 26 and 3):
      no deck rule so far moves The Insatiable off ~10%.
+   - Astra's third review (`docs/astra-review-3.md`): the replays match the
+     originals; packages2+shop2 is noise (paired p≈.29 on tuning, reversed on
+     confirmation); seeds 46-135 are now exposed (fresh confirmation beyond
+     315; ~320-480 paired starts to detect five points). Isolation fixed:
+     in-fight picks use `plainCardValue` (deck flags had changed 8 Vantom
+     fights), bench selects by `--seeds`, retries and reports failed replays
+     (run-fights records its errors), keeps rooms. The act 2 wall is output
+     and defence together (losses: 6.8 turns, 31.5 damage a turn, 127 of 341
+     HP left); Inflame was taken 0 of 16 times in act 2, and shops passed over
+     37-74 gold Inflames for removals.
+   - **`--flags spar`** (Astra's marginal contribution): `src/spar.ts` plays the
+     deck out in the simulator against the act boss's script at A10 (real
+     draws, 32 shuffles, the same for every candidate); a card reward or shop
+     item is worth the score it adds (removals on the same scale). On a mid act
+     2 deck: Demon Form +112, Offering +24, Anger +17, Inflame +15-25,
+     Bloodletting +4, a second Pommel +1, a curse 0 to -14. Being measured with
+     the act 2 replay.
    - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
      scored as the revival (seed 17's Queen fight).
    - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
