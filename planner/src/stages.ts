@@ -55,10 +55,21 @@ for (const file of process.argv.slice(2)) {
     const narrow = won.filter((f) => !revived.includes(f) && f.hpEnd < 0.3 * f.maxHp);
     const clean = won.length - revived.length - narrow.length;
     const left = won.filter((f) => !revived.includes(f)).map((f) => f.hpEnd / f.maxHp);
+    // Since the veteran profile each floor has one of three bosses (six in act 1): one line each.
+    const bossOf = (f: FightLog) => [...new Set(f.enemies.filter((e) => !/TORCH/.test(e)))].sort().join("+");
+    const names = [...new Set(fights.map(bossOf))];
     console.log(
-      `  f${floor} ${fights[0]!.enemies.find((e) => !/TORCH/.test(e)) ?? ""}: won ${won.length}/${fights.length} (${pct(won.length, fights.length)}) — clean ${clean}, narrow ${narrow.length}, revived ${revived.length};` +
+      `  f${floor} ${names.length === 1 ? names[0] : `${names.length} bosses`}: won ${won.length}/${fights.length} (${pct(won.length, fights.length)}) — clean ${clean}, narrow ${narrow.length}, revived ${revived.length};` +
         ` HP in ${Math.round(100 * mean(fights.map((f) => f.hpStart / f.maxHp)))}%, left after a win ${Math.round(100 * mean(left))}%`,
     );
+    if (names.length > 1) {
+      for (const name of names.sort()) {
+        const mine = fights.filter((f) => bossOf(f) === name);
+        const w = mine.filter((f) => f.won);
+        const c = w.filter((f) => !revived.includes(f) && f.hpEnd >= 0.3 * f.maxHp).length;
+        console.log(`     ${name}: won ${w.length}/${mine.length}, clean ${c}; HP in ${Math.round(100 * mean(mine.map((f) => f.hpStart / f.maxHp)))}%`);
+      }
+    }
     // The deck brought to the boss: the last screen before its floor.
     const decks = fights.map((f) => {
       const r = [...rooms].reverse().find((x) => x.seed === f.seed && x.floor < floor);

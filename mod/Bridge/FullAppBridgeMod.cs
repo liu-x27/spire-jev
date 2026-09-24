@@ -991,8 +991,11 @@ public static class FullAppBridgeMod
 
     private static async Task SafeWaitForRewardsOrGameOverScreenAsync(CancellationToken ct)
     {
+        // spire-jev: or the map, as AutoSlay's own wait allows: a fight with no rewards (the Gremlin Merc
+        // ran off with its loot, seed 43) goes straight back to it.
         await WaitHelper.Until(
-            () => GetTopScreen<NRewardsScreen>() != null || GetTopScreen<MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen.NGameOverScreen>() != null,
+            () => GetTopScreen<NRewardsScreen>() != null || GetTopScreen<MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen.NGameOverScreen>() != null
+                || (NMapScreen.Instance != null && NMapScreen.Instance.IsOpen),
             ct, TimeSpan.FromSeconds(15), "Neither rewards nor game over screen appeared after combat");
     }
 }
