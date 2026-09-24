@@ -521,6 +521,17 @@ const EVENTS: Record<string, (o: Observation, keys: readonly string[]) => string
   AMALGAMATOR: (o) => (blockCount(o.deck_cards) >= 3 ? "COMBINE_DEFENDS" : "COMBINE_STRIKES"),
   // §9b: pay 5 HP to choose between two dolls; never take one at random while HP allows.
   DOLL_ROOM: (o) => (o.player_hp > 15 ? "TAKE_SOME_TIME" : "RANDOM"),
+  // Tablet of Truth: each Decipher costs twice the max HP the one before (3, 6, 12, 24 ...) for a random
+  // upgrade, and nothing stopped the default rule, which only minds HP under half: 34 of 36 visits on the
+  // veteran profile left 20+ max HP behind (-76 on average), runs at 1 max HP. Decipher once (twice with
+  // 70+ max HP), then give up; Smash (20 HP back) under half HP.
+  TABLET_OF_TRUTH: (o, keys) => {
+    const first = (o.room?.details as { options?: { text_key?: string }[] } | undefined)?.options?.[0]?.text_key ?? "";
+    const page = /\.pages\.([A-Z0-9_]+)\.options\./.exec(first)?.[1] ?? "INITIAL";
+    if (page === "INITIAL") return hpShare(o) < 0.5 && keys.includes("SMASH") ? "SMASH" : "DECIPHER_1";
+    if (page === "DECIPHER_1" && o.player_max_hp >= 70) return "DECIPHER";
+    return "GIVE_UP";
+  },
   // Underdocks: Nab is a relic and an Injury for good; taking on both Punch Constructs is a relic and a
   // potion, but cost 72 and 37 HP at A10 (veteran seeds 27, 39; one alone costs about 9). Nab.
   PUNCH_OFF: (o, keys) => (keys.includes("FIGHT") ? "FIGHT" : "NAB"),

@@ -5,6 +5,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
 import { planTurn } from "../src/search.ts";
+import { chooseEvent } from "../src/choices.ts";
+import type { LegalAction, Observation } from "../src/obs.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
   id, cost, costsX: false, type, target, keywords: [], vars, upgrades: 0, locked: false, glows: false,
@@ -133,4 +135,18 @@ test("infested: the Phrog Parasite's death lets out its Wrigglers, stunned; the 
   assert.equal(wrigglers.length, 4);
   assert.ok(wrigglers.every((e) => e.alive && e.hp === 20));
   assert.equal(incomingDamage(s), 0);
+});
+
+test("tablet of truth: decipher once, twice with 70+ max HP, then give up", () => {
+  const screen = (page: string, keys: string[], hp: number, maxHp: number) => {
+    const options = keys.map((k, index) => ({ index, text_key: `TABLET_OF_TRUTH.pages.${page}.options.${k}`, locked: false, proceed: false }));
+    const o = { phase: "event", player_hp: hp, player_max_hp: maxHp, room: { details: { event_id: "TABLET_OF_TRUTH", options } } } as unknown as Observation;
+    const legal = keys.map((_, i) => ({ action_id: `choose_event:${i}` })) as LegalAction[];
+    return chooseEvent(o, legal);
+  };
+  assert.equal(screen("INITIAL", ["DECIPHER_1", "SMASH"], 67, 80), "choose_event:0");
+  assert.equal(screen("INITIAL", ["DECIPHER_1", "SMASH"], 30, 80), "choose_event:1");
+  assert.equal(screen("DECIPHER_1", ["DECIPHER", "GIVE_UP"], 67, 77), "choose_event:0");
+  assert.equal(screen("DECIPHER_1", ["DECIPHER", "GIVE_UP"], 60, 65), "choose_event:1");
+  assert.equal(screen("DECIPHER_2", ["DECIPHER", "GIVE_UP"], 67, 71), "choose_event:1");
 });
