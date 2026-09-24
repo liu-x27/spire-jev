@@ -36,6 +36,11 @@ export interface Card {
   enchantmentVars?: Readonly<Record<string, number>>;
   /** Numbers the card's own class keeps, for hand cards: Thrash's extra damage. */
   fields?: Readonly<Record<string, number>>;
+  /**
+   * Bound (the Queen's Chains of Binding: the first 3 cards drawn each turn, un-Bound at its
+   * end): only one Bound card can be played a turn.
+   */
+  bound?: boolean;
 }
 
 export interface Unit {
@@ -116,6 +121,10 @@ export interface State {
   potionSlots: number;
   /** Potions drunk since the observation (the evaluation charges for each). */
   potionsUsed: number;
+  /** This turn's one Bound card has been played (Chains of Binding's boundCardPlayed). */
+  boundPlayed?: boolean;
+  /** Second lives spent since the observation: a death Lizard Tail or Fairy in a Bottle undid. */
+  revivals?: number;
 }
 
 export type Action = { kind: "play"; hand: number; target?: number } | { kind: "potion"; slot: number; target?: number } | { kind: "end" };
@@ -161,16 +170,18 @@ export function cardOf(c: CardObs, energy?: number): Card {
     ...(c.enchantment ? { enchantment: c.enchantment } : {}),
     ...(c.enchantment_vars && Object.keys(c.enchantment_vars).length > 0 ? { enchantmentVars: c.enchantment_vars } : {}),
     ...(c.fields && Object.keys(c.fields).length > 0 ? { fields: c.fields } : {}),
+    ...(c.affliction === "BOUND" ? { bound: true } : {}),
   };
 }
 
 export function fromObservation(obs: Observation): State {
   const c = obs.combat;
   if (!c) throw new Error("not in combat");
+  const powerVars = powersOf(obs.player_power_vars ?? {});
   return {
     player: {
       hp: obs.player_hp, maxHp: obs.player_max_hp, block: obs.player_block,
-      powers: powersOf(obs.player_powers), powerVars: powersOf(obs.player_power_vars ?? {}),
+      powers: powersOf(obs.player_powers), powerVars,
     },
     energy: obs.player_energy,
     maxEnergy: c.max_energy,
@@ -222,6 +233,7 @@ export function fromObservation(obs: Observation): State {
     potions: (obs.potion_details ?? []).map((p) => ({ slot: p.slot, id: p.id, target: p.target ?? "None", usage: p.usage ?? "", vars: p.vars ?? {} })),
     potionSlots: obs.potion_slots ?? 3,
     potionsUsed: 0,
+    ...((powerVars["CHAINS_OF_BINDING"]?.["boundCardPlayed"] ?? 0) > 0 ? { boundPlayed: true } : {}),
   };
 }
 
@@ -250,6 +262,8 @@ function clone(s: State): State {
     potions: s.potions.slice(),
     potionSlots: s.potionSlots,
     potionsUsed: s.potionsUsed,
+    ...(s.boundPlayed ? { boundPlayed: true } : {}),
+    ...(s.revivals ? { revivals: s.revivals } : {}),
   };
 }
 
@@ -366,6 +380,7 @@ function takeFromDraw(s: State): Card | undefined {
 /** A card the model can play at all, given its cost and keywords. */
 export function playable(s: State, card: Card): boolean {
   if (card.locked || card.keywords.includes("Unplayable")) return false;
+  if (card.bound && s.boundPlayed) return false;
   // A status without Unplayable can be played (Slimed); a curse cannot.
   if (card.type === "Curse") return false;
   return card.costsX || costOf(s, card) <= s.energy;
@@ -384,12 +399,14 @@ const targetable = (e: Enemy) => e.alive || (e.deathBlow ?? 0) > 0;
 
 /** Every legal play from `s`, and ending the turn. */
 export function actions(s: State): Action[] {
+  // A death nothing undid ends the fight: there is nothing left to play.
+  if (s.player.hp <= 0) return [{ kind: "end" }];
   const out: Action[] = [];
   const seen = new Set<string>();
   s.hand.forEach((card, i) => {
     if (!playable(s, card)) return;
     // Identical cards give identical successors: offer only the first.
-    const sig = `${card.id}/${card.upgrades}/${card.cost}`;
+    const sig = `${card.id}/${card.upgrades}/${card.cost}/${card.bound ? "b" : ""}`;
     if (seen.has(sig)) return;
     seen.add(sig);
     if (needsTarget(card)) {
@@ -488,10 +505,7 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
   }
   if (v["Energy"] !== undefined) s.energy += v["Energy"];
   if (v["Heal"] !== undefined) s.player.hp = Math.min(s.player.maxHp, s.player.hp + v["Heal"]);
-  if (v["HpLoss"] !== undefined && v["HpLoss"] > 0) {
-    s.player.hp -= v["HpLoss"];
-    s.lostHp = true;
-  }
+  if (v["HpLoss"] !== undefined && v["HpLoss"] > 0) loseHp(s, v["HpLoss"]);
   if (v["Cards"] !== undefined) draw(s, v["Cards"]);
   return s;
 }
@@ -550,8 +564,7 @@ function exhaustCard(s: State, card: Card): void {
 /** HP a card costs the player (Offering, Hemokinesis, Brand): Rupture turns it into Strength. */
 function cardHpLoss(s: State, n: number): void {
   if (n <= 0) return;
-  s.player.hp -= n;
-  s.lostHp = true;
+  loseHp(s, n);
   if (has(s.player, "RUPTURE")) addPower(s.player, "STRENGTH", s.player.powers["RUPTURE"] ?? 1);
   // Inferno (IL: InfernoPower.AfterDamageReceived): HP lost on the player's own turn hits every
   // enemy for its amount.
@@ -565,10 +578,55 @@ function thorns(s: State, e: Enemy): void {
   if (n <= 0) return;
   const absorbed = Math.min(s.player.block, n);
   s.player.block -= absorbed;
-  if (n > absorbed) {
-    s.player.hp -= n - absorbed;
-    s.lostHp = true;
+  if (n > absorbed) loseHp(s, n - absorbed);
+}
+
+/**
+ * The player loses HP during the turn. A death is undone by a second life
+ * if there is one (the game's ShouldDie hooks): the fight goes on at what it leaves.
+ */
+function loseHp(s: State, n: number): void {
+  if (n <= 0) return;
+  s.player.hp -= n;
+  s.lostHp = true;
+  if (s.player.hp <= 0) revive(s);
+}
+
+export type Reviver = "FAIRY_IN_A_BOTTLE" | "LIZARD_TAIL";
+
+/**
+ * What would bring the player back from a death, and the HP it leaves, in
+ * the game's order: Fairy in a Bottle answers the ShouldDie hook, Lizard Tail
+ * only ShouldDieLate, so a held Fairy goes first and the tail is kept. Lizard
+ * Tail works once a run (the bridge reports its Heal, 50%, and _wasUsed);
+ * Fairy in a Bottle heals 30% unless its vars say otherwise.
+ */
+export function revivalFor(s: State): { by: Reviver; hp: number } | undefined {
+  const fairy = s.potions.find((p) => p.id === "FAIRY_IN_A_BOTTLE");
+  if (fairy) return { by: "FAIRY_IN_A_BOTTLE", hp: Math.floor((s.player.maxHp * (fairy.vars["HealPercent"] ?? fairy.vars["Heal"] ?? 30)) / 100) };
+  const tail = s.relicVars?.["LIZARD_TAIL"];
+  if (s.relics.includes("LIZARD_TAIL") && (tail?.["_wasUsed"] ?? 0) === 0) return { by: "LIZARD_TAIL", hp: Math.floor((s.player.maxHp * (tail?.["Heal"] ?? 50)) / 100) };
+  return undefined;
+}
+
+/** Spend a second life on `s` (the potion gone, the tail used). */
+export function spendRevival(s: State, by: Reviver): void {
+  if (by === "FAIRY_IN_A_BOTTLE") {
+    const i = s.potions.findIndex((p) => p.id === by);
+    if (i >= 0) s.potions = s.potions.filter((_, j) => j !== i);
+  } else {
+    s.relicVars = { ...s.relicVars, LIZARD_TAIL: { ...(s.relicVars?.["LIZARD_TAIL"] ?? {}), _wasUsed: 1 } };
   }
+  s.revivals = (s.revivals ?? 0) + 1;
+}
+
+/** A death undone, if something can: HP to what the revival leaves. False if nothing could. */
+export function revive(s: State): boolean {
+  const r = revivalFor(s);
+  if (!r) return false;
+  s.player.hp = r.hp;
+  spendRevival(s, r.by);
+  return true;
 }
 
 /** Powers that go when the monster that put them on dies (the powers' AfterDeath). */
@@ -931,6 +989,7 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   const card = s.hand[a.hand];
   if (!card) throw new Error(`no card at hand index ${a.hand}`);
   s.hand.splice(a.hand, 1);
+  if (card.bound) s.boundPlayed = true;
 
   const x = card.costsX ? s.energy : 0;
   s.energy -= card.costsX ? s.energy : costOf(s, card);
@@ -945,10 +1004,7 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   // Daughter of the Wind: block for every attack played.
   if (card.type === "Attack" && s.relics.includes("DAUGHTER_OF_THE_WIND")) gainBlock(s, s.relicVars?.["DAUGHTER_OF_THE_WIND"]?.["Block"] ?? 1);
   // Corrupted: the enchantment hurts whoever plays the card, through block.
-  if (card.enchantment === "CORRUPTED") {
-    s.player.hp -= card.enchantmentVars?.["_damageAmount"] ?? 2;
-    s.lostHp = true;
-  }
+  if (card.enchantment === "CORRUPTED") loseHp(s, card.enchantmentVars?.["_damageAmount"] ?? 2);
   if (card.type === "Attack") delete s.player.powers["VIGOR"];
   // Vital Spark (Infested Prism): every skill played taints the player.
   if (card.type === "Skill") {
@@ -1032,11 +1088,34 @@ export function hpLoss(s: State): number {
   return Math.max(0, incomingDamage(s) + constrict + statuses - endOfTurnBlock(s)) + mantle;
 }
 
+/**
+ * The player's HP once the enemies' turn is over: hpLoss taken, and if that
+ * kills, what a second life leaves (seed 17's Queen fight: 18 HP, a 24 hit,
+ * Lizard Tail, 52). Hits after the killing one that turn are not charged to
+ * the second life — an approximation: in the replay with Bound, 17 HP and 4
+ * block took the Queen's 7x5, the third hit killed, and the turn ended at 45,
+ * not 52 (every later hit charged would be 38). 0 or less: dead.
+ */
+export function hpAfterTurn(s: State): { hp: number; revived?: Reviver } {
+  const hp = s.player.hp - hpLoss(s);
+  if (hp > 0) return { hp };
+  const r = endOfTurnRevival(s);
+  return r ? { hp: r.hp, revived: r.by } : { hp };
+}
+
+/** The Insatiable's Sandpit runs out this turn: it devours the player, and no relic or potion undoes that. */
+export const sandpitDevours = (s: State) => s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1);
+
+/** The second life a death at the end of this turn would use: none against Sandpit (research §2.1). */
+export function endOfTurnRevival(s: State): { by: Reviver; hp: number } | undefined {
+  return sandpitDevours(s) ? undefined : revivalFor(s);
+}
+
 /** A key that is equal for states search should treat as the same. */
 export function stateKey(s: State): string {
-  const hand = s.hand.map((c) => `${c.id}.${c.upgrades}.${c.cost}`).sort().join(",");
+  const hand = s.hand.map((c) => `${c.id}.${c.upgrades}.${c.cost}${c.bound ? "b" : ""}`).sort().join(",");
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
   const potions = s.potions.map((p) => p.slot).join(",");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}`;
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}`;
 }

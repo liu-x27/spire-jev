@@ -34,7 +34,7 @@ import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
 import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useGiantRules, type Weights } from "./search.ts";
 import { nextTurn, seeded } from "./turn.ts";
-import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpLoss, junkIndex, play, type State } from "./sim.ts";
+import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
 
 type Policy = "planner" | "naive";
 
@@ -117,7 +117,8 @@ function collect(o: Observation): void {
   for (const card of [...c.hand, ...c.draw_pile, ...c.discard_pile, ...c.exhaust_pile]) {
     const key = `${card.card_id}${card.upgrades > 0 ? "+" : ""}`;
     if (catalog.has(key)) continue;
-    const { index: _index, can_play: _canPlay, ...rest } = card;
+    // An affliction (Bound) lasts the combat, not the card: not in the catalogue.
+    const { index: _index, can_play: _canPlay, affliction: _affliction, affliction_amount: _afflictionAmount, ...rest } = card;
     catalog.set(key, rest);
   }
 }
@@ -129,7 +130,7 @@ function brief(o: Observation): string {
   const player = `P ${o.player_hp}hp ${o.player_block}blk ${o.player_energy}e [${pw(o.player_powers, o.player_power_vars)}]`;
   const enemies = (o.combat?.enemies ?? []).filter((e) => e.is_alive).map((e) =>
     `E${e.combat_id} ${e.model_id} ${e.hp}hp ${e.block}blk [${pw(e.powers, e.power_vars)}] ${e.intents.map((i) => i.type + (i.damage ? `${i.damage}x${i.hits}` : "")).join("+")}`);
-  const hand = `H[${(o.combat?.hand ?? []).map((c) => c.card_id + (c.upgrades > 0 ? "+" : "") + (c.enchantment ? `~${c.enchantment}` : "")).join(",")}] draw ${o.combat?.draw_pile.length ?? 0} discard ${o.combat?.discard_pile.length ?? 0} exhaust ${o.combat?.exhaust_pile.length ?? 0}`;
+  const hand = `H[${(o.combat?.hand ?? []).map((c) => c.card_id + (c.upgrades > 0 ? "+" : "") + (c.enchantment ? `~${c.enchantment}` : "") + (c.affliction ? `@${c.affliction}` : "")).join(",")}] draw ${o.combat?.draw_pile.length ?? 0} discard ${o.combat?.discard_pile.length ?? 0} exhaust ${o.combat?.exhaust_pile.length ?? 0}`;
   return [player, hand, ...enemies].join(" | ");
 }
 
@@ -390,8 +391,10 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       // (A fight that ends in the enemies' turn — one escapes, or dies to
       // Flame Barrier — shows HP after the win's heal: nothing to compare.)
       log.turns++;
-      // HP cannot fall below 0: a lethal turn shows only the HP there was.
-      const predicted = Math.min(hpLoss(s), s.player.hp);
+      // HP cannot fall below 0: a lethal turn shows only the HP there was, and one that Lizard Tail
+      // or Fairy in a Bottle undoes shows a gain (seed 17's Queen, turn 5: 18 HP to 52, -34).
+      const end = hpAfterTurn(s);
+      const predicted = end.hp > 0 ? s.player.hp - end.hp : s.player.hp;
       log.endTurn.push({ turn: obs.combat!.turn, predicted, actual: obs.player_hp - after.player_hp, before: brief(obs) });
     }
     cur = next;

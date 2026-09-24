@@ -26,6 +26,9 @@ export interface CardObs {
   enchantment_vars?: Record<string, number>;
   /** Hand cards: numbers the card's own class keeps (Thrash's extra damage). */
   fields?: Record<string, number>;
+  /** An affliction for this combat: "BOUND" (the Queen's Chains of Binding), and its amount. */
+  affliction?: string;
+  affliction_amount?: number;
 }
 
 export interface IntentObs {

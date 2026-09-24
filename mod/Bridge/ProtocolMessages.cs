@@ -237,6 +237,14 @@ public sealed class CardObservationDto
     // spire-jev, hand cards only: numbers the card's own class keeps (Thrash's extra damage).
     [JsonPropertyName("fields")]
     public Dictionary<string, double> Fields { get; set; } = new();
+
+    // spire-jev: an affliction on the card for this combat (Bound, from the
+    // Queen's Chains of Binding: one Bound card can be played a turn), and its amount.
+    [JsonPropertyName("affliction")]
+    public string Affliction { get; set; } = "";
+
+    [JsonPropertyName("affliction_amount")]
+    public int AfflictionAmount { get; set; }
 }
 
 public sealed class EnemyObservationDto

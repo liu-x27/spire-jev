@@ -12,7 +12,7 @@
  */
 
 import type { IntentObs } from "./obs.ts";
-import { type Card, type Enemy, endOfTurnBlock, hpLoss, incomingDamage, type State } from "./sim.ts";
+import { type Card, type Enemy, endOfTurnBlock, hpAfterTurn, incomingDamage, spendRevival, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
 const TURN_ONLY = ["NO_DRAW", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED"];
@@ -56,8 +56,10 @@ const tick = (powers: Record<string, number>, keys: readonly string[]) => {
  * show on the next turn.
  */
 export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: number) => readonly IntentObs[]): State | undefined {
-  const hp = s.player.hp - hpLoss(s);
-  if (hp <= 0) return undefined;
+  // A death the enemies' turn deals is undone by Lizard Tail or Fairy in a Bottle, if there is one.
+  const after = hpAfterTurn(s);
+  if (after.hp <= 0) return undefined;
+  const hp = after.hp;
   const powers: Record<string, number> = { ...s.player.powers };
   // Block that outlives the enemies' turn: Barricade and Blur keep what the attacks left.
   const kept = Math.max(0, endOfTurnBlock(s) - incomingDamage(s));
@@ -94,10 +96,13 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
   let discard = s.discard.slice();
   const exhaust = s.exhaust.slice();
   for (const c of s.hand) {
-    if (keepAll || c.keywords.includes("Retain")) hand.push({ ...c, locked: false });
+    // Bound ends with the turn (Chains of Binding un-Binds the hand).
+    if (keepAll || c.keywords.includes("Retain")) hand.push({ ...free(c), locked: false });
     else if (c.keywords.includes("Ethereal")) exhaust.push(c);
     else discard.push(c);
   }
+  // Chains of Binding (the Queen): the first cards drawn each turn, as many as its amount, are Bound.
+  const binding = Math.max(0, powers["CHAINS_OF_BINDING"] ?? 0);
   let pile = shuffle(s.draw.slice(), rng);
   for (let i = 0; i < 5 + extraDraw && hand.length < HAND_LIMIT; i++) {
     if (pile.length === 0) {
@@ -105,7 +110,7 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
       pile = shuffle(discard, rng);
       discard = [];
     }
-    hand.push({ ...pile.pop()!, locked: false });
+    hand.push({ ...free(pile.pop()!), locked: false, ...(i < binding ? { bound: true } : {}) });
   }
 
   const enemies = s.enemies.map((e): Enemy => {
@@ -145,7 +150,7 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     };
   });
 
-  return {
+  const next: State = {
     player: { ...s.player, hp: Math.min(s.player.maxHp, hp + regen), block, powers },
     energy,
     turn,
@@ -168,5 +173,15 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     potions: s.potions.slice(),
     potionSlots: s.potionSlots,
     potionsUsed: s.potionsUsed,
+    ...(s.revivals ? { revivals: s.revivals } : {}),
   };
+  if (after.revived) spendRevival(next, after.revived);
+  return next;
+}
+
+/** The card without Bound. */
+function free(c: Card): Card {
+  if (!c.bound) return c;
+  const { bound: _bound, ...rest } = c;
+  return rest;
 }

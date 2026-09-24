@@ -37,7 +37,8 @@ public static class FullAppStateTracker
         try { foreach (var pair in power.DynamicVars) vars[pair.Key] = (double)pair.Value.BaseValue; } catch { }
         AddDeclaredNumbers(power, vars);
         // The counters a power keeps in its internal data (Hardened Shell's damageReceivedThisTurn,
-        // Skittish's hasGainedBlockThisTurn), where their names are not taken already.
+        // Skittish's hasGainedBlockThisTurn, Chains of Binding's boundCardPlayed), where their names
+        // are not taken already.
         try
         {
             object? data = typeof(PowerModel).GetField("_internalData", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(power);
@@ -175,6 +176,15 @@ public static class FullAppStateTracker
             {
                 int enchanted = (int)pair.Value.EnchantedValue;
                 if (enchanted != (int)pair.Value.BaseValue) dto.Enchanted[pair.Key] = enchanted;
+            }
+        }
+        catch { }
+        try
+        {
+            if (card.Affliction is { } affliction)
+            {
+                dto.Affliction = affliction.Id.Entry;
+                dto.AfflictionAmount = affliction.Amount;
             }
         }
         catch { }

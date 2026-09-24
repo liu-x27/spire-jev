@@ -12,7 +12,7 @@
  */
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
-import { type Action, actions, type Card, drink, type Enemy, hpLoss, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
+import { type Action, actions, type Card, drink, type Enemy, endOfTurnRevival, hpLoss, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -246,9 +246,12 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   const alive = s.enemies.filter((e) => e.alive);
   // Dying to one's own card (Offering, Hemokinesis at low HP, Thorns) is no win.
   if (s.player.hp <= 0) return -WIN * 2;
+  // A second life the turn already spent (a card's HP cost into Lizard Tail, sim.ts loseHp) costs
+  // what one spent at the end of the turn does.
+  const spent = (s.revivals ?? 0) * REVIVE_COST * s.player.maxHp;
   // Nothing alive, but a killed Waterfall Giant still to strike: the win is living through it.
   const blows = s.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
-  if (alive.length === 0 && !blows) return WIN + s.player.hp * 10;
+  if (alive.length === 0 && !blows) return WIN + (s.player.hp - spent) * 10;
   const enemyHp = alive.reduce((a, e) => a + e.hp, 0);
   const loss = hpLoss(s);
   // A death this turn is the end only with nothing to bring the player back (seed 17's Queen fight:
@@ -256,10 +259,11 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // less what the relic or potion would have been worth later.
   let hpLeft = s.player.hp - loss;
   if (hpLeft <= 0) {
-    const back = revival(s);
+    const back = endOfTurnRevival(s);
     if (back === undefined) return -WIN - enemyHp;
-    hpLeft = back - REVIVE_COST * s.player.maxHp;
+    hpLeft = back.hp - REVIVE_COST * s.player.maxHp;
   }
+  hpLeft -= spent;
   if (alive.length === 0) {
     // The blow lands this turn and the player lives: won. It lands next turn: as good as won, by
     // how much HP it leaves (a blow that looks lethal still depends on next turn's draw).
@@ -413,19 +417,9 @@ export function safetyMargin(s: State): number {
 /** What a second life costs, as a share of max HP: the Lizard Tail or Fairy in a Bottle is gone. */
 const REVIVE_COST = 0.3;
 
-/**
- * The HP a death would leave, if something brings the player back: Lizard
- * Tail not yet used (the bridge reports its Heal, 50%, and _wasUsed), or a
- * Fairy in a Bottle held (30% unless its vars say otherwise).
- */
+/** The HP a death would leave, if something brings the player back (sim.ts revivalFor, in the game's order). */
 export function revival(s: State): number | undefined {
-  // The Insatiable's Sandpit eats the player whatever relic or potion is held (research §2.1).
-  if (s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return undefined;
-  const tail = s.relicVars?.["LIZARD_TAIL"];
-  if (s.relics.includes("LIZARD_TAIL") && (tail?.["_wasUsed"] ?? 0) === 0) return Math.floor((s.player.maxHp * (tail?.["Heal"] ?? 50)) / 100);
-  const fairy = s.potions.find((p) => p.id === "FAIRY_IN_A_BOTTLE");
-  if (fairy) return Math.floor((s.player.maxHp * (fairy.vars["HealPercent"] ?? fairy.vars["Heal"] ?? 30)) / 100);
-  return undefined;
+  return endOfTurnRevival(s)?.hp;
 }
 
 /**
