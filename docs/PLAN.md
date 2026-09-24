@@ -184,7 +184,14 @@ states, and only a simulator is fast enough for that.
      vs 17.5, HP +1% — no.
    - `--choices rules2` (cards the table lacked; act 1 damage slots first;
      elites only with three attacks): **A10 20.1 vs 17.5, further on 8 seeds,
-     shorter on 0; act 1 boss beaten 11 vs 8**, HP −1%. Adopted for A10.
+     shorter on 0; act 1 boss beaten 11 vs 8**, HP −1%. At A0 (with the
+     Frantic Escape fix below): 32.0 vs 31.8, Insatiable beaten 9/17 vs
+     6/20, Queen 1/4 vs 0/2 — and **the first clear: seed 17**, 2026-09-23
+     21:06 (the game's run history: win, ascension 0). Deck of 24 with Demon
+     Form, Feel No Pain, Fiend Fire, Flame Barrier; Lizard Tail saved the
+     Queen fight. The bridge reports that ending as a loss (The Architect
+     takes the last HP before the game-over screen), so runs now read the
+     verdict from the history file.
    - Batch 3, queued: `--flags restbudget` (heal when the heal lasts to the
      boss), `--flags pathdp` (whole-map dynamic programming, `src/path.ts`),
      `--weights {"long":1}` (a big enemy's HP at its damage a turn over ours).
