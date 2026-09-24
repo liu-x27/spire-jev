@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, safetyMargin, type Weights } from "./search.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpLoss, junkIndex, play, type State } from "./sim.ts";
 
@@ -295,8 +295,8 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
         // The act 1 and 2 bosses: the next Ancient heals 80% of missing HP. The run's last fight
         // (floor 48 below A10, 49 at A10): nothing after it.
         const last = ascension >= 10 ? 49 : 48;
-        if (obs.floor === 17 || obs.floor === 33) s.hpWorth = 0.25;
-        else if (obs.floor >= last) s.hpWorth = 0.05;
+        if (obs.floor === 17 || obs.floor === 33) s.hpWorth = { worth: 0.25, margin: safetyMargin(s) };
+        else if (obs.floor >= last) s.hpWorth = { worth: 0.05, margin: safetyMargin(s) };
       }
       const plan = weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);

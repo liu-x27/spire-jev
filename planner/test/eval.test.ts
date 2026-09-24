@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { actionId, deckPace, evaluate, futureDamage, planTurn, TURN_WEIGHTS } from "../src/search.ts";
+import { actionId, deckPace, evaluate, futureDamage, planTurn, safetyMargin, TURN_WEIGHTS } from "../src/search.ts";
 import { type Card, type Enemy, play, type State } from "../src/sim.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
@@ -150,7 +150,7 @@ test("stakes, sandpit2, and a Sandpit death that no revival undoes", () => {
   const strikesPlayed = (w: typeof TURN_WEIGHTS, worth?: number) => {
     let s = state([STRIKE, STRIKE, DEFEND, DEFEND], 3, [{ ...foe(1, 60, 14), model: "VANTOM", maxHp: 183 }]);
     s.draw = [HEAVY, HEAVY, HEAVY, HEAVY];
-    if (worth !== undefined) s.hpWorth = worth;
+    if (worth !== undefined) s.hpWorth = { worth, margin: safetyMargin(s) };
     let n = 0;
     for (const a of planTurn(s, w).actions) if (a.kind === "play") { if (s.hand[a.hand]!.id === "STRIKE_IRONCLAD") n++; s = play(s, a); }
     return n;

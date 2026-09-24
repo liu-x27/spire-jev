@@ -313,13 +313,19 @@ function demonFormWorth(s: State, w: Weights): number {
  * HP as the evaluation counts it: all of it, or with weights.stakes, the HP up to the fight's safety
  * margin in full and what is above it at s.hpWorth.
  */
-function hpValue(s: State, hpLeft: number, alive: readonly Enemy[], w: Weights): number {
+function hpValue(s: State, hpLeft: number, _alive: readonly Enemy[], w: Weights): number {
   if (w.stakes <= 0 || s.hpWorth === undefined || hpLeft <= 0) return hpLeft;
+  const { worth, margin } = s.hpWorth;
+  return Math.min(hpLeft, margin) + Math.max(0, hpLeft - margin) * worth;
+}
+
+/** The HP a fight still needs: the damage to come over the turns the kill will take, plus 10 (research rule 1). */
+export function safetyMargin(s: State): number {
+  const alive = s.enemies.filter((e) => e.alive);
   const pace = deckPace(s);
   const turns = Math.max(1, alive.reduce((a, e) => a + e.hp, 0) / Math.max(1, pace.perTurn));
   const incoming = alive.reduce((a, e) => a + threat(e), 0);
-  const margin = Math.min(s.player.maxHp, turns * incoming + 10);
-  return Math.min(hpLeft, margin) + Math.max(0, hpLeft - margin) * s.hpWorth;
+  return Math.min(s.player.maxHp, turns * incoming + 10);
 }
 
 /** What a second life costs, as a share of max HP: the Lizard Tail or Fairy in a Bottle is gone. */

@@ -69,9 +69,10 @@ export interface State {
   /**
    * What an HP above the fight's safety margin is worth (weights.stakes): 0.25 in the act 1 and 2
    * boss fights, which the next Ancient's 80% heal mostly refunds, about 0 in the run's last fight;
-   * absent, 1.
+   * absent, 1. The margin is set once for the turn, from its start: a line that deals more damage
+   * must not shrink it.
    */
-  hpWorth?: number;
+  hpWorth?: { worth: number; margin: number };
   hand: Card[];
   draw: Card[];
   discard: Card[];
