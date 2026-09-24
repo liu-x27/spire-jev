@@ -66,6 +66,12 @@ export interface State {
   maxEnergy?: number;
   /** The combat's turn, from 1. */
   turn?: number;
+  /**
+   * What an HP above the fight's safety margin is worth (weights.stakes): 0.25 in the act 1 and 2
+   * boss fights, which the next Ancient's 80% heal mostly refunds, about 0 in the run's last fight;
+   * absent, 1.
+   */
+  hpWorth?: number;
   hand: Card[];
   draw: Card[];
   discard: Card[];
@@ -198,6 +204,7 @@ function clone(s: State): State {
     energy: s.energy,
     ...(s.maxEnergy !== undefined ? { maxEnergy: s.maxEnergy } : {}),
     ...(s.turn !== undefined ? { turn: s.turn } : {}),
+    ...(s.hpWorth !== undefined ? { hpWorth: s.hpWorth } : {}),
     hand: s.hand.slice(),
     draw: s.draw.slice(),
     discard: s.discard.slice(),

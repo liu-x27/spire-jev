@@ -71,10 +71,23 @@ export interface Weights {
    * from there; 0: this turn only.
    */
   look: number;
+  /**
+   * 1: HP above the fight's safety margin (the damage still to come, over the turns the kill will
+   * take, plus 10) counts at the state's hpWorth — run-fights sets it for boss fights: 0.25 in acts
+   * 1 and 2 (the next Ancient heals 80% of missing HP), ~0 in the run's last fight
+   * (docs/a10-combat-research.md rules 1-2); 0: every HP counts the same.
+   */
+  stakes: number;
+  /**
+   * 1: The Insatiable's Sandpit judged with a pessimistic pace (four fifths of the deck's) and a
+   * turn to spare, so a Frantic Escape is worth playing unless the kill surely fits in the timer
+   * (research rules 4-5); 0: the deck's pace and no margin.
+   */
+  sandpit2: number;
 }
 
 /** The first version: this turn only. */
-export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0, long: 0, look: 0 };
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0, long: 0, look: 0, stakes: 0, sandpit2: 0 };
 export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
 
 /** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
@@ -229,7 +242,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was
   // charged: a state at 70 HP and one at 10 scored the same.) Root HP is the same for every line.
-  let score = hpLeft * w.hpLoss - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
+  let score = hpValue(s, hpLeft, alive, w) * w.hpLoss - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
@@ -248,7 +261,12 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   const pits = alive.filter((e) => (e.powers["SANDPIT"] ?? 0) > 0);
   if (pits.length > 0) {
     const pace = deckPace(s).perTurn;
-    for (const e of pits) score -= SANDPIT_TURN * Math.max(0, e.hp / pace - (e.powers["SANDPIT"] ?? 0));
+    for (const e of pits) {
+      const sandpit = e.powers["SANDPIT"] ?? 0;
+      score -= w.sandpit2 > 0
+        ? SANDPIT_TURN * Math.max(0, e.hp / (0.8 * pace) - (sandpit - 1))
+        : SANDPIT_TURN * Math.max(0, e.hp / pace - sandpit);
+    }
   }
   return score;
 }
@@ -291,6 +309,19 @@ function demonFormWorth(s: State, w: Weights): number {
   return Math.max(w.strength, strengthHits * w.enemyHp);
 }
 
+/**
+ * HP as the evaluation counts it: all of it, or with weights.stakes, the HP up to the fight's safety
+ * margin in full and what is above it at s.hpWorth.
+ */
+function hpValue(s: State, hpLeft: number, alive: readonly Enemy[], w: Weights): number {
+  if (w.stakes <= 0 || s.hpWorth === undefined || hpLeft <= 0) return hpLeft;
+  const pace = deckPace(s);
+  const turns = Math.max(1, alive.reduce((a, e) => a + e.hp, 0) / Math.max(1, pace.perTurn));
+  const incoming = alive.reduce((a, e) => a + threat(e), 0);
+  const margin = Math.min(s.player.maxHp, turns * incoming + 10);
+  return Math.min(hpLeft, margin) + Math.max(0, hpLeft - margin) * s.hpWorth;
+}
+
 /** What a second life costs, as a share of max HP: the Lizard Tail or Fairy in a Bottle is gone. */
 const REVIVE_COST = 0.3;
 
@@ -300,6 +331,8 @@ const REVIVE_COST = 0.3;
  * Fairy in a Bottle held (30% unless its vars say otherwise).
  */
 export function revival(s: State): number | undefined {
+  // The Insatiable's Sandpit eats the player whatever relic or potion is held (research §2.1).
+  if (s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return undefined;
   const tail = s.relicVars?.["LIZARD_TAIL"];
   if (s.relics.includes("LIZARD_TAIL") && (tail?.["_wasUsed"] ?? 0) === 0) return Math.floor((s.player.maxHp * (tail?.["Heal"] ?? 50)) / 100);
   const fairy = s.potions.find((p) => p.id === "FAIRY_IN_A_BOTTLE");

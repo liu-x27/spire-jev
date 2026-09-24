@@ -135,3 +135,33 @@ test("a death this turn is not the end with Lizard Tail unused", () => {
   safe.relicVars = unused.relicVars;
   assert.ok(evaluate(safe) > evaluate(unused));
 });
+
+test("stakes, sandpit2, and a Sandpit death that no revival undoes", () => {
+  // Sandpit at 1: eaten after this turn, Lizard Tail or not.
+  const pit = state([], 0, [foe(1, 200, 0)]);
+  pit.enemies[0]!.powers["SANDPIT"] = 1;
+  pit.relics = ["LIZARD_TAIL"];
+  pit.relicVars = { LIZARD_TAIL: { Heal: 50, _wasUsed: 0 } };
+  assert.ok(evaluate(pit) < -1e5);
+
+  // A boss near its end (60 HP left, a deck of big hits to draw), the player at full HP: with stakes
+  // (hpWorth 0.25) the HP above what the rest of the fight needs is spent on damage.
+  const HEAVY = card("HEAVY", "Attack", "AnyEnemy", { Damage: 20 }, 2);
+  const strikesPlayed = (w: typeof TURN_WEIGHTS, worth?: number) => {
+    let s = state([STRIKE, STRIKE, DEFEND, DEFEND], 3, [{ ...foe(1, 60, 14), model: "VANTOM", maxHp: 183 }]);
+    s.draw = [HEAVY, HEAVY, HEAVY, HEAVY];
+    if (worth !== undefined) s.hpWorth = worth;
+    let n = 0;
+    for (const a of planTurn(s, w).actions) if (a.kind === "play") { if (s.hand[a.hand]!.id === "STRIKE_IRONCLAD") n++; s = play(s, a); }
+    return n;
+  };
+  assert.ok(strikesPlayed({ ...TURN_WEIGHTS, stakes: 1 }, 0.25) > strikesPlayed(TURN_WEIGHTS), "stakes: more strikes at full HP in a boss fight");
+
+  // The Insatiable at 200 HP with Sandpit 4 and a pace that would just make it: sandpit2 wants a turn to spare.
+  const race = state([], 0, [foe(1, 200, 0)]);
+  race.enemies[0]!.powers["SANDPIT"] = 4;
+  const more = structuredClone(race);
+  more.enemies[0]!.powers["SANDPIT"] = 5;
+  const gain = (w: typeof TURN_WEIGHTS) => evaluate(more, w) - evaluate(race, w);
+  assert.ok(gain({ ...TURN_WEIGHTS, sandpit2: 1 }) > gain(TURN_WEIGHTS));
+});

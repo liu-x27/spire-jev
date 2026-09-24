@@ -291,6 +291,13 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
     let a: Action;
     let urged: string | undefined;
     if (policy === "planner") {
+      if (weights.stakes > 0 && obs.combat!.enemies.some((e) => BOSSES.has(e.model_id))) {
+        // The act 1 and 2 bosses: the next Ancient heals 80% of missing HP. The run's last fight
+        // (floor 48 below A10, 49 at A10): nothing after it.
+        const last = ascension >= 10 ? 49 : 48;
+        if (obs.floor === 17 || obs.floor === 33) s.hpWorth = 0.25;
+        else if (obs.floor >= last) s.hpWorth = 0.05;
+      }
       const plan = weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);
       log.nodes.push(plan.nodes);
