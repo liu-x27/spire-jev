@@ -160,6 +160,36 @@ states, and only a simulator is fast enough for that.
    11 runs reached the act 2 boss (none before). Over the 478 fights both
    played, HP lost fell 16% (8362 → 6999) and wins rose 443 → 457.
    Still to measure: rules alone vs rules + judge; potions drunk; the map.
+
+   **Since then (A0, mean floor, same held-out seeds 16-45 from crules6 on):**
+   21.6 → 26.3 (potions drunk, Sandpit term, map scoring) → 27.8 → 29.7 →
+   31.1 (crules6: duplicate penalty, map lookahead) → 31.8 (fix1: Astra's
+   review, `docs/astra-review-1.md`, batch 1 — removal and HP-accounting
+   fixes; HP lost in shared fights −3%). No clear yet: the wall is The
+   Insatiable (fix1-a0 won 6 of 20; they end on close races, several with it
+   under 25 HP) and Queen (0 of 2).
+
+   **Ascension 10** (the goal; `--ascension 10`, the bridge sets it through
+   `RunState.CreateForNewRun`; `docs/A10-reference.md`): 15.6 → 16.8 (elites
+   only near full HP) → 17.5 (fix1-a10); the act 1 boss beaten by 8 of 30.
+   Where act 1 HP goes (fix1-a10): mid-act rests smithed at 58% HP on
+   average and runs came to the rest before Vantom at 41%; Byrdonis was
+   fought in 21 of 30 runs (36 HP each), sometimes at 15-35% HP, on maps
+   with elite-free paths (the one-step map scoring walks into rows of
+   elites); Vantom was blocked for five turns while Slippery held. Vantom
+   fights lost came in at 55 HP on average, won at 74.
+
+   Switches, one at a time against fix1 on seeds 16-45:
+   - `--weights {"setup":1}` (powers valued for the turns to come): A10 17.1
+     vs 17.5, HP +1% — no.
+   - `--choices rules2` (cards the table lacked; act 1 damage slots first;
+     elites only with three attacks): **A10 20.1 vs 17.5, further on 8 seeds,
+     shorter on 0; act 1 boss beaten 11 vs 8**, HP −1%. Adopted for A10.
+   - Batch 3, queued: `--flags restbudget` (heal when the heal lasts to the
+     boss), `--flags pathdp` (whole-map dynamic programming, `src/path.ts`),
+     `--weights {"long":1}` (a big enemy's HP at its damage a turn over ours).
+   - Fixed outright: in-fight exhausts from hand took The Insatiable's
+     Frantic Escapes first (they are status cards).
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints

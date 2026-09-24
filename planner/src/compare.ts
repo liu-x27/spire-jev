@@ -67,4 +67,22 @@ console.log(`  floors reached (${a.tag}/${b.tag}): ${rows.join(" ")}`);
 console.log(`  mean floor ${mean(endA).toFixed(1)} vs ${mean(endB).toFixed(1)}; ${b.tag} further on ${further} seeds, shorter on ${shorter}`);
 console.log(`  ${shared} fights both played: HP lost ${lostA} vs ${lostB} (${(((lostB - lostA) / Math.max(1, lostA)) * 100).toFixed(0)}%), won ${wonA} vs ${wonB}`);
 console.log(`  all fights: ${a.fights.length} (${a.fights.filter((f) => f.won).length} won) vs ${b.fights.length} (${b.fights.filter((f) => f.won).length} won)`);
+// Bosses by floor, on the shared seeds: reached (a fight on that floor) and beaten (past it, or won
+// there). Conditional win rates hide less than mean floors: crules6 gained 1.3 floors while its
+// Insatiable wins fell 10/21 -> 7/29 (runs/analysis-report.html 5.5).
+const bossLine = (fights: FightLog[]) =>
+  [17, 33, 48, 49].map((floor) => {
+    const bySeed = new Map<string, FightLog[]>();
+    for (const f of fights) if (seeds.includes(f.seed)) bySeed.set(f.seed, [...(bySeed.get(f.seed) ?? []), f]);
+    let reached = 0;
+    let beaten = 0;
+    for (const fs_ of bySeed.values()) {
+      const last = fs_[fs_.length - 1]!;
+      if (!fs_.some((f) => f.floor === floor)) continue;
+      reached++;
+      if (last.floor > floor || (last.floor === floor && last.won)) beaten++;
+    }
+    return `f${floor} ${beaten}/${reached}`;
+  }).join(", ");
+console.log(`  bosses beaten/reached: ${a.tag} ${bossLine(a.fights)}; ${b.tag} ${bossLine(b.fights)}`);
 if (worse.length) console.log(`  fights where ${b.tag} lost 15+ HP more:\n    ${worse.join("\n    ")}`);
