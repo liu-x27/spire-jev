@@ -31,11 +31,13 @@ const { values } = parseArgs({
     ascension: { type: "string", default: "10" },
     // Also replay each save under these exploration seeds (1..N), as save-and-load would.
     explore: { type: "string", default: "0" },
+    // The library: runs/saves (seeds 46-135, the confirmation set) or runs/saves-dev (136-315, for tuning).
+    library: { type: "string", default: "saves" },
   },
 });
 if (!values.tag) throw new Error("--tag is required");
 const here = path.resolve(import.meta.dirname, "..");
-const dir = path.join(here, "runs", "saves");
+const dir = path.join(here, "runs", values.library);
 const saves = fs.readdirSync(dir).filter((f) => f.endsWith(".save") && f.includes(values.saves)).sort();
 if (saves.length === 0) throw new Error(`no saves matching ${values.saves} in ${dir}`);
 const n = Math.min(Number(values.sandboxes), saves.length);
