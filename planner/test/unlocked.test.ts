@@ -126,3 +126,11 @@ test("shriek: the hit that leaves the Terror Eel at 75 or under stuns it, its at
   assert.equal(s.enemies[0]!.powers["SHRIEK"], undefined);
   assert.equal(incomingDamage(s), 0);
 });
+
+test("infested: the Phrog Parasite's death lets out its Wrigglers, stunned; the fight is not won", () => {
+  const s = at(state([STRIKE], [foe("PHROG_PARASITE", 5, { INFESTED: 4 })]), 0);
+  const wrigglers = s.enemies.filter((e) => e.model === "WRIGGLER");
+  assert.equal(wrigglers.length, 4);
+  assert.ok(wrigglers.every((e) => e.alive && e.hp === 20));
+  assert.equal(incomingDamage(s), 0);
+});

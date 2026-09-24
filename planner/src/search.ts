@@ -12,7 +12,7 @@
  */
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
-import { type Action, actions, type Card, drink, type Enemy, hpLoss, play, type State, stateKey } from "./sim.ts";
+import { type Action, actions, type Card, drink, type Enemy, hpLoss, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -274,7 +274,10 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // A stack of Slippery (Vantom) is a hit that will take 1 HP instead of a
   // full one: count it as the HP it hides, so stripping it is worth playing.
   const slippery = alive.reduce((a, e) => a + Math.max(0, e.powers["SLIPPERY"] ?? 0), 0);
-  const hidden = slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0;
+  // An Infested Phrog Parasite's Wrigglers are HP still to take once it dies: counted from the start,
+  // so killing it is not a sudden rise in the enemies' HP the planner would shy from.
+  const infested = alive.reduce((a, e) => a + Math.max(0, e.powers["INFESTED"] ?? 0), 0) * WRIGGLER_HP;
+  const hidden = (slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0) + infested;
   const extra = w.long > 0 ? longFightExtra(s, alive, w) : 0;
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was

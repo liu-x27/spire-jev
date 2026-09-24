@@ -377,6 +377,23 @@ states, and only a simulator is fast enough for that.
      takes Nab, and run-fights gives a run up after 200 unchanged screens).
      The act's boss is in the observation (`act_boss`): act 1's multi-hit
      rule now applies with Vantom only.
+   - **Veteran libraries** (fresh seeds, code 3067839): tuning 316-495
+     (`vet-dev0-a10`, 151 saves in `runs/saves-vet-dev`), confirmation 496-585
+     (`vet-conf0-a10`, 86 in `runs/saves-vet-conf`). vet-dev0: mean floor 18.3,
+     124 of 176 deaths in act 1; act 1 bosses 52/131 — Waterfall Giant 13/22
+     (10 clean, after the DeathBlow model), Vantom 9/19, Ceremonial Beast 9/20,
+     Soul Fysh 10/30, Lagavulin Matriarch 7/26, The Kin 4/14; act 2 3/18.
+   - Waterfall Giant on 155 boss-swapped tuning saves: default 81 wins (43
+     clean), `wgpot` 79 (34): not adopted.
+   - Act 1 elites ended the run 27 of 65 times on floors 5-9 (42%), the path
+     model said ~9%. `--flags elitedeath` (the measured rates as a floor on an
+     elite's death chance): 145 runs reached the act 1 boss instead of 131, but
+     50 beat it instead of 52 — elite deaths became boss deaths without the
+     relics. Not adopted: act 1's limit is the deck, not the route.
+   - Phrog Parasite (18 of 42 fights lost): Infested lets out four stunned
+     Wrigglers (18-22 HP at A8+) when it dies, and the planner took the kill
+     for the win, as with the Giant. Modelled (sim.ts `died`), its Wrigglers
+     counted as HP still to take while it lives.
    - Colourless cards: shops offered them 9,092 times (38 kinds), bought 0 —
      `cardValue` gives cards missing from its tables 0.3. Mostly right:
      strong players' Elo puts nearly all of them below skipping (Spire Codex

@@ -574,7 +574,24 @@ function thorns(s: State, e: Enemy): void {
 /** Powers that go when the monster that put them on dies (the powers' AfterDeath). */
 const APPLIED_BY: Record<string, string> = { SHRINK: "SHRINKER_BEETLE", CONSTRICT: "SLITHERING_STRANGLER" };
 
+/** A Wriggler's HP as it comes out of a Phrog Parasite: 18-22 at A8+ (17-21 below; IL: Wriggler.MinInitialHp). */
+export const WRIGGLER_HP = 20;
+
 function died(s: State, e: Enemy): void {
+  // Infested (Phrog Parasite; IL: InfestedPower.AfterDeath): its death lets out that many Wrigglers,
+  // stunned for the turn. The fight is not won: the planner treated the kill as the win, as it did the
+  // Waterfall Giant's, and the Parasite won 18 of 42 fights on the veteran profile.
+  const infested = e.powers["INFESTED"] ?? 0;
+  if (infested > 0) {
+    delete e.powers["INFESTED"];
+    const id = Math.max(...s.enemies.map((o) => o.id)) + 1;
+    for (let i = 0; i < infested; i++) {
+      s.enemies.push({
+        id: id + i, model: "WRIGGLER", hp: WRIGGLER_HP, maxHp: WRIGGLER_HP, block: 0, alive: true, powers: {},
+        weakAtStart: false, startStrength: 0, intents: [],
+      });
+    }
+  }
   // Ravenous (Corpse Slug; IL: RavenousPower.AfterDeath): every other slug devours the dead one — its
   // amount in Strength, and stunned, so it does not act this turn.
   for (const o of s.enemies) {
