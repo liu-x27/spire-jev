@@ -203,10 +203,23 @@ states, and only a simulator is fast enough for that.
      3.0 — it drops the elites it would lose, not the relics. Adopted. Vantom
      itself is still won 39% of the time, and The Insatiable never at A10.
    - `--weights {"long":1}` (a big enemy's HP at its damage a turn over
-     ours): measuring.
-   - Next: rules2 + pathdp + restbudget together, then `--flags packages`
-     (cards valued as parts of a deck, `src/packages.ts`), `long` and
-     `--flags relicvalue` (`docs/relic-tiers.md`) one at a time on top.
+     ours): A10 19.9 vs 17.5 (9/3 seeds), Vantom 12/24, Byrdonis 18/21 vs
+     15/21 — but no gain on top of the combination below (22.4 vs 23.7).
+   - **The combination rules2 + pathdp + restbudget: A10 23.7, Vantom 17/28,
+     The Insatiable 0/7** (fix1: 17.5, 8/21, 0/2). The current base.
+   - On top of it: `--flags packages` (cards valued as parts of a deck,
+     `src/packages.ts`) 24.0 (6/4 seeds), Vantom 17/26, Insatiable 0/9 —
+     neutral, more engine cards (Rupture, Body Slam, Ashen Strike); at A0
+     32.7 vs 32.0 (12/6) and the second clear (seed 43, a 7 HP finish).
+     `--weights {"look":1}` (two-turn lookahead, `src/turn.ts`, enemy scripts
+     from `data/intents.json`; the next turn's start is predicted exactly 60%
+     of the time) 22.1, HP +8% in shared fights, Vantom 13/28 — worse: the
+     guessed second turn misleads the first. Queued: relicvalue, pickrate
+     (skip thresholds calibrated to 86/61/49%), scale1 (scaling from act 1).
+   - Stage report (`src/stages.ts`): per boss, clean / narrow / revived wins
+     and the deck brought. At A10, Vantom is won 10 of 11 with scaling in the
+     deck and 7 of 17 without, and under half the decks have any by floor 17.
+     Neither A0 clear was clean (a Lizard Tail revival; a 7 HP finish).
    - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
      scored as the revival (seed 17's Queen fight).
    - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
