@@ -217,9 +217,28 @@ states, and only a simulator is fast enough for that.
      guessed second turn misleads the first. Queued: relicvalue, pickrate
      (skip thresholds calibrated to 86/61/49%), scale1 (scaling from act 1).
    - Stage report (`src/stages.ts`): per boss, clean / narrow / revived wins
-     and the deck brought. At A10, Vantom is won 10 of 11 with scaling in the
-     deck and 7 of 17 without, and under half the decks have any by floor 17.
-     Neither A0 clear was clean (a Lizard Tail revival; a 7 HP finish).
+     and the deck brought (the last screen *before* the boss floor — an
+     earlier version counted the boss's own reward and inflated the
+     scaling effect to 10/11 vs 7/17; it is 4/5 vs 13/23). Neither A0 clear
+     was clean (a Lizard Tail revival; a 7 HP finish).
+   - `pickrate`, `scale1`, `stakes` (HP above a safety margin at 0.25 in act
+     1-2 boss fights), `sandpit2`: within noise; most changed 1-3 of 30 runs
+     (`stakes`' margin — damage to come until the kill — usually exceeds HP).
+   - **Confirmation on new seeds 46-135** (combination + packages,
+     `eval-conf1-a10.json`): Vantom 52/81 (25 clean, 27 narrow), The
+     Insatiable 3/26, Queen 0/2, no clears. The paired baseline (combination
+     alone, `conf0-a10`) is running.
+   - Astra's second review (`docs/astra-review-2.md`): act 2 fails on
+     sustained output (27-36 damage a turn to a 341 HP Insatiable that needs
+     ~49), but not for lack of removals (65% of A10 shop gold) — engines are
+     scarce in offers, passed over in shops (eight affordable Inflames), and
+     unplayed when drawn (Feel No Pain left in hand in 14 of 17 fights,
+     Vicious 25/32, Crimson Mantle 9/11). Its ranked changes, each behind a
+     switch: `--flags packages2` (contributions kept apart, payoffs only with
+     support), `--weights {"engines":1}` (powers worth their turns to come),
+     `--flags shop2` (a card that fills a gap before a removal; potions from
+     act 2), then deck-aware path/rest/upgrade. Seeds 16-45 are now a
+     development set; adoption needs a paired run on 46-135.
    - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
      scored as the revival (seed 17's Queen fight).
    - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
