@@ -437,7 +437,8 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       if (fs.existsSync(from)) {
         const dir = path.resolve(import.meta.dirname, "..", "runs", "saves");
         fs.mkdirSync(dir, { recursive: true });
-        fs.copyFileSync(from, path.join(dir, `${seed}-a${ascension}-f${o.floor}.save`));
+        // The port tells apart two evaluations of the same seeds running at once.
+        fs.copyFileSync(from, path.join(dir, `${seed}-a${ascension}-f${o.floor}-p${path.basename(sandbox).replace(/^p/, "")}.save`));
       }
     }
     let chosen: string;
