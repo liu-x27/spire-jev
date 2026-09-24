@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, safetyMargin, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, type Weights } from "./search.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpLoss, junkIndex, play, type State } from "./sim.ts";
 
@@ -70,6 +70,8 @@ export interface FightLog {
   illegal: string[];
   /** How often each card was played. */
   cardsPlayed: Record<string, number>;
+  /** Every action in order, "t<turn>:<card or POTION:id>" (end of turn not listed). */
+  sequence?: string[];
   /** Turn starts checked against turn.ts nextTurn's prediction, and the fields that differed. */
   transitionChecks?: number;
   transitions?: { turn: number; field: string; predicted: string; actual: string }[];
@@ -298,7 +300,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
         if (obs.floor === 17 || obs.floor === 33) s.hpWorth = { worth: 0.25, margin: safetyMargin(s) };
         else if (obs.floor >= last) s.hpWorth = { worth: 0.05, margin: safetyMargin(s) };
       }
-      const plan = weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
+      const plan = exploring ? planTurnExplore(s, weights, exploring) : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);
       log.nodes.push(plan.nodes);
       if (plan.truncated) log.truncated++;
@@ -346,6 +348,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       log.plays++;
       const card = s.hand[a.hand]!;
       log.cardsPlayed[label(card)] = (log.cardsPlayed[label(card)] ?? 0) + 1;
+      (log.sequence ??= []).push(`t${obs.combat!.turn}:${label(card)}`);
       const predicted = play(s, a);
       if (!inCombat && after.phase !== "game_over") log.hpLost += Math.max(0, obs.player_hp - predicted.player.hp);
       if (inCombat) {
@@ -357,6 +360,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       const held = s.potions.find((p) => p.slot === a.slot);
       const potion = held?.id ?? "?";
       log.cardsPlayed[`POTION:${potion}`] = (log.cardsPlayed[`POTION:${potion}`] ?? 0) + 1;
+      (log.sequence ??= []).push(`t${obs.combat!.turn}:POTION:${potion}`);
       // Only the potions the model can drink are held to its prediction.
       if (inCombat && held && drinkable(held)) for (const m of compare(`POTION:${potion}`, drink(s, a), fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
     } else if (inCombat || after.phase === "game_over") {
@@ -411,6 +415,8 @@ let usePotions = false;
 
 /** Floors whose map screen's save is copied into runs/saves (--capture). */
 let capture = new Set<number>();
+/** The exploration's generator, when exploring (--explore). */
+let exploring: (() => number) | undefined;
 
 async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[], resume = false, sandbox = ""): Promise<void> {
   let cur = await game.startRun(seed, ascension, resume);
@@ -564,9 +570,12 @@ async function main(): Promise<void> {
       capture: { type: "string", default: "" },
       // Continue a saved run instead of starting one (a file from --capture; --runs 1).
       resume: { type: "string" },
+      // Explore (bench.ts --explore): now and then a close second-best line, from this seed.
+      explore: { type: "string" },
     },
   });
   capture = new Set(values.capture.split(",").filter(Boolean).map(Number));
+  if (values.explore !== undefined) exploring = seeded(Number(values.explore) * 7919 + 17);
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
   useRules = values.choices === "rules" || values.choices === "rules2";

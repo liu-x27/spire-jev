@@ -487,6 +487,24 @@ function explore(start: State, w: Weights, maxNodes: number, keep: number): { be
   return { best, top, nodes, truncated };
 }
 
+/**
+ * Exploration, as a player uses save and load to try other lines: usually the
+ * best line, but with probability `p` one of the other ends within `margin`
+ * points of it, drawn with `rng` (seeded, so an exploration can be replayed).
+ * bench.ts --explore runs the same boss fight under several seeds; the lines
+ * that won where the plain planner lost show what its evaluation misjudges.
+ */
+export function planTurnExplore(start: State, w: Weights, rng: () => number, p = 0.15, margin = 5, maxNodes = 20_000): Plan {
+  const t0 = performance.now();
+  const { best, top, nodes, truncated } = explore(start, w, maxNodes, 4);
+  let chosen = best;
+  const close = top.filter((l) => l !== best && l.score > -WIN && l.score >= best.score - margin && l.actions[0] && actionKey(l.actions[0]) !== actionKey(best.actions[0]!));
+  if (close.length > 0 && rng() < p) chosen = close[Math.floor(rng() * close.length)]!;
+  return { actions: chosen.actions, score: chosen.score, exact: chosen.exact, nodes, ms: performance.now() - t0, truncated };
+}
+
+const actionKey = (a: Action) => (a.kind === "end" ? "end" : a.kind === "potion" ? `p${a.slot}:${a.target ?? ""}` : `c${a.hand}:${a.target ?? ""}`);
+
 export function planTurn(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
   const t0 = performance.now();
   const { best, nodes, truncated } = explore(start, w, maxNodes, 0);
