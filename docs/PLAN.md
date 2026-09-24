@@ -287,7 +287,14 @@ states, and only a simulator is fast enough for that.
      our Vantom is HP-bound, so `--flags smithorder` keeps only the upgrade
      order.
    - Tuning library (`dev0-a10`, seeds 136-315): Vantom 87/155, Insatiable 5/45;
-     155 and 45 saves in `runs/saves-dev`.
+     155 and 45 saves in `runs/saves-dev`. There potions2 gives Vantom 91/155
+     (confirming 55/81 vs 50/81), the Insatiable 4/45 vs 5/45: adopted.
+   - **Act 2 replayed from the same act 1 ends** (`bench --stop-floor 33` from the
+     pre-Vantom saves, potions2 throughout). Tuning library: base reached the
+     Insatiable 46 times and won 5, packages2+shop2 44 and 9, deckplan+exhaust2+
+     keepbasics+shop2 40 and 5, elo2+packages2+shop2 41 and 5. On the
+     confirmation saves packages2+shop2 did not replicate (26 and 2 vs 26 and 3):
+     no deck rule so far moves The Insatiable off ~10%.
    - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
      scored as the revival (seed 17's Queen fight).
    - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
