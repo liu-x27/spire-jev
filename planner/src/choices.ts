@@ -15,7 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { bossForAct, sparScore } from "./spar.ts";
+import { bossFor, sparScore } from "./spar.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -95,6 +95,16 @@ export function setFlags(names: readonly string[]): void {
   useSmartExhaust(flags.has("exhaust2"));
 }
 export const hasFlag = (name: string) => flags.has(name);
+
+/**
+ * The act's boss, as the bridge reports it from the act's start (run-fights sets it on every screen);
+ * "" when an older bridge does not say. Until 2026-09-24 every act 1 boss was Vantom (the first-run
+ * profile), and act 1's multi-hit rule was written for its Slippery alone.
+ */
+let actBoss = "";
+export function setActBoss(boss: string | undefined): void {
+  actBoss = boss ?? "";
+}
 const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number] }> = {
   DEMON_FORM: { tiers: "BBBB", pick: [30, 30, 30] }, // §1.2: +3 Strength a turn since v0.111
   DARK_EMBRACE: { tiers: "CCCC", pick: [15, 20, 20] }, // disputed
@@ -178,7 +188,7 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
     // §10.1.3: an AoE card when the deck has none.
     if (AOE.has(card) && count(deck, AOE) === 0) v += 0.15;
     // §10.1.4: three multi-hit sources before Vantom, the act 1 boss we keep meeting (rules2: Dismantle too).
-    if ((MULTI_HIT.has(card) || (rules2 && card === "DISMANTLE")) && count(deck, MULTI_HIT) < 3) v += 0.1;
+    if ((MULTI_HIT.has(card) || (rules2 && card === "DISMANTLE")) && count(deck, MULTI_HIT) < 3 && (actBoss === "" || actBoss === "VANTOM_BOSS")) v += 0.1;
     // §10.1.1: damage first until the deck has two damage cards of its own. rules2: enough to beat a
     // support card's rating (A10 seed 7 took Taunt, Colossus and Taunt over Anger and Sword Boomerang).
     if (DAMAGE.has(card) && count(deck, DAMAGE) < 2) v += rules2 ? 0.25 : 0.1;
@@ -210,8 +220,8 @@ const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, num
 const SPAR_SAMPLES = 32;
 const sparBase = new Map<string, number>();
 function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[]): number {
-  const boss = bossForAct(act);
-  const key = `${act}/${floor}/${deck.join(",")}`;
+  const boss = bossFor(actBoss, act);
+  const key = `${boss.model}/${floor}/${deck.join(",")}`;
   let base = sparBase.get(key);
   if (base === undefined) {
     if (sparBase.size > 64) sparBase.clear();

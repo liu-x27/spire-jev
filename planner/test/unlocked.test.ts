@@ -117,3 +117,12 @@ test("inferno: HP lost on the player's turn hits every enemy", () => {
   s.player.powers["INFERNO"] = 6;
   assert.deepEqual(play(s, { kind: "play", hand: 0 }).enemies.map((e) => e.hp), [34, 34]);
 });
+
+test("shriek: the hit that leaves the Terror Eel at 75 or under stuns it, its attack this turn gone", () => {
+  const eel = foe("TERROR_EEL", 80, { SHRIEK: 75 });
+  eel.intents = [{ type: "Attack", damage: 24, hits: 1 }];
+  const s = at(state([STRIKE], [eel]), 0);
+  assert.equal(s.enemies[0]!.hp, 74);
+  assert.equal(s.enemies[0]!.powers["SHRIEK"], undefined);
+  assert.equal(incomingDamage(s), 0);
+});

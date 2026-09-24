@@ -67,6 +67,9 @@ export interface Observation {
   is_victory: boolean;
   seed: string;
   act: number;
+  /** The act's boss encounter ("WATERFALL_GIANT_BOSS"), and act 3's second at A10; "" from older bridges. */
+  act_boss?: string;
+  act_second_boss?: string;
   floor: number;
   gold: number;
   player_hp: number;

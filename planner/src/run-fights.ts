@@ -29,7 +29,7 @@ import { parseArgs } from "node:util";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
-import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
+import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
 import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useGiantRules, type Weights } from "./search.ts";
@@ -463,6 +463,7 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       continue;
     }
     const o = cur.observation;
+    setActBoss(o.act_boss);
     if (o.phase === "map" && capture.has(o.floor) && !captured.has(o.floor) && sandbox) {
       captured.add(o.floor);
       const from = path.join(savesDir(sandbox), "current_run.save");

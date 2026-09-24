@@ -299,6 +299,12 @@ function hit(target: Enemy, damage: number): number {
   }
   // Hard to Kill (Exoskeleton): a hit takes at most that much HP.
   if (has(target, "HARD_TO_KILL")) lost = Math.min(lost, target.powers["HARD_TO_KILL"] ?? 0);
+  // Shriek (Terror Eel; IL: ShriekPower.AfterDamageReceived): the first HP lost that leaves it at or
+  // under its amount stuns it, its move this turn gone, and the power with it.
+  if (lost > 0 && has(target, "SHRIEK") && target.hp - lost > 0 && target.hp - lost <= (target.powers["SHRIEK"] ?? 0)) {
+    delete target.powers["SHRIEK"];
+    target.intents = [];
+  }
   // Hardened Shell (Skulking Colony; IL: ModifyHpLostBeforeOstyLate): at most its amount of HP a turn.
   if (has(target, "HARDENED_SHELL")) {
     lost = Math.max(0, Math.min(lost, (target.powers["HARDENED_SHELL"] ?? 0) - (target.shellTaken ?? 0)));

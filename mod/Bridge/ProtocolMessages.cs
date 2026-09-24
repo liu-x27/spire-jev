@@ -67,6 +67,14 @@ public sealed class ObservationDto
     [JsonPropertyName("act")]
     public int Act { get; set; }
 
+    // spire-jev: the act's boss, as the map shows it from the start of the act (and the second one
+    // of act 3 at A10), so the deck can be built for it.
+    [JsonPropertyName("act_boss")]
+    public string ActBoss { get; set; } = "";
+
+    [JsonPropertyName("act_second_boss")]
+    public string ActSecondBoss { get; set; } = "";
+
     [JsonPropertyName("floor")]
     public int Floor { get; set; }
 

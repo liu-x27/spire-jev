@@ -61,6 +61,19 @@ public static class FullAppStateTracker
         return vars;
     }
 
+    // spire-jev: the current act's boss encounter ("WATERFALL_GIANT_BOSS"), or its second at A10.
+    private static string BossOf(RunState? runState, bool second)
+    {
+        try
+        {
+            var act = runState?.Act;
+            if (act == null) return "";
+            if (second) return act.HasSecondBoss ? act.SecondBossEncounter?.Id.Entry ?? "" : "";
+            return act.BossEncounter?.Id.Entry ?? "";
+        }
+        catch { return ""; }
+    }
+
     // The numbers a model's own class keeps: fields declared on the concrete type.
     private static void AddDeclaredNumbers(object model, Dictionary<string, double> into)
     {
@@ -213,6 +226,8 @@ public static class FullAppStateTracker
             Character = player?.Character.Id.Entry ?? "",
             Ascension = runState?.AscensionLevel ?? 0,
             Act = (runState?.CurrentActIndex ?? 0) + 1,
+            ActBoss = BossOf(runState, second: false),
+            ActSecondBoss = BossOf(runState, second: true),
             Floor = runState?.TotalFloor ?? 0,
             Gold = player?.Gold ?? 0,
             PlayerHp = player?.Creature.CurrentHp ?? 0,

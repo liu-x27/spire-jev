@@ -54,6 +54,9 @@ export interface Boss {
 export const BOSSES: Record<string, Boss> = {
   VANTOM: { model: "VANTOM", hp: 183, powers: { SLIPPERY: 9 } },
   THE_INSATIABLE: { model: "THE_INSATIABLE", hp: 341, powers: {} },
+  // 250 HP at A8+ (wiki, v0.107.1; our A10 logs agree), Steam Eruption 20 from its opening
+  // Pressurize and +3 a move: 17 here, so that turn N starts at 20 + 3(N-2) as in the game.
+  WATERFALL_GIANT: { model: "WATERFALL_GIANT", hp: 250, powers: { STEAM_ERUPTION: 17 } },
 };
 
 export interface Bout {
@@ -63,7 +66,13 @@ export interface Bout {
   turns: number;
 }
 
-/** One shuffle of the deck against the boss, for at most `turns` turns (The Insatiable's Sandpit gives about eight). */
+/** Won: nothing alive, and no killed Waterfall Giant's DeathBlow still to come. */
+const over = (s: State) => s.enemies.every((e) => !e.alive && !((e.deathBlow ?? 0) > 0));
+
+/**
+ * One shuffle of the deck against the boss, for at most `turns` turns (The Insatiable's Sandpit gives
+ * about eight), and the two turns a killed Waterfall Giant takes to strike.
+ */
 export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, hp = 80): Bout {
   const pile = [...deck];
   for (let i = pile.length - 1; i > 0; i--) {
@@ -81,7 +90,8 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
     drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0,
     unmovableUsed: false, potions: [], potionSlots: 0, potionsUsed: 0,
   };
-  for (let t = 1; t <= turns; t++) {
+  const blowing = (st: State) => st.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
+  for (let t = 1; t <= turns || blowing(s); t++) {
     for (let step = 0; step < 15; step++) {
       const a = planTurn(s, TURN_WEIGHTS, 3000).actions[0];
       if (!a || a.kind !== "play") break;
@@ -91,12 +101,13 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
       } finally {
         setKnownDraws(false);
       }
-      if (!s.enemies[0]!.alive || s.enemies[0]!.hp <= 0) return { damage: boss.hp, hpLost: hp - s.player.hp, won: true, turns: t };
+      if (over(s)) return { damage: boss.hp, hpLost: hp - s.player.hp, won: true, turns: t };
       if (s.player.hp <= 0) return { damage: boss.hp - s.enemies[0]!.hp, hpLost: hp, won: false, turns: t };
     }
     const next = nextTurn(s, rng, expectedIntents);
     if (!next) return { damage: boss.hp - s.enemies[0]!.hp, hpLost: hp, won: false, turns: t };
     s = next;
+    if (over(s)) return { damage: boss.hp, hpLost: hp - s.player.hp, won: true, turns: t };
   }
   return { damage: boss.hp - s.enemies[0]!.hp, hpLost: hp - s.player.hp, won: false, turns };
 }
@@ -114,6 +125,11 @@ export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed 
 
 /** The boss a deck is measured against in each act (acts 1-2 of this pool; act 3 against the act 2 one for now). */
 export const bossForAct = (act: number): Boss => (act === 0 ? BOSSES["VANTOM"]! : BOSSES["THE_INSATIABLE"]!);
+
+/** The act's boss by its encounter id ("WATERFALL_GIANT_BOSS"), where it is modelled here; else the act's default. */
+export function bossFor(encounter: string, act: number): Boss {
+  return BOSSES[encounter.replace(/^ENCOUNTER\./, "").replace(/_BOSS$/, "")] ?? bossForAct(act);
+}
 
 if (import.meta.main) {
   const [arg, bossName] = process.argv.slice(2);
