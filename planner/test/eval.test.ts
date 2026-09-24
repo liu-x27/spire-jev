@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { actionId, deckPace, evaluate, futureDamage, planTurn, TURN_WEIGHTS } from "../src/search.ts";
-import type { Card, Enemy, State } from "../src/sim.ts";
+import { type Card, type Enemy, play, type State } from "../src/sim.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
   id, cost, costsX: false, type, target, keywords: [], vars, upgrades: 0, locked: false, glows: false,
@@ -94,4 +94,25 @@ test("with setup on, a power worth its turns is played on a safe turn, and not w
   assert.equal(actionId(planTurn(long, TURN_WEIGHTS).actions[0]!), "play_card:1:target:1");
   const short = state([fnp, STRIKE], 1, [foe(1, 6, 0)]);
   assert.equal(actionId(planTurn(short, { ...TURN_WEIGHTS, setup: 1 }).actions[0]!), "play_card:1:target:1");
+});
+
+test("long: strips more of Vantom's Slippery on a small-hit turn", () => {
+  const vantom = (attack: number): Enemy => ({
+    id: 1, model: "VANTOM", hp: 183, maxHp: 183, block: 0, alive: true, powers: { SLIPPERY: 9 }, weakAtStart: false, startStrength: 0,
+    intents: [{ type: "Attack", damage: attack, hits: 1 }],
+  });
+  // Stacks of Slippery the plan strips: one per strike.
+  const stripped = (attack: number, w: typeof TURN_WEIGHTS, draw: Card[]) => {
+    let s = state([STRIKE, STRIKE, DEFEND, DEFEND], 3, [vantom(attack)]);
+    s.draw = draw;
+    for (const a of planTurn(s, w).actions) if (a.kind === "play") s = play(s, a);
+    return 9 - (s.enemies[0]!.powers["SLIPPERY"] ?? 0);
+  };
+  const long = { ...TURN_WEIGHTS, long: 1 };
+  // A starter deck: one strike and two defends against Ink Blot's 8, two strikes with long.
+  const starter = [STRIKE, STRIKE, DEFEND, DEFEND];
+  assert.equal(stripped(8, TURN_WEIGHTS, starter), 1);
+  assert.equal(stripped(8, long, starter), 2);
+  // (With a deck of big hits a stack hides more HP, and long hits into Dismember too: one turn does
+  // not know the stacks could go on a quiet turn instead. Whether that costs is for the runs to say.)
 });

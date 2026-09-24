@@ -27,6 +27,7 @@ const { values } = parseArgs({
     cards: { type: "string", default: "take" },
     choices: { type: "string", default: "first" },
     ascension: { type: "string", default: "0" },
+    flags: { type: "string", default: "" },
     port: { type: "string", default: "47100" },
   },
 });
@@ -56,7 +57,7 @@ const parts = await Promise.all(
       [
         path.join(here, "src", "run-fights.ts"),
         "--policy", values.policy, "--runs", String(chunk.length), "--seed", String(chunk[0]),
-        "--port", String(port), "--cards", values.cards, "--weights", values.weights, "--out", out, "--choices", values.choices, "--ascension", values.ascension,
+        "--port", String(port), "--cards", values.cards, "--weights", values.weights, "--out", out, "--choices", values.choices, "--ascension", values.ascension, "--flags", values.flags,
       ],
       { cwd: here, stdio: ["ignore", log, log] },
     );
@@ -79,7 +80,7 @@ for (const file of parts) {
   fs.rmSync(file);
 }
 const merged = path.join(runs, `eval-${values.tag}.json`);
-fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, weights, fights, rooms }, null, 1));
+fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, choices: values.choices, ascension: Number(values.ascension), flags: values.flags, weights, fights, rooms }, null, 1));
 
 const bySeed = new Map<string, FightLog[]>();
 for (const f of fights) bySeed.set(f.seed, [...(bySeed.get(f.seed) ?? []), f]);

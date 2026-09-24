@@ -26,7 +26,11 @@ public static class GameCatalog
             {
                 try
                 {
-                    var list = typeof(ActModel).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(act) as IEnumerable<EncounterModel>;
+                    // The fields fill on first use of their properties (AllEliteEncounters, ...): ask the property first.
+                    const BindingFlags Any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+                    string property = "All" + char.ToUpperInvariant(field[4]) + field.Substring(5);
+                    var list = (act.GetType().GetProperty(property, Any)?.GetValue(act)
+                        ?? typeof(ActModel).GetField(field, Any)?.GetValue(act)) as IEnumerable<EncounterModel>;
                     a[name] = (list ?? Enumerable.Empty<EncounterModel>()).Select(e => new Dictionary<string, object?>
                     {
                         ["id"] = e.Id.Entry,

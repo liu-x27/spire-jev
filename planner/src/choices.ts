@@ -10,6 +10,7 @@
  * engines later" (§3.3).
  */
 
+import { type MapPoint, planPath } from "./path.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -78,6 +79,14 @@ let rules2 = false;
 export function useRules2(on: boolean): void {
   rules2 = on;
 }
+
+/** Changes under test (--flags a,b), each off unless named. */
+const flags = new Set<string>();
+export function setFlags(names: readonly string[]): void {
+  flags.clear();
+  for (const n of names) if (n) flags.add(n);
+}
+export const hasFlag = (name: string) => flags.has(name);
 const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number] }> = {
   DEMON_FORM: { tiers: "BBBB", pick: [30, 30, 30] }, // §1.2: +3 Strength a turn since v0.111
   DARK_EMBRACE: { tiers: "CCCC", pick: [15, 20, 20] }, // disputed
@@ -169,7 +178,28 @@ export function chooseRest(o: Observation, legal: LegalAction[]): string {
   // Before the boss, rest below 85%: the act 1 boss fights lost ended with Vantom at 12-37 HP after
   // coming in at about 73%, and a rest (30% of max HP) is worth more there than one upgrade.
   const rest = share <= 0.4 || o.player_hp < (bossNext ? 35 : 25) || (bossNext && share < 0.85);
+  // restbudget (review #5): away from the boss, heal when most of the heal would still be there when the
+  // boss fight starts. A10 runs smithed at 58% on average and came to the rest before Vantom at 41%.
+  if (!rest && !bossNext && flags.has("restbudget") && heal && smith && healCarried(o) >= 0.12 * o.player_max_hp) return heal;
   return (rest ? heal ?? smith : smith ?? heal) ?? legal[0]!.action_id;
+}
+
+/** HP lost per fight in acts 1-3 (fix1-a0, bosses left out); fix1-a10 lost 1.38 times as much. */
+const LOSS_PER_FIGHT = [10.6, 15.6, 19.6];
+/**
+ * How much more HP a heal here leaves for the next boss: the fights before
+ * the rest site ahead of it (about one floor in two between here and there,
+ * as in fix1-a10) take their share whichever we do, that rest site heals
+ * again, and neither heal goes past max HP.
+ */
+export function healCarried(o: Observation): number {
+  const max = o.player_max_hp;
+  const heal = Math.round(0.3 * max);
+  const next = [16, 32, 47].find((f) => f > o.floor) ?? 47;
+  const fights = 0.55 * Math.max(0, next - o.floor - 1);
+  const loss = fights * LOSS_PER_FIGHT[actOf(o)]! * (1 + 0.038 * (o.ascension ?? 0));
+  const atBoss = (hp: number) => Math.min(max, Math.max(1, Math.min(max, hp) - loss) + heal);
+  return atBoss(o.player_hp + heal) - atBoss(o.player_hp);
 }
 
 /** §3.8, §10.5.6: upgrades that change how a card works first; never Strike or Defend while better exists. */
@@ -434,6 +464,20 @@ const act = (id: string): LegalAction => ({ action_id: id, action_type: id.split
  * a relic's worth of risk). The bridge offers the reachable nodes of the
  * next row only, so this looks one step ahead.
  */
+/**
+ * pathdp: the offer on the best path through the whole act (path.ts), given
+ * the "map" call's points; chooseMap's choice when the offers carry no
+ * coordinates (a bridge older than them).
+ */
+export function chooseMapByPath(o: Observation, legal: LegalAction[], points: readonly MapPoint[]): string {
+  const offers = legal.filter((a) => a.action_id.startsWith("choose_map:"));
+  const at = offers.map((a) => ({ col: Number(a.metadata?.["col"]), row: Number(a.metadata?.["row"]) }));
+  if (offers.length === 0 || points.length === 0 || at.some((p) => !Number.isFinite(p.col) || !Number.isFinite(p.row))) return chooseMap(o, legal);
+  const plan = planPath(points, at, { hp: o.player_hp, maxHp: o.player_max_hp, act: actOf(o), ascension: o.ascension ?? 0, gold: o.gold });
+  if (!Number.isFinite(plan.values[plan.best]!)) return chooseMap(o, legal);
+  return offers[plan.best]!.action_id;
+}
+
 export function chooseMap(o: Observation, legal: LegalAction[]): string {
   const offers = legal.filter((a) => a.action_id.startsWith("choose_map:"));
   if (offers.length === 0) return legal[0]!.action_id;

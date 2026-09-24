@@ -424,7 +424,8 @@ public static class FullAppStateTracker
                         ActionId = $"choose_map:{branch1Indexed}:{typeName}",
                         ActionType = "choose_map",
                         Description = $"{branch1Indexed} ({typeName})",
-                        Metadata = new Dictionary<string, object?> { ["branch_choice"] = branch1Indexed, ["node_index"] = i, ["room_type"] = typeName }
+                        // spire-jev: where the node is, to find it in the "map" call's points.
+                        Metadata = new Dictionary<string, object?> { ["branch_choice"] = branch1Indexed, ["node_index"] = i, ["room_type"] = typeName, ["col"] = point.coord.col, ["row"] = point.coord.row }
                     });
                 }
             }

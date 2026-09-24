@@ -52,10 +52,19 @@ export interface Weights {
    * had it — Feel No Pain, Vicious, Crimson Mantle sat in hand unplayed.
    */
   setup: number;
+  /**
+   * 1: a big enemy (80 max HP or more: elites, bosses) weighs its HP at
+   * what each HP of it will cost us — its average damage a turn (the
+   * bestiary's, not this turn's intent, or Dismember turns would be spent
+   * hitting) over the deck's damage a turn — when that is more than
+   * enemyHp; 0: every enemy at enemyHp. Vantom (A10) was blocked for five
+   * turns while Slippery held; the guides strip it in the first three.
+   */
+  long: number;
 }
 
 /** The first version: this turn only. */
-export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0 };
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0, long: 0 };
 export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
 
 /** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
@@ -198,10 +207,11 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // full one: count it as the HP it hides, so stripping it is worth playing.
   const slippery = alive.reduce((a, e) => a + Math.max(0, e.powers["SLIPPERY"] ?? 0), 0);
   const hidden = slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0;
+  const extra = w.long > 0 ? longFightExtra(s, alive, w) : 0;
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was
   // charged: a state at 70 HP and one at 10 scored the same.) Root HP is the same for every line.
-  let score = (s.player.hp - loss) * w.hpLoss - (enemyHp + hidden) * w.enemyHp - s.potionsUsed * potionCost(s, w);
+  let score = (s.player.hp - loss) * w.hpLoss - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
@@ -221,6 +231,24 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     for (const e of pits) score -= SANDPIT_TURN * Math.max(0, e.hp / pace - (e.powers["SANDPIT"] ?? 0));
   }
   return score;
+}
+
+/**
+ * What `long` adds to the enemies' HP's cost: for each big enemy, its HP
+ * (Slippery's too) at the weight above enemyHp. Big by max HP, which a fight
+ * does not change: a threshold on HP left would pay for crossing it.
+ */
+function longFightExtra(s: State, alive: readonly Enemy[], w: Weights): number {
+  const pace = deckPace(s);
+  let extra = 0;
+  for (const e of alive) {
+    const seen = BESTIARY[e.model]?.perTurn;
+    if (seen === undefined || e.maxHp < 80) continue;
+    const hp = e.hp + Math.max(0, e.powers["SLIPPERY"] ?? 0) * Math.max(0, pace.perHit - 1);
+    const weight = Math.min(1.5, (w.long * seen) / pace.perTurn);
+    if (weight > w.enemyHp) extra += hp * (weight - w.enemyHp);
+  }
+  return extra;
 }
 
 function potionCost(s: State, w: Weights): number {

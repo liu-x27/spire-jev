@@ -17,7 +17,8 @@ import type { LegalAction, Observation } from "./obs.ts";
 
 export const GAME = process.env["STS2_GAME_ROOT"] ?? "D:\\SteamLibrary\\steamapps\\common\\Slay the Spire 2";
 const REPO = path.resolve(import.meta.dirname, "..", "..");
-const MOD_PACKAGE = path.join(REPO, "mod", "Bridge", "bin", "Release", "net9.0", "package");
+// SPIRE_JEV_MOD: another build of the bridge (dotnet build -c Staging), so runs already going keep theirs.
+const MOD_PACKAGE = process.env["SPIRE_JEV_MOD"] ?? path.join(REPO, "mod", "Bridge", "bin", "Release", "net9.0", "package");
 
 function prepare(sandbox: string): void {
   fs.mkdirSync(sandbox, { recursive: true });

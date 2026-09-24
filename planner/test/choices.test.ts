@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, worstCard } from "../src/choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, healCarried, setFlags, worstCard } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
@@ -34,6 +34,23 @@ test("rest when low, smith when healthy, rest before the boss unless near full",
   assert.equal(chooseRest(obs({ player_hp: 30, player_max_hp: 80 }), legal), "choose_rest:HEAL");
   assert.equal(chooseRest(obs({ player_hp: 60, player_max_hp: 80 }), legal), "choose_rest:SMITH");
   assert.equal(chooseRest(obs({ player_hp: 48, player_max_hp: 80, floor: 16 }), legal), "choose_rest:HEAL");
+});
+
+test("restbudget: heals mid-act when the heal would last to the boss, not when it would overflow", () => {
+  const legal = [act("choose_rest:HEAL"), act("choose_rest:SMITH")];
+  const a10 = (hp: number, floor: number) => obs({ player_hp: hp, player_max_hp: 87, floor, ascension: 10 });
+  // A10 seed 26: smithed at 59/87 on floor 11 and came to floor 16 at 34.
+  assert.ok(healCarried(a10(59, 11)) >= 20);
+  assert.ok(healCarried(a10(82, 7)) <= 5);
+  assert.equal(chooseRest(a10(59, 11), legal), "choose_rest:SMITH");
+  setFlags(["restbudget"]);
+  try {
+    assert.equal(chooseRest(a10(59, 11), legal), "choose_rest:HEAL");
+    assert.equal(chooseRest(a10(82, 7), legal), "choose_rest:SMITH");
+    assert.equal(chooseRest(a10(75, 14), legal), "choose_rest:SMITH");
+  } finally {
+    setFlags([]);
+  }
 });
 
 test("upgrades a card whose upgrade changes it before a strike", () => {

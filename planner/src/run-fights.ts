@@ -29,7 +29,8 @@ import { parseArgs } from "node:util";
 import { Game, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseSelect, chooseShop, chooseUpgrade, useRules2, wantsPotion } from "./choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
+import type { MapPoint } from "./path.ts";
 import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
 import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, play } from "./sim.ts";
 
@@ -360,8 +361,12 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       continue;
     }
     const o = cur.observation;
-    const chosen = useRules ? rules(o, cur.legal_actions) : routine(o, cur.legal_actions, takeCards);
-    if (o.phase !== "map" && o.phase !== "rewards") {
+    let chosen: string;
+    if (useRules && o.phase === "map" && hasFlag("pathdp")) {
+      const map = (await game.call("map")) as { points?: MapPoint[] };
+      chosen = chooseMapByPath(o, cur.legal_actions, map.points ?? []);
+    } else chosen = useRules ? rules(o, cur.legal_actions) : routine(o, cur.legal_actions, takeCards);
+    if (o.phase !== "rewards") {
       rooms.push({ seed, floor: o.floor, phase: o.phase, hp: o.player_hp, maxHp: o.player_max_hp, gold: o.gold, deck: o.deck_cards, room: o.room, chosen });
     }
     cur = await game.step(chosen);
@@ -428,12 +433,14 @@ async function main(): Promise<void> {
       out: { type: "string" },
       choices: { type: "string", default: "first" },
       ascension: { type: "string", default: "0" },
+      flags: { type: "string", default: "" },
     },
   });
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
   useRules = values.choices === "rules" || values.choices === "rules2";
   useRules2(values.choices === "rules2");
+  setFlags(values.flags.split(","));
   ascension = Number(values.ascension);
   usePotions = useRules;
   if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
