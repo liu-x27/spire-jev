@@ -95,6 +95,19 @@ function scales(card: string, p: DeckProfile): boolean {
   return false;
 }
 
+/** How many damage cards a deck has of its own (§10.1.1 wants two before anything else in act 1). */
+const OWN_DAMAGE = set("THRASH", "CONFLAGRATION", "DISMANTLE", "BLUDGEON", "POMMEL_STRIKE", "TWIN_STRIKE", "ANGER", "PERFECTED_STRIKE", "HEMOKINESIS", "UNRELENTING", "SWORD_BOOMERANG", "WHIRLWIND", "FIGHT_ME", "HEADBUTT", "UPPERCUT", "ASHEN_STRIKE", "BREAKTHROUGH");
+
+/**
+ * scale1: the scaling need from act 1 on, once the deck has its two damage cards. A10 runs that
+ * brought scaling to Vantom won 10 of 11 (combo-a10) and 11 of 12 (combopk-a10); without it 7 of
+ * 17 and 6 of 14 — and fewer than half had any.
+ */
+let scalingFromAct1 = false;
+export function useScalingFromAct1(on: boolean): void {
+  scalingFromAct1 = on;
+}
+
 /** What a card adds to a deck beyond its own rating, for act 0-2. */
 export function packageBonus(id: string, act: number, deck: readonly string[]): number {
   const card = base(id);
@@ -115,7 +128,9 @@ export function packageBonus(id: string, act: number, deck: readonly string[]): 
   if (VULNERABLE_SOURCES.has(card) && p.vulnerablePayoffs > 0) b += 0.06;
   if (SELF_DAMAGE.has(card) && p.selfDamagePayoffs > 0) b += 0.08;
   if (BLOCK.has(card) && p.blockPayoffs > 0) b += 0.05;
-  // From act 2: what the deck still lacks.
+  // From act 2 (scale1: from act 1, after two damage cards): what the deck still lacks.
+  const ownDamage = deck.filter((c) => OWN_DAMAGE.has(base(c))).length;
+  if (act === 0 && scalingFromAct1 && ownDamage >= 2 && p.scaling === 0 && scales(card, p)) b += 0.2;
   if (act >= 1) {
     if (p.scaling === 0 && scales(card, p)) b += act === 1 ? 0.15 : 0.2;
     if (p.draw < 2 && DRAW.has(card)) b += 0.08;

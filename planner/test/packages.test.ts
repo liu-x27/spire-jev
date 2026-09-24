@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { packageBonus, profile } from "../src/packages.ts";
+import { packageBonus, profile, useScalingFromAct1 } from "../src/packages.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
 
@@ -23,4 +23,17 @@ test("packages: from act 2, scaling first when the deck has none; act 3 wants an
   assert.equal(packageBonus("DEMON_FORM", 1, [...STARTER, "DOMINATE"]), 0);
   assert.ok(packageBonus("IMPERVIOUS", 2, STARTER) > packageBonus("IMPERVIOUS", 1, STARTER));
   assert.equal(profile([...STARTER, "FEEL_NO_PAIN", "TRUE_GRIT", "STOKE", "OFFERING"]).scaling, 2); // Stoke, and FNP with 3 sources
+});
+
+test("scale1: in act 1, once there are two damage cards, scaling is wanted", () => {
+  const two = [...STARTER, "POMMEL_STRIKE", "TWIN_STRIKE"];
+  const off = packageBonus("DEMON_FORM", 0, two);
+  const starterOff = packageBonus("DEMON_FORM", 0, STARTER);
+  useScalingFromAct1(true);
+  try {
+    assert.ok(packageBonus("DEMON_FORM", 0, two) - off >= 0.2);
+    assert.equal(packageBonus("DEMON_FORM", 0, STARTER), starterOff, "not before the damage cards");
+  } finally {
+    useScalingFromAct1(false);
+  }
 });

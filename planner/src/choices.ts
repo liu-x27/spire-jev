@@ -11,7 +11,7 @@
  */
 
 import { type MapPoint, planPath } from "./path.ts";
-import { packageBonus } from "./packages.ts";
+import { packageBonus, useScalingFromAct1 } from "./packages.ts";
 import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
@@ -87,6 +87,7 @@ const flags = new Set<string>();
 export function setFlags(names: readonly string[]): void {
   flags.clear();
   for (const n of names) if (n) flags.add(n);
+  useScalingFromAct1(flags.has("scale1"));
 }
 export const hasFlag = (name: string) => flags.has(name);
 const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number] }> = {
