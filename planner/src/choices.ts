@@ -207,6 +207,14 @@ export function chooseRest(o: Observation, legal: LegalAction[]): string {
   const bossNext = [16, 32, 47].includes(o.floor);
   // Before the boss, rest below 85%: the act 1 boss fights lost ended with Vantom at 12-37 HP after
   // coming in at about 73%, and a rest (30% of max HP) is worth more there than one upgrade.
+  // smith2 (docs/a10-upgrades-research.md, 51 winning A10 runs on v0.107.1+): winners smith at 81%
+  // of rest sites; they heal mid-act below ~40%, before the act 2 boss below ~50% (the next Ancient
+  // heals 80% of what is missing), before the act 3 double boss unless at 85%+. Before Vantom our own
+  // runs say HP decides it (winners came in at 95%, losers 85%): 85% there.
+  if (flags.has("smith2")) {
+    const healNow = o.floor === 32 ? share < 0.5 : bossNext ? share < 0.85 : share < 0.4 || o.player_hp < 25;
+    return (healNow ? heal ?? smith : smith ?? heal) ?? legal[0]!.action_id;
+  }
   const rest = share <= 0.4 || o.player_hp < (bossNext ? 35 : 25) || (bossNext && share < 0.85);
   // restbudget (review #5): away from the boss, heal when most of the heal would still be there when the
   // boss fight starts. A10 runs smithed at 58% on average and came to the rest before Vantom at 41%.
@@ -240,12 +248,27 @@ const SMITH_ORDER = [
   "THRASH", "FIEND_FIRE", "ASHEN_STRIKE",
 ];
 const SMITH_LAST = new Set(["STRIKE_IRONCLAD", "DEFEND_IRONCLAD", "SHRUG_IT_OFF", "COLOSSUS", "TREMBLE", "EVIL_EYE", "BLOOD_WALL", "FEED"]);
+/** smith2: winners' upgrade order when held (66 A10 wins, 51 on v0.107.1+), and what they almost never upgraded. */
+const SMITH_ORDER2 = [
+  "ARMAMENTS", "TRUE_GRIT", "BARRICADE", "BODY_SLAM", "UNMOVABLE", "DARK_EMBRACE", "HAVOC", "PYRE", "OFFERING", "STOKE",
+  "BURNING_PACT", "POMMEL_STRIKE", "UPPERCUT",
+];
+const SMITH_LAST2 = new Set(["STRIKE_IRONCLAD", "DEFEND_IRONCLAD", "BATTLE_TRANCE", "COLOSSUS", "TAUNT", "BASH"]);
 
 export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
   const offers = legal.filter((a) => a.action_id.startsWith("choose_upgrade:"));
   const idOf = (a: LegalAction) => base(a.action_id.split(":")[2] ?? "");
   const rank = (a: LegalAction) => {
     const id = idOf(a);
+    // smith2: the order winners upgraded in (docs/a10-upgrades-research.md), payoffs only with support.
+    if (flags.has("smith2")) {
+      const p = profile(o.deck_cards);
+      const unsupported = ((id === "BODY_SLAM" || id === "BARRICADE" || id === "JUGGERNAUT") && p.block < 4) || (id === "RUPTURE" && p.selfDamage < 2);
+      const i = SMITH_ORDER2.indexOf(id);
+      if (i >= 0 && !unsupported) return 200 - i;
+      if (SMITH_LAST2.has(id)) return -10;
+      return 20 + cardValue(id, actOf(o), o.deck_cards) * 10 - (unsupported ? 15 : 0);
+    }
     // upgrade2: a payoff's upgrade only with its support (Body Slam was upgraded first regardless).
     if (flags.has("upgrade2")) {
       const p = profile(o.deck_cards);

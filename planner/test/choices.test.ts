@@ -152,3 +152,18 @@ test("shop2: an affordable Inflame for a deck with no damage scaling comes befor
     setFlags([]);
   }
 });
+
+test("smith2: winners' upgrade order, and a smith before the act 2 boss unless under half HP", () => {
+  const legal = [act("choose_upgrade:0:POMMEL_STRIKE"), act("choose_upgrade:1:ARMAMENTS"), act("choose_upgrade:2:STRIKE_IRONCLAD")];
+  const rest = [act("choose_rest:HEAL"), act("choose_rest:SMITH")];
+  setFlags(["smith2"]);
+  try {
+    assert.equal(chooseUpgrade(obs({ phase: "deck_upgrade" }), legal), "choose_upgrade:1:ARMAMENTS");
+    assert.equal(chooseRest(obs({ floor: 32, act: 2, player_hp: 50, player_max_hp: 80 }), rest), "choose_rest:SMITH");
+    assert.equal(chooseRest(obs({ floor: 32, act: 2, player_hp: 35, player_max_hp: 80 }), rest), "choose_rest:HEAL");
+    assert.equal(chooseRest(obs({ floor: 16, act: 1, player_hp: 60, player_max_hp: 80 }), rest), "choose_rest:HEAL");
+    assert.equal(chooseRest(obs({ floor: 11, act: 1, player_hp: 40, player_max_hp: 80 }), rest), "choose_rest:SMITH");
+  } finally {
+    setFlags([]);
+  }
+});
