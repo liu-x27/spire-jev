@@ -67,20 +67,22 @@ const parts = await Promise.all(
 
 const fights: FightLog[] = [];
 const rooms: unknown[] = [];
+const ends: { seed: string; victory: boolean }[] = [];
 let weights: unknown;
 for (const file of parts) {
   if (!fs.existsSync(file)) {
     console.log(`missing ${file}: see sandbox/eval-${values.tag}-*.log`);
     continue;
   }
-  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[]; rooms?: unknown[] };
+  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[]; rooms?: unknown[]; ends?: { seed: string; victory: boolean }[] };
   weights = part.weights;
   fights.push(...part.fights);
   rooms.push(...(part.rooms ?? []));
+  ends.push(...(part.ends ?? []));
   fs.rmSync(file);
 }
 const merged = path.join(runs, `eval-${values.tag}.json`);
-fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, choices: values.choices, ascension: Number(values.ascension), flags: values.flags, weights, fights, rooms }, null, 1));
+fs.writeFileSync(merged, JSON.stringify({ tag: values.tag, policy: values.policy, choices: values.choices, ascension: Number(values.ascension), flags: values.flags, weights, fights, rooms, ends }, null, 1));
 
 const bySeed = new Map<string, FightLog[]>();
 for (const f of fights) bySeed.set(f.seed, [...(bySeed.get(f.seed) ?? []), f]);
@@ -91,5 +93,7 @@ const floors = [...bySeed].sort(([a], [b]) => a.localeCompare(b)).map(([seed, fs
 const mean = [...bySeed.values()].reduce((a, fs_) => a + fs_[fs_.length - 1]!.floor, 0) / Math.max(1, bySeed.size);
 console.log(`${values.tag}  weights ${JSON.stringify(weights)}`);
 console.log(`floors reached (last fight's floor; + if it was won): ${floors.join(" ")}  mean ${mean.toFixed(1)}`);
+const wins = ends.filter((e) => e.victory).map((e) => e.seed.slice(-2));
+console.log(`victories: ${wins.length} of ${ends.length} runs${wins.length ? ` (seeds ${wins.join(" ")})` : ""}`);
 console.log(summarise(values.tag, fights).split("\n").filter((l) => !l.startsWith("    ")).join("\n"));
 console.log(`${((Date.now() - t0) / 60000).toFixed(1)} min, merged into ${path.relative(here, merged)}`);

@@ -86,6 +86,20 @@ export interface RoomLog {
 }
 const rooms: RoomLog[] = [];
 
+/** How each run ended, as the game had it: a win is the game's own victory flag, not a guess from the floor. */
+export interface RunEnd {
+  seed: string;
+  floor: number;
+  terminal: boolean;
+  victory: boolean;
+  hp: number;
+  maxHp: number;
+  /** The deck and relics at the end. */
+  deck: string[];
+  relics: string[];
+}
+const ends: RunEnd[] = [];
+
 /** Every card seen, as the game describes it: what a card's own rule is written from. */
 const catalog = new Map<string, Omit<CardObs, "index" | "can_play">>();
 function collect(o: Observation): void {
@@ -370,6 +384,36 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
     }
     cur = await game.step(chosen);
   }
+  const o = cur.observation;
+  ends.push({ seed, floor: o.floor, terminal: o.is_terminal, victory: o.is_victory, hp: o.player_hp, maxHp: o.player_max_hp, deck: o.deck_cards, relics: o.relics });
+}
+
+/**
+ * The game's own verdict on a run: the "win" of its run-history file for this
+ * seed, written at the end. (The bridge's victory flag misses the early-access
+ * ending — The Architect takes the last HP and the game-over screen follows,
+ * yet the history says win: seed 17 of rules2-a0, the first A0 clear.)
+ */
+export function historyWin(sandbox: string, seed: string, since: number): boolean | undefined {
+  const dir = path.join(sandbox, "userdata", "SlayTheSpire2", "default", "1", "modded", "profile1", "saves", "history");
+  if (!fs.existsSync(dir)) return undefined;
+  let verdict: boolean | undefined;
+  let latest = 0;
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith(".run")) continue;
+    const file = path.join(dir, f);
+    const mtime = fs.statSync(file).mtimeMs;
+    if (mtime < since || mtime < latest) continue;
+    try {
+      const run = JSON.parse(fs.readFileSync(file, "utf8")) as { seed?: string; win?: boolean };
+      if (run.seed !== seed) continue;
+      verdict = run.win === true;
+      latest = mtime;
+    } catch {
+      // A file being written: the next run's check will not need it.
+    }
+  }
+  return verdict;
 }
 
 function pct(xs: number[], p: number): number {
@@ -455,6 +499,17 @@ async function main(): Promise<void> {
     try {
       game = await Game.launch(sandbox, Number(values.port));
       await playRun(game, seed, policy, Number(values["max-fights"]), values.cards === "take", logs);
+      // The history file is written as the run ends: give it a moment, then take the game's word.
+      for (let wait = 0; wait < 10; wait++) {
+        const win = historyWin(sandbox, seed, t0);
+        const end = ends[ends.length - 1];
+        if (win !== undefined && end?.seed === seed) {
+          end.victory = win;
+          if (win) console.log(`  VICTORY (the game's run history says win)`);
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
     } catch (err) {
       console.log(`  run stopped: ${(err as Error).message}`);
     } finally {
@@ -467,7 +522,7 @@ async function main(): Promise<void> {
   fs.mkdirSync(out, { recursive: true });
   const file = values.out ? path.resolve(values.out) : path.join(out, `${policy}-${values.cards}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
   const cards = Object.fromEntries([...catalog].sort(([a], [b]) => a.localeCompare(b)));
-  fs.writeFileSync(file, JSON.stringify({ policy, weights, fights: logs, cards, rooms }, null, 1));
+  fs.writeFileSync(file, JSON.stringify({ policy, weights, fights: logs, cards, rooms, ends }, null, 1));
   console.log(`\n${summarise(policy, logs)}\n\nlog: ${file}`);
 }
 
