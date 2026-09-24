@@ -165,3 +165,20 @@ test("stakes, sandpit2, and a Sandpit death that no revival undoes", () => {
   const gain = (w: typeof TURN_WEIGHTS) => evaluate(more, w) - evaluate(race, w);
   assert.ok(gain({ ...TURN_WEIGHTS, sandpit2: 1 }) > gain(TURN_WEIGHTS));
 });
+
+test("engines: Feel No Pain in play is worth its blocks to come in a long fight with exhausting cards", () => {
+  const EXH = card("TRUE_GRIT", "Skill", "Self", { Block: 7 });
+  const fnp = state([], 0, [foe(1, 200, 5)]);
+  fnp.draw = [EXH, EXH, EXH, STRIKE, STRIKE, DEFEND];
+  const plain = structuredClone(fnp);
+  fnp.player.powers["FEEL_NO_PAIN"] = 3;
+  const w = { ...TURN_WEIGHTS, engines: 1 };
+  assert.ok(evaluate(fnp, w) - evaluate(plain, w) > 10);
+  assert.equal(evaluate(fnp, TURN_WEIGHTS), evaluate(plain, TURN_WEIGHTS));
+  // With the fight about to end, it is worth nothing.
+  const ending = structuredClone(fnp);
+  ending.enemies[0]!.hp = 5;
+  const endingPlain = structuredClone(plain);
+  endingPlain.enemies[0]!.hp = 5;
+  assert.equal(evaluate(ending, w), evaluate(endingPlain, w));
+});

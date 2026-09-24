@@ -84,10 +84,19 @@ export interface Weights {
    * (research rules 4-5); 0: the deck's pace and no margin.
    */
   sandpit2: number;
+  /**
+   * 1: the powers in play are worth what they will give over the turns the
+   * fight has left (enginesWorth: each power's gain a turn from this deck's
+   * own rates, over at most four more turns); 0: only Demon Form is, as
+   * demonFormWorth. Feel No Pain stayed unplayed in 14 of 17 A10 fights that
+   * ended with it in hand, Vicious 25 of 32, Crimson Mantle 9 of 11
+   * (astra-review-2 #3).
+   */
+  engines: number;
 }
 
 /** The first version: this turn only. */
-export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0, long: 0, look: 0, stakes: 0, sandpit2: 0 };
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0, long: 0, look: 0, stakes: 0, sandpit2: 0, engines: 0 };
 export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
 
 /** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
@@ -252,6 +261,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
   const demon = s.player.powers["DEMON_FORM"] ?? 0;
   if (demon > 0) score += demon * demonFormWorth(s, w);
+  if (w.engines > 0) score += enginesWorth(s, w) * w.engines;
   if (w.setup > 0) score += setupValue(s) * w.setup;
   score += s.drawn * w.drawn;
   // Sandpit (The Insatiable) devours the player when it runs out, and only
@@ -307,6 +317,47 @@ function demonFormWorth(s: State, w: Weights): number {
   // Turn k after this one has k stacks' Strength: 1 + 2 + ... + turns.
   const strengthHits = ((turns * (turns + 1)) / 2) * hitsPerTurn;
   return Math.max(w.strength, strengthHits * w.enemyHp);
+}
+
+/** Turns the fight will likely last after this one: the enemies' HP at the deck's pace, at most four. */
+function turnsAfter(s: State): number {
+  const alive = s.enemies.filter((e) => e.alive);
+  if (alive.length === 0) return 0;
+  const pace = deckPace(s);
+  return Math.min(4, Math.max(0, alive.reduce((a, e) => a + e.hp, 0) / Math.max(1, pace.perTurn) - 1));
+}
+
+const EXHAUST_IDS = new Set(["TRUE_GRIT", "BURNING_PACT", "SECOND_WIND", "FIEND_FIRE", "STOKE", "BRAND", "CINDER", "THRASH", "HAVOC"]);
+const VULNERABLE_IDS = new Set(["BASH", "TREMBLE", "TAUNT", "UPPERCUT", "THUNDERCLAP", "MOLTEN_FIST", "DOMINATE", "BREAK"]);
+
+/**
+ * What the powers in play (Demon Form apart) will give in the turns this
+ * fight has left, from the deck's own rates: the share of the cards still in
+ * the fight that trigger each, times a hand of five.
+ */
+export function enginesWorth(s: State, w: Weights): number {
+  const turns = turnsAfter(s);
+  if (turns <= 0) return 0;
+  const cards = [...s.hand, ...s.draw, ...s.discard];
+  const n = Math.max(1, cards.length);
+  const perHand = (test: (c: Card) => boolean) => (cards.filter(test).length / n) * 5;
+  const exhausts = perHand((c) => c.keywords.includes("Exhaust") || EXHAUST_IDS.has(c.id) || c.type === "Status" || c.type === "Curse");
+  const vulnerables = perHand((c) => VULNERABLE_IDS.has(c.id));
+  const selfDamage = perHand((c) => (c.vars["HpLoss"] ?? 0) > 0);
+  const blockers = perHand((c) => (c.vars["Block"] ?? 0) > 0);
+  const pace = deckPace(s);
+  const hits = pace.perTurn / Math.max(1, pace.perHit);
+  const p = s.player.powers;
+  let perTurn = 0;
+  perTurn += (p["FEEL_NO_PAIN"] ?? 0) * exhausts * 0.7; // block, about 70% of it wanted
+  perTurn += Math.max(0, (p["CRIMSON_MANTLE"] ?? 0) * 0.8 - (p["CRIMSON_MANTLE"] ? 1 : 0)); // block every turn, for 1 HP
+  perTurn += (p["METALLICIZE"] ?? 0) * 0.8;
+  perTurn += (p["BARRICADE"] ?? 0) > 0 ? 3 : 0;
+  perTurn += (p["VICIOUS"] ?? 0) * vulnerables * w.drawn;
+  perTurn += (p["DARK_EMBRACE"] ?? 0) * exhausts * w.drawn;
+  perTurn += (p["RUPTURE"] ?? 0) * selfDamage * hits * w.enemyHp;
+  perTurn += (p["JUGGERNAUT"] ?? 0) * blockers * w.enemyHp;
+  return Math.min(40, perTurn * turns);
 }
 
 /**
