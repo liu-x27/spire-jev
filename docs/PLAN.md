@@ -319,6 +319,53 @@ states, and only a simulator is fast enough for that.
      it. Orrery (card rewards inside the shop) stalled seed 35; not bought now.
    - Fixed outright: in-fight exhausts from hand took The Insatiable's
      Frantic Escapes first (they are status cards).
+   - **Every result above was on a locked timeline.** `prepare()` deleted the
+     sandbox's progress.save with the run saves, so each launch began a fresh
+     profile: 5 of 57 epochs (IRONCLAD3-7, RELIC1-5, POTION1-2, COLORLESS1-5,
+     EVENT1-3, the alternate acts all missing). In 26,161 card rewards 11
+     Ironclad cards never appeared, among them Dominate and Cruelty (strong
+     players' #2 and #7 by Elo vs skip); act 1 was always the Overgrowth.
+     And every run was a *first run* (`docs/run-generation.md`, from the IL):
+     an unlocked act not in `discovered_acts` is forced, each act's boss is
+     the first of its discovery order not in `encounter_stats` (so always
+     Vantom, The Insatiable, Queen: 3 of the 12 bosses), and with no wins or
+     losses the Overgrowth scripts its first seven hallway fights, two events,
+     two elites and the first chest (the 261 locked saves: 261/261 the same).
+     Now `data/progress-veteran.save` is installed each launch
+     (`SPIRE_JEV_PROFILE`=veteran by default, `unlocked` for the timeline
+     alone, `locked` for the old fresh profile): all epochs, acts and
+     encounters seen, a win and a loss. Acts and bosses are then drawn as for
+     a player past their first runs (A10 seeds 16-39: Overgrowth 8 /
+     Underdocks 16, all 12 bosses). Every baseline and save library is to be
+     redone on it. The `unl-*` runs (`runs/saves-unl`, `SPIRE_JEV_LIBRARY`)
+     were on the unlocked profile alone: Underdocks, Waterfall Giant,
+     Insatiable, Queen every time.
+   - Unlocked baseline (`unl-base-a10`, 16-45, after the bridge fixes below):
+     mean floor 16.6 (22 on the locked pool), Waterfall Giant 7/21. The
+     Giant at 0 HP is stunned a turn, then strikes for its Steam Eruption
+     (20 on turn 2, +3 a turn: 38-56) and dies. Of the 14 losses in the 21
+     pre-Giant replays, **9 killed it and died to that blow**, their hand that
+     turn all attacks and their potions drunk on turn 1 (potions2). Modelled
+     now (sim.ts `deathBlow`; the search had stopped at the "win" and ended
+     the blow's turn unblocked); on the replays that gives 7/21 with 6 clean
+     (was 5) and 38% HP left. `--flags wgpot` (block, Dex, Weak and draw
+     potions kept for the blow; potions five times dearer while it lives)
+     8/21, `wghp` (HP under the coming blow counted twice) no change: the
+     blow needs HP and block cards in the deck before the fight, not play.
+   - The bridge, for screens the unlocked content brings: a rest or event
+     option can offer rewards before it finishes (Dream Catcher, Tiny
+     Mailbox, Punch Off's Nab), which AutoSlay drains only after the room;
+     Punch Off's punch animation loop froze the game headless (skipped);
+     powers report their internal data. Simulator rules from the IL
+     (`tools/inspect --il`): Colossus's halving (never modelled), Skittish,
+     Ravenous, Hardened Shell, Dominate, Molten Fist, Pact's End, Cruelty,
+     Inferno; `test/unlocked.test.ts`. The other session (branch
+     `sim-lizard-bound`) models the eight bosses the bot never met.
+   - Colourless cards: shops offered them 9,092 times (38 kinds), bought 0 —
+     `cardValue` gives cards missing from its tables 0.3. Mostly right:
+     strong players' Elo puts nearly all of them below skipping (Spire Codex
+     wr50, all characters); only Hidden Gem +27, Finesse +5, Dark Shackles 0
+     and Fasten -8 come near.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
