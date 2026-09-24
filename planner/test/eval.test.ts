@@ -116,3 +116,22 @@ test("long: strips more of Vantom's Slippery on a small-hit turn", () => {
   // (With a deck of big hits a stack hides more HP, and long hits into Dismember too: one turn does
   // not know the stacks could go on a quiet turn instead. Whether that costs is for the runs to say.)
 });
+
+test("a death this turn is not the end with Lizard Tail unused", () => {
+  const dying = () => {
+    const s = state([], 0, [foe(1, 40, 90)]);
+    s.relics = ["LIZARD_TAIL"];
+    return s;
+  };
+  const unused = dying();
+  unused.relicVars = { LIZARD_TAIL: { Heal: 50, _wasUsed: 0 } };
+  const used = dying();
+  used.relicVars = { LIZARD_TAIL: { Heal: 50, _wasUsed: 1 } };
+  assert.ok(evaluate(unused) > -1e5);
+  assert.ok(evaluate(used) < -1e5);
+  // Surviving with plenty of HP is still better than spending the tail.
+  const safe = state([], 0, [foe(1, 40, 10)]);
+  safe.relics = ["LIZARD_TAIL"];
+  safe.relicVars = unused.relicVars;
+  assert.ok(evaluate(safe) > evaluate(unused));
+});

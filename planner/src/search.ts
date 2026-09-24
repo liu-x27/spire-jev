@@ -201,7 +201,15 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   if (alive.length === 0) return WIN + s.player.hp * 10;
   const enemyHp = alive.reduce((a, e) => a + e.hp, 0);
   const loss = hpLoss(s);
-  if (loss >= s.player.hp) return -WIN - enemyHp;
+  // A death this turn is the end only with nothing to bring the player back (seed 17's Queen fight:
+  // the model saw a certain death on turn 5, and Lizard Tail won it). The revival is worth its HP,
+  // less what the relic or potion would have been worth later.
+  let hpLeft = s.player.hp - loss;
+  if (hpLeft <= 0) {
+    const back = revival(s);
+    if (back === undefined) return -WIN - enemyHp;
+    hpLeft = back - REVIVE_COST * s.player.maxHp;
+  }
 
   // A stack of Slippery (Vantom) is a hit that will take 1 HP instead of a
   // full one: count it as the HP it hides, so stripping it is worth playing.
@@ -211,7 +219,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was
   // charged: a state at 70 HP and one at 10 scored the same.) Root HP is the same for every line.
-  let score = (s.player.hp - loss) * w.hpLoss - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
+  let score = hpLeft * w.hpLoss - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
@@ -249,6 +257,22 @@ function longFightExtra(s: State, alive: readonly Enemy[], w: Weights): number {
     if (weight > w.enemyHp) extra += hp * (weight - w.enemyHp);
   }
   return extra;
+}
+
+/** What a second life costs, as a share of max HP: the Lizard Tail or Fairy in a Bottle is gone. */
+const REVIVE_COST = 0.3;
+
+/**
+ * The HP a death would leave, if something brings the player back: Lizard
+ * Tail not yet used (the bridge reports its Heal, 50%, and _wasUsed), or a
+ * Fairy in a Bottle held (30% unless its vars say otherwise).
+ */
+export function revival(s: State): number | undefined {
+  const tail = s.relicVars?.["LIZARD_TAIL"];
+  if (s.relics.includes("LIZARD_TAIL") && (tail?.["_wasUsed"] ?? 0) === 0) return Math.floor((s.player.maxHp * (tail?.["Heal"] ?? 50)) / 100);
+  const fairy = s.potions.find((p) => p.id === "FAIRY_IN_A_BOTTLE");
+  if (fairy) return Math.floor((s.player.maxHp * (fairy.vars["HealPercent"] ?? fairy.vars["Heal"] ?? 30)) / 100);
+  return undefined;
 }
 
 function potionCost(s: State, w: Weights): number {
