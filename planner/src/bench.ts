@@ -78,4 +78,4 @@ const won = boss.filter((f) => f.won);
 const clean = won.filter((f) => f.hpEnd >= 0.3 * f.maxHp);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 console.log(`bench ${values.tag}: ${boss.length} fights from ${saves.length} saves — won ${won.length} (clean ${clean.length}); HP left after a win ${Math.round(100 * mean(won.map((f) => f.hpEnd / f.maxHp)))}%; turns ${mean(boss.map((f) => f.turns)).toFixed(1)}; ${((Date.now() - t0) / 60000).toFixed(1)} min`);
-console.log(`  per save: ${results.map((r) => `${r.save.replace(/-a\d+-f\d+\.save$/, "").slice(-2)}:${r.fights.at(-1)?.won ? "W" : "L"}${r.fights.at(-1)?.hpEnd ?? "?"}`).join(" ")}`);
+console.log(`  per save: ${results.map((r) => `${(r.save.match(/JEV0*(\d+)/)?.[1] ?? "?")}:${r.fights.at(-1)?.won ? "W" : "L"}${r.fights.at(-1)?.hpEnd ?? "?"}`).join(" ")}`);
