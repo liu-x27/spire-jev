@@ -239,6 +239,23 @@ states, and only a simulator is fast enough for that.
      `--flags shop2` (a card that fills a gap before a removal; potions from
      act 2), then deck-aware path/rest/upgrade. Seeds 16-45 are now a
      development set; adoption needs a paired run on 46-135.
+   - Paired baseline on 46-135 (`conf0-a10`, the combination): Vantom 50/81
+     (29 clean), Insatiable 2/26 — packages on the same seeds 52/81, 3/26.
+   - Screens on 16-45 against the combination (23.7, Vantom 17/28,
+     Insatiable 0/7): `packages2` 22.8, 17/25; `engines` 24.1 but Vantom
+     15/29 (its one Insatiable win was clean, 72% HP); `packages2`+`shop2`
+     reaches the Insatiable 10 times (0 wins); all three 22.9, Vantom 14/28;
+     **`elo` (strong players' Elo over skipping, docs/a10-decks-research.md)
+     16.5, Vantom 4/24** — a 0.5 threshold skipped so much of act 1 that
+     decks met Vantom at 14.8 cards instead of 18.5. `--flags elo2` keeps
+     act 1 on rules2 and uses the Elo values from act 2: queued.
+   - **Boss fights replayed from saves.** `--capture 16,32,47` copies the
+     run's save at those map screens; `--resume` continues it (the bridge
+     presses the main menu's Continue); the resumed fight is the original
+     fight turn for turn (seed 16's Vantom, twice). `src/bench.ts` plays
+     every matching save under one combat configuration: paired comparisons
+     of boss play on dozens of the same fights in minutes. A library from
+     the combination on 46-135 (so aligned with `conf0-a10`) is being built.
    - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
      scored as the revival (seed 17's Queen fight).
    - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
