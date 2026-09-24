@@ -12,7 +12,8 @@
  */
 
 import type { IntentObs } from "./obs.ts";
-import { type Card, type Enemy, endOfTurnBlock, hpAfterTurn, incomingDamage, spendRevival, type State } from "./sim.ts";
+import { type EnemyTurn, moveIntents, playMove } from "./scripts.ts";
+import { type Card, type Enemy, endOfTurnBlock, hpAfterTurn, incomingDamage, isClaw, spendRevival, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
 const TURN_ONLY = ["NO_DRAW", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED"];
@@ -101,20 +102,10 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     else if (c.keywords.includes("Ethereal")) exhaust.push(c);
     else discard.push(c);
   }
-  // Chains of Binding (the Queen): the first cards drawn each turn, as many as its amount, are Bound.
-  const binding = Math.max(0, powers["CHAINS_OF_BINDING"] ?? 0);
-  // Mind Rot (the Knowledge Demon's curse; IL: MindRotPower.ModifyHandDraw): the turn's draw, less its amount.
-  const handDraw = Math.max(0, 5 - Math.max(0, powers["MIND_ROT"] ?? 0));
-  let pile = shuffle(s.draw.slice(), rng);
-  for (let i = 0; i < handDraw + extraDraw && hand.length < HAND_LIMIT; i++) {
-    if (pile.length === 0) {
-      if (discard.length === 0) break;
-      pile = shuffle(discard, rng);
-      discard = [];
-    }
-    hand.push({ ...free(pile.pop()!), locked: false, ...(i < binding ? { bound: true } : {}) });
-  }
-
+  // The enemies' turn, before the next hand is drawn: a scripted boss's move (scripts.ts) puts its
+  // cards into the piles and its debuffs on the player.
+  const draw = s.draw.slice();
+  const clawsUp = s.enemies.filter((e) => e.alive && isClaw(e)).length;
   const enemies = s.enemies.map((e): Enemy => {
     // A killed Waterfall Giant: its stun passes, and the turn after it strikes for its DeathBlow (the
     // game shows it with Weak taken off already); once struck it is gone.
@@ -137,7 +128,7 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
       return {
         ...form, alive: true, hp: e.revive!, maxHp: e.revive!, block: 0,
         powers: third ? { NEMESIS: 1, INTANGIBLE: 1 } : { ADAPTABLE: 1, PAINFUL_STABS: 1 },
-        intents: [{ type: "Attack", damage: 11, hits: 3 }],
+        intents: [{ type: "Attack", damage: 11, hits: 3 }], move: third ? "PHASE3_LACERATE_MOVE" : "MULTI_CLAW_MOVE",
         weakAtStart: false, startStrength: 0, vulnerableAtStart: false,
       };
     }
@@ -166,20 +157,33 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
         sleepBlock = Math.max(0, ep["PLATING"] ?? 0);
       }
     }
+    // A boss's move by its id: what it does now, and the move it shows next.
+    const moved: EnemyTurn = { turn: s.turn ?? 1, powers: ep, block: sleepBlock, heal: 0, player: powers, draw, discard };
+    const move = playMove(e, moved);
+    sleepBlock = moved.block;
     // Strength every turn: Byrdonis's Territorial, a Ritual.
     for (const k of ["TERRITORIAL", "RITUAL"]) if ((ep[k] ?? 0) > 0) ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
     // The Waterfall Giant's Steam Eruption grows 3 every turn, and its Heal turn gives back 15
     // (A10, our logs: every turn's buff, and each heal's miss in the turn-start checks).
     if ((ep["STEAM_ERUPTION"] ?? 0) > 0) ep["STEAM_ERUPTION"] = ep["STEAM_ERUPTION"]! + 3;
-    const heal = e.model === "WATERFALL_GIANT" && e.intents.some((i) => i.type === "Heal") ? 15 : 0;
+    const heal = (e.model === "WATERFALL_GIANT" && e.intents.some((i) => i.type === "Heal") ? 15 : 0) + moved.heal;
     // Stone Calendar: 52 to every enemy at the end of turn 7.
     const calendar = (s.turn ?? 1) === 7 ? relic("STONE_CALENDAR", "Damage", 52) : 0;
     const hp = Math.min(e.maxHp, e.hp + heal) - calendar;
-    const { asleep: _asleep, behindAtStart: _behind, ...rest } = e;
+    const { asleep: _asleep, behindAtStart: _behind, move: _move, ...rest } = e;
     const sleeping = (ep["ASLEEP"] ?? 0) > 0;
+    // Its next move's intents as the game will show them: Strength, the player's Vulnerable, its own
+    // Weak, a claw's back attack (the player still faces the claw last targeted); Multi Claw a hit more.
+    const behind = s.facing !== undefined && e.id !== s.facing && clawsUp > 1 && isClaw(e);
+    const hits = move === "MULTI_CLAW_MOVE" && e.move === "MULTI_CLAW_MOVE" ? (e.intents.find((i) => i.type === "Attack")?.hits ?? 3) + 1 : undefined;
+    const intents = move !== undefined
+      ? moveIntents(e.model, move, ep["STRENGTH"] ?? 0, { vulnerable: (powers["VULNERABLE"] ?? 0) > 0, weak: (ep["WEAK"] ?? 0) > 0, behind }, hits)
+      : sleeping ? [{ type: "Sleep", damage: 0, hits: 0 }] : foresee(e, turn);
     return {
       ...rest, powers: ep, block: sleepBlock, hp: Math.max(0, hp), alive: hp > 0,
-      intents: sleeping ? [{ type: "Sleep", damage: 0, hits: 0 }] : foresee(e, turn),
+      intents,
+      ...(move !== undefined ? { move } : {}),
+      ...(move !== undefined && behind ? { behindAtStart: true } : {}),
       weakAtStart: (ep["WEAK"] ?? 0) > 0,
       startStrength: ep["STRENGTH"] ?? 0,
       vulnerableAtStart: (ep["VULNERABLE"] ?? 0) > 0,
@@ -188,6 +192,20 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
       ...(sleeping ? { asleep: { turns: ep["ASLEEP"]!, hp: Math.max(0, hp) } } : {}),
     };
   });
+
+  // Chains of Binding (the Queen): the first cards drawn each turn, as many as its amount, are Bound.
+  const binding = Math.max(0, powers["CHAINS_OF_BINDING"] ?? 0);
+  // Mind Rot (the Knowledge Demon's curse; IL: MindRotPower.ModifyHandDraw): the turn's draw, less its amount.
+  const handDraw = Math.max(0, 5 - Math.max(0, powers["MIND_ROT"] ?? 0));
+  let pile = shuffle(draw, rng);
+  for (let i = 0; i < handDraw + extraDraw && hand.length < HAND_LIMIT; i++) {
+    if (pile.length === 0) {
+      if (discard.length === 0) break;
+      pile = shuffle(discard, rng);
+      discard = [];
+    }
+    hand.push({ ...free(pile.pop()!), locked: false, ...(i < binding ? { bound: true } : {}) });
+  }
 
   // Sloth counts the cards of a turn: the next starts at 0 (IL: SlothPower.BeforeSideTurnStart).
   const powerVars = s.player.powerVars?.["SLOTH"] ? { ...s.player.powerVars, SLOTH: { ...s.player.powerVars["SLOTH"], _cardsPlayedThisTurn: 0 } } : s.player.powerVars;

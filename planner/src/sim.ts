@@ -86,6 +86,8 @@ export interface Enemy extends Unit {
   behindAtStart?: boolean;
   /** Lagavulin Matriarch asleep at the observation: the enemy turns she had left to sleep, and her HP then. */
   asleep?: { turns: number; hp: number };
+  /** The move it shows, by id (the bridge's NextMove.Id): what scripts.ts plays a boss's turn by. */
+  move?: string;
 }
 
 export interface State {
@@ -243,6 +245,7 @@ export function fromObservation(obs: Observation): State {
         ...(e.model_id === "TEST_SUBJECT" && e.hp <= 0 && (powers["ADAPTABLE"] ?? 0) > 0 ? { revive: nextForm(e.max_hp) } : {}),
         ...(surrounded && claws.length > 1 && claws.includes(e) && e !== faced ? { behindAtStart: true } : {}),
         ...((powers["ASLEEP"] ?? 0) > 0 ? { asleep: { turns: powers["ASLEEP"]!, hp: e.hp } } : {}),
+        ...(e.intent ? { move: e.intent } : {}),
       };
     }),
     ...(surrounded && faced ? { facing: faced.combat_id } : {}),
@@ -312,7 +315,7 @@ export function formsToCome(e: Enemy): number {
 
 const has = (u: Unit, p: string) => (u.powers[p] ?? 0) > 0;
 /** A Kaiser Crab claw: Surrounded's back attack is its. */
-const isClaw = (e: Enemy) => has(e, "BACK_ATTACK_LEFT") || has(e, "BACK_ATTACK_RIGHT");
+export const isClaw = (e: Enemy) => has(e, "BACK_ATTACK_LEFT") || has(e, "BACK_ATTACK_RIGHT");
 /** Surrounded: this claw is behind the player now, and deals ×1.5 (with two claws up). */
 const behind = (s: State, e: Enemy) => s.facing !== undefined && e.id !== s.facing && e.alive && isClaw(e);
 /** Shrink shows an amount of -1: it is on for as long as it is there at all. */
@@ -362,6 +365,7 @@ function hit(target: Enemy, damage: number): number {
     delete target.powers["PLATING"];
     delete target.powers["ASLEEP"];
     target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+    target.move = "STUNNED";
   }
   // Slippery (Inklet): a hit takes at most 1 HP, and uses up a stack.
   if (lost > 0 && has(target, "SLIPPERY")) {
@@ -390,6 +394,7 @@ function hit(target: Enemy, damage: number): number {
     delete target.powers["STRENGTH"];
     delete target.powers["MANGLE"];
     target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+    target.move = "STUNNED";
   }
   if (target.hp <= 0) {
     target.hp = 0;
@@ -406,6 +411,7 @@ function hit(target: Enemy, damage: number): number {
       target.revive = nextForm(target.maxHp);
       for (const p of Object.keys(target.powers)) if (p !== "ADAPTABLE" && p !== "PAINFUL_STABS") delete target.powers[p];
       target.intents = [{ type: "Heal", damage: 0, hits: 0 }, { type: "Buff", damage: 0, hits: 0 }];
+      target.move = "RESPAWN_MOVE";
     }
   }
   return lost;

@@ -315,6 +315,68 @@ test("crab rage: the claw left alone gains 6 Strength and 99 Block", () => {
   assert.equal(incomingDamage(s), 24);
 });
 
+// ---------------------------------------------------------------- Scripts (scripts.ts, turn.ts)
+
+const none = () => [];
+
+test("scripts: the Kin Priest's Orb of Frailty frails the next turn, and Orb of Weakness is shown next", () => {
+  const priest: Enemy = { ...foe("KIN_PRIEST", 199, {}, 3, 9), move: "ORB_OF_FRAILTY_MOVE" };
+  const next = nextTurn(state([], [priest]), seeded(1), none)!;
+  assert.equal(next.player.powers["FRAIL"], 1);
+  assert.equal(next.enemies[0]!.move, "ORB_OF_WEAKNESS_MOVE");
+  assert.deepEqual(next.enemies[0]!.intents.map((i) => `${i.type}${i.damage}`), ["Attack9", "Debuff0"]);
+  // Ritual: +3 Strength, and every hit after it shows it.
+  const ritual = nextTurn(state([], [{ ...priest, move: "RITUAL_MOVE", intents: [{ type: "Buff", damage: 0, hits: 0 }] }]), seeded(1), none)!;
+  assert.equal(ritual.enemies[0]!.powers["STRENGTH"], 3);
+  assert.equal(ritual.enemies[0]!.intents[0]!.damage, 12);
+});
+
+test("scripts: Soul Fysh's Beckon puts a Beckon in the draw pile and one in the discard pile", () => {
+  const fysh: Enemy = { ...foe("SOUL_FYSH", 221, {}, 1, 0), move: "BECKON_MOVE", intents: [{ type: "StatusCard", damage: 0, hits: 0 }] };
+  const next = nextTurn(state([], [fysh]), seeded(1), none)!;
+  const beckons = [...next.hand, ...next.draw, ...next.discard].filter((c) => c.id === "BECKON").length;
+  assert.equal(beckons, 2);
+  assert.equal(next.enemies[0]!.intents[0]!.damage, 18);
+});
+
+test("scripts: the Rocket's Laser, 38 after Charge Up, is 57 from behind", () => {
+  const [crusher, rocket] = crab();
+  const s: State = { ...state([], [{ ...crusher!, behindAtStart: false, move: "BUG_STING_MOVE" }, { ...rocket!, move: "CHARGE_UP_MOVE" }]), facing: 1 };
+  const next = nextTurn(s, seeded(1), none)!;
+  const r = next.enemies[1]!;
+  assert.equal(r.powers["STRENGTH"], 3);
+  assert.equal(r.intents[0]!.damage, 57);
+  assert.equal(r.behindAtStart, true);
+  // Bug Sting's Weak and Frail on the player, and the Crusher in front: its Adapt, a Buff.
+  assert.equal(next.player.powers["WEAK"], 2);
+  assert.equal(next.player.powers["FRAIL"], 2);
+  assert.equal(next.enemies[0]!.intents[0]!.type, "Buff");
+  assert.equal(incomingDamage(next), 57);
+});
+
+test("scripts: Increasing Intensity upgrades every Wither by 3, adds two, and gains 4 Strength the first time", () => {
+  const glass: Enemy = { ...foe("AEONGLASS", 535, { ARTIFACT: 3 }, 1, 0), move: "INCREASING_INTENSITY_MOVE", intents: [{ type: "StatusCard", damage: 0, hits: 0 }] };
+  const s = state([], [glass]);
+  s.turn = 3;
+  s.draw = [card("WITHER", "Status", "None", { Damage: 3 }, -1, ["Unplayable"])];
+  const next = nextTurn(s, seeded(1), none)!;
+  const withers = [...next.hand, ...next.draw, ...next.discard].filter((c) => c.id === "WITHER").map((c) => c.vars["Damage"]);
+  assert.deepEqual(withers.sort(), [6, 6, 6]);
+  assert.equal(next.enemies[0]!.powers["STRENGTH"], 4);
+  // Ebb next, 26 with the Strength: 30.
+  assert.equal(next.enemies[0]!.intents[0]!.damage, 30);
+  // The Wither the draw pile held is not the one the state before still has.
+  assert.equal(s.draw[0]!.vars["Damage"], 3);
+});
+
+test("scripts: the Matriarch left asleep wakes after her third turn and Slashes on the fourth", () => {
+  let s = state([], [{ ...foe("LAGAVULIN_MATRIARCH", 233, { ASLEEP: 3, PLATING: 12 }, 1, 0), block: 12, move: "SLEEP_MOVE", intents: [{ type: "Sleep", damage: 0, hits: 0 }] }]);
+  s.turn = 1;
+  for (let t = 1; t <= 3; t++) s = nextTurn(s, seeded(t), none)!;
+  assert.equal(s.enemies[0]!.move, "SLASH_MOVE");
+  assert.equal(incomingDamage(s), 21);
+});
+
 test("withering presence: the card that takes CardsLeft to 0 puts a Wither in hand, which hurts at the turn's end", () => {
   const glass = foe("AEONGLASS", 535, { WITHERING_PRESENCE: 6, ARTIFACT: 3 }, 1, 0);
   glass.powerVars = { WITHERING_PRESENCE: { CardsLeft: 2 } };

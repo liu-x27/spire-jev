@@ -21,7 +21,8 @@ import path from "node:path";
 import { setIntentAscension } from "./intents.ts";
 import { expectedIntents, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
-import { type Card, cardOf, type Enemy, play, setKnownDraws, type State } from "./sim.ts";
+import { moveIntents } from "./scripts.ts";
+import { type Card, cardOf, type Enemy, formsToCome, play, setKnownDraws, type State } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
 const CATALOG_FILE = path.resolve(import.meta.dirname, "..", "data", "card-catalog.json");
@@ -49,14 +50,46 @@ export interface Boss {
   model: string;
   hp: number;
   powers: Record<string, number>;
+  /** Its first move, for a boss scripts.ts plays (the rest follow from it); else intents.ts guesses. */
+  move?: string;
+  /** Block it starts with (the Lagavulin Matriarch's Plating), and its powers' own numbers. */
+  block?: number;
+  powerVars?: Record<string, Record<string, number>>;
+  /** The encounter's other monsters: The Kin's followers, the Kaiser Crab's Rocket. */
+  with?: Omit<Boss, "with" | "player">[];
+  /** What the encounter puts on the player (the Crab's Surrounded, facing the Rocket). */
+  player?: Record<string, number>;
 }
-/** The act bosses at A10 (docs/a10-combat-research.md). */
+/** The act bosses at A10 (docs/a10-combat-research.md; the eight from the IL, scratchpad specs). */
 export const BOSSES: Record<string, Boss> = {
   VANTOM: { model: "VANTOM", hp: 183, powers: { SLIPPERY: 9 } },
   THE_INSATIABLE: { model: "THE_INSATIABLE", hp: 341, powers: {} },
   // 250 HP at A8+ (wiki, v0.107.1; our A10 logs agree), Steam Eruption 20 from its opening
   // Pressurize and +3 a move: 17 here, so that turn N starts at 20 + 3(N-2) as in the game.
   WATERFALL_GIANT: { model: "WATERFALL_GIANT", hp: 250, powers: { STEAM_ERUPTION: 17 } },
+  // The Priest is the one to kill: its followers are minions, gone with it.
+  THE_KIN: {
+    model: "KIN_PRIEST", hp: 199, powers: {}, move: "ORB_OF_FRAILTY_MOVE",
+    with: [
+      { model: "KIN_FOLLOWER", hp: 62, powers: { MINION: 1 }, move: "POWER_DANCE_MOVE" },
+      { model: "KIN_FOLLOWER", hp: 63, powers: { MINION: 1 }, move: "QUICK_SLASH_MOVE" },
+    ],
+  },
+  CEREMONIAL_BEAST: { model: "CEREMONIAL_BEAST", hp: 262, powers: {}, move: "STAMP_MOVE" },
+  LAGAVULIN_MATRIARCH: { model: "LAGAVULIN_MATRIARCH", hp: 233, powers: { ASLEEP: 3, PLATING: 12 }, block: 12, move: "SLEEP_MOVE" },
+  SOUL_FYSH: { model: "SOUL_FYSH", hp: 221, powers: {}, move: "BECKON_MOVE" },
+  KNOWLEDGE_DEMON: { model: "KNOWLEDGE_DEMON", hp: 399, powers: {}, move: "CURSE_OF_KNOWLEDGE_MOVE" },
+  KAISER_CRAB: {
+    model: "CRUSHER", hp: 219, powers: { BACK_ATTACK_LEFT: 1, CRAB_RAGE: 1 }, move: "THRASH_MOVE",
+    powerVars: { CRAB_RAGE: { StrengthPower: 6, Block: 99 } },
+    with: [{ model: "ROCKET", hp: 209, powers: { BACK_ATTACK_RIGHT: 1, CRAB_RAGE: 1 }, move: "TARGETING_RETICLE_MOVE", powerVars: { CRAB_RAGE: { StrengthPower: 6, Block: 99 } } }],
+    player: { SURROUNDED: 1 },
+  },
+  TEST_SUBJECT: { model: "TEST_SUBJECT", hp: 111, powers: { ADAPTABLE: 1, ENRAGE: 3 }, move: "BITE_MOVE" },
+  AEONGLASS: {
+    model: "AEONGLASS", hp: 535, powers: { WITHERING_PRESENCE: 6, ARTIFACT: 3 }, move: "EBB_MOVE",
+    powerVars: { WITHERING_PRESENCE: { CardsLeft: 6 } },
+  },
 };
 
 export interface Bout {
@@ -66,8 +99,10 @@ export interface Bout {
   turns: number;
 }
 
-/** Won: nothing alive, and no killed Waterfall Giant's DeathBlow still to come. */
-const over = (s: State) => s.enemies.every((e) => !e.alive && !((e.deathBlow ?? 0) > 0));
+/** Won: nothing alive, no killed Waterfall Giant's DeathBlow still to come, no Test Subject to respawn. */
+const over = (s: State) => s.enemies.every((e) => !e.alive && !((e.deathBlow ?? 0) > 0) && !((e.revive ?? 0) > 0));
+/** The HP a fight still needs: every monster's, and the Test Subject's forms to come. */
+const pool = (s: State) => s.enemies.reduce((a, e) => a + (e.alive ? e.hp : 0) + formsToCome(e), 0);
 
 /**
  * One shuffle of the deck against the boss, for at most `turns` turns (The Insatiable's Sandpit gives
@@ -79,17 +114,30 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
     const j = Math.floor(rng() * (i + 1));
     [pile[i], pile[j]] = [pile[j]!, pile[i]!];
   }
-  const enemy: Enemy = {
-    id: 1, model: boss.model, hp: boss.hp, maxHp: boss.hp, block: 0, alive: true, powers: { ...boss.powers },
-    weakAtStart: false, startStrength: 0, intents: [],
-  };
-  enemy.intents = expectedIntents(enemy, 1);
+  // The monsters as the fight opens; a scripted boss shows its first move (a claw behind the player
+  // with it: the player faces the Rocket, the last monster, at the start).
+  const monsters = [boss, ...(boss.with ?? [])];
+  const surrounded = (boss.player?.["SURROUNDED"] ?? 0) > 0;
+  const enemies = monsters.map((m, i): Enemy => {
+    const e: Enemy = {
+      id: i + 1, model: m.model, hp: m.hp, maxHp: m.hp, block: m.block ?? 0, alive: true, powers: { ...m.powers },
+      weakAtStart: false, startStrength: 0, intents: [],
+      ...(m.powerVars ? { powerVars: m.powerVars } : {}),
+      ...(m.move ? { move: m.move } : {}),
+    };
+    const behind = surrounded && i < monsters.length - 1;
+    e.intents = m.move ? moveIntents(m.model, m.move, 0, { vulnerable: false, weak: false, behind }) : expectedIntents(e, 1);
+    if (behind) e.behindAtStart = true;
+    return e;
+  });
   let s: State = {
-    player: { hp, maxHp: hp, block: 0, powers: {} }, energy: 3, maxEnergy: 3, turn: 1,
-    hand: pile.splice(pile.length - 5, 5), draw: pile, discard: [], exhaust: [], enemies: [enemy],
+    player: { hp, maxHp: hp, block: 0, powers: { ...(boss.player ?? {}) } }, energy: 3, maxEnergy: 3, turn: 1,
+    hand: pile.splice(pile.length - 5, 5), draw: pile, discard: [], exhaust: [], enemies,
     drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0,
     unmovableUsed: false, potions: [], potionSlots: 0, potionsUsed: 0,
+    ...(surrounded ? { facing: monsters.length } : {}),
   };
+  const full = pool(s);
   const blowing = (st: State) => st.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
   for (let t = 1; t <= turns || blowing(s); t++) {
     for (let step = 0; step < 15; step++) {
@@ -101,15 +149,15 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
       } finally {
         setKnownDraws(false);
       }
-      if (over(s)) return { damage: boss.hp, hpLost: hp - s.player.hp, won: true, turns: t };
-      if (s.player.hp <= 0) return { damage: boss.hp - s.enemies[0]!.hp, hpLost: hp, won: false, turns: t };
+      if (over(s)) return { damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
+      if (s.player.hp <= 0) return { damage: full - pool(s), hpLost: hp, won: false, turns: t };
     }
     const next = nextTurn(s, rng, expectedIntents);
-    if (!next) return { damage: boss.hp - s.enemies[0]!.hp, hpLost: hp, won: false, turns: t };
+    if (!next) return { damage: full - pool(s), hpLost: hp, won: false, turns: t };
     s = next;
-    if (over(s)) return { damage: boss.hp, hpLost: hp - s.player.hp, won: true, turns: t };
+    if (over(s)) return { damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
   }
-  return { damage: boss.hp - s.enemies[0]!.hp, hpLost: hp - s.player.hp, won: false, turns };
+  return { damage: full - pool(s), hpLost: hp - s.player.hp, won: false, turns };
 }
 
 /** A deck's score against a boss: damage dealt, a win's worth, HP lost; the mean over `samples` shuffles from `seed`. */
