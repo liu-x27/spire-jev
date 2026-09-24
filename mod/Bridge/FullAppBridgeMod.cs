@@ -532,6 +532,30 @@ public static class FullAppBridgeMod
                 {
                     await UiHelper.Click(proceedBtn, 0);
                 }
+                await Task.Delay(50);
+                // spire-jev: after a fight inside an event (Punch Off's) the proceed button stays
+                // disabled with every reward taken, and the click did nothing, 2,000 times. Do what it
+                // would: RunManager.ProceedFromTerminalRewardsScreen resumes the event the fight was
+                // started from (ShouldResumeParentEventAfterCombat), or opens the map. (Calling the
+                // button's own handler took its act-change branch and changed nothing.)
+                if (GodotObject.IsInstanceValid(screen) && GetTopScreen<NRewardsScreen>() == screen)
+                {
+                    GD.Print($"[spire-jev] rewards: proceed did not close the screen (button enabled {proceedBtn?.IsEnabled}); proceeding from the terminal rewards screen");
+                    try
+                    {
+                        var proceedNow = typeof(RunManager).GetMethod("ProceedFromTerminalRewardsScreen", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                        if (proceedNow?.Invoke(RunManager.Instance, null) is Task proceeding) await proceeding;
+                    }
+                    catch (Exception ex) { GD.PrintErr($"[spire-jev] rewards proceed: {ex.InnerException?.Message ?? ex.Message}"); }
+                    await Task.Delay(100);
+                    // Resuming the event leaves the screen on the stack: take it off, as a screen that is
+                    // not the room's last takes itself off.
+                    if (GodotObject.IsInstanceValid(screen) && GetTopScreen<NRewardsScreen>() == screen && screen is IOverlayScreen overlay)
+                    {
+                        NOverlayStack.Instance?.Remove(overlay);
+                        await Task.Delay(100);
+                    }
+                }
                 break;
             }
             else if (actionId.StartsWith("choose_reward:", StringComparison.Ordinal))
@@ -814,8 +838,16 @@ public static class FullAppBridgeMod
                 if (slotIdx >= 0 && slotIdx < allSlots.Count)
                 {
                     NMerchantSlot chosenSlot = allSlots[slotIdx];
-                    await chosenSlot.Entry.OnTryPurchaseWrapper(inventory.Inventory);
+                    // spire-jev: a relic can offer rewards as it is bought (Cauldron's potions), a screen
+                    // the purchase waits on: handle it while the purchase runs (seed 30 hung here).
+                    Task buying = chosenSlot.Entry.OnTryPurchaseWrapper(inventory.Inventory);
+                    while (!buying.IsCompleted)
+                    {
+                        if (!await HandleOfferedScreenAsync(random, ct)) await Task.Delay(20);
+                    }
+                    await buying;
                     await Task.Delay(50);
+                    while (await HandleOfferedScreenAsync(random, ct)) await Task.Delay(20);
                 }
             }
             else
@@ -856,6 +888,16 @@ public static class FullAppBridgeMod
             // Injury, then a relic through RewardsCmd.OfferCustom). The screen sits on top while the old
             // options stay, and clicking them again did nothing (seeds 17, 20, 27: 1,983 clicks).
             if (await HandleOfferedScreenAsync(random, ct)) continue;
+            // spire-jev: an option can start a fight inside the event (Punch Off's Fight:
+            // EnterCombatWithoutExitingEvent). AutoSlay's own event handler plays those with its test
+            // cheats (Strength, Plating, the enemies killed); ours plays it as any fight, then the event
+            // resumes or ends (veteran seeds 27, 39 clicked Fight over and over).
+            if (CombatManager.Instance?.IsInProgress == true)
+            {
+                await RunCombatLoopAsync(random, ct);
+                await Task.Delay(100);
+                continue;
+            }
 
             var optionButtons = UiHelper.FindAll<NEventOptionButton>(eventRoom).Where(b => b.Option != null && !b.Option.IsLocked).ToList();
             if (optionButtons.Count == 0)
@@ -922,6 +964,8 @@ public static class FullAppBridgeMod
 
             await UiHelper.Click(chosenBtn, 0);
             await Task.Delay(50);
+            // A fight the option starts begins a moment after the click.
+            for (int wait = 0; wait < 20 && CombatManager.Instance?.IsInProgress != true && GetTopScreen<NRewardsScreen>() == null; wait++) await Task.Delay(50);
 
             if (isProceed) break;
         }

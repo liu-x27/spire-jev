@@ -361,6 +361,22 @@ states, and only a simulator is fast enough for that.
      Ravenous, Hardened Shell, Dominate, Molten Fist, Pact's End, Cruelty,
      Inferno; `test/unlocked.test.ts`. The other session (branch
      `sim-lizard-bound`) models the eight bosses the bot never met.
+   - **Veteran baseline** (`vet-base-a10`, 16-45, 2026-09-24): mean last
+     floor 18.2, no clear; 19 of 26 deaths in act 1. Act 1 bosses 8/21 —
+     Soul Fysh 3/4, Ceremonial Beast 2/4, Waterfall Giant 2/4, Lagavulin
+     Matriarch 1/5 (4 deaths), Vantom 0/3 (15-card decks: without the
+     first-run script act 1's fights are harder and fewer), The Kin 0/1.
+     The other session's boss-swap replays (a save's `acts[i].rooms.boss_id`
+     set to another boss) give 8 fights a boss from the old libraries; the
+     Waterfall Giant has 155 + 81 that way (`runs/boss-wg-dev`, `-conf`).
+   - Bridge, for the veteran profile's content: a fight with no rewards
+     (Gremlin Merc ran off) goes back to the map; a purchase can offer
+     rewards (Cauldron); an event option can start a fight inside the event
+     (Punch Off's), which AutoSlay plays with its test cheats — ours plays it,
+     but its rewards screen then ignores proceed (known issue; Punch Off now
+     takes Nab, and run-fights gives a run up after 200 unchanged screens).
+     The act's boss is in the observation (`act_boss`): act 1's multi-hit
+     rule now applies with Vantom only.
    - Colourless cards: shops offered them 9,092 times (38 kinds), bought 0 —
      `cardValue` gives cards missing from its tables 0.3. Mostly right:
      strong players' Elo puts nearly all of them below skipping (Spire Codex
