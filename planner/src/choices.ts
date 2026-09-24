@@ -11,7 +11,7 @@
  */
 
 import { type MapPoint, planPath } from "./path.ts";
-import { fillsNeed, packageBonus, usePackages2, useScalingFromAct1 } from "./packages.ts";
+import { fillsNeed, packageBonus, profile, usePackages2, useScalingFromAct1 } from "./packages.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
@@ -241,6 +241,13 @@ export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
   const idOf = (a: LegalAction) => base(a.action_id.split(":")[2] ?? "");
   const rank = (a: LegalAction) => {
     const id = idOf(a);
+    // upgrade2: a payoff's upgrade only with its support (Body Slam was upgraded first regardless).
+    if (flags.has("upgrade2")) {
+      const p = profile(o.deck_cards);
+      const unsupported = ((id === "BODY_SLAM" || id === "BARRICADE" || id === "JUGGERNAUT") && p.block < 4) || (id === "RUPTURE" && p.selfDamage < 2)
+        || (id === "FEEL_NO_PAIN" && p.exhaust < 2);
+      if (unsupported) return 20 + cardValue(id, actOf(o), o.deck_cards) * 10 - 15;
+    }
     const i = SMITH_ORDER.indexOf(id);
     if (i >= 0) return 100 - i;
     // Bash only in act 1, and only with no other Vulnerable source (§3.8).
@@ -523,7 +530,10 @@ export function chooseMapByPath(o: Observation, legal: LegalAction[], points: re
   const offers = legal.filter((a) => a.action_id.startsWith("choose_map:"));
   const at = offers.map((a) => ({ col: Number(a.metadata?.["col"]), row: Number(a.metadata?.["row"]) }));
   if (offers.length === 0 || points.length === 0 || at.some((p) => !Number.isFinite(p.col) || !Number.isFinite(p.row))) return chooseMap(o, legal);
-  const plan = planPath(points, at, { hp: o.player_hp, maxHp: o.player_max_hp, act: actOf(o), ascension: o.ascension ?? 0, gold: o.gold });
+  // upgrade2 (astra-review-2 #4): the path sees the deck — an elite costs more before it has three attacks of its own.
+  const attacks = o.deck_cards.filter((c) => DAMAGE.has(base(c)) || MULTI_HIT.has(base(c))).length;
+  const eliteScale = flags.has("upgrade2") && attacks < 3 ? 1.4 : 1;
+  const plan = planPath(points, at, { hp: o.player_hp, maxHp: o.player_max_hp, act: actOf(o), ascension: o.ascension ?? 0, gold: o.gold, eliteScale });
   if (!Number.isFinite(plan.values[plan.best]!)) return chooseMap(o, legal);
   return offers[plan.best]!.action_id;
 }

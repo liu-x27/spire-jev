@@ -27,6 +27,8 @@ export interface PathContext {
   act: number;
   ascension: number;
   gold: number;
+  /** How much more an elite costs this deck than the average (upgrade2: 1.4 before it has three attacks). */
+  eliteScale?: number;
 }
 
 /** HP an ordinary fight takes, acts 1-3 at A0 (fix1-a0 without its elites); ×1.38 at A10. */
@@ -79,7 +81,7 @@ export function planPath(points: readonly MapPoint[], offers: readonly { col: nu
     const children = p.children.map(([c, r]) => byKey.get(key(c, r))).filter((q): q is MapPoint => q !== undefined);
     const next = (h: number) => (children.length ? Math.max(...children.map((q) => value(q, h))) : boss(h));
     let v: number;
-    if (/Elite/i.test(p.type)) v = fight(hp, monster * ELITE_TIMES, VALUE.relic + VALUE.card, next);
+    if (/Elite/i.test(p.type)) v = fight(hp, monster * ELITE_TIMES * (ctx.eliteScale ?? 1), VALUE.relic + VALUE.card, next);
     else if (/Monster/i.test(p.type)) v = fight(hp, monster, VALUE.card, next);
     else if (/Rest/i.test(p.type)) v = Math.max(next(hp + Math.round(0.3 * max)), VALUE.upgrade + next(hp));
     else if (/Shop|Merchant/i.test(p.type)) {
