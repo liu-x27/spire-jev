@@ -35,7 +35,8 @@ test("the next turn: HP after the enemies, powers ticked, Demon Form's Strength,
   const s = state([STRIKE, DEFEND], 0, [foe(100, 12)]);
   s.player.powers = { DEMON_FORM: 3, WEAK: 2, RAGE: 3, NO_DRAW: 1 };
   s.player.block = 5;
-  const next = nextTurn(s, seeded(1), () => 9)!;
+  const nine = () => [{ type: "Attack", damage: 9, hits: 1 }];
+  const next = nextTurn(s, seeded(1), nine)!;
   assert.equal(next.player.hp, 80 - 7);
   assert.equal(next.player.block, 0);
   assert.equal(next.player.powers["STRENGTH"], 3);
@@ -47,10 +48,10 @@ test("the next turn: HP after the enemies, powers ticked, Demon Form's Strength,
   assert.equal(next.discard.length + next.draw.length + next.hand.length, 8);
   assert.deepEqual(next.enemies[0]!.intents, [{ type: "Attack", damage: 9, hits: 1 }]);
   // The same state and seed draw the same hand.
-  assert.deepEqual(nextTurn(s, seeded(1), () => 9)!.hand.map((c) => c.id), next.hand.map((c) => c.id));
+  assert.deepEqual(nextTurn(s, seeded(1), nine)!.hand.map((c) => c.id), next.hand.map((c) => c.id));
   // A turn the enemies win has no next.
   const dying = state([], 0, [foe(100, 90)]);
-  assert.equal(nextTurn(dying, seeded(1), () => 9), undefined);
+  assert.equal(nextTurn(dying, seeded(1), nine), undefined);
 });
 
 test("planTurn2 plays Demon Form into a long fight where one turn would not", () => {

@@ -31,9 +31,10 @@ import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedAttack, planTurn, planTurn2, type Weights } from "./search.ts";
+import { setIntentAscension } from "./intents.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, type Weights } from "./search.ts";
 import { nextTurn, seeded } from "./turn.ts";
-import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, junkIndex, play, type State } from "./sim.ts";
+import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpLoss, junkIndex, play, type State } from "./sim.ts";
 
 type Policy = "planner" | "naive";
 
@@ -322,7 +323,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
     }
 
     if (a.kind === "end") {
-      const predicted = nextTurn(s, seeded(0), expectedAttack);
+      const predicted = nextTurn(s, seeded(0), expectedIntents);
       if (predicted) foreseen = { turn: obs.combat!.turn, state: predicted };
     }
     let next = await game.step(id);
@@ -388,6 +389,8 @@ function compareTurnStart(p: State, a: State): { field: string; predicted: strin
     check(`enemy${i + 1}.hp`, q.hp, e.hp);
     check(`enemy${i + 1}.block`, q.block, e.block);
     check(`enemy${i + 1}.powers`, powers(q.powers), powers(e.powers));
+    const intents = (x: Enemy) => x.intents.map((t) => (t.type === "Attack" ? `Attack${t.damage}x${t.hits}` : t.type)).join("+");
+    check(`enemy${i + 1}.intents`, intents(q), intents(e));
   });
   return out;
 }
@@ -544,6 +547,7 @@ async function main(): Promise<void> {
   useRules2(values.choices === "rules2");
   setFlags(values.flags.split(","));
   ascension = Number(values.ascension);
+  setIntentAscension(ascension);
   usePotions = useRules;
   if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
   const repo = path.resolve(import.meta.dirname, "..", "..");

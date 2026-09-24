@@ -13,6 +13,8 @@
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
 import { type Action, actions, type Card, drink, type Enemy, hpLoss, play, type State, stateKey } from "./sim.ts";
+import { likelyIntent } from "./intents.ts";
+import type { IntentObs } from "./obs.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
 export interface Weights {
@@ -398,6 +400,17 @@ function hash(text: string): number {
 export const expectedAttack = (e: Enemy): number => BESTIARY[e.model]?.perTurn ?? threat(e);
 
 /**
+ * What an enemy will show on `turn`: what the logs say it shows then (intents.ts, for monsters
+ * with a set script, like Vantom's), else one attack of its expected damage.
+ */
+export function expectedIntents(e: Enemy, turn: number): IntentObs[] {
+  const known = likelyIntent(e.model, turn);
+  if (known) return known;
+  const damage = Math.max(0, Math.round(expectedAttack(e)));
+  return damage > 0 ? [{ type: "Attack", damage, hits: 1 }] : [{ type: "Buff", damage: 0, hits: 0 }];
+}
+
+/**
  * Two turns (weights.look): the best ends of this turn by the one-turn
  * evaluation, each judged by the mean over a few random hands of the best
  * next turn from it (turn.ts nextTurn: the enemies attack for their average,
@@ -410,7 +423,6 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
   let nodesAll = nodes;
   let chosen = best;
   let chosenValue = -Infinity;
-  const attack = expectedAttack;
   for (const line of top) {
     let value: number;
     if (line.score >= WIN || line.score <= -WIN) value = line.score;
@@ -418,7 +430,7 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
       let sum = 0;
       const seed = hash(stateKey(line.state));
       for (let i = 0; i < LOOK_DRAWS; i++) {
-        const next = nextTurn(line.state, seeded(seed + i * 7919), attack);
+        const next = nextTurn(line.state, seeded(seed + i * 7919), expectedIntents);
         if (!next) {
           sum += -WIN;
           continue;

@@ -11,6 +11,7 @@
  * average damage a turn; buffs and debuffs they cast are not modelled).
  */
 
+import type { IntentObs } from "./obs.ts";
 import { type Card, type Enemy, endOfTurnBlock, hpLoss, incomingDamage, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
@@ -51,10 +52,10 @@ const tick = (powers: Record<string, number>, keys: readonly string[]) => {
 
 /**
  * The state at the start of the next turn, the hand drawn at random; undefined
- * if the enemies' turn kills the player. `attack` says what an enemy will hit
- * for next turn.
+ * if the enemies' turn kills the player. `foresee` says what an enemy will
+ * show on the next turn.
  */
-export function nextTurn(s: State, rng: () => number, attack: (e: Enemy) => number): State | undefined {
+export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: number) => readonly IntentObs[]): State | undefined {
   const hp = s.player.hp - hpLoss(s);
   if (hp <= 0) return undefined;
   const powers: Record<string, number> = { ...s.player.powers };
@@ -115,10 +116,9 @@ export function nextTurn(s: State, rng: () => number, attack: (e: Enemy) => numb
     for (const k of ["TERRITORIAL", "RITUAL"]) if ((ep[k] ?? 0) > 0) ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
     // Stone Calendar: 52 to every enemy at the end of turn 7.
     const calendar = (s.turn ?? 1) === 7 ? relic("STONE_CALENDAR", "Damage", 52) : 0;
-    const damage = Math.max(0, Math.round(attack(e)));
     return {
       ...e, powers: ep, block: 0, hp: Math.max(0, e.hp - calendar), alive: e.hp - calendar > 0,
-      intents: damage > 0 ? [{ type: "Attack", damage, hits: 1 }] : [{ type: "Buff", damage: 0, hits: 0 }],
+      intents: foresee(e, turn),
       weakAtStart: (ep["WEAK"] ?? 0) > 0,
       startStrength: ep["STRENGTH"] ?? 0,
     };
