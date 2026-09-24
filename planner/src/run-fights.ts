@@ -31,7 +31,7 @@ import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
-import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, planTurn, planTurn2, type Weights } from "./search.ts";
 import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, junkIndex, play } from "./sim.ts";
 
 type Policy = "planner" | "naive";
@@ -277,7 +277,7 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
     let a: Action;
     let urged: string | undefined;
     if (policy === "planner") {
-      const plan = planTurn(s, weights);
+      const plan = weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);
       log.nodes.push(plan.nodes);
       if (plan.truncated) log.truncated++;

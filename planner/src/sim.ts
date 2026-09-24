@@ -62,6 +62,8 @@ export interface Enemy extends Unit {
 export interface State {
   player: Unit;
   energy: number;
+  /** Energy a turn starts with (the combat's max_energy); what the next turn gets. */
+  maxEnergy?: number;
   hand: Card[];
   draw: Card[];
   discard: Card[];
@@ -146,6 +148,7 @@ export function fromObservation(obs: Observation): State {
       powers: powersOf(obs.player_powers), powerVars: powersOf(obs.player_power_vars ?? {}),
     },
     energy: obs.player_energy,
+    maxEnergy: c.max_energy,
     // Free Attack makes every attack in hand show cost 0, but only the next
     // one played is free: give them their own cost back and let play() apply it.
     hand: c.hand.map((card) => {
@@ -190,6 +193,7 @@ function clone(s: State): State {
   return {
     player: { ...s.player, powers: { ...s.player.powers } },
     energy: s.energy,
+    ...(s.maxEnergy !== undefined ? { maxEnergy: s.maxEnergy } : {}),
     hand: s.hand.slice(),
     draw: s.draw.slice(),
     discard: s.discard.slice(),
@@ -586,6 +590,11 @@ type Rule = (s: State, card: Card, target: Enemy | undefined) => void;
 
 /** Cards whose effect is not what their numbers say, each written from what the game did. */
 const SPECIAL: Record<string, Rule> = {
+  // Strength at the start of each turn to come, none now: its StrengthPower var is the amount a
+  // turn (26 mismatches: the model gave the Strength at once, the game a DEMON_FORM power).
+  DEMON_FORM: (s, c) => {
+    applyPower(s, s.player, "DEMON_FORM", num(c, "StrengthPower") || num(c, "Strength") || 3);
+  },
   // A copy of itself goes into the discard pile.
   ANGER: (s, c, t) => {
     strike(s, one(t), dmg(s, c), 1);

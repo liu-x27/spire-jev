@@ -13,6 +13,7 @@
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
 import { type Action, actions, type Card, drink, type Enemy, hpLoss, play, type State, stateKey } from "./sim.ts";
+import { nextTurn, seeded } from "./turn.ts";
 
 export interface Weights {
   /** Per point of HP the enemies' attacks will take this turn. */
@@ -61,10 +62,17 @@ export interface Weights {
    * turns while Slippery held; the guides strip it in the first three.
    */
   long: number;
+  /**
+   * 1: plan two turns (planTurn2): the best few ends of this turn are each
+   * carried into the next turn — the enemies' turn, a hand drawn at random
+   * from the draw pile, a few times — and judged by the best second turn
+   * from there; 0: this turn only.
+   */
+  look: number;
 }
 
 /** The first version: this turn only. */
-export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0, long: 0 };
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0, long: 0, look: 0 };
 export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
 
 /** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
@@ -227,6 +235,9 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     if (attacking) score += Math.min(3, e.powers["WEAK"] ?? 0) * w.weak;
   }
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
+  // Demon Form in play is Strength to come, at least a turn's worth: what made the model play it
+  // when it wrongly gave the Strength at once (and without it, one turn never would).
+  score += (s.player.powers["DEMON_FORM"] ?? 0) * w.strength;
   if (w.setup > 0) score += setupValue(s) * w.setup;
   score += s.drawn * w.drawn;
   // Sandpit (The Insatiable) devours the player when it runs out, and only
@@ -322,17 +333,30 @@ export interface Plan {
   exact: boolean;
 }
 
-export function planTurn(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
-  const t0 = performance.now();
+interface Line {
+  score: number;
+  actions: Action[];
+  exact: boolean;
+  state: State;
+}
+
+/** Every play order from `start`, equal states merged; the best line, and the best `keep` distinct ends. */
+function explore(start: State, w: Weights, maxNodes: number, keep: number): { best: Line; top: Line[]; nodes: number; truncated: boolean } {
   let nodes = 0;
   let truncated = false;
-  let best: { score: number; actions: Action[]; exact: boolean } = { score: -Infinity, actions: [{ kind: "end" }], exact: true };
+  let best: Line = { score: -Infinity, actions: [{ kind: "end" }], exact: true, state: start };
+  const top: Line[] = [];
   const seen = new Set<string>([stateKey(start)]);
 
   const visit = (s: State, path: Action[]): void => {
     nodes++;
     const here = evaluate(s, w);
-    if (here > best.score) best = { score: here, actions: [...path, { kind: "end" }], exact: s.exact };
+    if (here > best.score) best = { score: here, actions: [...path, { kind: "end" }], exact: s.exact, state: s };
+    if (keep > 0 && (top.length < keep || here > top[top.length - 1]!.score)) {
+      top.push({ score: here, actions: [...path, { kind: "end" }], exact: s.exact, state: s });
+      top.sort((a, b) => b.score - a.score);
+      if (top.length > keep) top.pop();
+    }
     if (here >= WIN) return; // everything is dead; nothing left to plan
     if (nodes >= maxNodes) {
       truncated = true;
@@ -349,7 +373,65 @@ export function planTurn(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 
     }
   };
   visit(start, []);
-  return { ...best, nodes, ms: performance.now() - t0, truncated };
+  return { best, top, nodes, truncated };
+}
+
+export function planTurn(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
+  const t0 = performance.now();
+  const { best, nodes, truncated } = explore(start, w, maxNodes, 0);
+  return { actions: best.actions, score: best.score, exact: best.exact, nodes, ms: performance.now() - t0, truncated };
+}
+
+/** How many ends of this turn the lookahead carries on, and how many hands it draws for each. */
+const LOOK_ENDS = 4;
+const LOOK_DRAWS = 4;
+const LOOK_NODES = 3000;
+
+/** A number from a state, to seed its draws: the same state draws the same hands. */
+function hash(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+/**
+ * Two turns (weights.look): the best ends of this turn by the one-turn
+ * evaluation, each judged by the mean over a few random hands of the best
+ * next turn from it (turn.ts nextTurn: the enemies attack for their average,
+ * the hand is drawn from the draw pile's contents). A turn that wins or
+ * loses the fight keeps its own score.
+ */
+export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
+  const t0 = performance.now();
+  const { best, top, nodes, truncated } = explore(start, w, maxNodes, LOOK_ENDS);
+  let nodesAll = nodes;
+  let chosen = best;
+  let chosenValue = -Infinity;
+  const attack = (e: Enemy) => BESTIARY[e.model]?.perTurn ?? threat(e);
+  for (const line of top) {
+    let value: number;
+    if (line.score >= WIN || line.score <= -WIN) value = line.score;
+    else {
+      let sum = 0;
+      const seed = hash(stateKey(line.state));
+      for (let i = 0; i < LOOK_DRAWS; i++) {
+        const next = nextTurn(line.state, seeded(seed + i * 7919), attack);
+        if (!next) {
+          sum += -WIN;
+          continue;
+        }
+        const second = explore(next, w, LOOK_NODES, 0);
+        nodesAll += second.nodes;
+        sum += second.best.score;
+      }
+      value = sum / LOOK_DRAWS;
+    }
+    if (value > chosenValue) {
+      chosenValue = value;
+      chosen = line;
+    }
+  }
+  return { actions: chosen.actions, score: chosenValue, exact: chosen.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
 }
 
 /** The bridge's id for an action, against the current hand's indices. */
