@@ -5,10 +5,13 @@
  *
  * For each boss floor (17, 33, 48; 49 at A10): runs that reached it, won it,
  * and how — clean (30%+ max HP left, no revival), narrow (under 30%), or
- * revived (the fight took more HP than there was: Lizard Tail, Fairy in a
- * Bottle, healing mid-fight). The first A0 clear was a revival (Lizard Tail
+ * revived (Lizard Tail used in the fight, or a Fairy in a Bottle gone without
+ * being drunk). The first A0 clear was a revival (Lizard Tail
  * in the Queen fight), the second a 7 HP finish: neither is a strategy.
- * Then the deck each run brought to the boss (packages.ts profile): size,
+ * Then the deck each run brought to the boss — the last screen *before* the
+ * boss floor (the boss floor's own screens come after the fight: its reward;
+ * counting them credited winners with the card they won, astra-review-2) —
+ * (packages.ts profile): size,
  * Strikes and Defends left, scaling, draw, AoE, answers to big hits — and
  * the win rate with and without scaling.
  */
@@ -23,6 +26,18 @@ const base = (c: string) => c.replace(/\+$/, "");
 const pct = (a: number, b: number) => (b ? `${Math.round((100 * a) / b)}%` : "-");
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
+/** Whether a revival saved this fight: Lizard Tail's _wasUsed flips by the next fight, or a Fairy vanishes undrunk. */
+function revivedIn(f: FightLog, next: FightLog | undefined): boolean {
+  const tailBefore = f.relicVars?.["LIZARD_TAIL"]?.["_wasUsed"];
+  const tailAfter = next?.relicVars?.["LIZARD_TAIL"]?.["_wasUsed"];
+  if (tailBefore === 0 && tailAfter === 1) return true;
+  const fairy = (xs: readonly string[]) => xs.filter((p) => p === "FAIRY_IN_A_BOTTLE").length;
+  const drunk = f.cardsPlayed["POTION:FAIRY_IN_A_BOTTLE"] ?? 0;
+  if (next && fairy(f.potions) - drunk > fairy(next.potions)) return true;
+  // The last fight of a run has no next: an unused Lizard Tail or a Fairy held, and the fight won from below zero.
+  return !next && f.won && f.hpLost > f.hpStart && (tailBefore === 0 || fairy(f.potions) > 0);
+}
+
 for (const file of process.argv.slice(2)) {
   const d = JSON.parse(fs.readFileSync(file, "utf8")) as { tag?: string; fights: FightLog[]; rooms?: RoomLog[]; ends?: { seed: string; victory: boolean }[] };
   const rooms = d.rooms ?? [];
@@ -32,17 +47,21 @@ for (const file of process.argv.slice(2)) {
     const fights = d.fights.filter((f) => f.floor === floor);
     if (fights.length === 0) continue;
     const won = fights.filter((f) => f.won);
-    const revived = won.filter((f) => f.hpLost > f.hpStart);
-    const narrow = won.filter((f) => f.hpLost <= f.hpStart && f.hpEnd < 0.3 * f.maxHp);
+    const nextOf = (f: FightLog) => {
+      const run = d.fights.filter((x) => x.seed === f.seed);
+      return run[run.indexOf(f) + 1];
+    };
+    const revived = won.filter((f) => revivedIn(f, nextOf(f)));
+    const narrow = won.filter((f) => !revived.includes(f) && f.hpEnd < 0.3 * f.maxHp);
     const clean = won.length - revived.length - narrow.length;
-    const left = won.filter((f) => f.hpLost <= f.hpStart).map((f) => f.hpEnd / f.maxHp);
+    const left = won.filter((f) => !revived.includes(f)).map((f) => f.hpEnd / f.maxHp);
     console.log(
       `  f${floor} ${fights[0]!.enemies.find((e) => !/TORCH/.test(e)) ?? ""}: won ${won.length}/${fights.length} (${pct(won.length, fights.length)}) — clean ${clean}, narrow ${narrow.length}, revived ${revived.length};` +
         ` HP in ${Math.round(100 * mean(fights.map((f) => f.hpStart / f.maxHp)))}%, left after a win ${Math.round(100 * mean(left))}%`,
     );
     // The deck brought to the boss: the last screen before its floor.
     const decks = fights.map((f) => {
-      const r = [...rooms].reverse().find((x) => x.seed === f.seed && x.floor <= floor);
+      const r = [...rooms].reverse().find((x) => x.seed === f.seed && x.floor < floor);
       return { f, deck: r?.deck ?? [] };
     });
     const withScaling = decks.filter(({ deck }) => profile(deck).scaling > 0);
