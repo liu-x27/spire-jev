@@ -270,6 +270,24 @@ states, and only a simulator is fast enough for that.
      removals) → `--flags smith2`; `docs/cn-research.md` (bilibili tier lists
      on v0.110-0.111: draw and energy on sight, a Vulnerable-draw engine
      around Vicious; Havoc, Anger rated far higher than in the English data).
+   - **Explorations** (save-and-load, `bench --explore`): of the 31 Vantom fights
+     the planner lost, 14 were won by some exploration (x4) — half the Vantom
+     losses are play; of 24 Insatiable losses only 1 (x8) — that wall is the
+     deck. The winning lines drank their potions at turn 2.2 against 4.5 (Liquid
+     Bronze 2.7 vs 13, Clarity 3 vs 10.5; the one Insatiable rescue drank
+     Gigantification on turn 1, not 7): a one-turn evaluation counts a
+     fight-long buff as a turn's worth. `--flags potions2` (every potion but
+     heals and block in a boss fight's first two turns, no single hits into
+     Slippery): Vantom 55/81 (31 clean) vs 50/81 (29) on the same fights,
+     Insatiable 3/26 vs 2/26 — to be confirmed on the tuning library.
+   - Deck screens on 16-45, all within noise and none beating an Insatiable:
+     elo2 23.6, deckplan 23.6 (Vantom clean wins 6 vs 10), exhaust2 23.9,
+     keepbasics 23.6, the four together 24.8 (Vantom 19/29). `smith2` (winners'
+     rest thresholds too) 21.8, Vantom 11/26 entering at 82% HP instead of 94%:
+     our Vantom is HP-bound, so `--flags smithorder` keeps only the upgrade
+     order.
+   - Tuning library (`dev0-a10`, seeds 136-315): Vantom 87/155, Insatiable 5/45;
+     155 and 45 saves in `runs/saves-dev`.
    - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
      scored as the revival (seed 17's Queen fight).
    - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
