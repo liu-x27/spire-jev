@@ -254,8 +254,22 @@ states, and only a simulator is fast enough for that.
      presses the main menu's Continue); the resumed fight is the original
      fight turn for turn (seed 16's Vantom, twice). `src/bench.ts` plays
      every matching save under one combat configuration: paired comparisons
-     of boss play on dozens of the same fights in minutes. A library from
-     the combination on 46-135 (so aligned with `conf0-a10`) is being built.
+     of boss play on dozens of the same fights in minutes. The library from
+     the combination on 46-135 (`cap0-a10`, identical to `conf0-a10` fight for
+     fight: 81 saves before Vantom, 26 before The Insatiable, 1 before Queen)
+     replays the originals exactly (Insatiable 2/26, Vantom 50/81) in 1.6 and
+     5.4 minutes. Combat settings on the same fights: Insatiable 2/26 for the
+     default, sandpit2, stakes, long, 1/26 for engines; Vantom 50/81 (29
+     clean) default and stakes (identical), 47 engines, 46 (15 clean) long —
+     evaluation weights have no gain left. Explorations (`--explore N`,
+     `src/explored.ts`) look for the lines that win the fights the planner
+     loses. A tuning library on seeds 136-315 (`runs/saves-dev`) keeps the
+     confirmation saves out of any tuning.
+   - More research: `docs/a10-upgrades-research.md` (66 winning A10 runs, 51
+     on v0.107.1+: upgrade order, smith 81% of rests, heal thresholds, 2
+     removals) → `--flags smith2`; `docs/cn-research.md` (bilibili tier lists
+     on v0.110-0.111: draw and energy on sight, a Vulnerable-draw engine
+     around Vicious; Havoc, Anger rated far higher than in the English data).
    - Evaluation: a death with Lizard Tail unused or Fairy in a Bottle held is
      scored as the revival (seed 17's Queen fight).
    - Known stall: seed 43's BATTLEWORN_DUMMY event (act 3, A0) — clicking any
