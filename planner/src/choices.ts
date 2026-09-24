@@ -136,7 +136,9 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   if (card === "TREMBLE" && copies >= 2) return -1;
   // §3.5 "too many of one card": the fourth and fifth Pommel Strike or Taunt (seen in the A0 runs)
   // are worth less than a card the deck lacks; each copy already held takes a fifth off.
-  if (card !== "BATTLE_TRANCE" && card !== "TREMBLE") v *= Math.pow(0.8, copies);
+  // nodup: not at all (the ablation runs/analysis-report.html 5.5 asks for: with the skip threshold
+  // it took act 2's pick rate from 62% to 47%, and The Insatiable's win rate from 10/21 to 7/29).
+  if (card !== "BATTLE_TRANCE" && card !== "TREMBLE" && !flags.has("nodup")) v *= Math.pow(0.8, copies);
   if (act === 0) {
     // §10.1.3: an AoE card when the deck has none.
     if (AOE.has(card) && count(deck, AOE) === 0) v += 0.15;
