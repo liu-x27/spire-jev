@@ -394,6 +394,9 @@ function hash(text: string): number {
   return h >>> 0;
 }
 
+/** What an enemy will hit for next turn, as the lookahead guesses it: its bestiary average, else its threat. */
+export const expectedAttack = (e: Enemy): number => BESTIARY[e.model]?.perTurn ?? threat(e);
+
 /**
  * Two turns (weights.look): the best ends of this turn by the one-turn
  * evaluation, each judged by the mean over a few random hands of the best
@@ -407,7 +410,7 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
   let nodesAll = nodes;
   let chosen = best;
   let chosenValue = -Infinity;
-  const attack = (e: Enemy) => BESTIARY[e.model]?.perTurn ?? threat(e);
+  const attack = expectedAttack;
   for (const line of top) {
     let value: number;
     if (line.score >= WIN || line.score <= -WIN) value = line.score;

@@ -14,7 +14,7 @@
 import { type Card, type Enemy, endOfTurnBlock, hpLoss, incomingDamage, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
-const TURN_ONLY = ["NO_DRAW", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION"];
+const TURN_ONLY = ["NO_DRAW", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED"];
 /** Powers that lose a stack every round. */
 const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN"];
 /** Temporary Strength and Dexterity, and what they were added to. */
@@ -70,13 +70,25 @@ export function nextTurn(s: State, rng: () => number, attack: (e: Enemy) => numb
   for (const k of TURN_ONLY) delete powers[k];
   tick(powers, TICKS);
   // The next turn begins.
+  const turn = (s.turn ?? 1) + 1;
+  const relic = (id: string, name: string, fallback: number) => (s.relics.includes(id) ? (s.relicVars?.[id]?.[name] ?? fallback) : 0);
+  // Relics that give by the turn number (docs/relic-tiers.md): Candelabra on turn 2, Chandelier on 3,
+  // Happy Flower and Pendulum every third turn, Bread from turn 2, Ice Cream keeps what was not spent.
+  const every = (id: string) => {
+    const seen = s.relicVars?.[id]?.["_turnsSeen"];
+    const period = s.relicVars?.[id]?.["Turns"] ?? 3;
+    return s.relics.includes(id) && (seen !== undefined ? (seen + 1) % period === 0 : turn % period === 0);
+  };
   if (powers["DEMON_FORM"]) powers["STRENGTH"] = (powers["STRENGTH"] ?? 0) + powers["DEMON_FORM"]!;
-  const energy = (s.maxEnergy ?? 3) + (powers["ENERGY_NEXT_TURN"] ?? 0);
-  const extraDraw = powers["DRAW_CARDS_NEXT_TURN"] ?? 0;
+  const energy = (s.maxEnergy ?? 3) + (powers["ENERGY_NEXT_TURN"] ?? 0)
+    + (turn === 2 ? relic("CANDELABRA", "Energy", 2) : 0) + (turn === 3 ? relic("CHANDELIER", "Energy", 3) : 0)
+    + (every("HAPPY_FLOWER") ? relic("HAPPY_FLOWER", "Energy", 1) : 0) + (s.relics.includes("BREAD") ? 1 : 0)
+    + (s.relics.includes("ICE_CREAM") ? s.energy : 0);
+  const extraDraw = (powers["DRAW_CARDS_NEXT_TURN"] ?? 0) + (every("PENDULUM") ? relic("PENDULUM", "Cards", 1) : 0);
   block += powers["BLOCK_NEXT_TURN"] ?? 0;
   for (const k of ["ENERGY_NEXT_TURN", "DRAW_CARDS_NEXT_TURN", "BLOCK_NEXT_TURN"]) delete powers[k];
 
-  const keepAll = (s.player.powers["RETAIN_HAND"] ?? 0) > 0;
+  const keepAll = (s.player.powers["RETAIN_HAND"] ?? 0) > 0 || ((s.turn ?? 1) === 1 && s.relics.includes("RINGING_TRIANGLE"));
   const hand: Card[] = [];
   let discard = s.discard.slice();
   const exhaust = s.exhaust.slice();
@@ -99,9 +111,13 @@ export function nextTurn(s: State, rng: () => number, attack: (e: Enemy) => numb
     if (!e.alive) return { ...e, powers: { ...e.powers } };
     const ep = { ...e.powers };
     tick(ep, ["WEAK", "VULNERABLE"]);
+    // Strength every turn: Byrdonis's Territorial, a Ritual.
+    for (const k of ["TERRITORIAL", "RITUAL"]) if ((ep[k] ?? 0) > 0) ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
+    // Stone Calendar: 52 to every enemy at the end of turn 7.
+    const calendar = (s.turn ?? 1) === 7 ? relic("STONE_CALENDAR", "Damage", 52) : 0;
     const damage = Math.max(0, Math.round(attack(e)));
     return {
-      ...e, powers: ep, block: 0,
+      ...e, powers: ep, block: 0, hp: Math.max(0, e.hp - calendar), alive: e.hp - calendar > 0,
       intents: damage > 0 ? [{ type: "Attack", damage, hits: 1 }] : [{ type: "Buff", damage: 0, hits: 0 }],
       weakAtStart: (ep["WEAK"] ?? 0) > 0,
       startStrength: ep["STRENGTH"] ?? 0,
@@ -111,6 +127,7 @@ export function nextTurn(s: State, rng: () => number, attack: (e: Enemy) => numb
   return {
     player: { ...s.player, hp: Math.min(s.player.maxHp, hp + regen), block, powers },
     energy,
+    turn,
     ...(s.maxEnergy !== undefined ? { maxEnergy: s.maxEnergy } : {}),
     hand,
     draw: pile,

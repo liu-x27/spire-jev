@@ -31,8 +31,9 @@ import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
-import { actionId, DEFAULT_WEIGHTS, planTurn, planTurn2, type Weights } from "./search.ts";
-import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, junkIndex, play } from "./sim.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedAttack, planTurn, planTurn2, type Weights } from "./search.ts";
+import { nextTurn, seeded } from "./turn.ts";
+import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, junkIndex, play, type State } from "./sim.ts";
 
 type Policy = "planner" | "naive";
 
@@ -68,6 +69,9 @@ export interface FightLog {
   illegal: string[];
   /** How often each card was played. */
   cardsPlayed: Record<string, number>;
+  /** Turn starts checked against turn.ts nextTurn's prediction, and the fields that differed. */
+  transitionChecks?: number;
+  transitions?: { turn: number; field: string; predicted: string; actual: string }[];
 }
 
 const label = (c: Card) => `${c.id}${c.upgrades > 0 ? "+" : ""}`;
@@ -268,10 +272,19 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
   logs.push(log);
   const tried = new Set<string>();
   let cur = start;
+  // What nextTurn said the turn after an end of turn would start with, to hold it to the game.
+  let foreseen: { turn: number; state: State } | undefined;
+  log.transitionChecks = 0;
+  log.transitions = [];
   while (cur.observation.phase === "combat" && cur.observation.combat) {
     const obs = cur.observation;
     collect(obs);
     const s = fromObservation(obs);
+    if (foreseen && obs.combat!.turn === foreseen.turn + 1) {
+      log.transitionChecks++;
+      for (const d of compareTurnStart(foreseen.state, s)) log.transitions.push({ turn: obs.combat!.turn, ...d });
+    }
+    foreseen = undefined;
     const legal = new Set(cur.legal_actions.map((a) => a.action_id));
 
     let a: Action;
@@ -308,6 +321,10 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       id = "end_turn";
     }
 
+    if (a.kind === "end") {
+      const predicted = nextTurn(s, seeded(0), expectedAttack);
+      if (predicted) foreseen = { turn: obs.combat!.turn, state: predicted };
+    }
     let next = await game.step(id);
     // A card that asks for a selection stops the step there; answer it and read the play's outcome after.
     for (let guard = 0; next.observation.phase === "card_select" && guard < 10; guard++) {
@@ -347,6 +364,32 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
   log.won = cur.observation.phase !== "game_over";
   log.hpEnd = cur.observation.player_hp;
   return { log, next: cur };
+}
+
+/**
+ * Where the predicted start of a turn differs from the game's, on what does
+ * not depend on the draw: the player's HP, block, energy, powers and hand
+ * size, and each living enemy's HP, block and powers.
+ */
+function compareTurnStart(p: State, a: State): { field: string; predicted: string; actual: string }[] {
+  const out: { field: string; predicted: string; actual: string }[] = [];
+  const powers = (x: Record<string, number>) => Object.entries(x).filter(([, n]) => n !== 0).map(([k, n]) => `${k}${n}`).sort().join(" ");
+  const check = (field: string, pv: string | number, av: string | number) => {
+    if (String(pv) !== String(av)) out.push({ field, predicted: String(pv), actual: String(av) });
+  };
+  check("player.hp", p.player.hp, a.player.hp);
+  check("player.block", p.player.block, a.player.block);
+  check("energy", p.energy, a.energy);
+  check("hand.size", p.hand.length, a.hand.length);
+  check("player.powers", powers(p.player.powers), powers(a.player.powers));
+  a.enemies.forEach((e, i) => {
+    const q = p.enemies.find((x) => x.id === e.id);
+    if (!q || !e.alive) return;
+    check(`enemy${i + 1}.hp`, q.hp, e.hp);
+    check(`enemy${i + 1}.block`, q.block, e.block);
+    check(`enemy${i + 1}.powers`, powers(q.powers), powers(e.powers));
+  });
+  return out;
 }
 
 const MAX_STEPS = 2000;
@@ -440,6 +483,22 @@ export function summarise(policy: string, logs: FightLog[]): string {
   const all = logs.flatMap((l) => l.mismatches);
   const badPlays = new Set(logs.flatMap((l, i) => l.mismatches.map((m) => `${i}/${m.card}/${m.field}/${m.predicted}`))).size;
   lines.push(`  cards played ${plays}; mismatched fields ${all.length} (${badPlays} distinct)`);
+  const checks = logs.reduce((a, l) => a + (l.transitionChecks ?? 0), 0);
+  if (checks > 0) {
+    const byField: Record<string, number> = {};
+    const turnsOff = new Set<string>();
+    logs.forEach((l, i) => {
+      for (const t of l.transitions ?? []) {
+        const k = t.field.replace(/^enemy\d+/, "enemy");
+        byField[k] = (byField[k] ?? 0) + 1;
+        turnsOff.add(`${i}/${t.turn}`);
+      }
+    });
+    lines.push(
+      `  turn starts foreseen ${checks}, ${checks - turnsOff.size} exactly; fields off: ` +
+        Object.entries(byField).sort((x, y) => y[1] - x[1]).map(([k, n]) => `${k} ${n}`).join(", "),
+    );
+  }
   const byKey = new Map<string, { n: number; eg: Mismatch }>();
   for (const m of all) {
     const k = `${m.card} ${m.field.replace(/^enemy\d+/, "enemy")}`;

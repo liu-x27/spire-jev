@@ -64,6 +64,8 @@ export interface State {
   energy: number;
   /** Energy a turn starts with (the combat's max_energy); what the next turn gets. */
   maxEnergy?: number;
+  /** The combat's turn, from 1. */
+  turn?: number;
   hand: Card[];
   draw: Card[];
   discard: Card[];
@@ -149,6 +151,7 @@ export function fromObservation(obs: Observation): State {
     },
     energy: obs.player_energy,
     maxEnergy: c.max_energy,
+    turn: c.turn,
     // Free Attack makes every attack in hand show cost 0, but only the next
     // one played is free: give them their own cost back and let play() apply it.
     hand: c.hand.map((card) => {
@@ -194,6 +197,7 @@ function clone(s: State): State {
     player: { ...s.player, powers: { ...s.player.powers } },
     energy: s.energy,
     ...(s.maxEnergy !== undefined ? { maxEnergy: s.maxEnergy } : {}),
+    ...(s.turn !== undefined ? { turn: s.turn } : {}),
     hand: s.hand.slice(),
     draw: s.draw.slice(),
     discard: s.discard.slice(),
