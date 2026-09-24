@@ -26,6 +26,8 @@ const { values } = parseArgs({
     flags: { type: "string", default: "" },
     choices: { type: "string", default: "rules2" },
     fights: { type: "string", default: "1" },
+    // Or play on until a fight on this floor (33: from the pre-Vantom save through act 2 to The Insatiable).
+    "stop-floor": { type: "string", default: "999" },
     sandboxes: { type: "string", default: "8" },
     port: { type: "string", default: "47100" },
     ascension: { type: "string", default: "10" },
@@ -63,7 +65,7 @@ await Promise.all(
           [
             path.join(here, "src", "run-fights.ts"), "--runs", "1", "--seed", String(seed), "--port", String(port),
             "--choices", values.choices, "--ascension", values.ascension, "--flags", values.flags, "--weights", values.weights,
-            "--resume", path.join(dir, save), "--max-fights", values.fights, "--cards", "take", "--out", out,
+            "--resume", path.join(dir, save), "--max-fights", values.fights, "--stop-floor", values["stop-floor"], "--cards", "take", "--out", out,
             ...(explore > 0 ? ["--explore", String(explore)] : []),
           ],
           { cwd: here, stdio: ["ignore", log, log] },
@@ -100,4 +102,10 @@ const won = boss.filter((f) => f.won);
 const clean = won.filter((f) => f.hpEnd >= 0.3 * f.maxHp);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 console.log(`bench ${values.tag}: ${boss.length} fights from ${saves.length} saves — won ${won.length} (clean ${clean.length}); HP left after a win ${Math.round(100 * mean(won.map((f) => f.hpEnd / f.maxHp)))}%; turns ${mean(boss.map((f) => f.turns)).toFixed(1)}; ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+if (Number(values["stop-floor"]) < 999) {
+  // An act replayed to its boss: how many reached the boss floor, and won there.
+  const floor = Number(values["stop-floor"]);
+  const at = plain.map((r) => r.fights.find((f) => f.floor === floor)).filter((f): f is FightLog => f !== undefined);
+  console.log(`  reached floor ${floor}: ${at.length} of ${plain.length}; won there ${at.filter((f) => f.won).length} (clean ${at.filter((f) => f.won && f.hpEnd >= 0.3 * f.maxHp).length}); HP coming in ${Math.round(100 * mean(at.map((f) => f.hpStart / f.maxHp)))}%`);
+}
 console.log(`  per save: ${results.map((r) => `${(r.save.match(/JEV0*(\d+)/)?.[1] ?? "?")}:${r.fights.at(-1)?.won ? "W" : "L"}${r.fights.at(-1)?.hpEnd ?? "?"}`).join(" ")}`);

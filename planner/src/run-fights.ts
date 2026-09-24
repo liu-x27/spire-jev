@@ -425,6 +425,8 @@ let ascension = 0;
 /** Drink potions the planner cannot model, where it counts (on with --choices rules). */
 let usePotions = false;
 
+/** --stop-floor: the run ends at the first fight after one on this floor. */
+let stopFloor = 999;
 /** Floors whose map screen's save is copied into runs/saves (--capture). */
 let capture = new Set<number>();
 /** The exploration's generator, when exploring (--explore). */
@@ -437,6 +439,7 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
   for (let steps = 0; !cur.observation.is_terminal && steps < MAX_STEPS; steps++) {
     if (cur.observation.phase === "combat" && cur.observation.combat) {
       if (fights++ >= maxFights) return;
+      if (logs.length > 0 && logs[logs.length - 1]!.seed === seed && logs[logs.length - 1]!.floor >= stopFloor) return;
       const { log, next } = await fight(game, cur, policy, seed, logs);
       const ms = log.planMs.length ? ` plan p95 ${pct(log.planMs, 0.95).toFixed(2)} ms` : "";
       console.log(
@@ -571,6 +574,8 @@ async function main(): Promise<void> {
       runs: { type: "string", default: "1" },
       seed: { type: "string", default: "1" },
       "max-fights": { type: "string", default: "30" },
+      // Stop the run once a fight on this floor or above has been played (bench: an act replayed to its boss).
+      "stop-floor": { type: "string", default: "999" },
       port: { type: "string", default: "47100" },
       cards: { type: "string", default: "skip" },
       weights: { type: "string", default: "{}" },
@@ -587,6 +592,7 @@ async function main(): Promise<void> {
     },
   });
   capture = new Set(values.capture.split(",").filter(Boolean).map(Number));
+  stopFloor = Number(values["stop-floor"]);
   if (values.explore !== undefined) exploring = seeded(Number(values.explore) * 7919 + 17);
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
