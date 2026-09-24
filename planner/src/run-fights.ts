@@ -230,8 +230,11 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   if (!(hopeless || (boss && turn <= 2) || (elite && hurt))) return undefined;
   const byHp = [...s.enemies].filter((e) => e.alive).sort((a, b) => a.hp - b.hp);
   // A potion tried this turn and still held was refused: not again this turn.
+  // Only potions the search cannot model — it already weighs the ones it can (a Block Potion was
+  // forced on a turn with no attack coming) — unless no play survives the turn.
+  const modelled = new Set(s.potions.filter((p) => drinkable(p)).map((p) => p.slot));
   const uses = legal.filter((a) => a.action_id.startsWith("use_potion:") && !KEEP_POTIONS.has(String(a.metadata?.["potion_id"] ?? ""))
-    && !tried.has(`${turn}:${a.action_id.split(":")[1]}`));
+    && !tried.has(`${turn}:${a.action_id.split(":")[1]}`) && (hopeless || !modelled.has(Number(a.action_id.split(":")[1]))));
   for (const a of uses) {
     const target = a.metadata?.["target_id"];
     if (target === undefined || !s.enemies.some((e) => e.id === Number(target))) return a.action_id;

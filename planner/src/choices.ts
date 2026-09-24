@@ -177,19 +177,37 @@ export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
  * statuses, then Defend before Strike if the deck has three block cards of
  * its own, else Strike; Bash last.
  */
-export function worstCard(ids: readonly string[], deck: readonly string[]): number {
+/** Curses and statuses by exact id, for when the card's type is not to hand (a substring test took BURNING_PACT for BURN). */
+const JUNK = new Set(["INJURY", "CLUMSY", "SPORE_MIND", "NORMALITY", "DECAY", "GUILTY", "POOR_SLEEP", "GREED", "BAD_LUCK", "DOUBT",
+  "REGRET", "SHAME", "WRITHE", "PAIN", "DEBT", "ASCENDERS_BANE", "WOUND", "DAZED", "SLIMED", "BURN", "INFECTION", "VOID"]);
+
+/**
+ * What a card already in the deck is worth keeping: its ratings and its pick
+ * rate over all acts, and nothing of what adding another copy would be worth
+ * (the "no third Tremble" -1 made a Tremble held the worst card in the deck).
+ */
+function keepValue(id: string): number {
+  const card = base(id);
+  const row = CARDS[card];
+  let v = row ? 0.5 * ([...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5)) + 0.5 * ((row.pick[0] + row.pick[1] + row.pick[2]) / 300) : 0.3;
+  if (ALWAYS.has(card)) v = Math.max(v, 0.9);
+  return v;
+}
+
+export function worstCard(ids: readonly string[], deck: readonly string[], types?: readonly (string | undefined)[]): number {
   const blockCards = deck.filter((c) => ["SHRUG_IT_OFF", "FLAME_BARRIER", "TAUNT", "TRUE_GRIT", "COLOSSUS", "EVIL_EYE", "IMPERVIOUS", "UNMOVABLE", "CRIMSON_MANTLE", "SECOND_WIND", "IRON_WAVE"].includes(base(c))).length;
-  const order = (id: string) => {
+  const order = (id: string, i: number) => {
     const c = base(id);
-    if (/CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK|ASCENDERS_BANE|WOUND|DAZED|SLIMED|BURN|INFECTION/.test(c)) return 0;
+    const type = types?.[i];
+    if (type === "Curse" || type === "Status" || JUNK.has(c)) return 0;
     if (c === "DEFEND_IRONCLAD") return blockCards >= 3 ? 1 : 2;
     if (c === "STRIKE_IRONCLAD") return blockCards >= 3 ? 2 : 1;
     if (c === "BASH") return 50;
-    return 10 + (CARDS[c] ? cardValue(c, 0, deck) * 30 : 20);
+    return 10 + keepValue(c) * 30;
   };
   let best = 0;
   ids.forEach((id, i) => {
-    if (order(id) < order(ids[best]!)) best = i;
+    if (order(id, i) < order(ids[best]!, best)) best = i;
   });
   return best;
 }
@@ -363,10 +381,11 @@ export function chooseSelect(o: Observation, legal: LegalAction[]): string {
   let order: number[];
   if (WORST_FOR.test(purpose)) {
     // Worst first: take the worst, then the worst of the rest, and so on.
+    const types = ((o.room?.details ?? {}) as { cards?: { card_type?: string }[] }).cards?.map((c) => c.card_type) ?? [];
     const left = ids.map((_, i) => i);
     order = [];
     while (left.length > 0) {
-      const w = worstCard(left.map((i) => ids[i]!), o.deck_cards);
+      const w = worstCard(left.map((i) => ids[i]!), o.deck_cards, left.map((i) => types[i]));
       order.push(left.splice(w, 1)[0]!);
     }
   } else if (UPGRADE_FOR.test(purpose)) {

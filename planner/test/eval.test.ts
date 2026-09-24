@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { actionId, deckPace, futureDamage, planTurn, TURN_WEIGHTS } from "../src/search.ts";
+import { actionId, deckPace, evaluate, futureDamage, planTurn, TURN_WEIGHTS } from "../src/search.ts";
 import type { Card, Enemy, State } from "../src/sim.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
@@ -78,4 +78,11 @@ test("against slippery, stripping stacks is worth more than a block that saves l
   vantom.powers["SLIPPERY"] = 6;
   const s = state([twin, DEFEND], 1, [vantom]);
   assert.equal(actionId(planTurn(s).actions[0]!), "play_card:0:target:1");
+});
+
+test("HP a card spends counts in the evaluation", () => {
+  const s = state([], 1, [foe(1, 40, 0)]);
+  const hurt = state([], 1, [foe(1, 40, 0)]);
+  hurt.player.hp = 10;
+  assert.ok(evaluate(s) > evaluate(hurt) + 50);
 });

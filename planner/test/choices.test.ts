@@ -96,3 +96,11 @@ test("the map looks beyond the next node: hurt, the way with fewer fights before
   const room = { room_type: "Map", options: [], details: { lookahead: [{ RestSite: 4, fights_to_rest_min: 3 }, { RestSite: 2, fights_to_rest_min: 1 }] } };
   assert.equal(chooseMap(obs({ player_hp: 30, room }), legal), "choose_map:2:Monster");
 });
+
+test("removals: Burning Pact is not a burn, and a Tremble held is not the worst card", () => {
+  const deck = [...STARTER, "BURNING_PACT", "TREMBLE", "TREMBLE"];
+  assert.equal(worstCard(["BURNING_PACT", "STRIKE_IRONCLAD"], deck), 1);
+  assert.equal(worstCard(["TREMBLE", "DEFEND_IRONCLAD"], deck), 1);
+  assert.equal(worstCard(["BURN", "STRIKE_IRONCLAD"], deck), 0);
+  assert.equal(worstCard(["SOMETHING_NEW", "STRIKE_IRONCLAD"], deck, ["Curse", "Attack"]), 0);
+});

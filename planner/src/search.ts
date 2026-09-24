@@ -180,6 +180,8 @@ const SANDPIT_TURN = 20;
 /** How good it is to end the turn in state `s`. */
 export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   const alive = s.enemies.filter((e) => e.alive);
+  // Dying to one's own card (Offering, Hemokinesis at low HP, Thorns) is no win.
+  if (s.player.hp <= 0) return -WIN * 2;
   if (alive.length === 0) return WIN + s.player.hp * 10;
   const enemyHp = alive.reduce((a, e) => a + e.hp, 0);
   const loss = hpLoss(s);
@@ -189,7 +191,10 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // full one: count it as the HP it hides, so stripping it is worth playing.
   const slippery = alive.reduce((a, e) => a + Math.max(0, e.powers["SLIPPERY"] ?? 0), 0);
   const hidden = slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0;
-  let score = -loss * w.hpLoss - (enemyHp + hidden) * w.enemyHp - s.potionsUsed * potionCost(s, w);
+  // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
+  // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was
+  // charged: a state at 70 HP and one at 10 scored the same.) Root HP is the same for every line.
+  let score = (s.player.hp - loss) * w.hpLoss - (enemyHp + hidden) * w.enemyHp - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;

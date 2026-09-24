@@ -34,7 +34,10 @@ say(`# Digest of ${data.tag ?? file}`);
 say();
 say(`Weights: \`${JSON.stringify(data.weights)}\`. ${ends.length} runs, ${fights.length} fights (${fights.filter((f) => f.won).length} won).`);
 const floors = ends.map((e) => e.last.floor).sort((a, b) => a - b);
-say(`Floors reached: mean ${(floors.reduce((a, b) => a + b, 0) / floors.length).toFixed(1)}, median ${floors[Math.floor(floors.length / 2)]}; ${floors.filter((f) => f >= 17).length} past floor 17 (act 1 boss), ${floors.filter((f) => f >= 33).length} at or past 33 (act 2 boss), ${floors.filter((f) => f >= 48).length} at 48+ (act 3 boss). Acts are floors 1-17, 18-33, 34-48 (A10: a second boss on 49).`);
+// A boss is beaten if the run went past its floor, or won the fight on it (a run can stop there).
+const beaten = (floor: number) => ends.filter((e) => e.last.floor > floor || (e.last.floor === floor && e.last.won)).length;
+const reached = (floor: number) => ends.filter((e) => e.last.floor >= floor).length;
+say(`Floors reached: mean ${(floors.reduce((a, b) => a + b, 0) / floors.length).toFixed(1)}, median ${floors[Math.floor(floors.length / 2)]}. Act 1 boss (floor 17) reached by ${reached(17)}, beaten by ${beaten(17)}; act 2 boss (33) reached by ${reached(33)}, beaten by ${beaten(33)}; act 3 boss (48) reached by ${reached(48)}, beaten by ${beaten(48)}. Acts are floors 1-17, 18-33, 34-48 (A10: a second boss on 49).`);
 say();
 
 say("## Deaths by fight");
@@ -65,7 +68,7 @@ say();
 let drunk = 0;
 const drunkBy: Record<string, number> = {};
 for (const f of fights) for (const [k, n] of Object.entries(f.cardsPlayed)) if (k.startsWith("POTION:")) { drunk += n; drunkBy[k.slice(7)] = (drunkBy[k.slice(7)] ?? 0) + n; }
-say(`## Potions: ${drunk} drunk. Held at death: ${ends.filter((e) => !e.last.won).map((e) => e.last.potions.length).join(" ")}`);
+say(`## Potions: ${drunk} drunk. Held at the start of the fatal fight (not at death): ${ends.filter((e) => !e.last.won).map((e) => e.last.potions.length).join(" ")}`);
 say(`Drunk most: ${Object.entries(drunkBy).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `${k} ${n}`).join(", ")}`);
 say();
 
@@ -80,7 +83,7 @@ for (const [p, m] of Object.entries(byPhase)) say(`- ${p}: ${Object.entries(m).s
 say();
 
 say("## One line per run");
-say("seed | floor | ended by | HP in | deck's own cards (size) | relics | potions left");
+say("seed | floor | ended by | HP in | deck's own cards (size), from the last screen before | relics | potions at the last fight's start");
 say("---|---|---|---|---|---|---");
 for (const e of ends.sort((a, b) => a.seed.localeCompare(b.seed))) {
   const room = lastRoom(e.seed, e.last.floor);
