@@ -561,13 +561,75 @@ const EVENTS: Record<string, (o: Observation, keys: readonly string[]) => string
 /** What the card select after an event is for: the best card to improve, or the worst to lose. */
 let selectFor: "best" | "worst" = "worst";
 
+/**
+ * The Ancients' relics, in docs/STRATEGY-research.md §10.9's default orders (Jorbs' Elo, Untapped's act
+ * deltas, the tier lists), with the conditions a deck can be checked for; then any not listed, in the
+ * order offered; then the weak, then the avoided. Before, the default event rule took the first option
+ * that costs no HP, the order the game lists them: Neow gave Lost Coffer 22 of the 43 times it was
+ * offered, Winged Boots 20/41, Lava Rock 13/20 (the bottom of Jorbs' list) and Stone Humidifier 12/23.
+ */
+const ANCIENTS: Record<string, { order: [string, (o: Observation) => boolean][]; weak?: string[]; avoid?: string[] }> = {
+  NEOW: {
+    order: [
+      ["SILVER_CRUCIBLE", () => true], ["STONE_HUMIDIFIER", () => true], ["LEAFY_POULTICE", (o) => o.player_max_hp >= 70],
+      ["NEOWS_TALISMAN", () => true], ["PRECARIOUS_SHEARS", (o) => o.player_hp >= 60], ["LARGE_CAPSULE", () => true],
+      ["SMALL_CAPSULE", () => true], ["NEW_LEAF", () => true], ["NEOWS_SACRIFICE", () => true],
+    ],
+    weak: ["SCROLL_BOXES", "CURSED_PEARL", "WINGED_BOOTS", "LAVA_ROCK"],
+    avoid: ["ARCANE_SCROLL", "HEFTY_TABLET", "LOST_COFFER"],
+  },
+  OROBAS: {
+    order: [["PRISMATIC_GEM", () => true], ["ARCHAIC_TOOTH", () => true], ["GLASS_EYE", () => true], ["SAND_CASTLE", () => true]],
+    avoid: ["TOUCH_OF_OROBAS"],
+  },
+  DARV: {
+    order: [
+      ["RUNIC_PYRAMID", () => true],
+      ["PANDORAS_BOX", (o) => o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length >= 5],
+      ["ASTROLABE", () => true],
+    ],
+  },
+  PAEL: {
+    order: [
+      ["PAELS_BLOOD", () => true], ["PAELS_LEGION", () => true], ["PAELS_CLAW", () => true], ["PAELS_FLESH", () => true],
+      ["PAELS_TEARS", () => true], ["PAELS_HORN", () => true], ["PAELS_TOOTH", () => true],
+    ],
+  },
+  TEZCATARA: {
+    order: [
+      ["TOASTY_MITTENS", (o) => o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length >= 4],
+      ["STORYBOOK", (o) => o.player_max_hp >= 55], ["SEAL_OF_GOLD", (o) => o.gold >= 175], ["VERY_HOT_COCOA", () => true],
+      ["NUTRITIOUS_SOUP", (o) => o.deck_cards.filter((c) => /^STRIKE_IRONCLAD/.test(c)).length >= 4], ["PUMPKIN_CANDLE", () => true],
+      ["BIIIG_HUG", (o) => o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD|^BASH/.test(c)).length >= 6], ["YUMMY_COOKIE", () => true],
+      ["GOLDEN_COMPASS", () => true], ["TOY_BOX", () => true],
+    ],
+  },
+  VAKUU: { order: [["MUSIC_BOX", () => true], ["FIDDLE", () => true]] },
+  NONUPEIPE: { order: [["BRILLIANT_SCARF", () => true], ["BEAUTIFUL_BRACELET", () => true], ["GLITTER", () => true]] },
+};
+
+/** The Ancient's relic to take, by ANCIENTS; undefined for a page without relics or an Ancient not listed. */
+function ancientPick(o: Observation, eventId: string | undefined, options: readonly EventOptionObs[]): EventOptionObs | undefined {
+  const table = eventId ? ANCIENTS[eventId] : undefined;
+  const relics = options.filter((x) => x.relic);
+  if (!table || relics.length === 0) return undefined;
+  const rank = (x: EventOptionObs) => {
+    const i = table.order.findIndex(([id, ok]) => id === x.relic && ok(o));
+    if (i >= 0) return i;
+    if (table.avoid?.includes(x.relic!)) return 3000;
+    if (table.weak?.includes(x.relic!)) return 2000;
+    return 1000;
+  };
+  return [...relics].sort((a, b) => rank(a) - rank(b) || a.index - b.index)[0];
+}
+
 export function chooseEvent(o: Observation, legal: LegalAction[]): string {
   const details = (o.room?.details ?? {}) as { event_id?: string; options?: EventOptionObs[] };
   const options = (details.options ?? []).filter((x) => !x.locked);
   const key = (x: EventOptionObs) => (x.text_key ?? "").split(".options.").pop() ?? "";
   const byKey = (k: string | undefined) => (k === undefined ? undefined : options.find((x) => key(x) === k));
   const rule = details.event_id ? EVENTS[details.event_id] : undefined;
-  let pick = byKey(rule?.(o, options.map(key)));
+  let pick = ancientPick(o, details.event_id, options) ?? byKey(rule?.(o, options.map(key)));
   if (!pick) {
     // No rule: an option that cannot kill, and costs no HP while HP is under half.
     pick = options.find((x) => !x.kills && !x.proceed && !(hpShare(o) < 0.5 && /生命|HP/.test(x.description ?? ""))) ?? options[0];

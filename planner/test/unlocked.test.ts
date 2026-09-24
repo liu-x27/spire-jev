@@ -150,3 +150,15 @@ test("tablet of truth: decipher once, twice with 70+ max HP, then give up", () =
   assert.equal(screen("DECIPHER_1", ["DECIPHER", "GIVE_UP"], 60, 65), "choose_event:1");
   assert.equal(screen("DECIPHER_2", ["DECIPHER", "GIVE_UP"], 67, 71), "choose_event:1");
 });
+
+test("neow: the relic highest in the research's order, not the first listed; the avoided last", () => {
+  const offer = (relics: string[], hp = 80, maxHp = 80) => {
+    const options = relics.map((relic, index) => ({ index, text_key: `NEOW.pages.INITIAL.options.${relic}`, relic, locked: false, proceed: false }));
+    const o = { phase: "event", player_hp: hp, player_max_hp: maxHp, gold: 99, deck_cards: [], room: { details: { event_id: "NEOW", options } } } as unknown as Observation;
+    return chooseEvent(o, relics.map((_, i) => ({ action_id: `choose_event:${i}` })) as LegalAction[]);
+  };
+  assert.equal(offer(["LOST_COFFER", "WINGED_BOOTS", "STONE_HUMIDIFIER"]), "choose_event:2");
+  assert.equal(offer(["LOST_COFFER", "FISHING_ROD", "LAVA_ROCK"]), "choose_event:1");
+  // Leafy Poultice costs 12 max HP: not under 70.
+  assert.equal(offer(["LEAFY_POULTICE", "NEW_LEAF"], 60, 65), "choose_event:1");
+});
