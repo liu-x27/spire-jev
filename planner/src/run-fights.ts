@@ -229,6 +229,9 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
   return offers[Math.min(i, offers.length - 1)]!.action_id;
 }
 
+/** potions2: potions not drunk early (a heal at full HP, block with nothing coming), and single hits Slippery blunts. */
+const LATE_POTIONS = new Set(["BLOOD_POTION", "BLOCK_POTION", "FRUIT_JUICE"]);
+const ONE_HIT_POTIONS = new Set(["FIRE_POTION", "EXPLOSIVE_AMPOULE", "POTION_SHAPED_ROCK"]);
 /** Potions that work by themselves (Fairy in a Bottle saves a death), or are worth more kept. */
 const KEEP_POTIONS = new Set(["FAIRY_IN_A_BOTTLE"]);
 const BOSSES = new Set(["VANTOM", "THE_KIN", "CEREMONIAL_BEAST", "WATERFALL_GIANT", "LAGAVULIN_MATRIARCH", "SOUL_FYSH",
@@ -254,8 +257,17 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   // Only potions the search cannot model — it already weighs the ones it can (a Block Potion was
   // forced on a turn with no attack coming) — unless no play survives the turn.
   const modelled = new Set(s.potions.filter((p) => drinkable(p)).map((p) => p.slot));
-  const uses = legal.filter((a) => a.action_id.startsWith("use_potion:") && !KEEP_POTIONS.has(String(a.metadata?.["potion_id"] ?? ""))
-    && !tried.has(`${turn}:${a.action_id.split(":")[1]}`) && (hopeless || !modelled.has(Number(a.action_id.split(":")[1]))));
+  // potions2: in a boss fight's first two turns, every potion — the ones the search models too. The
+  // explorations that won Vantom fights the planner lost drank theirs at turn 2.2 on average, the
+  // losing lines at 4.5 (Liquid Bronze 2.7 vs 13, Clarity 3 vs 10.5): one turn sees a fight-long
+  // buff as a turn's worth. Not the heals or block (wasted at full HP or with no attack coming), and
+  // not single-hit damage while Slippery would take it down to 1.
+  const early = hasFlag("potions2") && boss && turn <= 2;
+  const slippery = s.enemies.some((e) => e.alive && (e.powers["SLIPPERY"] ?? 0) > 0);
+  const id = (a: LegalAction) => String(a.metadata?.["potion_id"] ?? "");
+  const uses = legal.filter((a) => a.action_id.startsWith("use_potion:") && !KEEP_POTIONS.has(id(a))
+    && !tried.has(`${turn}:${a.action_id.split(":")[1]}`)
+    && (hopeless || !modelled.has(Number(a.action_id.split(":")[1])) || (early && !LATE_POTIONS.has(id(a)) && !(slippery && ONE_HIT_POTIONS.has(id(a))))));
   for (const a of uses) {
     const target = a.metadata?.["target_id"];
     if (target === undefined || !s.enemies.some((e) => e.id === Number(target))) return a.action_id;
