@@ -1,0 +1,125 @@
+/**
+ * Cards as parts of a deck (--flags packages; review #7). The card table
+ * rates each card alone, so the payoffs of the archetypes in
+ * docs/STRATEGY-research.md §2 sit below the skip threshold whatever the deck
+ * holds (Body Slam 0.29, Barricade 0.31, Rupture 0.39 in act 2; fix1-a0 took
+ * Body Slam 0 times in 76 offers, Inflame 0 in 24) and act 3's needs (§9c.8:
+ * an engine that re-establishes itself between A10's two bosses, draw, a way
+ * through 25-45 damage hits) are never asked about.
+ *
+ * packageBonus adds to a card's value (0-1 scale):
+ * - a payoff, for the enablers the deck already has (Feel No Pain for its
+ *   exhaust sources, Body Slam for its block, Rupture for its self-damage...);
+ * - an enabler, when the deck has its payoff;
+ * - from act 2, what the deck still lacks: scaling, then draw; in act 3,
+ *   answers to big single hits.
+ * The sizes are ours, to be measured.
+ */
+
+const set = (...ids: string[]) => new Set(ids);
+
+/** §2.2. */
+const EXHAUST_SOURCES = set("TRUE_GRIT", "BURNING_PACT", "SECOND_WIND", "FIEND_FIRE", "STOKE", "BRAND", "CINDER", "THRASH", "TREMBLE", "OFFERING", "FORGOTTEN_RITUAL", "MOLTEN_FIST", "CORRUPTION");
+const EXHAUST_PAYOFFS = set("FEEL_NO_PAIN", "DARK_EMBRACE", "ASHEN_STRIKE", "PACTS_END", "EVIL_EYE");
+/** §2.1; Bash is counted apart: "you need 2 or 3 reliable Vulnerable sources besides Bash". */
+const VULNERABLE_SOURCES = set("TREMBLE", "TAUNT", "UPPERCUT", "THUNDERCLAP", "MOLTEN_FIST", "BREAK");
+const VULNERABLE_PAYOFFS = set("DISMANTLE", "BULLY", "DOMINATE", "CRUELTY", "COLOSSUS", "VICIOUS");
+/** §2.3. */
+const SELF_DAMAGE = set("BLOODLETTING", "OFFERING", "BLOOD_WALL", "BREAKTHROUGH", "HEMOKINESIS", "BRAND", "CRIMSON_MANTLE", "INFERNO", "TEAR_ASUNDER");
+const SELF_DAMAGE_PAYOFFS = set("RUPTURE", "INFERNO", "SPITE", "TEAR_ASUNDER");
+/** §2.5: cards that block (Defends counted too, at half). */
+const BLOCK = set("SHRUG_IT_OFF", "FLAME_BARRIER", "TAUNT", "TRUE_GRIT", "COLOSSUS", "EVIL_EYE", "IMPERVIOUS", "UNMOVABLE", "CRIMSON_MANTLE", "SECOND_WIND", "IRON_WAVE", "BLOOD_WALL", "STONE_ARMOR", "RAGE");
+const BLOCK_PAYOFFS = set("BODY_SLAM", "BARRICADE", "JUGGERNAUT");
+/** §2.4. */
+const STRENGTH = set("DOMINATE", "INFLAME", "SETUP_STRIKE", "FIGHT_ME", "DEMON_FORM", "BRAND", "RUPTURE");
+const MULTI_HITS = set("TWIN_STRIKE", "SWORD_BOOMERANG", "THRASH", "WHIRLWIND", "CONFLAGRATION", "ANGER", "FIGHT_ME", "PECK");
+/** §9c.8 item 2. */
+const DRAW = set("POMMEL_STRIKE", "BATTLE_TRANCE", "OFFERING", "BURNING_PACT", "DARK_EMBRACE", "BLOODLETTING");
+/** §9c.8 item 3. */
+const BIG_HIT_ANSWERS = set("IMPERVIOUS", "FLAME_BARRIER", "MANGLE", "UNMOVABLE", "UPPERCUT");
+/** §3.4, §9c.8 item 1: scaling that holds up over a long fight, whatever else the deck has. */
+const SCALING = set("DOMINATE", "DEMON_FORM", "THRASH", "ASHEN_STRIKE", "INFERNO", "CRIMSON_MANTLE", "UNMOVABLE", "CRUELTY", "STOKE");
+
+const base = (id: string) => id.replace(/\+$/, "");
+
+export interface DeckProfile {
+  exhaust: number;
+  exhaustPayoffs: number;
+  vulnerable: number;
+  vulnerablePayoffs: number;
+  selfDamage: number;
+  selfDamagePayoffs: number;
+  block: number;
+  blockPayoffs: number;
+  strength: number;
+  multiHits: number;
+  draw: number;
+  bigHitAnswers: number;
+  /** Scaling the deck has, counting the conditional kinds once they have their enablers. */
+  scaling: number;
+}
+
+export function profile(deck: readonly string[]): DeckProfile {
+  const ids = deck.map(base);
+  const n = (s: Set<string>) => ids.filter((c) => s.has(c)).length;
+  const p: DeckProfile = {
+    exhaust: n(EXHAUST_SOURCES),
+    exhaustPayoffs: n(EXHAUST_PAYOFFS),
+    vulnerable: n(VULNERABLE_SOURCES),
+    vulnerablePayoffs: n(VULNERABLE_PAYOFFS),
+    selfDamage: n(SELF_DAMAGE),
+    selfDamagePayoffs: n(SELF_DAMAGE_PAYOFFS),
+    block: n(BLOCK) + 0.5 * ids.filter((c) => c === "DEFEND_IRONCLAD").length,
+    blockPayoffs: n(BLOCK_PAYOFFS),
+    strength: n(STRENGTH),
+    multiHits: n(MULTI_HITS),
+    draw: n(DRAW),
+    bigHitAnswers: n(BIG_HIT_ANSWERS),
+    scaling: 0,
+  };
+  p.scaling = n(SCALING)
+    + (ids.includes("FEEL_NO_PAIN") && p.exhaust >= 3 ? 1 : 0)
+    + (ids.includes("RUPTURE") && p.selfDamage >= 3 ? 1 : 0)
+    + (ids.includes("BARRICADE") && p.block >= 4 ? 1 : 0)
+    + (ids.includes("JUGGERNAUT") && p.block >= 4 ? 1 : 0)
+    + (ids.includes("INFLAME") ? 1 : 0);
+  return p;
+}
+
+/** Whether a card would be scaling in this deck, once added. */
+function scales(card: string, p: DeckProfile): boolean {
+  if (SCALING.has(card) || card === "INFLAME") return true;
+  if (card === "FEEL_NO_PAIN") return p.exhaust >= 3;
+  if (card === "RUPTURE") return p.selfDamage >= 3;
+  if (card === "BARRICADE" || card === "JUGGERNAUT") return p.block >= 4;
+  return false;
+}
+
+/** What a card adds to a deck beyond its own rating, for act 0-2. */
+export function packageBonus(id: string, act: number, deck: readonly string[]): number {
+  const card = base(id);
+  const p = profile(deck);
+  const has = (c: string) => deck.some((d) => base(d) === c);
+  let b = 0;
+  // Payoffs, for the enablers already there.
+  if (EXHAUST_PAYOFFS.has(card)) b += 0.08 * Math.min(4, p.exhaust);
+  if (VULNERABLE_PAYOFFS.has(card)) b += 0.06 * Math.min(3, p.vulnerable);
+  if (SELF_DAMAGE_PAYOFFS.has(card)) b += 0.08 * Math.min(4, p.selfDamage);
+  if (card === "BODY_SLAM") b += 0.04 * Math.min(6, p.block) + (has("BARRICADE") ? 0.2 : 0);
+  if (card === "BARRICADE") b += 0.03 * Math.min(6, p.block) + (has("BODY_SLAM") || has("JUGGERNAUT") ? 0.15 : 0);
+  if (card === "JUGGERNAUT") b += 0.03 * Math.min(6, p.block);
+  if (MULTI_HITS.has(card)) b += 0.05 * Math.min(2, p.strength);
+  if (STRENGTH.has(card)) b += 0.04 * Math.min(3, p.multiHits);
+  // Enablers, for a payoff already there.
+  if (EXHAUST_SOURCES.has(card) && p.exhaustPayoffs > 0) b += 0.08;
+  if (VULNERABLE_SOURCES.has(card) && p.vulnerablePayoffs > 0) b += 0.06;
+  if (SELF_DAMAGE.has(card) && p.selfDamagePayoffs > 0) b += 0.08;
+  if (BLOCK.has(card) && p.blockPayoffs > 0) b += 0.05;
+  // From act 2: what the deck still lacks.
+  if (act >= 1) {
+    if (p.scaling === 0 && scales(card, p)) b += act === 1 ? 0.15 : 0.2;
+    if (p.draw < 2 && DRAW.has(card)) b += 0.08;
+  }
+  if (act >= 2 && p.bigHitAnswers === 0 && BIG_HIT_ANSWERS.has(card)) b += 0.08;
+  return b;
+}

@@ -11,6 +11,7 @@
  */
 
 import { type MapPoint, planPath } from "./path.ts";
+import { packageBonus } from "./packages.ts";
 import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
@@ -148,6 +149,8 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
     // support card's rating (A10 seed 7 took Taunt, Colossus and Taunt over Anger and Sword Boomerang).
     if (DAMAGE.has(card) && count(deck, DAMAGE) < 2) v += rules2 ? 0.25 : 0.1;
   }
+  // packages: what the card adds to this deck as part of an archetype, and what the deck still lacks.
+  if (flags.has("packages")) v += packageBonus(card, act, deck);
   return v;
 }
 
