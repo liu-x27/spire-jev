@@ -195,6 +195,45 @@ function packageBonus2(card: string, act: number, deck: readonly string[]): numb
   return b;
 }
 
+/**
+ * deckplan: the shape of 22 winning A10 Ironclad decks (docs/a10-decks-research.md §3.2). The first
+ * engine piece came by floor 5 (20 of 22 by the act 1 boss); at the act 2 boss about 25 cards with
+ * ~4 engine pieces including a Strength source and a power-block engine, only ~2 flat-damage attacks
+ * and ~1 of Anger/Pommel/Taunt/Tremble, 2 draw and 2 energy cards.
+ */
+const STRENGTH_SOURCES = set("DOMINATE", "INFLAME", "DEMON_FORM", "BRAND");
+const POWER_BLOCK = set("BARRICADE", "UNMOVABLE", "STONE_ARMOR", "CRIMSON_MANTLE", "FEEL_NO_PAIN", "JUGGERNAUT");
+const ENGINE_PIECES = set(...STRENGTH_SOURCES, ...POWER_BLOCK, "RUPTURE", "BODY_SLAM", "THRASH", "ASHEN_STRIKE", "INFERNO", "TEAR_ASUNDER", "CRUELTY", "DARK_EMBRACE");
+const FLAT_DAMAGE = set("ANGER", "POMMEL_STRIKE", "TWIN_STRIKE", "IRON_WAVE", "BREAKTHROUGH", "CINDER", "HEMOKINESIS", "PERFECTED_STRIKE", "SETUP_STRIKE", "SWORD_BOOMERANG", "THUNDERCLAP", "HEADBUTT", "BLUDGEON", "UNRELENTING", "STOMP", "DISMANTLE", "UPPERCUT", "MOLTEN_FIST", "RAMPAGE", "WHIRLWIND", "INFERNAL_BLADE");
+const COMMON_FOUR = set("ANGER", "POMMEL_STRIKE", "TAUNT", "TREMBLE");
+const DRAW_CARDS = set("POMMEL_STRIKE", "BATTLE_TRANCE", "OFFERING", "BURNING_PACT", "DARK_EMBRACE", "SHRUG_IT_OFF");
+const ENERGY_CARDS = set("BLOODLETTING", "OFFERING", "FORGOTTEN_RITUAL");
+
+export function planBonus(id: string, act: number, deck: readonly string[]): number {
+  const card = base(id);
+  const ids = deck.map(base);
+  const count = (s: Set<string>) => ids.filter((c) => s.has(c)).length;
+  const p = profile(deck);
+  // A payoff without its support is no engine piece yet.
+  const supported = card !== "RUPTURE" && card !== "INFERNO" && card !== "TEAR_ASUNDER" ? (card !== "BODY_SLAM" || p.block >= 4) : p.selfDamage >= 2;
+  const engine = ENGINE_PIECES.has(card) && supported;
+  let b = 0;
+  if (act === 0) {
+    // One damage card of its own first, then the first engine piece.
+    if (engine && count(ENGINE_PIECES) === 0 && ids.some((c) => OWN_DAMAGE.has(c))) b += 0.2;
+    if (FLAT_DAMAGE.has(card) && count(FLAT_DAMAGE) >= 5) b -= 0.1;
+  } else {
+    if (STRENGTH_SOURCES.has(card) && count(STRENGTH_SOURCES) === 0) b += 0.2;
+    if (POWER_BLOCK.has(card) && count(POWER_BLOCK) === 0) b += 0.15;
+    if (engine && count(ENGINE_PIECES) < 4) b += 0.05;
+    if (FLAT_DAMAGE.has(card) && count(FLAT_DAMAGE) >= 3) b -= 0.15;
+    if (DRAW_CARDS.has(card) && count(DRAW_CARDS) < 2) b += 0.08;
+    if (ENERGY_CARDS.has(card) && count(ENERGY_CARDS) < 2) b += 0.08;
+  }
+  if (COMMON_FOUR.has(card) && count(COMMON_FOUR) >= 2) b -= 0.15;
+  return b;
+}
+
 /** What a card adds to a deck beyond its own rating, for act 0-2. */
 export function packageBonus(id: string, act: number, deck: readonly string[]): number {
   const card = base(id);

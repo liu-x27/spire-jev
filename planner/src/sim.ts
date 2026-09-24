@@ -557,9 +557,24 @@ const KEEP_STATUS = new Set(["FRANTIC_ESCAPE"]);
  * anything else. (Burning Pact exhausted the Frantic Escapes The Insatiable
  * had shuffled in, and the Sandpit ran out.)
  */
+/**
+ * exhaust2: after statuses and curses, a Strike, then a Defend, before anything else — how exhaust
+ * decks thin themselves in a fight (True Grit+, Burning Pact); the last card was an arbitrary pick.
+ */
+let smartExhaust = false;
+export function useSmartExhaust(on: boolean): void {
+  smartExhaust = on;
+}
+
 export function junkIndex(cards: readonly { id: string; type: string }[]): number {
   const junk = cards.findIndex((c) => (c.type === "Status" || c.type === "Curse") && !KEEP_STATUS.has(c.id));
   if (junk >= 0) return junk;
+  if (smartExhaust) {
+    for (const basic of ["STRIKE_IRONCLAD", "DEFEND_IRONCLAD"]) {
+      const i = cards.findIndex((c) => c.id === basic);
+      if (i >= 0) return i;
+    }
+  }
   for (let i = cards.length - 1; i >= 0; i--) if (!KEEP_STATUS.has(cards[i]!.id)) return i;
   return cards.length - 1;
 }

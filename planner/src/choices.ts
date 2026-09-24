@@ -11,7 +11,8 @@
  */
 
 import { type MapPoint, planPath } from "./path.ts";
-import { fillsNeed, packageBonus, profile, usePackages2, useScalingFromAct1 } from "./packages.ts";
+import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFromAct1 } from "./packages.ts";
+import { useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
@@ -90,6 +91,7 @@ export function setFlags(names: readonly string[]): void {
   for (const n of names) if (n) flags.add(n);
   useScalingFromAct1(flags.has("scale1"));
   usePackages2(flags.has("packages2"));
+  useSmartExhaust(flags.has("exhaust2"));
 }
 export const hasFlag = (name: string) => flags.has(name);
 const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number] }> = {
@@ -159,6 +161,7 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   }
   // packages: what the card adds to this deck as part of an archetype, and what the deck still lacks.
   if (flags.has("packages") || flags.has("packages2")) v += packageBonus(card, act, deck);
+  if (flags.has("deckplan")) v += planBonus(card, act, deck);
   return v;
 }
 
@@ -347,7 +350,13 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
     const need = cards.find((c) => c.v >= 0.5 && fillsNeed(item(c.a), actOf(o), o.deck_cards));
     if (need) return need.a.action_id;
   }
-  if (removal && o.deck_cards.some((c) => REMOVABLE.test(c))) {
+  // keepbasics: winners keep 7-8 basics and out-grow them (docs/a10-decks-research.md §3.2); a
+  // removal only for a curse or while more than 7 Strikes and Defends are left, after a good card.
+  const basics = o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length;
+  const curse = o.deck_cards.some((c) => REMOVABLE.test(c) && !/^(STRIKE|DEFEND)_IRONCLAD/.test(c));
+  const keep = flags.has("keepbasics") && !curse;
+  if (keep && topCard && topCard.v >= 0.55) return topCard.a.action_id;
+  if (removal && (!keep || basics > 7) && o.deck_cards.some((c) => REMOVABLE.test(c))) {
     // The card select that follows is the removal's, whatever an event left behind.
     resetCardSelect();
     return removal.action_id;

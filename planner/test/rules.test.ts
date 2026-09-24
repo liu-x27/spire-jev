@@ -1,7 +1,7 @@
 // Card rules, each as the game showed it in a coverage run (planner/runs).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { actions, type Card, drink, type Enemy, hpLoss, junkIndex, play, type State } from "../src/sim.ts";
+import { actions, type Card, drink, type Enemy, hpLoss, junkIndex, play, type State, useSmartExhaust } from "../src/sim.ts";
 import { planTurn } from "../src/search.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
@@ -350,4 +350,17 @@ test("an exhaust from hand never takes a Frantic Escape while anything else is t
   assert.equal(junkIndex(cards), 2);
   assert.equal(junkIndex([...cards, { id: "WOUND", type: "Status" }]), 3);
   assert.equal(junkIndex([{ id: "FRANTIC_ESCAPE", type: "Status" }]), 0);
+});
+
+test("exhaust2: with no status in hand, a Strike goes first, then a Defend", () => {
+  const hand = [{ id: "BASH", type: "Attack" }, { id: "DEFEND_IRONCLAD", type: "Skill" }, { id: "STRIKE_IRONCLAD", type: "Attack" }, { id: "OFFERING", type: "Skill" }];
+  assert.equal(junkIndex(hand), 3);
+  useSmartExhaust(true);
+  try {
+    assert.equal(junkIndex(hand), 2);
+    assert.equal(junkIndex(hand.filter((c) => c.id !== "STRIKE_IRONCLAD")), 1);
+    assert.equal(junkIndex([...hand, { id: "WOUND", type: "Status" }]), 4);
+  } finally {
+    useSmartExhaust(false);
+  }
 });

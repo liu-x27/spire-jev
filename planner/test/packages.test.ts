@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { damageScaling, packageBonus, profile, usePackages2, useScalingFromAct1 } from "../src/packages.ts";
+import { damageScaling, packageBonus, planBonus, profile, usePackages2, useScalingFromAct1 } from "../src/packages.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
 
@@ -56,4 +56,14 @@ test("packages2: payoffs need support, defensive scaling does not stop the call 
   } finally {
     usePackages2(false);
   }
+});
+
+test("deckplan: the first engine piece early, a Strength source and power block from act 2, no fifth common", () => {
+  const oneDamage = [...STARTER, "POMMEL_STRIKE"];
+  assert.ok(planBonus("UNMOVABLE", 0, oneDamage) >= 0.2, "act 1: the first engine piece after a damage card");
+  assert.equal(planBonus("UNMOVABLE", 0, STARTER), 0, "not before any damage card");
+  assert.ok(planBonus("INFLAME", 1, oneDamage) >= 0.2);
+  assert.ok(planBonus("TAUNT", 1, [...STARTER, "POMMEL_STRIKE", "ANGER"]) < 0);
+  assert.ok(planBonus("TWIN_STRIKE", 1, [...STARTER, "POMMEL_STRIKE", "ANGER", "HEADBUTT"]) < 0);
+  assert.ok(planBonus("BODY_SLAM", 0, oneDamage) < 0.2, "Body Slam without block is no engine piece");
 });
