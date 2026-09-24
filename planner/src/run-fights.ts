@@ -447,6 +447,12 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
   let cur = await game.startRun(seed, ascension, resume);
   const captured = new Set<number>();
   let fights = 0;
+  // A screen that comes back unchanged after its action did nothing (a reward that cannot be taken,
+  // a button the game ignores) cost whole runs: 2,000 steps on one rewards screen after Punch Off's
+  // fight. Seen 25 times, say so and try another action; 200 times, give the run up as stuck.
+  let lastScreen = "";
+  let repeats = 0;
+  let stuck: string | undefined;
   for (let steps = 0; !cur.observation.is_terminal && steps < MAX_STEPS; steps++) {
     if (cur.observation.phase === "combat" && cur.observation.combat) {
       if (fights++ >= maxFights) return;
@@ -480,13 +486,26 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       const map = (await game.call("map")) as { points?: MapPoint[] };
       chosen = chooseMapByPath(o, cur.legal_actions, map.points ?? []);
     } else chosen = useRules ? rules(o, cur.legal_actions) : routine(o, cur.legal_actions, takeCards);
+    const screen = `${o.phase}|${o.floor}|${cur.legal_actions.map((a) => a.action_id).join(",")}`;
+    repeats = screen === lastScreen ? repeats + 1 : 0;
+    lastScreen = screen;
+    if (repeats >= 25) {
+      const ids = cur.legal_actions.map((a) => a.action_id);
+      if (repeats === 25) console.log(`  stuck at floor ${o.floor}, ${o.phase}: [${ids.join(" ")}], chose ${chosen} 25 times`);
+      if (repeats >= 200) {
+        stuck = `stuck at floor ${o.floor}, ${o.phase}: [${ids.join(" ")}]`;
+        break;
+      }
+      const others = ids.filter((id) => id !== chosen);
+      chosen = ids.find((id) => /^(proceed|skip|leave|shop_leave)/.test(id) && id !== chosen) ?? others[(repeats - 25) % Math.max(1, others.length)] ?? chosen;
+    }
     if (o.phase !== "rewards") {
       rooms.push({ seed, floor: o.floor, phase: o.phase, hp: o.player_hp, maxHp: o.player_max_hp, gold: o.gold, deck: o.deck_cards, room: o.room, chosen });
     }
     cur = await game.step(chosen);
   }
   const o = cur.observation;
-  ends.push({ seed, floor: o.floor, terminal: o.is_terminal, victory: o.is_victory, hp: o.player_hp, maxHp: o.player_max_hp, deck: o.deck_cards, relics: o.relics });
+  ends.push({ seed, floor: o.floor, terminal: o.is_terminal, victory: o.is_victory, hp: o.player_hp, maxHp: o.player_max_hp, deck: o.deck_cards, relics: o.relics, ...(stuck ? { error: stuck } : {}) });
 }
 
 /**

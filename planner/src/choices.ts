@@ -521,9 +521,9 @@ const EVENTS: Record<string, (o: Observation, keys: readonly string[]) => string
   AMALGAMATOR: (o) => (blockCount(o.deck_cards) >= 3 ? "COMBINE_DEFENDS" : "COMBINE_STRIKES"),
   // §9b: pay 5 HP to choose between two dolls; never take one at random while HP allows.
   DOLL_ROOM: (o) => (o.player_hp > 15 ? "TAKE_SOME_TIME" : "RANDOM"),
-  // Underdocks: Nab is a relic and an Injury for good; taking on the two Punch Constructs is a relic
-  // and a potion, for about 9 HP (10 such fights at A10, none lost). Fight unless HP is low.
-  PUNCH_OFF: (o, keys) => (keys.includes("FIGHT") ? "FIGHT" : hpShare(o) > 0.35 ? "I_CAN_TAKE_THEM" : "NAB"),
+  // Underdocks: Nab is a relic and an Injury for good; taking on both Punch Constructs is a relic and a
+  // potion, but cost 72 and 37 HP at A10 (veteran seeds 27, 39; one alone costs about 9). Nab.
+  PUNCH_OFF: (o, keys) => (keys.includes("FIGHT") ? "FIGHT" : "NAB"),
   // Slippery Bridge names the card it will take in text only: reroll once while healthy, then cross.
   SLIPPERY_BRIDGE: (o, keys) => (keys.includes("HOLD_ON_0") && hpShare(o) > 0.6 ? "HOLD_ON_0" : "OVERCOME"),
   // §9b: keep reaching deeper (5 HP a step) while HP stays at half or more, then take the prize.
