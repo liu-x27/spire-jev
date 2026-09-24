@@ -35,12 +35,18 @@ const { values } = parseArgs({
     explore: { type: "string", default: "0" },
     // The library: runs/saves (seeds 46-135, the confirmation set) or runs/saves-dev (136-315, for tuning).
     library: { type: "string", default: "saves" },
+    // The saves' seeds, a-b: an explicit manifest (the library also holds saves from other seed sets).
+    seeds: { type: "string" },
   },
 });
 if (!values.tag) throw new Error("--tag is required");
 const here = path.resolve(import.meta.dirname, "..");
 const dir = path.join(here, "runs", values.library);
-const saves = fs.readdirSync(dir).filter((f) => f.endsWith(".save") && f.includes(values.saves)).sort();
+const seedOf = (f: string) => Number(f.match(/JEV0*(\d+)/)?.[1] ?? -1);
+const [lo, hi] = (values.seeds ?? "0-999999").split("-").map(Number) as [number, number];
+const saves = fs.readdirSync(dir).filter((f) => f.endsWith(".save") && f.includes(values.saves) && seedOf(f) >= lo && seedOf(f) <= hi).sort();
+// An act replay plays every fight up to the stop floor.
+const maxFights = Number(values["stop-floor"]) < 999 && values.fights === "1" ? "99" : values.fights;
 if (saves.length === 0) throw new Error(`no saves matching ${values.saves} in ${dir}`);
 const n = Math.min(Number(values.sandboxes), saves.length);
 // Each job: a save, and an exploration seed (0: the plain planner).
@@ -51,13 +57,24 @@ jobs.forEach((j, i) => queues[i % n]!.push(j));
 const logs = path.join(here, "..", "sandbox");
 
 const t0 = Date.now();
-const results: { save: string; explore: number; fights: FightLog[] }[] = [];
+/** One replay: its fights and screens, and whether it ran to its end (a crash or timeout is not a loss). */
+interface Replay {
+  save: string;
+  explore: number;
+  status: "ok" | "failed";
+  fights: FightLog[];
+  rooms: unknown[];
+  ends: unknown[];
+}
+const results: Replay[] = [];
 await Promise.all(
   queues.map(async (queue, i) => {
     const port = Number(values.port) + i;
     for (const { save, explore } of queue) {
-      const seed = Number(save.match(/JEV0*(\d+)/)?.[1] ?? 1);
+      const seed = seedOf(save);
       const out = path.join(here, "runs", `bench-${values.tag}-${port}.json`);
+      // A replay that did not run to its end is tried once more, then recorded as failed.
+      for (let attempt = 0; attempt < 2; attempt++) {
       const log = fs.openSync(path.join(logs, `bench-${values.tag}-${port}.log`), "a");
       await new Promise<void>((resolve) => {
         const child = spawn(
@@ -65,7 +82,7 @@ await Promise.all(
           [
             path.join(here, "src", "run-fights.ts"), "--runs", "1", "--seed", String(seed), "--port", String(port),
             "--choices", values.choices, "--ascension", values.ascension, "--flags", values.flags, "--weights", values.weights,
-            "--resume", path.join(dir, save), "--max-fights", values.fights, "--stop-floor", values["stop-floor"], "--cards", "take", "--out", out,
+            "--resume", path.join(dir, save), "--max-fights", maxFights, "--stop-floor", values["stop-floor"], "--cards", "take", "--out", out,
             ...(explore > 0 ? ["--explore", String(explore)] : []),
           ],
           { cwd: here, stdio: ["ignore", log, log] },
@@ -73,9 +90,17 @@ await Promise.all(
         child.on("exit", () => resolve());
       });
       fs.closeSync(log);
-      if (fs.existsSync(out)) {
-        results.push({ save, explore, fights: (JSON.parse(fs.readFileSync(out, "utf8")) as { fights: FightLog[] }).fights });
-        fs.rmSync(out);
+      const part = fs.existsSync(out) ? (JSON.parse(fs.readFileSync(out, "utf8")) as { fights: FightLog[]; rooms?: unknown[]; ends?: { terminal?: boolean; error?: string }[] }) : undefined;
+      if (part) fs.rmSync(out);
+      // Ran to its end: the game said the run was over, or the replay reached its stop (a fight past
+      // the stop floor, or the fight limit), rather than a lost connection or a timeout.
+      const last = part?.fights.at(-1);
+      const ended = part !== undefined && part.fights.length > 0 && !(part.ends ?? []).some((e) => e.error)
+        && ((part.ends?.length ?? 0) > 0 || (last !== undefined && (!last.won || last.floor >= Number(values["stop-floor"]) || part.fights.length >= Number(maxFights))));
+      if (ended || attempt === 1) {
+        results.push({ save, explore, status: ended ? "ok" : "failed", fights: part?.fights ?? [], rooms: part?.rooms ?? [], ends: part?.ends ?? [] });
+        break;
+      }
       }
     }
   }),
@@ -83,7 +108,9 @@ await Promise.all(
 
 results.sort((a, b) => a.save.localeCompare(b.save) || a.explore - b.explore);
 fs.writeFileSync(path.join(here, "runs", `bench-${values.tag}.json`), JSON.stringify({ tag: values.tag, weights: values.weights, flags: values.flags, results }, null, 1));
-const plain = results.filter((r) => r.explore === 0);
+const failed = results.filter((r) => r.status === "failed");
+if (failed.length) console.log(`  FAILED replays (left out below): ${failed.map((r) => `${seedOf(r.save)}${r.explore ? `/e${r.explore}` : ""}`).join(" ")}`);
+const plain = results.filter((r) => r.explore === 0 && r.status === "ok");
 const boss = plain.map((r) => r.fights[r.fights.length - 1]).filter((f): f is FightLog => f !== undefined);
 if (Number(values.explore) > 0) {
   // Saves the plain planner lost and some exploration won: the fights that were winnable.

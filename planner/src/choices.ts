@@ -130,6 +130,21 @@ const count = (deck: readonly string[], ids: Set<string>) => deck.filter((c) => 
 type Act = 0 | 1 | 2;
 
 /** How much a card is worth adding to this deck in this act (0-2 for acts 1-3), about 0-1; below 0 means never. */
+/**
+ * cardValue with no deck-building flags: for choices inside a fight (Armaments, discovery), which
+ * must not change with them — packages2+shop2 changed 8 Vantom fights through combatSelect before
+ * act 2 began (astra-review-3), so deck experiments were not isolated.
+ */
+export function plainCardValue(id: string, act: Act, deck: readonly string[]): number {
+  const saved = [...flags];
+  flags.clear();
+  try {
+    return cardValue(id, act, deck);
+  } finally {
+    for (const f of saved) flags.add(f);
+  }
+}
+
 export function cardValue(id: string, act: Act, deck: readonly string[]): number {
   const card = base(id);
   if (NEVER.has(card)) return -1;

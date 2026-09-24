@@ -29,7 +29,7 @@ import { parseArgs } from "node:util";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
+import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
 import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, type Weights } from "./search.ts";
@@ -104,6 +104,8 @@ export interface RunEnd {
   /** The deck and relics at the end. */
   deck: string[];
   relics: string[];
+  /** Set when the run stopped on an error (a lost connection, a timeout), not on the game's terms. */
+  error?: string;
 }
 const ends: RunEnd[] = [];
 
@@ -222,7 +224,7 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
   } else if (/Upgrade|ChooseACard|SimpleGrid|Bundle/.test(purpose)) {
     let best = -Infinity;
     cards.forEach((c, j) => {
-      const v = cardValue(c.card_id, 0, obs.deck_cards);
+      const v = plainCardValue(c.card_id, 0, obs.deck_cards);
       if (v > best) [best, i] = [v, j];
     });
   }
@@ -628,6 +630,7 @@ async function main(): Promise<void> {
       }
     } catch (err) {
       console.log(`  run stopped: ${(err as Error).message}`);
+      ends.push({ seed, floor: -1, terminal: false, victory: false, hp: 0, maxHp: 0, deck: [], relics: [], error: (err as Error).message });
     } finally {
       await game?.kill();
     }
