@@ -34,26 +34,6 @@ function state(hand: Card[], enemies: Enemy[], hp = 80, energy = 3): State {
 const at = (s: State, hand: number, target?: number) => play(s, { kind: "play", hand, ...(target !== undefined ? { target } : {}) });
 const plays = (s: State) => actions(s).filter((a) => a.kind === "play").length;
 
-// ---------------------------------------------------------------- The Kin
-
-test("kin: with the Priest up, a Strike goes at the Priest unless it saves a follower's hit", () => {
-  const kin = (followerHp: number): Enemy[] => [
-    foe("KIN_FOLLOWER", followerHp, { MINION: 1 }, 1, 8), foe("KIN_FOLLOWER", 62, { MINION: 1 }, 2, 0), foe("KIN_PRIEST", 199, {}, 3, 9),
-  ];
-  const target = (s: State) => {
-    const a = planTurn(s).actions[0];
-    return a?.kind === "play" ? a.target : undefined;
-  };
-  useBossRules({ sleep: false, kin: true });
-  try {
-    assert.equal(target(state([STRIKE], kin(40), 80, 1)), 3);
-    // A follower a Strike kills before its 8 lands: that one.
-    assert.equal(target(state([STRIKE], kin(6), 80, 1)), 1);
-  } finally {
-    useBossRules({ sleep: false });
-  }
-});
-
 // ---------------------------------------------------------------- Ceremonial Beast
 
 test("plow: HP lost that leaves the Beast at or under its Plow stuns it and strips its Strength", () => {
@@ -169,6 +149,13 @@ test("disintegration: its amount at the end of the turn, into block", () => {
   assert.equal(hpLoss(s), 31);
   s.player.block = 20;
   assert.equal(hpLoss(s), 11);
+});
+
+test("cloak clasp: a block for every card held at the end of the turn", () => {
+  const s = { ...state([STRIKE, STRIKE, DEFEND], [foe("KNOWLEDGE_DEMON", 399, {}, 1, 18)]), relics: ["CLOAK_CLASP"], relicVars: { CLOAK_CLASP: { Block: 1 } } };
+  assert.equal(hpLoss(s), 15);
+  // A card played is one fewer held.
+  assert.equal(hpLoss(at(s, 2)), 13 - 5 + 3);
 });
 
 test("sloth: three cards a turn, counting the ones played before the observation", () => {

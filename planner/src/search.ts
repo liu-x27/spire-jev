@@ -258,11 +258,6 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // it took and no more. sleep: damage into a Lagavulin Matriarch asleep for two more turns is worth
   // nothing (her HP as it was), and waking her costs WAKE_COST.
   let enemyHp = alive.reduce((a, e) => a + e.hp, 0) + s.enemies.reduce((a, e) => a + formsToCome(e), 0);
-  // kin: The Kin's followers are minions, gone when the Priest dies (IL: MinionPower), so their HP is
-  // none of what the fight needs; hitting one is worth only the hit it saves this turn.
-  if (bossRules.kin && alive.some((e) => e.model === "KIN_PRIEST")) {
-    enemyHp -= alive.reduce((a, e) => a + (e.model === "KIN_FOLLOWER" ? e.hp : 0), 0);
-  }
   let woken = 0;
   if (bossRules.sleep) {
     for (const e of s.enemies) {
@@ -460,10 +455,9 @@ export function useGiantRules(potions: boolean, margin: boolean): void {
  * herself after her third turn. Either way she acts the same number of turns before the kill, so
  * waking her early buys nothing, and the turns she sleeps are free ones for the player's powers.
  */
-const bossRules = { sleep: false, kin: false };
-export function useBossRules(rules: { sleep: boolean; kin?: boolean }): void {
+const bossRules = { sleep: false };
+export function useBossRules(rules: { sleep: boolean }): void {
   bossRules.sleep = rules.sleep;
-  bossRules.kin = rules.kin ?? false;
 }
 /** sleep: what waking the Matriarch early costs, in HP: a tie-break toward letting her sleep. */
 const WAKE_COST = 6;

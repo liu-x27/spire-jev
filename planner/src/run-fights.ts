@@ -649,7 +649,7 @@ async function main(): Promise<void> {
   useRules2(values.choices === "rules2");
   setFlags(values.flags.split(","));
   useGiantRules(hasFlag("wgpot"), hasFlag("wghp"));
-  useBossRules({ sleep: hasFlag("sleep"), kin: hasFlag("kin") });
+  useBossRules({ sleep: hasFlag("sleep") });
   ascension = Number(values.ascension);
   setIntentAscension(ascension);
   usePotions = useRules;

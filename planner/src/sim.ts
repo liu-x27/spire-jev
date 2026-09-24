@@ -1200,12 +1200,14 @@ export function incomingDamage(s: State): number {
 
 /**
  * Block the player will have when the enemies attack: Plating adds its amount
- * at the end of the turn, and Feel No Pain blocks for every Ethereal card
- * (Dazed) that the end of the turn exhausts from the hand.
+ * at the end of the turn, Feel No Pain blocks for every Ethereal card (Dazed)
+ * that the end of the turn exhausts from the hand, and Cloak Clasp for every
+ * card held (the Knowledge Demon replays: misses of the hand's size, 3 and 7).
  */
 export function endOfTurnBlock(s: State): number {
   const ethereal = s.hand.filter((c) => c.keywords.includes("Ethereal")).length;
-  return s.player.block + Math.max(0, s.player.powers["PLATING"] ?? 0) + ethereal * Math.max(0, s.player.powers["FEEL_NO_PAIN"] ?? 0);
+  const clasp = s.relics.includes("CLOAK_CLASP") ? (s.hand.length + s.drawn) * (s.relicVars?.["CLOAK_CLASP"]?.["Block"] ?? 1) : 0;
+  return s.player.block + Math.max(0, s.player.powers["PLATING"] ?? 0) + ethereal * Math.max(0, s.player.powers["FEEL_NO_PAIN"] ?? 0) + clasp;
 }
 
 /**
