@@ -86,3 +86,12 @@ test("HP a card spends counts in the evaluation", () => {
   hurt.player.hp = 10;
   assert.ok(evaluate(s) > evaluate(hurt) + 50);
 });
+
+test("with setup on, a power worth its turns is played on a safe turn, and not when the fight ends now", () => {
+  const fnp = card("FEEL_NO_PAIN", "Power", "Self", { Power: 3 });
+  const long = state([fnp, STRIKE], 1, [foe(1, 120, 0)]);
+  assert.equal(actionId(planTurn(long, { ...TURN_WEIGHTS, setup: 1 }).actions[0]!), "play_card:0");
+  assert.equal(actionId(planTurn(long, TURN_WEIGHTS).actions[0]!), "play_card:1:target:1");
+  const short = state([fnp, STRIKE], 1, [foe(1, 6, 0)]);
+  assert.equal(actionId(planTurn(short, { ...TURN_WEIGHTS, setup: 1 }).actions[0]!), "play_card:1:target:1");
+});

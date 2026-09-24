@@ -329,3 +329,14 @@ test("a potion is drunk when it saves the fight, and kept when it only saves a l
   calm.potions = s.potions;
   assert.equal(planTurn(calm).actions[0]!.kind, "end");
 });
+
+test("dark embrace draws for every card exhausted; rupture turns a card's HP cost into strength", () => {
+  const s = state([{ ...card("TREMBLE", "Skill", "AnyEnemy", { VulnerablePower: 3 }), keywords: ["Exhaust"] }]);
+  s.player.powers["DARK_EMBRACE"] = 1;
+  assert.equal(at(s, 0).drawn, 1);
+  const r = state([card("HEMOKINESIS", "Attack", "AnyEnemy", { HpLoss: 2, Damage: 15 })]);
+  r.player.powers["RUPTURE"] = 1;
+  const after = at(r, 0);
+  assert.equal(after.player.hp, 78);
+  assert.equal(after.player.powers["STRENGTH"], 1);
+});

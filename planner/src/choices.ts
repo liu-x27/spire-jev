@@ -69,6 +69,30 @@ const CARDS: Record<string, { tiers: string; pick: [number, number, number] }> =
   WHIRLWIND: { tiers: "CABB", pick: [33, 15, 6] },
 };
 
+/**
+ * rules2 (--choices rules2, from docs/astra-review-1.md §4 and §7): cards the
+ * §3.2 table lacks, rated roughly from what §2-§3.4 say of them (these are
+ * our estimates, not sources' ratings), and act 1's damage slots filled first.
+ */
+let rules2 = false;
+export function useRules2(on: boolean): void {
+  rules2 = on;
+}
+const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number] }> = {
+  DEMON_FORM: { tiers: "BBBB", pick: [30, 30, 30] }, // §1.2: +3 Strength a turn since v0.111
+  DARK_EMBRACE: { tiers: "CCCC", pick: [15, 20, 20] }, // disputed
+  BLOODLETTING: { tiers: "AAAA", pick: [45, 40, 35] }, // §3.1: draw and energy are premium
+  INFERNO: { tiers: "BBBB", pick: [35, 35, 35] }, // §2.3: the key self-damage card
+  CRUELTY: { tiers: "BBBB", pick: [30, 30, 30] }, // §2.1, §3.4
+  BULLY: { tiers: "BBCC", pick: [30, 20, 15] },
+  MOLTEN_FIST: { tiers: "BBCC", pick: [30, 20, 15] },
+  IMPERVIOUS: { tiers: "BBBB", pick: [30, 30, 30] },
+  CASCADE: { tiers: "CCCC", pick: [15, 15, 15] },
+  PYRE: { tiers: "CCCC", pick: [15, 15, 15] },
+  STAMPEDE: { tiers: "CCCC", pick: [15, 15, 15] },
+  EXPECT_A_FIGHT: { tiers: "CCCC", pick: [15, 15, 15] }, // §1.2: now a 3-cost block card
+};
+
 /** §10.1.2: top-tier in all three good lists and picked 63-91%. */
 const ALWAYS = new Set(["OFFERING", "BATTLE_TRANCE", "COLOSSUS", "UNMOVABLE", "CRIMSON_MANTLE", "DOMINATE", "BREAK", "FIEND_FIRE"]);
 /** §10.1.6. */
@@ -93,7 +117,7 @@ type Act = 0 | 1 | 2;
 export function cardValue(id: string, act: Act, deck: readonly string[]): number {
   const card = base(id);
   if (NEVER.has(card)) return -1;
-  const row = CARDS[card];
+  const row = CARDS[card] ?? (rules2 ? EXTRA_CARDS[card] : undefined);
   let v = row ? 0.5 * ([...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5)) + 0.5 * (row.pick[act] / 100) : 0.3;
   if (ALWAYS.has(card)) v = Math.max(v, 0.9);
   // §10.1.10, §3.5: the first Battle Trance, not the second; two Trembles at most.
@@ -106,10 +130,11 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   if (act === 0) {
     // §10.1.3: an AoE card when the deck has none.
     if (AOE.has(card) && count(deck, AOE) === 0) v += 0.15;
-    // §10.1.4: three multi-hit sources before Vantom, the act 1 boss we keep meeting.
-    if (MULTI_HIT.has(card) && count(deck, MULTI_HIT) < 3) v += 0.1;
-    // §10.1.1: damage first until the deck has two damage cards of its own.
-    if (DAMAGE.has(card) && count(deck, DAMAGE) < 2) v += 0.1;
+    // §10.1.4: three multi-hit sources before Vantom, the act 1 boss we keep meeting (rules2: Dismantle too).
+    if ((MULTI_HIT.has(card) || (rules2 && card === "DISMANTLE")) && count(deck, MULTI_HIT) < 3) v += 0.1;
+    // §10.1.1: damage first until the deck has two damage cards of its own. rules2: enough to beat a
+    // support card's rating (A10 seed 7 took Taunt, Colossus and Taunt over Anger and Sword Boomerang).
+    if (DAMAGE.has(card) && count(deck, DAMAGE) < 2) v += rules2 ? 0.25 : 0.1;
   }
   return v;
 }
@@ -419,7 +444,11 @@ export function chooseMap(o: Observation, legal: LegalAction[]): string {
     // A1+ has eight elites a map (A10-reference §3), and act 1 elites end most A10 runs that fail
     // (Byrdonis 17 of 45 in our first A10 runs, coming in at 56 HP on average): only near full HP.
     if (/Elite/i.test(type)) {
-      if ((o.ascension ?? 0) >= 1) return share >= 0.9 ? 3 : share >= 0.75 ? 1.5 : 0;
+      if ((o.ascension ?? 0) >= 1) {
+        // rules2: and only with three attacks of the deck's own (review §4: HP alone is no readiness test).
+        if (rules2 && o.deck_cards.filter((c) => DAMAGE.has(base(c)) || MULTI_HIT.has(base(c))).length < 3) return 0;
+        return share >= 0.9 ? 3 : share >= 0.75 ? 1.5 : 0;
+      }
       return share >= 0.75 && o.floor >= 5 ? 4 : share >= 0.6 ? 2 : 0;
     }
     if (/Treasure/i.test(type)) return 4;

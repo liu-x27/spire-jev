@@ -45,10 +45,17 @@ export interface Weights {
    * elite), and less again when the belt is full (the next one would be lost).
    */
   potion: number;
+  /**
+   * 1: powers in play count for what they will do in the next turns of this
+   * fight (setupValue: per-turn benefit, over at most two more turns, at 0.7,
+   * none if the fight ends now); 0: not at all, as the one-turn evaluation
+   * had it — Feel No Pain, Vicious, Crimson Mantle sat in hand unplayed.
+   */
+  setup: number;
 }
 
 /** The first version: this turn only. */
-export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10 };
+export const TURN_WEIGHTS: Weights = { hpLoss: 1, enemyHp: 0.35, vulnerable: 1.5, weak: 1.2, strength: 2, drawn: 1.5, future: 0, futureBlock: 0, potion: 10, setup: 0 };
 export const DEFAULT_WEIGHTS: Weights = TURN_WEIGHTS;
 
 /** Damage the deck deals in a turn, and per hit: the pace the rest of the fight goes at. */
@@ -202,6 +209,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     if (attacking) score += Math.min(3, e.powers["WEAK"] ?? 0) * w.weak;
   }
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
+  if (w.setup > 0) score += setupValue(s) * w.setup;
   score += s.drawn * w.drawn;
   // Sandpit (The Insatiable) devours the player when it runs out, and only
   // Frantic Escape winds it back: every turn short of the turns the deck needs
@@ -219,6 +227,35 @@ function potionCost(s: State, w: Weights): number {
   const big = s.enemies.some((e) => e.maxHp >= 100);
   const full = s.potions.length + s.potionsUsed >= s.potionSlots;
   return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1);
+}
+
+/**
+ * What the powers in play are worth for the rest of this fight, in HP: each
+ * power's benefit per turn (block, or damage and cards at the evaluation's
+ * own rates), over the turns after this one that the fight will likely last —
+ * at most two, discounted 0.7 — so a power played in the last turn of a
+ * fight is worth nothing.
+ */
+export function setupValue(s: State): number {
+  const alive = s.enemies.filter((e) => e.alive);
+  if (alive.length === 0) return 0;
+  const pace = deckPace(s);
+  const turnsLeft = alive.reduce((a, e) => a + e.hp, 0) / Math.max(1, pace.perTurn);
+  const horizon = Math.min(2, Math.max(0, turnsLeft - 1)) * 0.7;
+  if (horizon <= 0) return 0;
+  const p = s.player.powers;
+  const damage = 0.35; // an HP of enemy damage, as enemyHp weighs it
+  let perTurn = 0;
+  perTurn += (p["FEEL_NO_PAIN"] ?? 0) * 0.5; // about one card exhausted every other turn
+  perTurn += (p["METALLICIZE"] ?? 0) + (p["PLATING"] ?? 0) * 0.5;
+  perTurn += (p["CRIMSON_MANTLE"] ?? 0) - (p["CRIMSON_MANTLE"] ? 1 : 0); // block every turn, for 1 HP
+  perTurn += (p["BARRICADE"] ?? 0) > 0 ? 3 : 0;
+  perTurn += (p["JUGGERNAUT"] ?? 0) * 1.5 * damage;
+  perTurn += (p["DEMON_FORM"] ?? 0) * 2.5 * damage * 1.5; // Strength on every hit, growing
+  perTurn += (p["VICIOUS"] ?? 0) * 0.5 * 1.5; // a card for every Vulnerable applied, about every other turn
+  perTurn += (p["DARK_EMBRACE"] ?? 0) * 0.5 * 1.5;
+  perTurn += (p["RUPTURE"] ?? 0) * 0.3 * 2.5 * damage;
+  return Math.min(30, perTurn * horizon);
 }
 
 export interface Plan {

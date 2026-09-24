@@ -468,6 +468,16 @@ function exhaustCard(s: State, card: Card): void {
   s.exhaust.push(card);
   s.exhaustedThisTurn = true;
   gainBlock(s, s.player.powers["FEEL_NO_PAIN"] ?? 0);
+  // Dark Embrace draws for every card exhausted.
+  if (has(s.player, "DARK_EMBRACE")) draw(s, s.player.powers["DARK_EMBRACE"] ?? 1);
+}
+
+/** HP a card costs the player (Offering, Hemokinesis, Brand): Rupture turns it into Strength. */
+function cardHpLoss(s: State, n: number): void {
+  if (n <= 0) return;
+  s.player.hp -= n;
+  s.lostHp = true;
+  if (has(s.player, "RUPTURE")) addPower(s.player, "STRENGTH", s.player.powers["RUPTURE"] ?? 1);
 }
 
 /** Thorns (Spiny Toad): every hit on it hits the player back, into block first. */
@@ -588,8 +598,7 @@ const SPECIAL: Record<string, Rule> = {
   // Strength for the player, and a little for the target.
   // Lose HP, gain Strength, exhaust a card from hand (chosen as exhaustOne does).
   BRAND: (s, c) => {
-    s.player.hp -= num(c, "HpLoss");
-    if (num(c, "HpLoss") > 0) s.lostHp = true;
+    cardHpLoss(s, num(c, "HpLoss"));
     applyPower(s, s.player, "STRENGTH", num(c, "StrengthPower"));
     exhaustOne(s);
   },
@@ -748,10 +757,7 @@ function standard(s: State, card: Card, target: Enemy | undefined, x: number): v
     else for (const e of victims) if (e.alive) applyPower(s, e, powerKey(name), n);
   }
   if (v["Energy"] !== undefined) s.energy += v["Energy"];
-  if (v["HpLoss"] !== undefined && v["HpLoss"] > 0) {
-    s.player.hp -= v["HpLoss"];
-    s.lostHp = true;
-  }
+  if (v["HpLoss"] !== undefined) cardHpLoss(s, v["HpLoss"]);
   if (v["Cards"] !== undefined) draw(s, v["Cards"]);
 }
 

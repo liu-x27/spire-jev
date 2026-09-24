@@ -48,7 +48,9 @@ const last = (fights: FightLog[]) => {
 };
 const endA = last(a.fights);
 const endB = last(b.fights);
-const seeds = [...new Set([...endA.keys(), ...endB.keys()])].sort();
+// Only the seeds both evaluations ran (one may cover more seeds than the other).
+const seeds = [...endA.keys()].filter((s) => endB.has(s)).sort();
+for (const m of [endA, endB]) for (const k of [...m.keys()]) if (!seeds.includes(k)) m.delete(k);
 let further = 0;
 let shorter = 0;
 const rows = seeds.map((s) => {

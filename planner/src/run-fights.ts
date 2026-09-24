@@ -29,7 +29,7 @@ import { parseArgs } from "node:util";
 import { Game, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseSelect, chooseShop, chooseUpgrade, wantsPotion } from "./choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseSelect, chooseShop, chooseUpgrade, useRules2, wantsPotion } from "./choices.ts";
 import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
 import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, play } from "./sim.ts";
 
@@ -432,7 +432,8 @@ async function main(): Promise<void> {
   });
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
-  useRules = values.choices === "rules";
+  useRules = values.choices === "rules" || values.choices === "rules2";
+  useRules2(values.choices === "rules2");
   ascension = Number(values.ascension);
   usePotions = useRules;
   if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
