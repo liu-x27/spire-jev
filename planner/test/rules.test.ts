@@ -1,7 +1,7 @@
 // Card rules, each as the game showed it in a coverage run (planner/runs).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { actions, type Card, drink, type Enemy, hpLoss, play, type State } from "../src/sim.ts";
+import { actions, type Card, drink, type Enemy, hpLoss, junkIndex, play, type State } from "../src/sim.ts";
 import { planTurn } from "../src/search.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
@@ -339,4 +339,15 @@ test("dark embrace draws for every card exhausted; rupture turns a card's HP cos
   const after = at(r, 0);
   assert.equal(after.player.hp, 78);
   assert.equal(after.player.powers["STRENGTH"], 1);
+});
+
+test("an exhaust from hand never takes a Frantic Escape while anything else is there", () => {
+  const cards = [
+    { id: "STRIKE_IRONCLAD", type: "Attack" },
+    { id: "FRANTIC_ESCAPE", type: "Status" },
+    { id: "DEFEND_IRONCLAD", type: "Skill" },
+  ];
+  assert.equal(junkIndex(cards), 2);
+  assert.equal(junkIndex([...cards, { id: "WOUND", type: "Status" }]), 3);
+  assert.equal(junkIndex([{ id: "FRANTIC_ESCAPE", type: "Status" }]), 0);
 });

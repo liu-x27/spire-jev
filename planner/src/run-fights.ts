@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { actionId, DEFAULT_WEIGHTS, planTurn, type Weights } from "./search.ts";
-import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, play } from "./sim.ts";
+import { type Action, type Card, drink, drinkable, fromObservation, hpLoss, junkIndex, play } from "./sim.ts";
 
 type Policy = "planner" | "naive";
 
@@ -197,8 +197,7 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
   const purpose = details.purpose ?? "";
   let i = 0;
   if (/^FromHand(ForDiscard)?$/.test(purpose)) {
-    const junk = cards.findIndex((c) => c.card_type === "Status" || c.card_type === "Curse");
-    i = junk >= 0 ? junk : offers.length - 1;
+    i = cards.length ? junkIndex(cards.map((c) => ({ id: c.card_id, type: c.card_type }))) : offers.length - 1;
   } else if (/Upgrade|ChooseACard|SimpleGrid|Bundle/.test(purpose)) {
     let best = -Infinity;
     cards.forEach((c, j) => {

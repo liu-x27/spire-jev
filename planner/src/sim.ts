@@ -532,16 +532,31 @@ function strike(s: State, victims: readonly Enemy[], base: number, times: number
   }
 }
 
+/** Status cards worth keeping: Frantic Escape is the only thing that winds The Insatiable's Sandpit back. */
+const KEEP_STATUS = new Set(["FRANTIC_ESCAPE"]);
+
+/**
+ * The card of a hand to give up when one must go (exhausted, discarded): a
+ * status or curse, else the last card — never a kept status while there is
+ * anything else. (Burning Pact exhausted the Frantic Escapes The Insatiable
+ * had shuffled in, and the Sandpit ran out.)
+ */
+export function junkIndex(cards: readonly { id: string; type: string }[]): number {
+  const junk = cards.findIndex((c) => (c.type === "Status" || c.type === "Curse") && !KEEP_STATUS.has(c.id));
+  if (junk >= 0) return junk;
+  for (let i = cards.length - 1; i >= 0; i--) if (!KEEP_STATUS.has(cards[i]!.id)) return i;
+  return cards.length - 1;
+}
+
 /**
  * Exhaust a card from the hand that the game picks — at random, or by a
  * choice the bridge makes for us — so which one is not known. The model takes
- * the least useful: a status or curse if there is one, else the last card.
+ * the one junkIndex gives up.
  */
 function exhaustOne(s: State): void {
   if (s.hand.length === 0) return;
   s.exact = false;
-  let i = s.hand.findIndex((c) => c.type === "Status" || c.type === "Curse");
-  if (i < 0) i = s.hand.length - 1;
+  const i = junkIndex(s.hand);
   for (const c of s.hand.splice(i, 1)) exhaustCard(s, c);
 }
 
