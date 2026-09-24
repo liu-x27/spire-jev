@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, healCarried, setFlags, worstCard } from "../src/choices.ts";
+import { relicValue } from "../src/relics.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
@@ -120,4 +121,20 @@ test("removals: Burning Pact is not a burn, and a Tremble held is not the worst 
   assert.equal(worstCard(["TREMBLE", "DEFEND_IRONCLAD"], deck), 1);
   assert.equal(worstCard(["BURN", "STRIKE_IRONCLAD"], deck), 0);
   assert.equal(worstCard(["SOMETHING_NEW", "STRIKE_IRONCLAD"], deck, ["Curse", "Attack"]), 0);
+});
+
+test("relicvalue: the relic worth most at its price, not the cheapest; Dingy Rug never", () => {
+  assert.ok((relicValue("PANTOGRAPH") ?? 0) > (relicValue("DINGY_RUG") ?? 1));
+  const shopItem = (i: number, id: string, price: number) =>
+    act(`shop_buy:${i}:${id}`, { entry_type: "MerchantRelicEntry", item_id: id, price, stocked: true, affordable: true });
+  const legal = [shopItem(0, "DINGY_RUG", 150), shopItem(1, "STRIKE_DUMMY", 160), shopItem(2, "PANTOGRAPH", 190), act("shop_leave")];
+  const rich = obs({ phase: "shop", gold: 400, deck_cards: ["BASH", "OFFERING"] });
+  assert.equal(chooseShop(rich, legal), "shop_buy:0:DINGY_RUG");
+  setFlags(["relicvalue"]);
+  try {
+    assert.equal(chooseShop(rich, legal), "shop_buy:2:PANTOGRAPH");
+    assert.equal(chooseShop(rich, [shopItem(0, "DINGY_RUG", 150), act("shop_leave")]), "shop_leave");
+  } finally {
+    setFlags([]);
+  }
 });

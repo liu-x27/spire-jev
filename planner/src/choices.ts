@@ -11,6 +11,7 @@
  */
 
 import { type MapPoint, planPath } from "./path.ts";
+import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -293,14 +294,24 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   const removal = stock.find((a) => /remov/i.test(type(a)));
   const topCard = cards[0];
   if (topCard && topCard.v >= 0.85) return topCard.a.action_id;
+  // relicvalue (docs/relic-tiers.md §2): relics by what they are worth at their price, not the
+  // cheapest; one worth 100 gold more than it costs comes before the removal (rule 2).
+  const relics = flags.has("relicvalue")
+    ? stock.filter((a) => type(a) === "Relic").map((a) => ({ a, surplus: relicSurplus(item(a), price(a), actOf(o)) ?? -Infinity })).sort((x, y) => y.surplus - x.surplus)
+    : [];
+  if (relics[0] && relics[0].surplus > 100) return relics[0].a.action_id;
   if (removal && o.deck_cards.some((c) => REMOVABLE.test(c))) {
     // The card select that follows is the removal's, whatever an event left behind.
     resetCardSelect();
     return removal.action_id;
   }
   if (topCard && topCard.v >= 0.65) return topCard.a.action_id;
-  const relic = stock.filter((a) => type(a) === "Relic").sort((x, y) => price(x) - price(y))[0];
-  if (relic && o.gold - price(relic) >= 0) return relic.action_id;
+  if (flags.has("relicvalue")) {
+    if (relics[0] && relics[0].surplus > 0) return relics[0].a.action_id;
+  } else {
+    const relic = stock.filter((a) => type(a) === "Relic").sort((x, y) => price(x) - price(y))[0];
+    if (relic && o.gold - price(relic) >= 0) return relic.action_id;
+  }
   if (actOf(o) === 2 && o.potions.length < 3) {
     const potion = stock.filter((a) => type(a) === "Potion").sort((x, y) => price(y) - price(x))[0];
     if (potion) return potion.action_id;
