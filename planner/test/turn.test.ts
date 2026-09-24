@@ -54,13 +54,32 @@ test("the next turn: HP after the enemies, powers ticked, Demon Form's Strength,
   assert.equal(nextTurn(dying, seeded(1), nine), undefined);
 });
 
-test("planTurn2 plays Demon Form into a long fight where one turn would not", () => {
-  const long = () => state([DEMON_FORM, STRIKE, STRIKE, DEFEND], 3, [foe(400, 4)], Array(8).fill(STRIKE));
+test("Demon Form is played into a long fight, by one turn and by two, and not into a short one", () => {
+  const fight = (hp: number) => state([DEMON_FORM, STRIKE, STRIKE, DEFEND], 3, [foe(hp, 4)], Array(8).fill(STRIKE));
   const first = (p: ReturnType<typeof planTurn>, s: State) => (p.actions[0]!.kind === "play" ? s.hand[(p.actions[0] as { hand: number }).hand]!.id : "end");
-  const s1 = long();
-  const s2 = long();
-  const one = planTurn(s1, TURN_WEIGHTS);
-  const two = planTurn2(s2, { ...TURN_WEIGHTS, look: 1 });
-  assert.notEqual(first(one, s1), "DEMON_FORM", "one turn: strikes and block");
-  assert.equal(first(two, s2), "DEMON_FORM", "two turns: Demon Form");
+  const long1 = fight(400);
+  const long2 = fight(400);
+  assert.equal(first(planTurn(long1, TURN_WEIGHTS), long1), "DEMON_FORM");
+  assert.equal(first(planTurn2(long2, { ...TURN_WEIGHTS, look: 1 }), long2), "DEMON_FORM");
+  const short = fight(14);
+  assert.notEqual(first(planTurn(short, TURN_WEIGHTS), short), "DEMON_FORM");
+});
+
+test("seed 17's Vantom, Dismember coming and no block in hand: Demon Form (it won the first A0 clear)", () => {
+  const ANGER = card("ANGER", "Attack", "AnyEnemy", { Damage: 6 }, 0);
+  const POMMEL = card("POMMEL_STRIKE", "Attack", "AnyEnemy", { Damage: 10, Cards: 2 }, 1);
+  const BLOODLETTING = card("BLOODLETTING", "Skill", "Self", { HpLoss: 3, Energy: 2 }, 0);
+  const vantom: Enemy = { ...foe(149, 26), model: "VANTOM", maxHp: 183 };
+  const s = state([ANGER, POMMEL, DEMON_FORM, STRIKE, BLOODLETTING], 3, [vantom], [STRIKE, DEFEND]);
+  s.player.hp = 77;
+  s.player.powers = { PLATING: 2, STRENGTH: 1 };
+  let t = s;
+  const played: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    const a = planTurn(t, TURN_WEIGHTS).actions[0]!;
+    if (a.kind !== "play") break;
+    played.push(t.hand[a.hand]!.id);
+    t = play(t, a);
+  }
+  assert.ok(played.includes("DEMON_FORM"), played.join(" "));
 });

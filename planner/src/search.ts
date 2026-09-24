@@ -237,9 +237,8 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     if (attacking) score += Math.min(3, e.powers["WEAK"] ?? 0) * w.weak;
   }
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
-  // Demon Form in play is Strength to come, at least a turn's worth: what made the model play it
-  // when it wrongly gave the Strength at once (and without it, one turn never would).
-  score += (s.player.powers["DEMON_FORM"] ?? 0) * w.strength;
+  const demon = s.player.powers["DEMON_FORM"] ?? 0;
+  if (demon > 0) score += demon * demonFormWorth(s, w);
   if (w.setup > 0) score += setupValue(s) * w.setup;
   score += s.drawn * w.drawn;
   // Sandpit (The Insatiable) devours the player when it runs out, and only
@@ -270,6 +269,26 @@ function longFightExtra(s: State, alive: readonly Enemy[], w: Weights): number {
     if (weight > w.enemyHp) extra += hp * (weight - w.enemyHp);
   }
   return extra;
+}
+
+/**
+ * What a stack of Demon Form in play is worth: a Strength on every hit of every
+ * turn still to come, one more each turn — over the turns the fight will
+ * likely last after this one (the enemies' HP at the deck's pace, at most
+ * four), at enemyHp's rate, and never less than a turn of Strength. Valued
+ * at one turn's Strength (e00d275) the one-turn planner held it: seed 17,
+ * the first A0 clear, replayed on that code never played it in five fights
+ * and died on floor 22.
+ */
+function demonFormWorth(s: State, w: Weights): number {
+  const alive = s.enemies.filter((e) => e.alive);
+  if (alive.length === 0) return 0;
+  const pace = deckPace(s);
+  const turns = Math.min(4, Math.max(0, alive.reduce((a, e) => a + e.hp, 0) / Math.max(1, pace.perTurn) - 1));
+  const hitsPerTurn = pace.perTurn / Math.max(1, pace.perHit);
+  // Turn k after this one has k stacks' Strength: 1 + 2 + ... + turns.
+  const strengthHits = ((turns * (turns + 1)) / 2) * hitsPerTurn;
+  return Math.max(w.strength, strengthHits * w.enemyHp);
 }
 
 /** What a second life costs, as a share of max HP: the Lizard Tail or Fairy in a Bottle is gone. */
