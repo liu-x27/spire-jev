@@ -11,7 +11,7 @@
  */
 
 import { type MapPoint, planPath } from "./path.ts";
-import { packageBonus, usePackages2, useScalingFromAct1 } from "./packages.ts";
+import { fillsNeed, packageBonus, usePackages2, useScalingFromAct1 } from "./packages.ts";
 import { relicSurplus } from "./relics.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
@@ -326,19 +326,27 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
     ? stock.filter((a) => type(a) === "Relic").map((a) => ({ a, surplus: relicSurplus(item(a), price(a), actOf(o)) ?? -Infinity })).sort((x, y) => y.surplus - x.surplus)
     : [];
   if (relics[0] && relics[0].surplus > 100) return relics[0].a.action_id;
+  // shop2 (astra-review-2 #2): a card that fills a gap comes before the removal. Removals took 65%
+  // of A10 shop gold while eight affordable Inflames were passed over.
+  const shop2 = flags.has("shop2");
+  if (shop2) {
+    const need = cards.find((c) => c.v >= 0.5 && fillsNeed(item(c.a), actOf(o), o.deck_cards));
+    if (need) return need.a.action_id;
+  }
   if (removal && o.deck_cards.some((c) => REMOVABLE.test(c))) {
     // The card select that follows is the removal's, whatever an event left behind.
     resetCardSelect();
     return removal.action_id;
   }
-  if (topCard && topCard.v >= 0.65) return topCard.a.action_id;
+  if (topCard && topCard.v >= (shop2 ? 0.55 : 0.65)) return topCard.a.action_id;
   if (flags.has("relicvalue")) {
     if (relics[0] && relics[0].surplus > 0) return relics[0].a.action_id;
   } else {
     const relic = stock.filter((a) => type(a) === "Relic").sort((x, y) => price(x) - price(y))[0];
     if (relic && o.gold - price(relic) >= 0) return relic.action_id;
   }
-  if (actOf(o) === 2 && o.potions.length < 3) {
+  // shop2: potions from act 2 into free slots, for the damage the act 2 boss needs early.
+  if (shop2 ? actOf(o) >= 1 && wantsPotion(o, o.potion_slots ?? 3) : actOf(o) === 2 && o.potions.length < 3) {
     const potion = stock.filter((a) => type(a) === "Potion").sort((x, y) => price(y) - price(x))[0];
     if (potion) return potion.action_id;
   }

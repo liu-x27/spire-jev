@@ -150,6 +150,18 @@ function scalesDamage(card: string, p: DeckProfile): boolean {
   return false;
 }
 
+/**
+ * shop2: whether a card fills a gap this deck has now — damage scaling it can use (from act 2),
+ * AoE in act 2, or draw when it has under two — so a shop buys it before a removal.
+ */
+export function fillsNeed(id: string, act: number, deck: readonly string[]): boolean {
+  const card = base(id);
+  const ids = deck.map(base);
+  if (act >= 1 && damageScaling(deck) === 0 && scalesDamage(card, profile(deck))) return true;
+  if (act === 1 && !ids.some((c) => AOE2.has(c)) && AOE2.has(card)) return true;
+  return ids.filter((c) => DRAW2.has(c)).length < 2 && DRAW2.has(card);
+}
+
 function packageBonus2(card: string, act: number, deck: readonly string[]): number {
   const p = profile(deck);
   const ids = deck.map(base);

@@ -138,3 +138,17 @@ test("relicvalue: the relic worth most at its price, not the cheapest; Dingy Rug
     setFlags([]);
   }
 });
+
+test("shop2: an affordable Inflame for a deck with no damage scaling comes before the removal", () => {
+  const shopItem = (i: number, entry: string, id: string, price: number) =>
+    act(`shop_buy:${i}:${id}`, { entry_type: entry, item_id: id, price, stocked: true, affordable: true });
+  const legal = [shopItem(0, "MerchantCardEntry", "INFLAME", 38), shopItem(1, "MerchantCardRemovalEntry", "REMOVAL", 150), act("shop_leave")];
+  const o = obs({ phase: "shop", act: 2, floor: 24, gold: 200, deck_cards: [...STARTER, "POMMEL_STRIKE", "ANGER"] });
+  assert.equal(chooseShop(o, legal), "shop_buy:1:REMOVAL");
+  setFlags(["shop2", "packages2"]);
+  try {
+    assert.equal(chooseShop(o, legal), "shop_buy:0:INFLAME");
+  } finally {
+    setFlags([]);
+  }
+});
