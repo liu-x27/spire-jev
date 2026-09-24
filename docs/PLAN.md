@@ -369,6 +369,49 @@ states, and only a simulator is fast enough for that.
      The other session's boss-swap replays (a save's `acts[i].rooms.boss_id`
      set to another boss) give 8 fights a boss from the old libraries; the
      Waterfall Giant has 155 + 81 that way (`runs/boss-wg-dev`, `-conf`).
+   - **The eight bosses the bot had never met** (branch `sim-lizard-bound`,
+     `test/bosses.test.ts`; rules from the IL, `tools/inspect --il`):
+     Ceremonial Beast's Plow (HP lost that leaves it at or under 160 stuns it
+     and strips its Strength) and Beast Cry's Ringing (one card a turn);
+     Lagavulin Matriarch's Asleep (damage past her block wakes her, stunned
+     a turn; asleep, Plating's block decays and she wakes after her third
+     turn); Soul Fysh's Intangible (every hit 1) and Beckon (played it does
+     nothing, held it costs 6 HP past block); the Knowledge Demon's
+     Disintegration (end of turn, into block), Sloth and Mind Rot; the Kaiser
+     Crab's Surrounded (the claw behind deals x1.5, the player faces the one
+     last targeted; the bridge now reports powers' enum fields, `_facing`)
+     and Crab Rage; the Test Subject's Enrage, respawns (a kill in its first
+     two forms is no win: evaluate counts the forms to come) and Nemesis;
+     Aeonglass's Withering Presence. `scripts.ts` plays each boss's moves by
+     the id the bridge reports (the two-turn lookahead and spar meet their
+     real turns), and spar has all eight (`bossFor`).
+   - Measured on 24 pre-boss saves a boss with the boss swapped in (seeds
+     136-, `runs/boss-*-dev24`), before and after in frozen worktrees:
+     Soul Fysh 16 won (7 clean) → 18 (16), end-of-turn HP exact 80/182 →
+     228/230; Ceremonial Beast 17 (11) → 19 (15); The Kin 13 (9) and
+     Lagavulin Matriarch 15 (7) unchanged; act 2 decks against the act 2
+     and 3 bosses as before (Kaiser Crab 1, Knowledge Demon 1, Test Subject
+     and Aeonglass 0; the Demon's end-of-turn HP 47/162 → 150/167). No save
+     did worse. Flags on the same saves: `sleep` (leave the Matriarch asleep
+     while she has two turns to go, no potions then; woken early she acts
+     as many turns before the kill, and her sleep is free turns) 14 won but
+     13 clean against 7, 58% HP after a win against 38%; `curse` (Sloth over
+     a second Disintegration) the same wins, a turn more alive; `kin` (the
+     followers' HP not counted while the Priest lives) 9 (3) against 13 (9):
+     killing the followers first is right, dropped.
+   - Confirmed on the veteran library's own fights with these bosses (100
+     pre-boss saves of `runs/saves-vet-dev`, main 13cd381 against it plus the
+     rules, paired): 31 won (14 clean) → 44 (23). Soul Fysh 10/30 (2 clean)
+     → 20/30 (9), 15 saves better and 1 worse; Ceremonial Beast 9/20 (7) →
+     12/20 (9), 4 better; the Matriarch 7/26, The Kin 4/14, Knowledge Demon
+     1/4, Kaiser Crab 0/4 and Aeonglass 0/2 as before. End-of-turn HP exact
+     687/849 → 914/934. The one worse (seed 374): a Beckon played goes back
+     to the discard pile, so each one drawn is an energy or 6 HP again; the
+     planner paid the energy every time and the fight took 12 turns instead
+     of 6 — the one-turn evaluation prices a card's damage below HP.
+     `--flags sleep` on the 26 Matriarch saves: 7 won (4 clean) → 9 (8), 29%
+     → 40% HP after a win, 4 better and 1 worse; with the swapped saves'
+     7 → 13 clean, **adopted** (add `sleep` to the flags runs use).
    - Bridge, for the veteran profile's content: a fight with no rewards
      (Gremlin Merc ran off) goes back to the map; a purchase can offer
      rewards (Cauldron); an event option can start a fight inside the event
