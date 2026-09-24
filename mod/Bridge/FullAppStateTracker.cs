@@ -36,6 +36,19 @@ public static class FullAppStateTracker
         var vars = new Dictionary<string, double>();
         try { foreach (var pair in power.DynamicVars) vars[pair.Key] = (double)pair.Value.BaseValue; } catch { }
         AddDeclaredNumbers(power, vars);
+        // The counters a power keeps in its internal data (Hardened Shell's damageReceivedThisTurn,
+        // Skittish's hasGainedBlockThisTurn), where their names are not taken already.
+        try
+        {
+            object? data = typeof(PowerModel).GetField("_internalData", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(power);
+            if (data != null)
+            {
+                var kept = new Dictionary<string, double>();
+                AddDeclaredNumbers(data, kept);
+                foreach (var pair in kept) vars.TryAdd(pair.Key, pair.Value);
+            }
+        }
+        catch { }
         return vars;
     }
 

@@ -1,0 +1,317 @@
+{
+  "ancient_stats": [],
+  "architect_damage": 0,
+  "card_stats": [],
+  "character_stats": [],
+  "current_score": 0,
+  "discovered_acts": [],
+  "discovered_cards": [],
+  "discovered_events": [],
+  "discovered_potions": [],
+  "discovered_relics": [],
+  "enable_ftues": false,
+  "encounter_stats": [],
+  "enemy_stats": [],
+  "epochs": [
+    {
+      "id": "ACT2_B_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "ACT3_B_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "COLORLESS1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "COLORLESS2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "COLORLESS3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "COLORLESS4_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "COLORLESS5_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "CUSTOM_AND_SEEDS_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DAILY_RUN_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DARV_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DEFECT1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DEFECT2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DEFECT3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DEFECT4_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DEFECT5_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DEFECT6_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "DEFECT7_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "EVENT1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "EVENT2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "EVENT3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "IRONCLAD2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "IRONCLAD3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "IRONCLAD4_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "IRONCLAD5_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "IRONCLAD6_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "IRONCLAD7_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NECROBINDER1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NECROBINDER2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NECROBINDER3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NECROBINDER4_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NECROBINDER5_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NECROBINDER6_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NECROBINDER7_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "NEOW_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "OROBAS_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "POTION1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "POTION2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "REGENT1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "REGENT2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "REGENT3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "REGENT4_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "REGENT5_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "REGENT6_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "REGENT7_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "RELIC1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "RELIC2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "RELIC3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "RELIC4_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "RELIC5_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "SILENT1_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "SILENT2_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "SILENT3_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "SILENT4_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "SILENT5_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "SILENT6_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "SILENT7_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    },
+    {
+      "id": "UNDERDOCKS_EPOCH",
+      "obtain_date": 1772787904,
+      "state": "revealed"
+    }
+  ],
+  "floors_climbed": 0,
+  "ftue_completed": [
+    "ascension_singleplayer_ftue",
+    "combat_reward_ftue"
+  ],
+  "max_multiplayer_ascension": 0,
+  "pending_character_unlock": "NONE.NONE",
+  "preferred_multiplayer_ascension": 0,
+  "schema_version": 24,
+  "test_subject_kills": 0,
+  "total_playtime": 0,
+  "total_unlocks": 0,
+  "unique_id": "AGZBVO1",
+  "unlocked_achievements": [],
+  "wongo_points": 0
+}

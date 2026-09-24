@@ -57,6 +57,20 @@ export interface Enemy extends Unit {
   weakAtStart: boolean;
   /** Strength at the start of the turn: the intent damage already includes it (Mangle takes it away). */
   startStrength: number;
+  /**
+   * Waterfall Giant: at 0 HP it does not die. The game keeps it at 999,999,999 HP, stunned for a
+   * turn, then it strikes for its Steam Eruption (a DeathBlow) and dies: 4 of the first 13 losses to
+   * it came after the kill (seeds 28, 30, 31, 45). The blow still to come, and whether it lands at
+   * this turn's end (blowNow) or the next's. The Giant counts as dead meanwhile: nothing to hit.
+   */
+  deathBlow?: number;
+  blowNow?: boolean;
+  /** Vulnerable at the start of the turn: with Colossus then, the intent damage already includes it. */
+  vulnerableAtStart?: boolean;
+  /** Skittish (Phantasmal Gardener) has given its block this turn. */
+  skittishUsed?: boolean;
+  /** HP Hardened Shell (Skulking Colony) has let through this turn. */
+  shellTaken?: number;
 }
 
 export interface State {
@@ -66,6 +80,8 @@ export interface State {
   maxEnergy?: number;
   /** The combat's turn, from 1. */
   turn?: number;
+  /** Colossus at the start of the turn: the intents shown already halve a Vulnerable enemy's attack. */
+  colossusAtStart?: boolean;
   /**
    * What an HP above the fight's safety margin is worth (weights.stakes): 0.25 in the act 1 and 2
    * boss fights, which the next Ancient's 80% heal mostly refunds, about 0 in the run's last fight;
@@ -170,20 +186,30 @@ export function fromObservation(obs: Observation): State {
     exhaust: c.exhaust_pile.map((card) => cardOf(card)),
     enemies: c.enemies.map((e) => {
       const powers = powersOf(e.powers);
+      // A killed Waterfall Giant: 999,999,999 HP, Stun, then DeathBlow <its Steam Eruption>.
+      const dying = e.is_alive && e.hp >= 1e8;
+      const blow = e.intents.find((i) => i.type === "DeathBlow");
       return {
         id: e.combat_id,
         model: e.model_id,
-        hp: e.hp,
+        hp: dying ? 0 : e.hp,
         maxHp: e.max_hp,
         block: e.block,
-        alive: e.is_alive && e.hp > 0,
+        alive: e.is_alive && e.hp > 0 && !dying,
         intents: e.intents,
         powers,
         powerVars: powersOf(e.power_vars ?? {}),
         weakAtStart: (powers["WEAK"] ?? 0) > 0,
         startStrength: powers["STRENGTH"] ?? 0,
+        vulnerableAtStart: (powers["VULNERABLE"] ?? 0) > 0,
+        // The powers' own counters, as the bridge reports their internal data (a Gardener's block on
+        // the player's turn can only be Skittish's, for a bridge that does not).
+        ...((powers["SKITTISH"] ?? 0) > 0 && ((e.power_vars?.["SKITTISH_POWER"]?.["hasGainedBlockThisTurn"] ?? (e.block > 0 ? 1 : 0)) > 0) ? { skittishUsed: true } : {}),
+        ...((powers["HARDENED_SHELL"] ?? 0) > 0 ? { shellTaken: e.power_vars?.["HARDENED_SHELL_POWER"]?.["damageReceivedThisTurn"] ?? 0 } : {}),
+        ...(dying ? { deathBlow: blow ? blow.damage * Math.max(1, blow.hits) : Math.max(0, powers["STEAM_ERUPTION"] ?? 0), blowNow: blow !== undefined } : {}),
       };
     }),
+    colossusAtStart: (obs.player_powers["COLOSSUS_POWER"] ?? 0) > 0,
     drawn: 0,
     exact: true,
     lostHp: c.hand.some((card) => card.card_id === "SPITE" && card.glows === true),
@@ -245,7 +271,9 @@ export function attackDamage(base: number, attacker: Unit, target: Unit, extra =
   if (has(attacker, "WEAK")) d *= 0.75;
   // Shrink (Shrinker Beetle): the owner's attacks deal DamageDecrease percent less.
   if (present(attacker, "SHRINK")) d *= 1 - powerVar(attacker, "SHRINK", "DamageDecrease", 30) / 100;
-  if (has(target, "VULNERABLE")) d *= powerVar(target, "VULNERABLE", "DamageIncrease", 1.5);
+  // Cruelty (IL: CrueltyPower.ModifyVulnerableMultiplier): the owner's attacks add Amount/100 to
+  // Vulnerable's multiplier, 1.5 to 1.75.
+  if (has(target, "VULNERABLE")) d *= powerVar(target, "VULNERABLE", "DamageIncrease", 1.5) + Math.max(0, attacker.powers["CRUELTY"] ?? 0) / 100;
   // Flutter (Thieving Hopper): attacks on it deal DamageDecrease percent less.
   if (has(target, "FLUTTER")) d *= 1 - powerVar(target, "FLUTTER", "DamageDecrease", 50) / 100;
   return Math.max(0, Math.floor(d));
@@ -271,10 +299,20 @@ function hit(target: Enemy, damage: number): number {
   }
   // Hard to Kill (Exoskeleton): a hit takes at most that much HP.
   if (has(target, "HARD_TO_KILL")) lost = Math.min(lost, target.powers["HARD_TO_KILL"] ?? 0);
+  // Hardened Shell (Skulking Colony; IL: ModifyHpLostBeforeOstyLate): at most its amount of HP a turn.
+  if (has(target, "HARDENED_SHELL")) {
+    lost = Math.max(0, Math.min(lost, (target.powers["HARDENED_SHELL"] ?? 0) - (target.shellTaken ?? 0)));
+    target.shellTaken = (target.shellTaken ?? 0) + lost;
+  }
   target.hp -= lost;
   if (target.hp <= 0) {
     target.hp = 0;
     target.alive = false;
+    // Stunned for the rest of this turn and the enemies' turn, then its DeathBlow.
+    if (target.model === "WATERFALL_GIANT") {
+      target.deathBlow = Math.max(0, target.powers["STEAM_ERUPTION"] ?? 0);
+      target.blowNow = false;
+    }
   }
   return lost;
 }
@@ -336,6 +374,8 @@ export function needsTarget(card: Card): boolean {
   return card.target === "AnyEnemy";
 }
 
+const targetable = (e: Enemy) => e.alive || (e.deathBlow ?? 0) > 0;
+
 /** Every legal play from `s`, and ending the turn. */
 export function actions(s: State): Action[] {
   const out: Action[] = [];
@@ -347,7 +387,8 @@ export function actions(s: State): Action[] {
     if (seen.has(sig)) return;
     seen.add(sig);
     if (needsTarget(card)) {
-      for (const e of s.enemies) if (e.alive) out.push({ kind: "play", hand: i, target: e.id });
+      // A killed Waterfall Giant can still be targeted: Weak or Vulnerable (under Colossus) on it cuts its DeathBlow.
+      for (const e of s.enemies) if (targetable(e)) out.push({ kind: "play", hand: i, target: e.id });
     } else {
       out.push({ kind: "play", hand: i });
     }
@@ -355,7 +396,7 @@ export function actions(s: State): Action[] {
   for (const p of s.potions) {
     if (!drinkable(p)) continue;
     if (p.target === "AnyEnemy") {
-      for (const e of s.enemies) if (e.alive) out.push({ kind: "potion", slot: p.slot, target: e.id });
+      for (const e of s.enemies) if (targetable(e)) out.push({ kind: "potion", slot: p.slot, target: e.id });
     } else {
       out.push({ kind: "potion", slot: p.slot });
     }
@@ -434,7 +475,7 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
   for (const [name, n] of Object.entries(v)) {
     if (!name.endsWith("Power") || name === "Power") continue;
     if (atEnemies) {
-      for (const e of victims) if (e.alive) applyPower(s, e, powerKey(name), n);
+      for (const e of victims) if (targetable(e)) applyPower(s, e, powerKey(name), n);
     } else {
       applyPower(s, s.player, powerKey(name), n);
     }
@@ -506,6 +547,10 @@ function cardHpLoss(s: State, n: number): void {
   s.player.hp -= n;
   s.lostHp = true;
   if (has(s.player, "RUPTURE")) addPower(s.player, "STRENGTH", s.player.powers["RUPTURE"] ?? 1);
+  // Inferno (IL: InfernoPower.AfterDamageReceived): HP lost on the player's own turn hits every
+  // enemy for its amount.
+  const inferno = s.player.powers["INFERNO"] ?? 0;
+  if (inferno > 0) for (const e of s.enemies) if (e.alive) hit(e, inferno);
 }
 
 /** Thorns (Spiny Toad): every hit on it hits the player back, into block first. */
@@ -524,6 +569,13 @@ function thorns(s: State, e: Enemy): void {
 const APPLIED_BY: Record<string, string> = { SHRINK: "SHRINKER_BEETLE", CONSTRICT: "SLITHERING_STRANGLER" };
 
 function died(s: State, e: Enemy): void {
+  // Ravenous (Corpse Slug; IL: RavenousPower.AfterDeath): every other slug devours the dead one — its
+  // amount in Strength, and stunned, so it does not act this turn.
+  for (const o of s.enemies) {
+    if (o === e || !o.alive || (o.powers["RAVENOUS"] ?? 0) <= 0) continue;
+    addPower(o, "STRENGTH", o.powers["RAVENOUS"]!);
+    o.intents = [];
+  }
   for (const [power, model] of Object.entries(APPLIED_BY)) {
     if (e.model === model && !s.enemies.some((o) => o.alive && o.model === model)) delete s.player.powers[power];
   }
@@ -540,6 +592,7 @@ function died(s: State, e: Enemy): void {
 /** Each living victim, `times` times over. */
 function strike(s: State, victims: readonly Enemy[], base: number, times: number): void {
   const curling = new Map<Enemy, number>();
+  const skittish = new Set<Enemy>();
   for (let r = 0; r < times; r++) {
     for (const e of victims) {
       if (!e.alive) continue;
@@ -548,6 +601,7 @@ function strike(s: State, victims: readonly Enemy[], base: number, times: number
       const lost = hit(e, attackDamage(base, s.player, e, slow));
       // Curl Up (Louse Progenitor): the first HP it loses curls it up, for block once the card is done.
       if (lost > 0 && has(e, "CURL_UP")) curling.set(e, e.powers["CURL_UP"] ?? 0);
+      if (lost > 0 && has(e, "SKITTISH") && !e.skittishUsed) skittish.add(e);
       thorns(s, e);
       // Flutter loses a stack for every hit it takes.
       if (has(e, "FLUTTER")) addPower(e, "FLUTTER", -1);
@@ -557,6 +611,12 @@ function strike(s: State, victims: readonly Enemy[], base: number, times: number
   for (const [e, block] of curling) {
     delete e.powers["CURL_UP"];
     if (e.alive) e.block += block;
+  }
+  // Skittish (Phantasmal Gardener; IL: SkittishPower.AfterAttack): once a turn, a card's attack that
+  // took HP gives it its amount in block, once the attack is done. The first hit on each should be the big one.
+  for (const e of skittish) {
+    e.skittishUsed = true;
+    if (e.alive) e.block += e.powers["SKITTISH"] ?? 0;
   }
 }
 
@@ -658,6 +718,24 @@ const SPECIAL: Record<string, Rule> = {
   },
   // Hits twice if the target is Vulnerable.
   DISMANTLE: (s, c, t) => strike(s, one(t), dmg(s, c), t && has(t, "VULNERABLE") ? 2 : 1),
+  // Vulnerable, then Strength for every Vulnerable the target has now (IL: PowerCmd.Apply of
+  // VulnerablePower, then the target's Vulnerable amount as Strength; StrengthPerVulnerable is not read).
+  DOMINATE: (s, c, t) => {
+    if (!t) return;
+    applyPower(s, t, "VULNERABLE", num(c, "VulnerablePower") || 1);
+    const stacks = Math.max(0, t.powers["VULNERABLE"] ?? 0);
+    if (stacks > 0) applyPower(s, s.player, "STRENGTH", stacks);
+  },
+  // The hit, then the target's Vulnerable doubled, if it has any and lives (IL: Apply of its own amount).
+  MOLTEN_FIST: (s, c, t) => {
+    strike(s, one(t), dmg(s, c), 1);
+    const vulnerable = t?.powers["VULNERABLE"] ?? 0;
+    if (t?.alive && vulnerable > 0) applyPower(s, t, "VULNERABLE", vulnerable);
+  },
+  // Every enemy, and only with Cards (3) cards in the exhaust pile (IL: CanDealDamage); it draws nothing.
+  PACTS_END: (s, c) => {
+    if (s.exhaust.length >= (num(c, "Cards") || 3)) strike(s, s.enemies.filter((e) => e.alive), dmg(s, c), 1);
+  },
   // Strength for the player, and a little for the target.
   // Lose HP, gain Strength, exhaust a card from hand (chosen as exhaustOne does).
   BRAND: (s, c) => {
@@ -784,7 +862,7 @@ const SPECIAL: Record<string, Rule> = {
   // Weak, then Vulnerable, each for its one Power number.
   UPPERCUT: (s, c, t) => {
     strike(s, one(t), dmg(s, c), 1);
-    if (t?.alive) {
+    if (t && targetable(t)) {
       applyPower(s, t, "WEAK", num(c, "Power"));
       applyPower(s, t, "VULNERABLE", num(c, "Power"));
     }
@@ -817,7 +895,8 @@ function standard(s: State, card: Card, target: Enemy | undefined, x: number): v
   }
   for (const [name, n] of powers) {
     if (card.target === "Self" || card.target === "None") applyPower(s, s.player, powerKey(name), n);
-    else for (const e of victims) if (e.alive) applyPower(s, e, powerKey(name), n);
+    // A killed Waterfall Giant still takes debuffs (Weak cuts its DeathBlow).
+    else for (const e of victims) if (targetable(e)) applyPower(s, e, powerKey(name), n);
   }
   if (v["Energy"] !== undefined) s.energy += v["Energy"];
   if (v["HpLoss"] !== undefined) cardHpLoss(s, v["HpLoss"]);
@@ -882,17 +961,24 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
 export function incomingDamage(s: State): number {
   let total = 0;
   for (const e of s.enemies) {
-    if (!e.alive) continue;
     // The shown damage already includes the enemy's strength and weak and the
     // player's vulnerable as they stood when it was computed; weak applied to
-    // the enemy this turn cuts it by a quarter.
+    // the enemy this turn cuts it by a quarter, and Colossus played this turn
+    // (or Vulnerable put on the enemy under it) halves an attack from a
+    // Vulnerable enemy.
     const weakened = !e.weakAtStart && has(e, "WEAK");
+    const colossus = has(s.player, "COLOSSUS") && has(e, "VULNERABLE") && !(s.colossusAtStart && e.vulnerableAtStart)
+      ? powerVar(s.player, "COLOSSUS", "DamageDecrease", 0.5) : 1;
+    const cut = (per: number) => Math.floor(Math.floor(weakened ? per * 0.75 : per) * colossus);
+    if (!e.alive) {
+      // A killed Waterfall Giant's DeathBlow, at the end of the turn after its stun.
+      if (e.blowNow && (e.deathBlow ?? 0) > 0) total += cut(e.deathBlow!);
+      continue;
+    }
     const strength = (e.powers["STRENGTH"] ?? 0) - e.startStrength;
     for (const i of e.intents) {
       if (i.type !== "Attack" && i.type !== "DeathBlow") continue;
-      let per = Math.max(0, i.damage + strength);
-      if (weakened) per = Math.floor(per * 0.75);
-      total += per * Math.max(1, i.hits);
+      total += cut(Math.max(0, i.damage + strength)) * Math.max(1, i.hits);
     }
   }
   return total;

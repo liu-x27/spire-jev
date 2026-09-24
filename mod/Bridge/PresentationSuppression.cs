@@ -24,6 +24,11 @@ public static class PresentationSuppression
 
         TryPatchVoid(harmony, typeof(CreatureCmd), "TriggerAnim");
         TryPatchVoid(harmony, typeof(MegaCrit.Sts2.Core.Nodes.Screens.Map.NNormalMapPoint), "SetAngle");
+        // spire-jev: the Punch Off event's two fighters trade punches on screen until an option is
+        // chosen; with their animations gone every wait in that loop finishes at once, and it spun
+        // the main thread forever (seeds 17, 20, 27 froze on entering it, the log's last line
+        // "Creating NCombatRoom with mode=VisualOnly encounter=PUNCH_OFF_EVENT_ENCOUNTER").
+        TryPatchSkipTask(harmony, typeof(MegaCrit.Sts2.Core.Models.Events.PunchOff), "PunchEachOther");
 
         try
         {
@@ -110,6 +115,33 @@ public static class PresentationSuppression
 
     private static bool SkipVoidMethod()
     {
+        return false;
+    }
+
+    /// <summary>A presentation coroutine (a Task) that is only shown, never waited on for its result.</summary>
+    private static void TryPatchSkipTask(Harmony harmony, Type type, string methodName)
+    {
+        try
+        {
+            MethodInfo? method = AccessTools.Method(type, methodName);
+            if (method is not null && method.ReturnType == typeof(Task))
+            {
+                harmony.Patch(method, prefix: new HarmonyMethod(typeof(PresentationSuppression), nameof(SkipTaskMethod)));
+            }
+            else
+            {
+                Godot.GD.PrintErr($"[FullAppBridge] no Task {type.Name}.{methodName} to skip");
+            }
+        }
+        catch (Exception ex)
+        {
+            Godot.GD.PrintErr($"[FullAppBridge] skip {type.Name}.{methodName}: {ex.Message}");
+        }
+    }
+
+    private static bool SkipTaskMethod(ref Task __result)
+    {
+        __result = Task.CompletedTask;
         return false;
     }
 }

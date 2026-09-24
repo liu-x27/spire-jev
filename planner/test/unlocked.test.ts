@@ -1,0 +1,119 @@
+// Rules for what the unlocked timeline brought (2026-09-24): the Underdocks' monsters, the
+// Waterfall Giant's DeathBlow, and the Ironclad cards the locked profile never offered. Each is
+// written from the game's IL (tools/inspect --il) and the A10 runs.
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
+import { planTurn } from "../src/search.ts";
+
+const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
+  id, cost, costsX: false, type, target, keywords: [], vars, upgrades: 0, locked: false, glows: false,
+});
+const STRIKE = card("STRIKE_IRONCLAD", "Attack", "AnyEnemy", { Damage: 6 });
+const DEFEND = card("DEFEND_IRONCLAD", "Skill", "Self", { Block: 5 });
+
+function foe(model: string, hp: number, powers: Record<string, number> = {}, id = 1): Enemy {
+  return {
+    id, model, hp, maxHp: hp, block: 0, alive: true, powers: { ...powers }, weakAtStart: false, startStrength: 0,
+    intents: [{ type: "Attack", damage: 10, hits: 1 }],
+  };
+}
+function state(hand: Card[], enemies: Enemy[], hp = 80): State {
+  return {
+    player: { hp, maxHp: 80, block: 0, powers: {} },
+    energy: 3, hand, draw: [STRIKE, STRIKE, STRIKE], discard: [], exhaust: [], enemies, drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0, unmovableUsed: false, potions: [], potionSlots: 3, potionsUsed: 0,
+  };
+}
+const at = (s: State, hand: number, target = 1) => play(s, { kind: "play", hand, target });
+const after = (s: State, line: readonly Action[]) => line.reduce((x, a) => (a.kind === "play" ? play(x, a) : x), s);
+
+test("the Waterfall Giant killed is not dead: it strikes for its Steam Eruption the turn after", () => {
+  const s = at(state([STRIKE], [foe("WATERFALL_GIANT", 5, { STEAM_ERUPTION: 41 })]), 0);
+  const giant = s.enemies[0]!;
+  assert.equal(giant.alive, false);
+  assert.equal(giant.deathBlow, 41);
+  assert.equal(giant.blowNow, false);
+  // Stunned: nothing at this turn's end.
+  assert.equal(incomingDamage(s), 0);
+});
+
+test("on the DeathBlow's turn the planner blocks, though nothing is left to hit", () => {
+  const dying: Enemy = {
+    ...foe("WATERFALL_GIANT", 0), alive: false, deathBlow: 45, blowNow: true, intents: [{ type: "DeathBlow", damage: 45, hits: 1 }],
+  };
+  const s = state([STRIKE, DEFEND, DEFEND], [dying], 38);
+  assert.equal(hpLoss(s), 45);
+  // Two Defends leave 3 HP; ending the turn at once (the first replays) died.
+  assert.equal(hpLoss(after(s, planTurn(s).actions)), 35);
+});
+
+test("weak put on the dying Giant takes a quarter off its DeathBlow", () => {
+  const dying: Enemy = {
+    ...foe("WATERFALL_GIANT", 0), alive: false, deathBlow: 44, blowNow: true, intents: [{ type: "DeathBlow", damage: 44, hits: 1 }],
+  };
+  const uppercut = card("UPPERCUT", "Attack", "AnyEnemy", { Damage: 13, Power: 1 }, 2);
+  assert.equal(incomingDamage(at(state([uppercut], [dying]), 0)), 33);
+});
+
+test("colossus played this turn halves a vulnerable enemy's attack", () => {
+  const e = foe("SEAPUNK", 40, { VULNERABLE: 1 });
+  e.intents = [{ type: "Attack", damage: 20, hits: 1 }];
+  const colossus = card("COLOSSUS", "Skill", "Self", { Block: 0, Colossus: 1 });
+  assert.equal(incomingDamage(play(state([colossus], [e]), { kind: "play", hand: 0 })), 10);
+});
+
+test("skittish: once a turn, a card's attack that took HP gives the Gardener its block after", () => {
+  const twin = card("TWIN_STRIKE", "Attack", "AnyEnemy", { Damage: 5, Repeat: 2 });
+  const s = at(state([twin, STRIKE], [foe("PHANTASMAL_GARDENER", 30, { SKITTISH: 7 })]), 0);
+  // Both hits land before the block.
+  assert.equal(s.enemies[0]!.hp, 20);
+  assert.equal(s.enemies[0]!.block, 7);
+  // The next attack goes into that block, and gives no more.
+  const t = at(s, 0);
+  assert.equal(t.enemies[0]!.hp, 20);
+  assert.equal(t.enemies[0]!.block, 1);
+});
+
+test("ravenous: killing a slug gives the others strength, and stuns them for this turn", () => {
+  const s = at(state([STRIKE], [foe("CORPSE_SLUG", 4, { RAVENOUS: 5 }, 1), foe("CORPSE_SLUG", 20, { RAVENOUS: 5 }, 2)]), 0, 1);
+  assert.equal(s.enemies[1]!.powers["STRENGTH"], 5);
+  assert.equal(incomingDamage(s), 0);
+});
+
+test("hardened shell lets through at most its amount of HP a turn", () => {
+  const big = card("BLUDGEON", "Attack", "AnyEnemy", { Damage: 15 });
+  const s = at(at(state([big, big], [foe("SKULKING_COLONY", 80, { HARDENED_SHELL: 20 })]), 0), 0);
+  assert.equal(s.enemies[0]!.hp, 60);
+});
+
+test("dominate: vulnerable first, then strength for every vulnerable the target has", () => {
+  const dominate = card("DOMINATE", "Skill", "AnyEnemy", { VulnerablePower: 1, StrengthPerVulnerable: 1 });
+  const s = at(state([dominate], [foe("SEAPUNK", 40, { VULNERABLE: 2 })]), 0);
+  assert.equal(s.enemies[0]!.powers["VULNERABLE"], 3);
+  assert.equal(s.player.powers["STRENGTH"], 3);
+});
+
+test("cruelty adds its amount to vulnerable's multiplier; molten fist doubles vulnerable", () => {
+  const s = state([STRIKE], [foe("SEAPUNK", 40, { VULNERABLE: 2 })]);
+  s.player.powers["CRUELTY"] = 25;
+  assert.equal(at(s, 0).enemies[0]!.hp, 30); // 6 x 1.75
+  const fist = card("MOLTEN_FIST", "Attack", "AnyEnemy", { Damage: 10 });
+  assert.equal(at(state([fist], [foe("SEAPUNK", 40, { VULNERABLE: 2 })]), 0).enemies[0]!.powers["VULNERABLE"], 4);
+});
+
+test("pact's end hits every enemy, and only with three cards exhausted; it draws nothing", () => {
+  const pact = card("PACTS_END", "Attack", "AllEnemies", { Damage: 18, Cards: 3 }, 0);
+  const two = () => [foe("SEAPUNK", 40, {}, 1), foe("SEAPUNK", 40, {}, 2)];
+  const none = play(state([pact], two()), { kind: "play", hand: 0 });
+  assert.deepEqual(none.enemies.map((e) => e.hp), [40, 40]);
+  assert.equal(none.drawn, 0);
+  const ready = state([pact], two());
+  ready.exhaust = [STRIKE, STRIKE, STRIKE];
+  assert.deepEqual(play(ready, { kind: "play", hand: 0 }).enemies.map((e) => e.hp), [22, 22]);
+});
+
+test("inferno: HP lost on the player's turn hits every enemy", () => {
+  const s = state([card("BLOODLETTING", "Skill", "Self", { HpLoss: 3, Energy: 2 }, 0)], [foe("SEAPUNK", 40, {}, 1), foe("SEAPUNK", 40, {}, 2)]);
+  s.player.powers["INFERNO"] = 6;
+  assert.deepEqual(play(s, { kind: "play", hand: 0 }).enemies.map((e) => e.hp), [34, 34]);
+});

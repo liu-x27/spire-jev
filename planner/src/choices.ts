@@ -99,10 +99,18 @@ const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number
   DEMON_FORM: { tiers: "BBBB", pick: [30, 30, 30] }, // §1.2: +3 Strength a turn since v0.111
   DARK_EMBRACE: { tiers: "CCCC", pick: [15, 20, 20] }, // disputed
   BLOODLETTING: { tiers: "AAAA", pick: [45, 40, 35] }, // §3.1: draw and energy are premium
-  INFERNO: { tiers: "BBBB", pick: [35, 35, 35] }, // §2.3: the key self-damage card
-  CRUELTY: { tiers: "BBBB", pick: [30, 30, 30] }, // §2.1, §3.4
+  // The locked timeline never offered these (docs/PLAN.md, 2026-09-24); from here on the tiers follow
+  // strong A10 players' Elo against skipping and the pick rates are A10's by act (card-stats-a10.json).
+  INFERNO: { tiers: "CCCC", pick: [25, 13, 8] }, // Elo -152: below skipping, despite §2.3
+  CRUELTY: { tiers: "AAAA", pick: [45, 42, 38] }, // Elo +169, 7th of 82
   BULLY: { tiers: "BBCC", pick: [30, 20, 15] },
-  MOLTEN_FIST: { tiers: "BBCC", pick: [30, 20, 15] },
+  MOLTEN_FIST: { tiers: "BBCC", pick: [32, 27, 24] }, // Elo +6: doubles Vulnerable
+  PACTS_END: { tiers: "BBBB", pick: [24, 23, 17] }, // Elo +26: 18 to all with 3 cards exhausted
+  TEAR_ASUNDER: { tiers: "BBBB", pick: [26, 22, 22] }, // Elo +21
+  BLOOD_WALL: { tiers: "CCCC", pick: [23, 18, 14] }, // Elo -119
+  DEMONIC_SHIELD: { tiers: "CCCC", pick: [17, 21, 20] }, // Elo -93
+  DRUM_OF_BATTLE: { tiers: "CCCC", pick: [15, 20, 21] }, // Elo -111
+  CINDER: { tiers: "DDDD", pick: [8, 2, 1] }, // Elo -403, last of 82
   IMPERVIOUS: { tiers: "BBBB", pick: [30, 30, 30] },
   CASCADE: { tiers: "CCCC", pick: [15, 15, 15] },
   PYRE: { tiers: "CCCC", pick: [15, 15, 15] },
@@ -503,6 +511,9 @@ const EVENTS: Record<string, (o: Observation, keys: readonly string[]) => string
   AMALGAMATOR: (o) => (blockCount(o.deck_cards) >= 3 ? "COMBINE_DEFENDS" : "COMBINE_STRIKES"),
   // §9b: pay 5 HP to choose between two dolls; never take one at random while HP allows.
   DOLL_ROOM: (o) => (o.player_hp > 15 ? "TAKE_SOME_TIME" : "RANDOM"),
+  // Underdocks: Nab is a relic and an Injury for good; taking on the two Punch Constructs is a relic
+  // and a potion, for about 9 HP (10 such fights at A10, none lost). Fight unless HP is low.
+  PUNCH_OFF: (o, keys) => (keys.includes("FIGHT") ? "FIGHT" : hpShare(o) > 0.35 ? "I_CAN_TAKE_THEM" : "NAB"),
   // Slippery Bridge names the card it will take in text only: reroll once while healthy, then cross.
   SLIPPERY_BRIDGE: (o, keys) => (keys.includes("HOLD_ON_0") && hpShare(o) > 0.6 ? "HOLD_ON_0" : "OVERCOME"),
   // §9b: keep reaching deeper (5 HP a step) while HP stays at half or more, then take the prize.

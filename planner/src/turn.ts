@@ -109,18 +109,39 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
   }
 
   const enemies = s.enemies.map((e): Enemy => {
+    // A killed Waterfall Giant: its stun passes, and the turn after it strikes for its DeathBlow (the
+    // game shows it with Weak taken off already); once struck it is gone.
+    if (!e.alive && (e.deathBlow ?? 0) > 0) {
+      const ep = { ...e.powers };
+      tick(ep, ["WEAK", "VULNERABLE"]);
+      if (e.blowNow) return { ...e, powers: ep, deathBlow: 0, blowNow: false, intents: [] };
+      const weak = (ep["WEAK"] ?? 0) > 0;
+      const blow = weak ? Math.floor(e.deathBlow! * 0.75) : e.deathBlow!;
+      return {
+        ...e, powers: ep, deathBlow: blow, blowNow: true, intents: [{ type: "DeathBlow", damage: blow, hits: 1 }],
+        weakAtStart: weak, vulnerableAtStart: (ep["VULNERABLE"] ?? 0) > 0,
+      };
+    }
     if (!e.alive) return { ...e, powers: { ...e.powers } };
     const ep = { ...e.powers };
     tick(ep, ["WEAK", "VULNERABLE"]);
     // Strength every turn: Byrdonis's Territorial, a Ritual.
     for (const k of ["TERRITORIAL", "RITUAL"]) if ((ep[k] ?? 0) > 0) ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
+    // The Waterfall Giant's Steam Eruption grows 3 every turn, and its Heal turn gives back 15
+    // (A10, our logs: every turn's buff, and each heal's miss in the turn-start checks).
+    if ((ep["STEAM_ERUPTION"] ?? 0) > 0) ep["STEAM_ERUPTION"] = ep["STEAM_ERUPTION"]! + 3;
+    const heal = e.model === "WATERFALL_GIANT" && e.intents.some((i) => i.type === "Heal") ? 15 : 0;
     // Stone Calendar: 52 to every enemy at the end of turn 7.
     const calendar = (s.turn ?? 1) === 7 ? relic("STONE_CALENDAR", "Damage", 52) : 0;
+    const hp = Math.min(e.maxHp, e.hp + heal) - calendar;
     return {
-      ...e, powers: ep, block: 0, hp: Math.max(0, e.hp - calendar), alive: e.hp - calendar > 0,
+      ...e, powers: ep, block: 0, hp: Math.max(0, hp), alive: hp > 0,
       intents: foresee(e, turn),
       weakAtStart: (ep["WEAK"] ?? 0) > 0,
       startStrength: ep["STRENGTH"] ?? 0,
+      vulnerableAtStart: (ep["VULNERABLE"] ?? 0) > 0,
+      skittishUsed: false,
+      shellTaken: 0,
     };
   });
 
@@ -128,6 +149,7 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     player: { ...s.player, hp: Math.min(s.player.maxHp, hp + regen), block, powers },
     energy,
     turn,
+    colossusAtStart: (powers["COLOSSUS"] ?? 0) > 0,
     ...(s.maxEnergy !== undefined ? { maxEnergy: s.maxEnergy } : {}),
     hand,
     draw: pile,

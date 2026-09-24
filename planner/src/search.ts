@@ -225,12 +225,30 @@ const WIN = 1e6;
 /** What a turn of Sandpit short of the kill costs, in HP. */
 const SANDPIT_TURN = 20;
 
+/**
+ * A killed Waterfall Giant's DeathBlow due at the end of next turn (the one due at this turn's end
+ * is in hpLoss), less the block a whole hand of the deck makes when nothing is left to attack:
+ * Weak that outlasts the enemies' turn takes a quarter off.
+ */
+function blowToCome(s: State): number {
+  let total = 0;
+  for (const e of s.enemies) {
+    if (e.alive || e.blowNow || (e.deathBlow ?? 0) <= 0) continue;
+    const pace = deckPace(s);
+    const guard = 2 * pace.cardBlock + pace.blockPerTurn + Math.max(0, (s.player.powers["PLATING"] ?? 0) - 1);
+    total += Math.max(0, Math.floor(e.deathBlow! * ((e.powers["WEAK"] ?? 0) >= 2 ? 0.75 : 1)) - guard);
+  }
+  return total;
+}
+
 /** How good it is to end the turn in state `s`. */
 export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   const alive = s.enemies.filter((e) => e.alive);
   // Dying to one's own card (Offering, Hemokinesis at low HP, Thorns) is no win.
   if (s.player.hp <= 0) return -WIN * 2;
-  if (alive.length === 0) return WIN + s.player.hp * 10;
+  // Nothing alive, but a killed Waterfall Giant still to strike: the win is living through it.
+  const blows = s.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
+  if (alive.length === 0 && !blows) return WIN + s.player.hp * 10;
   const enemyHp = alive.reduce((a, e) => a + e.hp, 0);
   const loss = hpLoss(s);
   // A death this turn is the end only with nothing to bring the player back (seed 17's Queen fight:
@@ -242,6 +260,16 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     if (back === undefined) return -WIN - enemyHp;
     hpLeft = back - REVIVE_COST * s.player.maxHp;
   }
+  if (alive.length === 0) {
+    // The blow lands this turn and the player lives: won. It lands next turn: as good as won, by
+    // how much HP it leaves (a blow that looks lethal still depends on next turn's draw).
+    // A potion costs what it does elsewhere, on this scale of 10 a point of HP.
+    const pending = s.enemies.some((e) => !e.alive && !e.blowNow && (e.deathBlow ?? 0) > 0);
+    return (pending ? WIN / 2 + (hpLeft - blowToCome(s)) * 10 : WIN + hpLeft * 10) - s.potionsUsed * potionCost(s, w) * 10;
+  }
+  if (blows) hpLeft -= blowToCome(s);
+  // wghp: HP the Giant's blow will need, counted twice while short of it.
+  if (giantMargin && giantAlive(s)) hpLeft -= Math.max(0, giantBlowAhead(s) - hpLeft);
 
   // A stack of Slippery (Vantom) is a hit that will take 1 HP instead of a
   // full one: count it as the HP it hides, so stripping it is worth playing.
@@ -397,10 +425,38 @@ export function revival(s: State): number | undefined {
   return undefined;
 }
 
+/**
+ * The Waterfall Giant's DeathBlow (sim.ts) decides its fight after the kill: of the 14 losses in the
+ * 21 replays from before it (bench-unl-wg2-f16), 9 killed it and died to the blow (41-56), their
+ * hand that turn all attacks, their potions drunk on turn 1. --flags wgpot: potions are worth five
+ * times as much while it lives (the blow's turn is where a Block, Weak or draw potion wins the
+ * fight); --flags wghp: HP under the blow it will strike counts twice.
+ */
+let giantPotions = false;
+let giantMargin = false;
+export function useGiantRules(potions: boolean, margin: boolean): void {
+  giantPotions = potions;
+  giantMargin = margin;
+}
+const giantAlive = (s: State) => s.enemies.some((e) => e.alive && e.model === "WATERFALL_GIANT");
+
+/**
+ * The DeathBlow a living Waterfall Giant will strike, less a hand's block: its Steam Eruption grows
+ * 3 a turn (20 on turn 2) over the turns the deck needs to kill it.
+ */
+export function giantBlowAhead(s: State): number {
+  const giant = s.enemies.find((e) => e.alive && e.model === "WATERFALL_GIANT");
+  if (!giant) return 0;
+  const pace = deckPace(s);
+  const steam = giant.powers["STEAM_ERUPTION"] ?? 17;
+  const turns = Math.max(0, Math.ceil(giant.hp / Math.max(1, pace.perTurn)) - 1);
+  return Math.max(0, steam + 3 * turns - (2 * pace.cardBlock + pace.blockPerTurn));
+}
+
 function potionCost(s: State, w: Weights): number {
   const big = s.enemies.some((e) => e.maxHp >= 100);
   const full = s.potions.length + s.potionsUsed >= s.potionSlots;
-  return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1);
+  return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1) * (giantPotions && giantAlive(s) ? 5 : 1);
 }
 
 /**
@@ -468,7 +524,10 @@ function explore(start: State, w: Weights, maxNodes: number, keep: number): { be
       top.sort((a, b) => b.score - a.score);
       if (top.length > keep) top.pop();
     }
-    if (here >= WIN) return; // everything is dead; nothing left to plan
+    // Everything is dead: nothing left to plan. Not while a killed Waterfall Giant's DeathBlow is to
+    // come: living through it scores as a win already, and more block is still more HP (the first
+    // replays ended the blow's turn at once, 10-24 HP worse off).
+    if (here >= WIN && !s.enemies.some((e) => e.alive || (e.deathBlow ?? 0) > 0)) return;
     if (nodes >= maxNodes) {
       truncated = true;
       return;

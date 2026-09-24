@@ -587,7 +587,15 @@ public static class FullAppBridgeMod
             // UI buttons run the native option mutation first, then update the
             // room presentation. Calling AfterSelectingOption alone skips Heal,
             // Smith, and other native effects and can fault the headless room.
-            bool selected = await chosen.OnSelect();
+            // spire-jev: a rest can offer rewards (Dream Catcher's card, Tiny Mailbox's potion:
+            // TryModifyRestSiteHealRewards), a screen the option waits on and AutoSlay drains only
+            // after the room — so handle it here while the option runs (seeds 16, 26, 34 timed out).
+            Task<bool> selecting = chosen.OnSelect();
+            while (!selecting.IsCompleted)
+            {
+                if (!await HandleOfferedScreenAsync(random, ct)) await Task.Delay(20);
+            }
+            bool selected = await selecting;
             if (selected)
             {
                 room.AfterSelectingOption(chosen);
@@ -595,8 +603,16 @@ public static class FullAppBridgeMod
             await Task.Delay(50);
         }
 
+        DateTime waiting = DateTime.UtcNow;
+        bool told = false;
         while (NOverlayStack.Instance?.ScreenCount > 0)
         {
+            if (await HandleOfferedScreenAsync(random, ct)) continue;
+            if (!told && DateTime.UtcNow - waiting > TimeSpan.FromSeconds(5))
+            {
+                told = true;
+                GD.Print($"[spire-jev] rest site: no handler for screen {(NOverlayStack.Instance?.Peek() as object)?.GetType().Name ?? "?"}");
+            }
             await Task.Delay(20);
         }
 
@@ -605,6 +621,25 @@ public static class FullAppBridgeMod
             await WaitHelper.Until(() => room.ProceedButton.IsEnabled, ct, TimeSpan.FromSeconds(10), "Rest site proceed button not enabled");
             await UiHelper.Click(room.ProceedButton, 0);
         }
+    }
+
+    /// <summary>
+    /// A rewards screen a room's option opened and waits on, or the card choice one of its rewards
+    /// opened; false if neither is on top. AutoSlay drains such screens only after the room.
+    /// </summary>
+    private static async Task<bool> HandleOfferedScreenAsync(Rng random, CancellationToken ct)
+    {
+        if (GetTopScreen<NCardRewardSelectionScreen>() != null)
+        {
+            await RunCardRewardLoopAsync(random, ct);
+            return true;
+        }
+        if (GetTopScreen<NRewardsScreen>() != null)
+        {
+            await RunRewardsLoopAsync(random, ct);
+            return true;
+        }
+        return false;
     }
 
     private static bool HandleDeckUpgradeScreenAsync(Rng random, CancellationToken ct, ref Task __result)
@@ -816,6 +851,11 @@ public static class FullAppBridgeMod
         {
             RunState? runState = RunManager.Instance?.DebugOnlyGetState();
             if (runState == null || runState.BaseRoom == null || runState.BaseRoom.RoomType != RoomType.Event) break;
+
+            // spire-jev: an option can offer rewards before it finishes the event (Punch Off's Nab: an
+            // Injury, then a relic through RewardsCmd.OfferCustom). The screen sits on top while the old
+            // options stay, and clicking them again did nothing (seeds 17, 20, 27: 1,983 clicks).
+            if (await HandleOfferedScreenAsync(random, ct)) continue;
 
             var optionButtons = UiHelper.FindAll<NEventOptionButton>(eventRoom).Where(b => b.Option != null && !b.Option.IsLocked).ToList();
             if (optionButtons.Count == 0)

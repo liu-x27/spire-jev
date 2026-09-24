@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useGiantRules, type Weights } from "./search.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpLoss, junkIndex, play, type State } from "./sim.ts";
 
@@ -234,6 +234,14 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
 /** potions2: potions not drunk early (a heal at full HP, block with nothing coming), and single hits Slippery blunts. */
 const LATE_POTIONS = new Set(["BLOOD_POTION", "BLOCK_POTION", "FRUIT_JUICE"]);
 const ONE_HIT_POTIONS = new Set(["FIRE_POTION", "EXPLOSIVE_AMPOULE", "POTION_SHAPED_ROCK"]);
+/**
+ * wgpot: what to keep for a Waterfall Giant's DeathBlow turn, not drink on turn 1 — block, Dexterity,
+ * Weak on the Giant, and the draws and picks that find a block card in a hand of attacks.
+ */
+const BLOW_POTIONS = new Set([
+  "BLOCK_POTION", "DEXTERITY_POTION", "SPEED_POTION", "WEAK_POTION", "SWIFT_POTION", "GAMBLERS_BREW", "SKILL_POTION",
+  "DUPLICATOR", "FORTIFIER", "HEART_OF_IRON", "LIQUID_BRONZE", "DISTILLED_CHAOS", "COLORLESS_POTION", "LIQUID_MEMORIES",
+]);
 /** Potions that work by themselves (Fairy in a Bottle saves a death), or are worth more kept. */
 const KEEP_POTIONS = new Set(["FAIRY_IN_A_BOTTLE"]);
 const BOSSES = new Set(["VANTOM", "THE_KIN", "CEREMONIAL_BEAST", "WATERFALL_GIANT", "LAGAVULIN_MATRIARCH", "SOUL_FYSH",
@@ -265,11 +273,12 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   // buff as a turn's worth. Not the heals or block (wasted at full HP or with no attack coming), and
   // not single-hit damage while Slippery would take it down to 1.
   const early = hasFlag("potions2") && boss && turn <= 2;
+  const giant = hasFlag("wgpot") && s.enemies.some((e) => e.alive && e.model === "WATERFALL_GIANT");
   const slippery = s.enemies.some((e) => e.alive && (e.powers["SLIPPERY"] ?? 0) > 0);
   const id = (a: LegalAction) => String(a.metadata?.["potion_id"] ?? "");
   const uses = legal.filter((a) => a.action_id.startsWith("use_potion:") && !KEEP_POTIONS.has(id(a))
     && !tried.has(`${turn}:${a.action_id.split(":")[1]}`)
-    && (hopeless || !modelled.has(Number(a.action_id.split(":")[1])) || (early && !LATE_POTIONS.has(id(a)) && !(slippery && ONE_HIT_POTIONS.has(id(a))))));
+    && (hopeless || !modelled.has(Number(a.action_id.split(":")[1])) || (early && !LATE_POTIONS.has(id(a)) && !(slippery && ONE_HIT_POTIONS.has(id(a))) && !(giant && BLOW_POTIONS.has(id(a))))));
   for (const a of uses) {
     const target = a.metadata?.["target_id"];
     if (target === undefined || !s.enemies.some((e) => e.id === Number(target))) return a.action_id;
@@ -458,7 +467,8 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       captured.add(o.floor);
       const from = path.join(savesDir(sandbox), "current_run.save");
       if (fs.existsSync(from)) {
-        const dir = path.resolve(import.meta.dirname, "..", "runs", "saves");
+        // SPIRE_JEV_LIBRARY: another save library (runs/saves-unl for the unlocked timeline).
+        const dir = path.resolve(import.meta.dirname, "..", "runs", process.env["SPIRE_JEV_LIBRARY"] ?? "saves");
         fs.mkdirSync(dir, { recursive: true });
         // The port tells apart two evaluations of the same seeds running at once.
         fs.copyFileSync(from, path.join(dir, `${seed}-a${ascension}-f${o.floor}-p${path.basename(sandbox).replace(/^p/, "")}.save`));
@@ -601,6 +611,7 @@ async function main(): Promise<void> {
   useRules = values.choices === "rules" || values.choices === "rules2";
   useRules2(values.choices === "rules2");
   setFlags(values.flags.split(","));
+  useGiantRules(hasFlag("wgpot"), hasFlag("wghp"));
   ascension = Number(values.ascension);
   setIntentAscension(ascension);
   usePotions = useRules;

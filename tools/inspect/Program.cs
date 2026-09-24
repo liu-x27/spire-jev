@@ -40,6 +40,87 @@ string Name(Type? t) => t is null ? "?" : t.IsGenericType
     ? $"{t.Name.Split('`')[0]}<{string.Join(",", t.GetGenericArguments().Select(Name))}>"
     : t.Name;
 
+// --il <method regex>: the IL of the matching methods of the matching types, async and iterator
+// bodies included (their compiler-made MoveNext), with the members, fields and strings it names —
+// to see what a game method waits on. Local reading only.
+string? ilPattern = null;
+for (var i = 1; i < args.Length - 1; i++) if (args[i] == "--il") ilPattern = args[i + 1];
+if (ilPattern is not null)
+{
+    var methodRe = new System.Text.RegularExpressions.Regex(ilPattern);
+    var ops = typeof(System.Reflection.Emit.OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
+        .Select(f => (System.Reflection.Emit.OpCode)f.GetValue(null)!).ToDictionary(o => (ushort)o.Value);
+    void Dump(MethodBase m, string label)
+    {
+        byte[]? il;
+        try { il = m.GetMethodBody()?.GetILAsByteArray(); } catch { il = null; }
+        if (il is null) return;
+        Console.WriteLine($"== {label}");
+        var module = m.Module;
+        for (int pc = 0; pc < il.Length;)
+        {
+            int at = pc;
+            ushort code = il[pc++];
+            if (code == 0xFE) code = (ushort)(0xFE00 | il[pc++]);
+            if (!ops.TryGetValue(code, out var op)) { Console.WriteLine($"  {at:X4} ?{code:X}"); continue; }
+            string arg = "";
+            int size = op.OperandType switch
+            {
+                System.Reflection.Emit.OperandType.InlineNone => 0,
+                System.Reflection.Emit.OperandType.ShortInlineBrTarget or System.Reflection.Emit.OperandType.ShortInlineI or System.Reflection.Emit.OperandType.ShortInlineVar => 1,
+                System.Reflection.Emit.OperandType.InlineVar => 2,
+                System.Reflection.Emit.OperandType.InlineI8 or System.Reflection.Emit.OperandType.InlineR => 8,
+                System.Reflection.Emit.OperandType.InlineSwitch => 4 + 4 * BitConverter.ToInt32(il, pc),
+                _ => 4,
+            };
+            if (op.OperandType is System.Reflection.Emit.OperandType.InlineMethod or System.Reflection.Emit.OperandType.InlineField
+                or System.Reflection.Emit.OperandType.InlineType or System.Reflection.Emit.OperandType.InlineTok)
+            {
+                try
+                {
+                    var mem = module.ResolveMember(BitConverter.ToInt32(il, pc), m.DeclaringType?.GetGenericArguments(), m.IsGenericMethod ? m.GetGenericArguments() : null);
+                    arg = mem is null ? "" : $"{Name(mem.DeclaringType)}.{mem.Name}";
+                    if (mem is MethodInfo gm && gm.IsGenericMethod) arg += $"<{string.Join(",", gm.GetGenericArguments().Select(Name))}>";
+                }
+                catch { arg = $"tok {BitConverter.ToInt32(il, pc):X8}"; }
+            }
+            else if (op.OperandType == System.Reflection.Emit.OperandType.InlineString)
+            {
+                try { arg = "\"" + module.ResolveString(BitConverter.ToInt32(il, pc)) + "\""; } catch { }
+            }
+            else if (op.OperandType == System.Reflection.Emit.OperandType.ShortInlineBrTarget) arg = $"-> {pc + 1 + (sbyte)il[pc]:X4}";
+            else if (op.OperandType == System.Reflection.Emit.OperandType.InlineBrTarget) arg = $"-> {pc + 4 + BitConverter.ToInt32(il, pc):X4}";
+            else if (op.OperandType == System.Reflection.Emit.OperandType.InlineI) arg = BitConverter.ToInt32(il, pc).ToString();
+            else if (op.OperandType == System.Reflection.Emit.OperandType.ShortInlineI) arg = ((sbyte)il[pc]).ToString();
+            else if (op.OperandType == System.Reflection.Emit.OperandType.InlineR) arg = BitConverter.ToDouble(il, pc).ToString();
+            else if (op.OperandType == System.Reflection.Emit.OperandType.ShortInlineR) arg = BitConverter.ToSingle(il, pc).ToString();
+            Console.WriteLine($"  {at:X4} {op.Name} {arg}");
+            pc += size;
+        }
+    }
+    foreach (var t in types.Where(t => typeRe.IsMatch(t.FullName ?? "") && !t.Name.Contains('<')))
+    {
+        foreach (var c in t.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+            if (methodRe.IsMatch(c.Name)) Dump(c, $"{t.Name}.{c.Name}({string.Join(", ", c.GetParameters().Select(p => Name(p.ParameterType)))})");
+        foreach (var m in t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+        {
+            if (!methodRe.IsMatch(m.Name)) continue;
+            Dump(m, $"{t.Name}.{m.Name}");
+            // The body of an async method or iterator lives in a nested state machine's MoveNext.
+            foreach (var nested in t.GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Public).Where(n => n.Name.StartsWith($"<{m.Name}>", StringComparison.Ordinal)))
+            {
+                var move = nested.GetMethod("MoveNext", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (move is not null) Dump(move, $"{t.Name}.{m.Name} (state machine {nested.Name})");
+            }
+        }
+        // Lambdas the methods use, in the compiler's closure classes.
+        foreach (var nested in t.GetNestedTypes(BindingFlags.NonPublic).Where(n => n.Name.StartsWith("<>c", StringComparison.Ordinal)))
+            foreach (var m in nested.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(m => methodRe.IsMatch(m.Name)))
+                Dump(m, $"{t.Name}.{nested.Name}.{m.Name}");
+    }
+    return 0;
+}
+
 if (derivedPattern is not null)
 {
     var baseRe = new System.Text.RegularExpressions.Regex(derivedPattern);
