@@ -156,6 +156,17 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
 
 /** §3.6: strong players take a card from ~86% / 61% / 49% of rewards; below this, skip. */
 export const SKIP_BELOW: [number, number, number] = [0.3, 0.45, 0.52];
+/**
+ * pickrate: thresholds at which the best offer of our runs' rewards clears
+ * 86% / 61% / 49% of the time (§3.6's rates for strong players), for the
+ * values rules2 gives, alone and with packages. SKIP_BELOW took 99% / 53% /
+ * 12% (combo-a10, rules2-a0): the act 1 deck filled with second Taunts and
+ * Angers, and act 3 took nothing.
+ */
+const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, number, number] } = {
+  plain: [0.45, 0.43, 0.37],
+  packages: [0.46, 0.495, 0.47],
+};
 
 export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
   const offers = legal.filter((a) => a.action_id.startsWith("choose_card:"));
@@ -165,7 +176,8 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
     const v = cardValue(card, actOf(o), o.deck_cards);
     if (!best || v > best.v) best = { id: a.action_id, v };
   }
-  if (best && best.v >= SKIP_BELOW[actOf(o)]) return best.id;
+  const skipBelow = flags.has("pickrate") ? (flags.has("packages") ? SKIP_CALIBRATED.packages : SKIP_CALIBRATED.plain) : SKIP_BELOW;
+  if (best && best.v >= skipBelow[actOf(o)]) return best.id;
   return legal.find((a) => a.action_id === "skip_card")?.action_id ?? best?.id ?? legal[0]!.action_id;
 }
 
