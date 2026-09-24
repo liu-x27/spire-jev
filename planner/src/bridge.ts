@@ -41,6 +41,16 @@ function prepare(sandbox: string): void {
   // A run left over from the last launch crashes the next start_run.
   const saves = path.join(sandbox, "userdata", "SlayTheSpire2", "default", "1", "modded", "profile1", "saves");
   if (fs.existsSync(saves)) for (const f of fs.readdirSync(saves)) if (f.includes(".save")) fs.rmSync(path.join(saves, f));
+  // The profile's preferences, as the game writes its defaults, but no run data uploaded from the
+  // sandbox, and the animation speed from SPIRE_JEV_FAST_MODE (the game's FastModeType: normal, fast,
+  // instant; normal unless asked).
+  fs.mkdirSync(saves, { recursive: true });
+  const prefs = {
+    bestiary_actions_preferred: true, fast_mode: process.env["SPIRE_JEV_FAST_MODE"] ?? "normal", keyboard_mode: false,
+    long_press: false, mute_in_background: true, phobia_mode: false, schema_version: 2, screenshake: 2,
+    show_card_indices: false, show_mp_drawings: true, show_run_timer: false, text_effects_enabled: true, upload_data: false,
+  };
+  fs.writeFileSync(path.join(saves, "prefs.save"), JSON.stringify(prefs, null, 2));
 
   const settingsDir = path.join(sandbox, "userdata", "SlayTheSpire2", "default", "1");
   fs.mkdirSync(settingsDir, { recursive: true });
