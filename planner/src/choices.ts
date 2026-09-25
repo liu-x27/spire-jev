@@ -346,7 +346,7 @@ interface Sparring {
 }
 let opening: Pick<Player, "energy" | "maxEnergy" | "hand" | "block" | "powers"> | undefined;
 // What a relic gives at the start of a fight, not what the encounter puts on the player.
-const OPENING_POWERS = new Set(["STRENGTH", "DEXTERITY", "VIGOR", "THORNS", "PLATED_ARMOR", "METALLICIZE", "ARTIFACT", "REGEN", "BUFFER"]);
+const OPENING_POWERS = new Set(["STRENGTH", "DEXTERITY", "VIGOR", "THORNS", "PLATED_ARMOR", "PLATING", "METALLICIZE", "ARTIFACT", "REGEN", "BUFFER"]);
 /** A fight's first observation (run-fights, before it is played): its opening, for spar3's bouts. */
 export function noteCombatStart(o: Observation): void {
   if (!o.combat || (o.combat.turn ?? 1) !== 1) return;
@@ -365,7 +365,7 @@ function sparring(o: Observation, act: Act): Sparring | undefined {
   const maxHp = o.player_max_hp > 0 ? o.player_max_hp : BARE.maxHp;
   return {
     boss,
-    me: { ...BARE, ...(opening ?? {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}) },
+    me: { ...BARE, ...(opening ? { ...opening, opened: true } : {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}) },
   };
 }
 /** pantograph: the HP a boss fight starts with, Pantograph's 25 on top (at most max HP). */

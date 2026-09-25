@@ -13,14 +13,14 @@
 
 import type { IntentObs } from "./obs.ts";
 import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
-import { type Card, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, incomingDamage, isClaw, spendRevival, startOfTurn, type State } from "./sim.ts";
+import { type Card, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
 const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED"];
 /** Powers that lose a stack every round. */
 const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN", "NO_BLOCK"];
 /** Temporary Strength and Dexterity, and what they were added to. */
-const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"]];
+const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"], ["REPTILE_TRINKET", "STRENGTH"]];
 const HAND_LIMIT = 10;
 
 /** mulberry32: a small seeded generator, so a lookahead is the same every time it is asked. */
@@ -90,8 +90,21 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     + (turn === 2 ? relic("CANDELABRA", "Energy", 2) : 0) + (turn === 3 ? relic("CHANDELIER", "Energy", 3) : 0)
     + (every("HAPPY_FLOWER") ? relic("HAPPY_FLOWER", "Energy", 1) : 0) + (s.relics.includes("BREAD") ? 1 : 0)
     + (s.relics.includes("ICE_CREAM") ? s.energy : 0);
-  const extraDraw = (powers["DRAW_CARDS_NEXT_TURN"] ?? 0) + (every("PENDULUM") ? relic("PENDULUM", "Cards", 1) : 0);
+  let extraDraw = (powers["DRAW_CARDS_NEXT_TURN"] ?? 0) + (every("PENDULUM") ? relic("PENDULUM", "Cards", 1) : 0);
   block += powers["BLOCK_NEXT_TURN"] ?? 0;
+  const relicVar = (id: string, name: string, fallback: number) => s.relicVars?.[id]?.[name] ?? fallback;
+  // Horn Cleat (IL: AfterBlockCleared): 14 block on turn 2; Sparkling Rouge: 1 Strength and 1 Dexterity on turn 3.
+  if (turn === 2) block += relic("HORN_CLEAT", "Block", 14);
+  if (turn === 3 && s.relics.includes("SPARKLING_ROUGE")) {
+    powers["STRENGTH"] = (powers["STRENGTH"] ?? 0) + relic("SPARKLING_ROUGE", "StrengthPower", 1);
+    powers["DEXTERITY"] = (powers["DEXTERITY"] ?? 0) + relic("SPARKLING_ROUGE", "DexterityPower", 1);
+  }
+  // Pocketwatch (IL: AfterSideTurnStart): 3 cards or fewer played last turn, 3 more drawn.
+  const playedLast = relicVar("POCKETWATCH", "_cardsPlayedThisTurn", 0) + s.played;
+  if (s.relics.includes("POCKETWATCH") && playedLast <= relicVar("POCKETWATCH", "CardThreshold", 3)) extraDraw += relicVar("POCKETWATCH", "Cards", 3);
+  // Centennial Puzzle: the fight's first damage past block, if the enemies' turn deals it, draws 3.
+  const puzzle = s.relics.includes("CENTENNIAL_PUZZLE") && relicVar("CENTENNIAL_PUZZLE", "_usedThisCombat", 0) === 0 && hpLoss(s) > 0;
+  if (puzzle) extraDraw += relicVar("CENTENNIAL_PUZZLE", "Cards", 3);
   for (const k of ["ENERGY_NEXT_TURN", "DRAW_CARDS_NEXT_TURN", "BLOCK_NEXT_TURN"]) delete powers[k];
 
   const keepAll = (s.player.powers["RETAIN_HAND"] ?? 0) > 0 || ((s.turn ?? 1) === 1 && s.relics.includes("RINGING_TRIANGLE"));
@@ -213,6 +226,20 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     };
   });
 
+  // Thorns on the player (Bronze Scales; IL: ThornsPower.BeforeDamageReceived): every hit of an
+  // enemy's attack costs the attacker its amount, blocked or not.
+  const thornsBack = Math.max(0, powers["THORNS"] ?? 0);
+  if (thornsBack > 0) {
+    s.enemies.forEach((before, i) => {
+      const e = enemies[i]!;
+      if (!before.alive || !e.alive) return;
+      const hits = before.intents.filter((x) => x.type === "Attack").reduce((a, x) => a + Math.max(1, x.hits), 0);
+      if (hits === 0) return;
+      e.hp = Math.max(0, e.hp - thornsBack * hits);
+      if (e.hp === 0) e.alive = false;
+    });
+  }
+
   // Powers one enemy's move gives the others (Burn Bright for Me) go on every living one; and an
   // enemy that moved before another made the player Vulnerable (You Are Mine) shows it all the same:
   // the game works a shown hit out as it stands.
@@ -287,6 +314,11 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     }
   }
   const hurt = (s.hurt ?? 0) + through;
+  // Self-Forming Clay (IL: SelfFormingClayPower, at the block's clearing): 3 block for every damage past block.
+  if (s.relics.includes("SELF_FORMING_CLAY")) {
+    block += (powers["SELF_FORMING_CLAY"] ?? 0) + through * relicVar("SELF_FORMING_CLAY", "BlockNextTurn", 3);
+    delete powers["SELF_FORMING_CLAY"];
+  }
   const bombs = (s.bombs ?? []).map((b) => ({ ...b, turns: b.turns - 1 }));
   const next: State = {
     player: { ...s.player, hp: Math.min(s.player.maxHp, hp + regen), block, powers, ...(powerVars ? { powerVars } : {}) },
@@ -305,7 +337,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     lostHp: false,
     exhaustedThisTurn: false,
     relics: s.relics,
-    ...(s.relicVars ? { relicVars: nextRelicVars(s) } : {}),
+    ...(s.relicVars || puzzle ? { relicVars: nextRelicVars(s, puzzle) } : {}),
     played: 0,
     skills: 0,
     unmovableUsed: false,
@@ -317,21 +349,37 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     ...(bombs.length ? { bombs } : {}),
   };
   if (after.revived) spendRevival(next, after.revived);
+  redSkull(next);
   // After the draw: Inferno's cost and hit, Mayhem's and Hellraiser's free plays.
   startOfTurn(next);
   if (next.player.hp <= 0) return undefined;
   return next;
 }
 
-/** Relic counters for the next turn: Ornamental Fan's attacks start again, Iron Club's cards and Pen Nib's attacks go on. */
-function nextRelicVars(s: State): Readonly<Record<string, Record<string, number>>> {
-  const v = s.relicVars!;
+/**
+ * Relic counters for the next turn: the turn's counts start again (Ornamental Fan's, Kusarigama's,
+ * Letter Opener's attacks and skills, Pocketwatch's cards), the fight's and run's go on (Iron Club's
+ * cards, Pen Nib's and Nunchaku's attacks, Tuning Fork's skills), and Centennial Puzzle is spent if
+ * the enemies' turn drew its cards.
+ */
+function nextRelicVars(s: State, puzzle = false): Readonly<Record<string, Record<string, number>>> {
+  const v = s.relicVars ?? {};
   const fan = v["ORNAMENTAL_FAN"];
   const club = v["IRON_CLUB"];
   const nib = v["PEN_NIB"];
-  if (!fan && !club && !nib) return v;
+  const nun = s.relics.includes("NUNCHAKU") ? v["NUNCHAKU"] ?? {} : undefined;
+  const kus = v["KUSARIGAMA"];
+  const opener = v["LETTER_OPENER"];
+  const watch = s.relics.includes("POCKETWATCH") ? v["POCKETWATCH"] ?? {} : undefined;
+  const fork = v["TUNING_FORK"];
   return {
     ...v,
+    ...(nun ? { NUNCHAKU: { ...nun, _attacksPlayed: ((nun["_attacksPlayed"] ?? 0) + (s.attacks ?? 0)) % (nun["Cards"] || 10) } } : {}),
+    ...(kus ? { KUSARIGAMA: { ...kus, _attacksPlayedThisTurn: 0 } } : {}),
+    ...(opener ? { LETTER_OPENER: { ...opener, _skillsPlayedThisTurn: 0 } } : {}),
+    ...(watch ? { POCKETWATCH: { ...watch, _cardsPlayedLastTurn: (watch["_cardsPlayedThisTurn"] ?? 0) + s.played, _cardsPlayedThisTurn: 0 } } : {}),
+    ...(fork ? { TUNING_FORK: { ...fork, _skillsPlayed: (fork["_skillsPlayed"] ?? 0) + s.skills } } : {}),
+    ...(puzzle ? { CENTENNIAL_PUZZLE: { ...(v["CENTENNIAL_PUZZLE"] ?? {}), _usedThisCombat: 1 } } : {}),
     ...(nib ? { PEN_NIB: { ...nib, _attacksPlayed: ((nib["_attacksPlayed"] ?? 0) + (s.attacks ?? 0)) % 10 } } : {}),
     ...(fan ? { ORNAMENTAL_FAN: { ...fan, _attacksPlayedThisTurn: 0 } } : {}),
     ...(club ? { IRON_CLUB: { ...club, _cardsPlayed: (club["_cardsPlayed"] ?? 0) + s.played } } : {}),
