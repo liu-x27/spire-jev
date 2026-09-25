@@ -78,10 +78,37 @@ public static class FullAppBridgeMod
         TryPatchPrefix(harmony, typeof(GameOverScreenHandler), nameof(GameOverScreenHandler.HandleAsync), nameof(HandleGameOverAsync));
         TryPatchPrefix(harmony, typeof(AutoSlayer), "WaitForRewardsScreenAsync", nameof(HandleWaitForRewardsScreenAsync));
         TryPatchPrefix(harmony, typeof(AutoSlayer), "PlayMainMenuAsync", nameof(HandlePlayMainMenuAsync));
+        // spire-jev: AutoSlay ends a run once its total floor reaches 49 ("Run completed (max floor
+        // reached). Abandoning"), right as the map moves to A10's second boss on floor 49: no A10 run
+        // could be won (veteran seed 497 beat Aeonglass on floor 48 and was abandoned). Raise it.
+        try
+        {
+            MethodInfo? moveNext = AccessTools.AsyncMoveNext(AccessTools.Method(typeof(AutoSlayer), "PlayRunAsync"));
+            if (moveNext != null) harmony.Patch(moveNext, transpiler: new HarmonyMethod(typeof(FullAppBridgeMod), nameof(RaiseMaxFloor)));
+        }
+        catch (Exception ex) { GD.PrintErr($"[FullAppBridge] max floor: {ex.Message}"); }
         // spire-jev: every new run is made here, whoever starts it (AutoSlay starts ours at ascension 0).
         TryPatchPrefix(harmony, typeof(RunState), nameof(RunState.CreateForNewRun), nameof(OnCreateForNewRun));
 
         FullAppBridgeServer.Start(port, portFile);
+    }
+
+    /// <summary>PlayRunAsync's `TotalFloor < 49` (its only 49 after a TotalFloor read) becomes `< 99`.</summary>
+    private static IEnumerable<CodeInstruction> RaiseMaxFloor(IEnumerable<CodeInstruction> instructions)
+    {
+        var list = instructions.ToList();
+        MethodInfo? totalFloor = AccessTools.PropertyGetter(typeof(RunState), nameof(RunState.TotalFloor));
+        int changed = 0;
+        for (int i = 1; i < list.Count; i++)
+        {
+            if (list[i].opcode == System.Reflection.Emit.OpCodes.Ldc_I4_S && Convert.ToInt32(list[i].operand) == 49 && list[i - 1].Calls(totalFloor))
+            {
+                list[i].operand = (sbyte)99;
+                changed++;
+            }
+        }
+        GD.Print($"[spire-jev] AutoSlay's max floor raised in {changed} place(s)");
+        return list;
     }
 
     private static void TryPatchPrefix(Harmony harmony, Type type, string methodName, string patchMethodName)
