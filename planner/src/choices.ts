@@ -467,8 +467,10 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
     const relic = stock.filter((a) => type(a) === "Relic").sort((x, y) => price(x) - price(y))[0];
     if (relic && o.gold - price(relic) >= 0) return relic.action_id;
   }
-  // shop2: potions from act 2 into free slots, for the damage the act 2 boss needs early.
-  if (shop2 ? actOf(o) >= 1 && wantsPotion(o, o.potion_slots ?? 3) : actOf(o) === 2 && o.potions.length < 3) {
+  // shop2: potions from act 2 into free slots, for the damage the act 2 boss needs early. Only into
+  // a free slot: with the belt full the game refuses the potion (PotionCmd.TryToProcure) and nothing
+  // changes, and at A4+ the belt is 2 (JEV00707 at A10 asked for the same potion until run-fights left).
+  if ((shop2 ? actOf(o) >= 1 : actOf(o) === 2) && wantsPotion(o, o.potion_slots ?? 3)) {
     const potion = stock.filter((a) => type(a) === "Potion").sort((x, y) => price(y) - price(x))[0];
     if (potion) return potion.action_id;
   }
