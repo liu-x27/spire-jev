@@ -241,15 +241,21 @@ function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: 
     return pairScore(change([...deck]), bosses[0]!, bosses[1]!, n, floor, me, first) - base;
   }
   let gain = 0;
-  for (const boss of bosses) {
-    const key = `${boss.model}/${floor}/${me.hp}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
+  for (const [i, boss] of bosses.entries()) {
+    // sparboth2: act 3's second boss met as the first leaves the player, at half HP, for its own
+    // horizon (the Test Subject's third form is a burst test: ~310 damage in its first turn not
+    // intangible, or ~155 in two; the probes of 712 and 722 came to it at 12-69 HP).
+    const second = i === 1 && flags.has("sparboth2");
+    const who = second ? { ...me, hp: Math.max(1, Math.round(0.5 * me.maxHp)) } : me;
+    const turns = second ? boss.turns ?? 12 : undefined;
+    const key = `${boss.model}/${floor}/${who.hp}/${who.maxHp}/${who.maxEnergy}/${who.relics.length}/${first}/${turns ?? ""}/${deck.join(",")}`;
     let base = sparBase.get(key);
     if (base === undefined) {
       if (sparBase.size > 64) sparBase.clear();
-      base = sparScore(deck, boss, n, floor, me, first);
+      base = sparScore(deck, boss, n, floor, who, first, 0.7, turns);
       sparBase.set(key, base);
     }
-    gain += sparScore(change([...deck]), boss, n, floor, me, first) - base;
+    gain += sparScore(change([...deck]), boss, n, floor, who, first, 0.7, turns) - base;
   }
   return gain / bosses.length;
 }
@@ -259,7 +265,7 @@ function sparBosses(act: Act, at?: Sparring): Boss[] {
   // sparboth: seed 497 (A10) beat Aeonglass and died to the Test Subject, whom its act 3 picks were
   // never measured against: floor 42's Taunt, +25 against Aeonglass, is +0 against it, and Stone
   // Armor +18 and +29.
-  const second = flags.has("sparboth") || flags.has("sparpair") ? modelledBoss(actSecondBoss) : undefined;
+  const second = flags.has("sparboth") || flags.has("sparboth2") || flags.has("sparpair") ? modelledBoss(actSecondBoss) : undefined;
   if (second && second.model !== bosses[0]!.model) bosses.push(second);
   return bosses;
 }

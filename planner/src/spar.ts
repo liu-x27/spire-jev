@@ -223,11 +223,11 @@ export function useBossTurns(on: boolean): void {
  * HP (heal or smith), the HP lost measures nothing (the healed one, losing as well, loses more):
  * 0 there, the damage dealt and the win alone.
  */
-export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1, me: Player = BARE, first = 0, hpWeight = 0.7): number {
+export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1, me: Player = BARE, first = 0, hpWeight = 0.7, turns?: number): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   let total = 0;
   for (let i = first; i < first + samples; i++) {
-    const b = bout(deck, boss, seeded(seed * 1000 + i), bossTurns ? boss.turns ?? 8 : 8, me);
+    const b = bout(deck, boss, seeded(seed * 1000 + i), turns ?? (bossTurns ? boss.turns ?? 8 : 8), me);
     total += b.damage + (b.won ? 60 : 0) - hpWeight * b.hpLost;
   }
   return total / samples;
