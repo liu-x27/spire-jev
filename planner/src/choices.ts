@@ -15,7 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { BARE, type Boss, bossFor, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparScore, unknownCards, useBossTurns } from "./spar.ts";
+import { BARE, type Boss, bossFor, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -384,6 +384,58 @@ function offeredId(id: string, upgrades: unknown, described?: unknown): string {
   return `${id}${up ? "+" : ""}`;
 }
 /**
+ * spar5 (astra-review-5 #2): what a change does to the deck's outcomes against the boss, shuffle by
+ * shuffle (spar.ts outcomeScore: a win first, then HP kept; a loss by the burden taken off), fought
+ * out; the mean paired difference and its standard error. A change is taken when the difference
+ * less one standard error is above nothing, not over a five-point line; one within two standard
+ * errors of the line is looked at again over 128 more shuffles.
+ */
+const spar5Base = new Map<string, number[]>();
+function outcomes(deck: readonly string[], boss: Boss, floor: number, me: Player, first: number, n: number): number[] {
+  const key = `${boss.model}/${floor}/${me.hp}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${n}/${deck.join(",")}`;
+  let out = spar5Base.get(key);
+  if (!out) {
+    if (spar5Base.size > 256) spar5Base.clear();
+    out = sparOutcomes(deck, boss, n, floor, me, first);
+    spar5Base.set(key, out);
+  }
+  return out;
+}
+interface Paired {
+  mean: number;
+  se: number;
+}
+function paired(o: Observation, at: Sparring, change: (d: string[]) => string[], first = 0, n = SPAR_SAMPLES): Paired {
+  const base = outcomes(o.deck_cards, at.boss, o.floor, at.me, first, n);
+  const next = outcomes(change([...o.deck_cards]), at.boss, o.floor, at.me, first, n);
+  const d = base.map((b, i) => next[i]! - b);
+  const mean = d.reduce((a, x) => a + x, 0) / d.length;
+  const sd = Math.sqrt(d.reduce((a, x) => a + (x - mean) ** 2, 0) / Math.max(1, d.length - 1));
+  return { mean, se: sd / Math.sqrt(d.length) };
+}
+/** spar5: the change's paired difference, 32 shuffles, and 160 where it lies near the line. */
+function spar5Gain(o: Observation, at: Sparring, change: (d: string[]) => string[]): Paired {
+  const p = paired(o, at, change);
+  if (Math.abs(p.mean - p.se) > 2 * p.se) return p;
+  const more = paired(o, at, change, SPAR_SAMPLES, 128);
+  const n1 = SPAR_SAMPLES;
+  const mean = (p.mean * n1 + more.mean * 128) / (n1 + 128);
+  // The pooled standard error of the 160 differences.
+  const se = Math.sqrt((p.se ** 2 * n1 * n1 + more.se ** 2 * 128 * 128) / (n1 + 128) ** 2);
+  return { mean, se };
+}
+/** spar5's rule: the best change whose difference, less one standard error, is above nothing. */
+function spar5Pick<T extends { change: (d: string[]) => string[]; gain: number }>(o: Observation, at: Sparring, options: T[]): T | undefined {
+  let best: { x: T; p: Paired } | undefined;
+  for (const x of options) {
+    if (!Number.isFinite(x.gain)) continue;
+    const p = spar5Gain(o, at, x.change);
+    if (!best || p.mean > best.p.mean) best = { x, p };
+  }
+  return best && best.p.mean - best.p.se > 0 ? best.x : undefined;
+}
+
+/**
  * Many candidates (spar4up's upgrades, spar4rm's removals: twenty and more): QUICK_SAMPLES shuffles
  * each, and the best SHORTLIST go on to the full look. vet-d-norest seed 614's smith took more than
  * AutoSlay's three minutes, every upgrade played 32 + 128 times against the Kaiser Crab.
@@ -424,9 +476,15 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
       const card = ids[i]!;
       const change = (d: string[]) => [...d, card];
       // never-take list
-      const gain = cardValue(card.replace(/\+$/, ""), actOf(o), o.deck_cards) < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, change, at);
+      // spar5 weighs the offers by their outcomes (spar5Pick), not by this score.
+      const gain = cardValue(card.replace(/\+$/, ""), actOf(o), o.deck_cards) < 0 ? -Infinity : flags.has("spar5") ? 0 : sparGain(o.deck_cards, actOf(o), o.floor, change, at);
       return { id: a.action_id, gain, change };
     });
+    if (flags.has("spar5")) {
+      const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })));
+      if (pick) return pick.id;
+      return legal.find((a) => a.action_id === "skip_card")?.action_id ?? legal[0]!.action_id;
+    }
     const best = closerLook(o, at, options).sort((x, y) => y.gain - x.gain)[0];
     if (best && best.gain >= 5) return best.id;
     return legal.find((a) => a.action_id === "skip_card")?.action_id ?? best?.id ?? legal[0]!.action_id;
@@ -674,15 +732,21 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
       return removal!.action_id;
     }
     const takeOut = removal ? (spar4("rm") ? removals(o.deck_cards) : worst && REMOVABLE.test(worst) ? [worst] : []) : [];
+    const spar5 = flags.has("spar5");
     const options: { a: LegalAction; change: (d: string[]) => string[]; gain: number; out?: string }[] = [
       ...cards.map((c) => {
         const id = shopId(c.a);
         const change = (d: string[]) => [...d, id];
-        return { a: c.a, change, gain: c.v < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, change, at) };
+        return { a: c.a, change, gain: c.v < 0 ? -Infinity : spar5 ? 0 : sparGain(o.deck_cards, actOf(o), o.floor, change, at) };
       }),
-      ...shortlist(o, at, takeOut.map((id) => ({ id, change: withoutOne(id) }))).map(({ id, change }) => ({ a: removal!, change, gain: sparGain(o.deck_cards, actOf(o), o.floor, change, at), out: id })),
+      ...shortlist(o, at, takeOut.map((id) => ({ id, change: withoutOne(id) }))).map(({ id, change }) => ({ a: removal!, change, gain: spar5 ? 0 : sparGain(o.deck_cards, actOf(o), o.floor, change, at), out: id })),
     ];
-    closerLook(o, at, options).sort((x, y) => y.gain - x.gain);
+    // spar5: the purchase whose outcomes gain, less a standard error, more than nothing.
+    const chosen = spar5 ? spar5Pick(o, at, options) : undefined;
+    if (spar5) {
+      options.length = 0;
+      if (chosen) options.push({ ...chosen, gain: Infinity });
+    } else closerLook(o, at, options).sort((x, y) => y.gain - x.gain);
     if (options[0] && options[0].gain >= 5) {
       if (/remov/i.test(type(options[0].a))) {
         resetCardSelect();

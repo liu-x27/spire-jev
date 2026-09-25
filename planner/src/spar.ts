@@ -143,6 +143,8 @@ export interface Player {
 export const BARE: Player = { hp: 80, maxHp: 80, energy: 3, maxEnergy: 3, hand: 5, block: 0, powers: {}, relics: [] };
 
 export interface Bout {
+  /** The HP the fight needed in all (every monster's and forms to come): damage / pool is the burden taken off. */
+  pool?: number;
   damage: number;
   hpLost: number;
   won: boolean;
@@ -200,15 +202,15 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
       } finally {
         setKnownDraws(false);
       }
-      if (over(s)) return { damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
-      if (s.player.hp <= 0) return { damage: full - pool(s), hpLost: hp, won: false, turns: t };
+      if (over(s)) return { pool: full, damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
+      if (s.player.hp <= 0) return { pool: full, damage: full - pool(s), hpLost: hp, won: false, turns: t };
     }
     const next = nextTurn(s, rng, expectedIntents);
-    if (!next) return { damage: full - pool(s), hpLost: hp, won: false, turns: t };
+    if (!next) return { pool: full, damage: full - pool(s), hpLost: hp, won: false, turns: t };
     s = next;
-    if (over(s)) return { damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
+    if (over(s)) return { pool: full, damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
   }
-  return { damage: full - pool(s), hpLost: hp - s.player.hp, won: false, turns };
+  return { pool: full, damage: full - pool(s), hpLost: hp - s.player.hp, won: false, turns };
 }
 
 /** A deck's score against a boss: damage dealt, a win's worth, HP lost; the mean over `samples` shuffles from `seed`. */
@@ -258,6 +260,26 @@ export function pairScore(ids: readonly string[], first: Boss, second: Boss, sam
     total += b.damage + (b.won ? 60 : 0) - hpWeight * b.hpLost;
   }
   return total / samples;
+}
+
+/**
+ * spar5 (astra-review-5 #2): a bout's outcome, win first. The damage + 60·won − 0.7·hpLost score let
+ * a dead deck's 60 more damage be worth a win. Here a win is 100 and the HP it kept up to 30 more; a
+ * loss is the share of the fight's HP taken off, up to 60, and a fight still going at the horizon
+ * (SPAR5_TURNS, fought out) the HP it has kept, up to 10 more. Per shuffle, for paired differences.
+ */
+export const SPAR5_TURNS = 20;
+export function outcomeScore(b: Bout, me: Player): number {
+  const kept = Math.max(0, me.hp - b.hpLost) / Math.max(1, me.maxHp);
+  if (b.won) return 100 + 30 * kept;
+  const taken = b.damage / Math.max(1, b.pool ?? b.damage);
+  return 60 * Math.min(1, Math.max(0, taken)) + (b.hpLost < me.hp ? 10 * kept : 0);
+}
+export function sparOutcomes(ids: readonly string[], boss: Boss, samples: number, seed: number, me: Player = BARE, first = 0): number[] {
+  const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
+  const out: number[] = [];
+  for (let i = first; i < first + samples; i++) out.push(outcomeScore(bout(deck, boss, seeded(seed * 1000 + i), SPAR5_TURNS, me), me));
+  return out;
 }
 
 /** The boss a deck is measured against in each act (acts 1-2 of this pool; act 3 against the act 2 one for now). */
