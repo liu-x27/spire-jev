@@ -59,6 +59,11 @@ export interface Boss {
   with?: Omit<Boss, "with" | "player">[];
   /** What the encounter puts on the player (the Crab's Surrounded, facing the Rocket). */
   player?: Record<string, number>;
+  /**
+   * spar2: the turns a bout plays against it, where eight is too few for the fight to be decided (the
+   * Waterfall Giant's DeathBlow comes after a kill that takes ten; Knowledge Demon heals back).
+   */
+  turns?: number;
 }
 /** The act bosses at A10 (docs/a10-combat-research.md; the eight from the IL, scratchpad specs). */
 export const BOSSES: Record<string, Boss> = {
@@ -66,7 +71,7 @@ export const BOSSES: Record<string, Boss> = {
   THE_INSATIABLE: { model: "THE_INSATIABLE", hp: 341, powers: {} },
   // 250 HP at A8+ (wiki, v0.107.1; our A10 logs agree), Steam Eruption 20 from its opening
   // Pressurize and +3 a move: 17 here, so that turn N starts at 20 + 3(N-2) as in the game.
-  WATERFALL_GIANT: { model: "WATERFALL_GIANT", hp: 250, powers: { STEAM_ERUPTION: 17 } },
+  WATERFALL_GIANT: { model: "WATERFALL_GIANT", hp: 250, powers: { STEAM_ERUPTION: 17 }, turns: 12 },
   // The Priest is the one to kill: its followers are minions, gone with it.
   THE_KIN: {
     model: "KIN_PRIEST", hp: 199, powers: {}, move: "ORB_OF_FRAILTY_MOVE",
@@ -78,16 +83,16 @@ export const BOSSES: Record<string, Boss> = {
   CEREMONIAL_BEAST: { model: "CEREMONIAL_BEAST", hp: 262, powers: {}, move: "STAMP_MOVE" },
   LAGAVULIN_MATRIARCH: { model: "LAGAVULIN_MATRIARCH", hp: 233, powers: { ASLEEP: 3, PLATING: 12 }, block: 12, move: "SLEEP_MOVE" },
   SOUL_FYSH: { model: "SOUL_FYSH", hp: 221, powers: {}, move: "BECKON_MOVE" },
-  KNOWLEDGE_DEMON: { model: "KNOWLEDGE_DEMON", hp: 399, powers: {}, move: "CURSE_OF_KNOWLEDGE_MOVE" },
+  KNOWLEDGE_DEMON: { model: "KNOWLEDGE_DEMON", hp: 399, powers: {}, move: "CURSE_OF_KNOWLEDGE_MOVE", turns: 12 },
   KAISER_CRAB: {
-    model: "CRUSHER", hp: 219, powers: { BACK_ATTACK_LEFT: 1, CRAB_RAGE: 1 }, move: "THRASH_MOVE",
+    model: "CRUSHER", hp: 219, powers: { BACK_ATTACK_LEFT: 1, CRAB_RAGE: 1 }, move: "THRASH_MOVE", turns: 12,
     powerVars: { CRAB_RAGE: { StrengthPower: 6, Block: 99 } },
     with: [{ model: "ROCKET", hp: 209, powers: { BACK_ATTACK_RIGHT: 1, CRAB_RAGE: 1 }, move: "TARGETING_RETICLE_MOVE", powerVars: { CRAB_RAGE: { StrengthPower: 6, Block: 99 } } }],
     player: { SURROUNDED: 1 },
   },
-  TEST_SUBJECT: { model: "TEST_SUBJECT", hp: 111, powers: { ADAPTABLE: 1, ENRAGE: 3 }, move: "BITE_MOVE" },
+  TEST_SUBJECT: { model: "TEST_SUBJECT", hp: 111, powers: { ADAPTABLE: 1, ENRAGE: 3 }, move: "BITE_MOVE", turns: 12 },
   AEONGLASS: {
-    model: "AEONGLASS", hp: 535, powers: { WITHERING_PRESENCE: 6, ARTIFACT: 3 }, move: "EBB_MOVE",
+    model: "AEONGLASS", hp: 535, powers: { WITHERING_PRESENCE: 6, ARTIFACT: 3 }, move: "EBB_MOVE", turns: 12,
     powerVars: { WITHERING_PRESENCE: { CardsLeft: 6 } },
   },
 };
@@ -161,11 +166,17 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
 }
 
 /** A deck's score against a boss: damage dealt, a win's worth, HP lost; the mean over `samples` shuffles from `seed`. */
+let bossTurns = false;
+/** spar2: each boss's own horizon (Boss.turns), not eight turns for every one. */
+export function useBossTurns(on: boolean): void {
+  bossTurns = on;
+}
+
 export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   let total = 0;
   for (let i = 0; i < samples; i++) {
-    const b = bout(deck, boss, seeded(seed * 1000 + i));
+    const b = bout(deck, boss, seeded(seed * 1000 + i), bossTurns ? boss.turns ?? 8 : 8);
     total += b.damage + (b.won ? 60 : 0) - 0.7 * b.hpLost;
   }
   return total / samples;

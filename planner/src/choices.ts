@@ -15,7 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { bossFor, sparScore } from "./spar.ts";
+import { bossFor, sparScore, useBossTurns } from "./spar.ts";
 import type { LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -93,6 +93,7 @@ export function setFlags(names: readonly string[]): void {
   useScalingFromAct1(flags.has("scale1"));
   usePackages2(flags.has("packages2"));
   useSmartExhaust(flags.has("exhaust2"));
+  useBossTurns(flags.has("spar2"));
 }
 export const hasFlag = (name: string) => flags.has(name);
 
