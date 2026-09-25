@@ -550,6 +550,18 @@ states, and only a simulator is fast enough for that.
      card: Restlessness, Salvo, Panic Button, Equilibrium, Omnislice, Sword
      Boomerang far fewer; Tear Asunder one hit too many (fixed, 47acb58, with
      Intimidating Helmet, Ornamental Fan, Game Piece, Iron Club, Pen Nib).
+   - **spar4 against s3f** (`vet-s4g-a10`, 586-855, Staging9): act 1 188 → 174
+     (+23/-37, p 0.09), act 2 31 → 34 (+19/-16); floor-16 heals 157 → 112,
+     boss-entry HP 91% → 87% (astra-review-5: the rest's bout smiths ties and
+     values no HP). Its parts as flags (spar4rest, spar4up, spar4rm,
+     spar4shop), screened on 586-675 (90 starts, Staging10) against vet-d-base
+     (spar3 on today's code: 57 act 1 bosses, 8 act 2, like s3f's 58 and 8):
+     spar4up+rm+shop 59/12 (+11/-9, +8/-4), spar4up 64/8 (+14/-7, +2/-2),
+     spar4rm 55/10, spar4shop 61/12 (+5/-1, +6/-2). None significant on 90
+     starts; the rest is where s4g lost act 1. spar4up and spar4rm now
+     shortlist (12 shuffles each, the best 4 fully): a smith of 25 cards had
+     outrun AutoSlay's three minutes. Staging11 (c31c5b6) also stops a card
+     preview's tween from hanging a run (the other session: 589, 591, 627).
    - **Act 3's pair, from the 55 f47 saves** (`runs/saves-f47-all`: 36 seeds,
      the arms' libraries, every order; 56214be, Staging10; floor 47's rest and
      both bosses, paired): base wins floor 48 4/55 (Queen 2/24, Aeonglass 1/24,
