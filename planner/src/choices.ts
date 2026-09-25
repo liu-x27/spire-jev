@@ -224,15 +224,16 @@ const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, num
 const SPAR_SAMPLES = 32;
 const sparBase = new Map<string, number>();
 const sparDone = new Map<string, number>();
-function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[], at?: Sparring, more = 0): number {
+function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[], at?: Sparring, more = 0, quick = 0): number {
   const bosses = sparBosses(act, at);
   const me = at?.me ?? BARE;
-  // spar3's closer look: `more` shuffles after the first 32, on their own draws.
+  // spar3's closer look: `more` shuffles after the first 32, on their own draws; `quick`, the first
+  // few alone, to shortlist many candidates (QUICK_SAMPLES).
   const first = more > 0 ? SPAR_SAMPLES : 0;
-  const n = more > 0 ? more : SPAR_SAMPLES;
+  const n = more > 0 ? more : quick > 0 ? quick : SPAR_SAMPLES;
   // sparpair: act 3's two bosses fought one after the other, on one HP bar.
   if (flags.has("sparpair") && bosses.length === 2) {
-    const key = `pair/${bosses[0]!.model}/${bosses[1]!.model}/${floor}/${me.hp}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
+    const key = `pair/${bosses[0]!.model}/${bosses[1]!.model}/${floor}/${me.hp}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${n}/${deck.join(",")}`;
     let base = sparBase.get(key);
     if (base === undefined) {
       if (sparBase.size > 64) sparBase.clear();
@@ -249,7 +250,7 @@ function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: 
     const second = i === 1 && flags.has("sparboth2");
     const who = second ? { ...me, hp: Math.max(1, Math.round(0.5 * me.maxHp)) } : me;
     const turns = second ? boss.turns ?? 12 : undefined;
-    const key = `${boss.model}/${floor}/${who.hp}/${who.maxHp}/${who.maxEnergy}/${who.relics.length}/${first}/${turns ?? ""}/${deck.join(",")}`;
+    const key = `${boss.model}/${floor}/${who.hp}/${who.maxHp}/${who.maxEnergy}/${who.relics.length}/${first}/${n}/${turns ?? ""}/${deck.join(",")}`;
     let base = sparBase.get(key);
     if (base === undefined) {
       if (sparBase.size > 64) sparBase.clear();
@@ -326,7 +327,8 @@ function sparUpgrade(o: Observation, ids: readonly string[], at: Sparring, me: P
   candidates = candidates.filter((id) => knownExactly(`${id}+`));
   if (candidates.length === 0) return undefined;
   const at2 = { ...at, me };
-  const options = candidates.map((id) => ({ id, change: upgraded(id), gain: sparGain(o.deck_cards, actOf(o), o.floor, upgraded(id), at2) }));
+  const kept = shortlist(o, at2, candidates.map((id) => ({ id, change: upgraded(id) })));
+  const options = kept.map(({ id, change }) => ({ id, change, gain: sparGain(o.deck_cards, actOf(o), o.floor, change, at2) }));
   closerLook(o, at2, options).sort((x, y) => y.gain - x.gain);
   return options[0];
 }
@@ -380,6 +382,18 @@ function offeredId(id: string, upgrades: unknown, described?: unknown): string {
     learnCard(`${id}${(d.upgrades ?? 0) > 0 ? "+" : ""}`, rest);
   }
   return `${id}${up ? "+" : ""}`;
+}
+/**
+ * Many candidates (spar4up's upgrades, spar4rm's removals: twenty and more): QUICK_SAMPLES shuffles
+ * each, and the best SHORTLIST go on to the full look. vet-d-norest seed 614's smith took more than
+ * AutoSlay's three minutes, every upgrade played 32 + 128 times against the Kaiser Crab.
+ */
+const QUICK_SAMPLES = 12;
+const SHORTLIST = 4;
+function shortlist<T extends { change: (d: string[]) => string[] }>(o: Observation, at: Sparring, items: T[], keep = SHORTLIST): T[] {
+  if (items.length <= keep + 1) return items;
+  const scored = items.map((x) => ({ x, g: sparGain(o.deck_cards, actOf(o), o.floor, x.change, at, 0, QUICK_SAMPLES) }));
+  return scored.sort((a, b) => b.g - a.g).slice(0, keep).map((y) => y.x);
 }
 /**
  * spar3: the candidates within reach of the line (gain 5), or of the best one, looked at again over
@@ -666,7 +680,7 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
         const change = (d: string[]) => [...d, id];
         return { a: c.a, change, gain: c.v < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, change, at) };
       }),
-      ...takeOut.map((id) => ({ a: removal!, change: withoutOne(id), gain: sparGain(o.deck_cards, actOf(o), o.floor, withoutOne(id), at), out: id })),
+      ...shortlist(o, at, takeOut.map((id) => ({ id, change: withoutOne(id) }))).map(({ id, change }) => ({ a: removal!, change, gain: sparGain(o.deck_cards, actOf(o), o.floor, change, at), out: id })),
     ];
     closerLook(o, at, options).sort((x, y) => y.gain - x.gain);
     if (options[0] && options[0].gain >= 5) {
