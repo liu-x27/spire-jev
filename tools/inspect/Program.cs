@@ -144,7 +144,7 @@ foreach (var t in types.Where(t => typeRe.IsMatch(t.FullName ?? "") && !t.Name.C
             var line = mi switch
             {
                 PropertyInfo p => $"  prop  {Name(p.PropertyType)} {p.Name}",
-                FieldInfo f => $"  field {Name(f.FieldType)} {f.Name}",
+                FieldInfo f => $"  field {Name(f.FieldType)} {f.Name}" + (f.IsLiteral && f.FieldType.IsEnum ? $" = {Convert.ToInt64(f.GetRawConstantValue())}" : ""),
                 MethodInfo m when !m.IsSpecialName => $"  meth  {Name(m.ReturnType)} {m.Name}({string.Join(", ", m.GetParameters().Select(p => Name(p.ParameterType) + " " + p.Name))})",
                 _ => null,
             };

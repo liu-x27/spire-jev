@@ -25,7 +25,8 @@ import { moveIntents } from "./scripts.ts";
 import { type Card, cardOf, type Enemy, formsToCome, play, setKnownDraws, type State } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
-const CATALOG_FILE = path.resolve(import.meta.dirname, "..", "data", "card-catalog.json");
+// SPIRE_JEV_CATALOG: another catalogue (an older one, to replay the choices it made).
+const CATALOG_FILE = process.env["SPIRE_JEV_CATALOG"] ?? path.resolve(import.meta.dirname, "..", "data", "card-catalog.json");
 
 let catalog: Record<string, Omit<CardObs, "index" | "can_play">> | undefined;
 function cards(): Record<string, Omit<CardObs, "index" | "can_play">> {
@@ -58,6 +59,9 @@ export function cardFromId(id: string): Card | undefined {
   if (!c) return undefined;
   return cardOf({ ...c, index: 0, can_play: true } as CardObs);
 }
+
+/** The catalogue has this very card ("BASH+" upgraded), not only its unupgraded self. */
+export const knownExactly = (id: string): boolean => cards()[id] !== undefined;
 
 /** The deck ids the catalogue does not know at all: sparScore would leave them out. */
 export const unknownCards = (ids: readonly string[]): string[] => ids.filter((id) => !cards()[id] && !cards()[id.replace(/\+$/, "")]);
@@ -212,12 +216,17 @@ export function useBossTurns(on: boolean): void {
   bossTurns = on;
 }
 
-export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1, me: Player = BARE, first = 0): number {
+/**
+ * `hpWeight`: what a point of HP lost costs. Between two players who start the bout with different
+ * HP (heal or smith), the HP lost measures nothing (the healed one, losing as well, loses more):
+ * 0 there, the damage dealt and the win alone.
+ */
+export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1, me: Player = BARE, first = 0, hpWeight = 0.7): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   let total = 0;
   for (let i = first; i < first + samples; i++) {
     const b = bout(deck, boss, seeded(seed * 1000 + i), bossTurns ? boss.turns ?? 8 : 8, me);
-    total += b.damage + (b.won ? 60 : 0) - 0.7 * b.hpLost;
+    total += b.damage + (b.won ? 60 : 0) - hpWeight * b.hpLost;
   }
   return total / samples;
 }

@@ -198,3 +198,16 @@ test("personal hive: every hit on the Entomancer is a Dazed; one big hit beats m
   const heavy = card("BLUDGEON", "Attack", "AnyEnemy", { Damage: 10 });
   assert.ok(evaluate(at(state([heavy], [ento()]), 0)) > evaluate(at(state([twin], [ento()]), 0)));
 });
+
+test("Cinder hits, then exhausts a card from the hand; Drum of Battle draws, its energy comes when it is exhausted", () => {
+  const cinder = card("CINDER", "Attack", "AnyEnemy", { Damage: 18 }, 2);
+  const s = at(state([cinder, DEFEND, STRIKE], [foe("NIBBIT", 50)]), 0);
+  assert.equal(s.enemies[0]!.hp, 32);
+  assert.equal(s.hand.length, 1);
+  assert.equal(s.exhaust.length, 1);
+  assert.equal(s.exact, false);
+  const drum = card("DRUM_OF_BATTLE", "Skill", "Self", { Cards: 2, Energy: 2 }, 1);
+  const d = at(state([drum], [foe("NIBBIT", 50)]), 0);
+  assert.equal(d.energy, 2);
+  assert.equal(d.drawn, 2);
+});

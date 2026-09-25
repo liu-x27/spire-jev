@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { setIntentAscension } from "../src/intents.ts";
 import { BARE, BOSSES, learnCard, modelledBoss, sparScore, unknownCards } from "../src/spar.ts";
-import { chooseCardReward, setActBoss, setFlags } from "../src/choices.ts";
+import { chooseCardReward, chooseRest, chooseSelect, chooseShop, chooseUpgrade, setActBoss, setFlags } from "../src/choices.ts";
 import type { CardObs, LegalAction, Observation } from "../src/obs.ts";
 
 const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
@@ -60,6 +60,57 @@ test("spar3: an unmodelled boss or an unseen card leaves the reward to the rules
     assert.equal(chooseCardReward(reward("NOT_A_BOSS_BOSS"), legal), rules);
     setActBoss("VANTOM_BOSS");
     assert.equal(chooseCardReward(reward("VANTOM_BOSS"), unseen), rulesUnseen);
+  } finally {
+    setFlags([]);
+    setActBoss("");
+  }
+});
+
+test("spar4: before the boss, a low-HP Ironclad heals and a full one smiths, by the bout", () => {
+  const legal = [act("choose_rest:0:heal"), act("choose_rest:1:smith")];
+  const rest = (hp: number): Observation => ({ ...reward("VANTOM_BOSS"), phase: "rest_site", floor: 16, player_hp: hp });
+  try {
+    setFlags(["spar", "spar3", "spar4"]);
+    setActBoss("VANTOM_BOSS");
+    assert.equal(chooseRest(rest(15), legal), "choose_rest:0:heal");
+    assert.equal(chooseRest(rest(80), legal), "choose_rest:1:smith");
+  } finally {
+    setFlags([]);
+    setActBoss("");
+  }
+});
+
+test("spar4: the removal the shop bought is the card the select takes out", () => {
+  const deck = [...STARTER, "INJURY"];
+  const shop: Observation = { ...reward("VANTOM_BOSS"), phase: "shop", gold: 300, deck_cards: deck };
+  const legal = [
+    act("shop_buy:0:MerchantCardRemovalEntry", { entry_type: "MerchantCardRemovalEntry", item_id: "CARD_REMOVAL", price: 75, affordable: true, stocked: true }),
+    act("shop_leave"),
+  ];
+  try {
+    setFlags(["spar", "spar3", "spar4"]);
+    setActBoss("VANTOM_BOSS");
+    assert.equal(chooseShop(shop, legal), "shop_buy:0:MerchantCardRemovalEntry");
+    const offered = ["STRIKE_IRONCLAD", "DEFEND_IRONCLAD", "BASH", "INJURY"];
+    const select: Observation = { ...shop, phase: "card_select", room: { room_type: "CardSelect", options: [], details: { purpose: "FromDeckForRemoval", min: 1, max: 1 } } };
+    assert.equal(chooseSelect(select, offered.map((id, i) => act(`choose_card_select:${i}:${id}`))), "choose_card_select:3:INJURY");
+  } finally {
+    setFlags([]);
+    setActBoss("");
+  }
+});
+
+test("spar4: a smith's offers by what the upgrade adds; one never seen upgraded leaves it to the rules", () => {
+  const smith = { ...reward("VANTOM_BOSS"), phase: "card_select" };
+  const offers = ["STRIKE_IRONCLAD", "DEFEND_IRONCLAD", "BASH"].map((id, i) => act(`choose_upgrade:${i}:${id}`));
+  const unseen = [...offers, act("choose_upgrade:3:NEVER_UPGRADED")];
+  setFlags([]);
+  const rules = chooseUpgrade({ ...smith, deck_cards: [...STARTER, "NEVER_UPGRADED"] }, unseen);
+  try {
+    setFlags(["spar", "spar3", "spar4"]);
+    setActBoss("VANTOM_BOSS");
+    assert.ok(offers.some((a) => a.action_id === chooseUpgrade(smith, offers)));
+    assert.equal(chooseUpgrade({ ...smith, deck_cards: [...STARTER, "NEVER_UPGRADED"] }, unseen), rules);
   } finally {
     setFlags([]);
     setActBoss("");

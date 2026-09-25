@@ -15,7 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { BARE, type Boss, bossFor, learnCard, modelledBoss, type Player, sparScore, unknownCards, useBossTurns } from "./spar.ts";
+import { BARE, type Boss, bossFor, knownExactly, learnCard, modelledBoss, type Player, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -224,19 +224,14 @@ const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, num
 const SPAR_SAMPLES = 32;
 const sparBase = new Map<string, number>();
 function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[], at?: Sparring, more = 0): number {
-  const bosses = [at?.boss ?? bossFor(actBoss, act)];
-  // sparboth: act 3's second boss too, the mean of the two. Seed 497 (A10) beat Aeonglass and died
-  // to the Test Subject, whom its act 3 picks were never measured against: floor 42's Taunt, +25
-  // against Aeonglass, is +0 against it, and Stone Armor +18 and +29.
-  const second = flags.has("sparboth") ? modelledBoss(actSecondBoss) : undefined;
-  if (second && second.model !== bosses[0]!.model) bosses.push(second);
+  const bosses = sparBosses(act, at);
   const me = at?.me ?? BARE;
   // spar3's closer look: `more` shuffles after the first 32, on their own draws.
   const first = more > 0 ? SPAR_SAMPLES : 0;
   const n = more > 0 ? more : SPAR_SAMPLES;
   let gain = 0;
   for (const boss of bosses) {
-    const key = `${boss.model}/${floor}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
+    const key = `${boss.model}/${floor}/${me.hp}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
     let base = sparBase.get(key);
     if (base === undefined) {
       if (sparBase.size > 64) sparBase.clear();
@@ -246,6 +241,55 @@ function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: 
     gain += sparScore(change([...deck]), boss, n, floor, me, first) - base;
   }
   return gain / bosses.length;
+}
+/** The bosses a deck is measured against: the act's, and with sparboth act 3's second too (the mean of the two). */
+function sparBosses(act: Act, at?: Sparring): Boss[] {
+  const bosses = [at?.boss ?? bossFor(actBoss, act)];
+  // sparboth: seed 497 (A10) beat Aeonglass and died to the Test Subject, whom its act 3 picks were
+  // never measured against: floor 42's Taunt, +25 against Aeonglass, is +0 against it, and Stone
+  // Armor +18 and +29.
+  const second = flags.has("sparboth") ? modelledBoss(actSecondBoss) : undefined;
+  if (second && second.model !== bosses[0]!.model) bosses.push(second);
+  return bosses;
+}
+/** A deck's score (the mean over the bosses), for comparing what the deck and the player both change: spar4's rest. */
+function sparValue(deck: readonly string[], act: Act, floor: number, at: Sparring, me: Player, first = 0, n = SPAR_SAMPLES, hpWeight = 0.7): number {
+  const bosses = sparBosses(act, at);
+  return bosses.reduce((a, boss) => a + sparScore(deck, boss, n, floor, me, first, hpWeight), 0) / bosses.length;
+}
+
+/**
+ * spar4 (astra-review-4 #2): one evaluator for what changes the deck. Every legal removal, not
+ * worstCard's nominee; the upgrade by what it adds; heal or smith before the boss by the bout; and
+ * a card or removal the bout turned down is not bought by the rules after it.
+ */
+let removeNext: { id: string; floor: number } | undefined;
+const UNREMOVABLE = new Set(["ASCENDERS_BANE"]);
+function removals(deck: readonly string[]): string[] {
+  return [...new Set(deck)].filter((c) => !UNREMOVABLE.has(c) && (REMOVABLE.test(c) || JUNK.has(base(c)) || /^(STRIKE|DEFEND)_IRONCLAD/.test(c)));
+}
+const withoutOne = (id: string) => (d: string[]) => {
+  d.splice(d.indexOf(id), 1);
+  return d;
+};
+const upgraded = (id: string) => (d: string[]) => {
+  d.splice(d.indexOf(id), 1, `${id}+`);
+  return d;
+};
+/**
+ * spar4: the upgrade that adds most against the boss. Of a smith's offers, all or none: one the
+ * catalogue has never seen upgraded leaves the choice to the rules; of the deck (the rest site's
+ * question), those it has seen.
+ */
+function sparUpgrade(o: Observation, ids: readonly string[], at: Sparring, me: Player = at.me, offered = true): { id: string; gain: number } | undefined {
+  let candidates = [...new Set(ids.map(base))].filter((id) => o.deck_cards.includes(id) && !JUNK.has(id));
+  if (offered && candidates.some((id) => !knownExactly(`${id}+`))) return undefined;
+  candidates = candidates.filter((id) => knownExactly(`${id}+`));
+  if (candidates.length === 0) return undefined;
+  const at2 = { ...at, me };
+  const options = candidates.map((id) => ({ id, change: upgraded(id), gain: sparGain(o.deck_cards, actOf(o), o.floor, upgraded(id), at2) }));
+  closerLook(o, at2, options).sort((x, y) => y.gain - x.gain);
+  return options[0];
 }
 
 /**
@@ -359,6 +403,21 @@ export function chooseRest(o: Observation, legal: LegalAction[]): string {
   // of rest sites; they heal mid-act below ~40%, before the act 2 boss below ~50% (the next Ancient
   // heals 80% of what is missing), before the act 3 double boss unless at 85%+. Before Vantom our own
   // runs say HP decides it (winners came in at 95%, losers 85%): 85% there.
+  // spar4: before the boss, the bout says which: the deck at this HP healed, or upgraded at this HP.
+  const at = flags.has("spar4") && bossNext && heal && smith ? sparring(o, actOf(o)) : undefined;
+  if (at) {
+    const now: Player = { ...at.me, hp: Math.max(1, o.player_hp) };
+    const healed: Player = { ...now, hp: Math.min(o.player_max_hp, o.player_hp + Math.round(0.3 * o.player_max_hp)) };
+    const up = sparUpgrade(o, o.deck_cards.filter((c) => !c.endsWith("+")), at, now, false);
+    if (up) {
+      const n = SPAR_SAMPLES + 128;
+      // No HP term: the healed Ironclad, losing as well, would lose more of it. A tie is a smith: the
+      // upgrade stays, HP after an act's boss mostly comes back (the next Ancient heals 80% of it).
+      const healValue = sparValue(o.deck_cards, actOf(o), o.floor, at, healed, 0, n, 0);
+      const smithValue = sparValue(upgraded(up.id)([...o.deck_cards]), actOf(o), o.floor, at, now, 0, n, 0);
+      return (smithValue >= healValue ? smith : heal)!;
+    }
+  }
   if (flags.has("smith2")) {
     const healNow = o.floor === 32 ? share < 0.5 : bossNext ? share < 0.85 : share < 0.4 || o.player_hp < 25;
     return (healNow ? heal ?? smith : smith ?? heal) ?? legal[0]!.action_id;
@@ -406,6 +465,9 @@ const SMITH_LAST2 = new Set(["STRIKE_IRONCLAD", "DEFEND_IRONCLAD", "BATTLE_TRANC
 export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
   const offers = legal.filter((a) => a.action_id.startsWith("choose_upgrade:"));
   const idOf = (a: LegalAction) => base(a.action_id.split(":")[2] ?? "");
+  const at = flags.has("spar4") && offers.length > 1 ? sparring(o, actOf(o)) : undefined;
+  const up = at ? sparUpgrade(o, offers.map(idOf), at) : undefined;
+  if (up) return offers.find((a) => idOf(a) === up.id)!.action_id;
   const rank = (a: LegalAction) => {
     const id = idOf(a);
     // smith2 (and smithorder, the order alone — smith2's rest thresholds cost Vantom its HP: 11/26
@@ -508,7 +570,8 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   const cards = stock.filter((a) => type(a) === "Card").map((a) => ({ a, v: cardValue(item(a), actOf(o), o.deck_cards) })).sort((x, y) => y.v - x.v);
   const removal = stock.find((a) => /remov/i.test(type(a)));
   const topCard = cards[0];
-  if (topCard && topCard.v >= 0.85) return topCard.a.action_id;
+  // spar4: the bout decides the cards, this one too.
+  if (topCard && topCard.v >= 0.85 && !flags.has("spar4")) return topCard.a.action_id;
   // relicvalue (docs/relic-tiers.md §2): relics by what they are worth at their price, not the
   // cheapest; one worth 100 gold more than it costs comes before the removal (rule 2).
   const relics = flags.has("relicvalue")
@@ -526,27 +589,41 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
     const d = shopCards[String(a.metadata?.["slot_index"] ?? "")] as CardObs | undefined;
     return offeredId(item(a), d?.upgrades, d);
   };
+  let sparred = false;
   if (at && !(flags.has("spar3") && unknownCards(cards.map((c) => shopId(c.a))).length > 0)) {
+    sparred = true;
     const worst = o.deck_cards[worstCard(o.deck_cards, o.deck_cards)];
-    const options = [
+    // spar4: every card a removal could take, not worstCard's alone. A curse first, whatever the bout
+    // says: the simulator plays Decay, Regret, Doubt as dead cards and no more (all five gave the
+    // same +2.1 from three in the starter deck against Vantom).
+    const curse = removal && flags.has("spar4") ? removals(o.deck_cards).find((c) => JUNK.has(base(c))) : undefined;
+    if (curse) {
+      resetCardSelect();
+      removeNext = { id: curse, floor: o.floor };
+      return removal!.action_id;
+    }
+    const takeOut = removal ? (flags.has("spar4") ? removals(o.deck_cards) : worst && REMOVABLE.test(worst) ? [worst] : []) : [];
+    const options: { a: LegalAction; change: (d: string[]) => string[]; gain: number; out?: string }[] = [
       ...cards.map((c) => {
         const id = shopId(c.a);
         const change = (d: string[]) => [...d, id];
         return { a: c.a, change, gain: c.v < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, change, at) };
       }),
-      ...(removal && worst && REMOVABLE.test(worst) ? [(() => {
-        const change = (d: string[]) => { d.splice(d.indexOf(worst), 1); return d; };
-        return { a: removal, change, gain: sparGain(o.deck_cards, actOf(o), o.floor, change, at) };
-      })()] : []),
+      ...takeOut.map((id) => ({ a: removal!, change: withoutOne(id), gain: sparGain(o.deck_cards, actOf(o), o.floor, withoutOne(id), at), out: id })),
     ];
     closerLook(o, at, options).sort((x, y) => y.gain - x.gain);
     if (options[0] && options[0].gain >= 5) {
-      if (/remov/i.test(type(options[0].a))) resetCardSelect();
+      if (/remov/i.test(type(options[0].a))) {
+        resetCardSelect();
+        if (flags.has("spar4") && options[0].out) removeNext = { id: options[0].out, floor: o.floor };
+      }
       return options[0].a.action_id;
     }
   }
+  // spar4: what the bout turned down is not bought by the rules; relics and potions still are.
+  const rulesBuy = !(sparred && flags.has("spar4"));
   const shop2 = flags.has("shop2");
-  if (shop2) {
+  if (shop2 && rulesBuy) {
     const need = cards.find((c) => c.v >= 0.5 && fillsNeed(item(c.a), actOf(o), o.deck_cards));
     if (need) return need.a.action_id;
   }
@@ -555,13 +632,13 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   const basics = o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length;
   const curse = o.deck_cards.some((c) => REMOVABLE.test(c) && !/^(STRIKE|DEFEND)_IRONCLAD/.test(c));
   const keep = flags.has("keepbasics") && !curse;
-  if (keep && topCard && topCard.v >= 0.55) return topCard.a.action_id;
-  if (removal && (!keep || basics > 7) && o.deck_cards.some((c) => REMOVABLE.test(c))) {
+  if (keep && topCard && topCard.v >= 0.55 && rulesBuy) return topCard.a.action_id;
+  if (removal && rulesBuy && (!keep || basics > 7) && o.deck_cards.some((c) => REMOVABLE.test(c))) {
     // The card select that follows is the removal's, whatever an event left behind.
     resetCardSelect();
     return removal.action_id;
   }
-  if (topCard && topCard.v >= (shop2 ? 0.55 : 0.65)) return topCard.a.action_id;
+  if (topCard && topCard.v >= (shop2 ? 0.55 : 0.65) && rulesBuy) return topCard.a.action_id;
   if (flags.has("relicvalue")) {
     if (relics[0] && relics[0].surplus > 0) return relics[0].a.action_id;
   } else {
@@ -746,7 +823,10 @@ export function chooseCardSelectFor(o: Observation, legal: LegalAction[]): strin
   const offers = legal.filter((a) => a.action_id.startsWith("choose_card_select:"));
   if (offers.length === 0) return legal[0]!.action_id;
   const ids = offers.map((a) => a.action_id.split(":")[2] ?? "");
-  if (selectFor === "worst") return offers[worstCard(ids, o.deck_cards)]!.action_id;
+  if (selectFor === "worst") {
+    const chosen = takeRemoveNext(o, ids);
+    return offers[chosen ?? worstCard(ids, o.deck_cards)]!.action_id;
+  }
   let best = 0;
   ids.forEach((id, i) => {
     if (cardValue(id, actOf(o), o.deck_cards) > cardValue(ids[best]!, actOf(o), o.deck_cards)) best = i;
@@ -758,6 +838,14 @@ export function chooseCardSelectFor(o: Observation, legal: LegalAction[]): strin
 /** Card selects from here on take the worst card (a removal), until an event says otherwise. */
 export function resetCardSelect(): void {
   selectFor = "worst";
+}
+/** spar4: the card the shop's removal was bought for, where the select offers it (once, on that floor). */
+function takeRemoveNext(o: Observation, ids: readonly string[]): number | undefined {
+  const want = removeNext;
+  removeNext = undefined;
+  if (want === undefined || want.floor !== o.floor) return undefined;
+  const i = ids.indexOf(want.id);
+  return i >= 0 ? i : undefined;
 }
 
 const WORST_FOR = /Removal|Transformation|Discard|Generic/;
@@ -783,6 +871,8 @@ export function chooseSelect(o: Observation, legal: LegalAction[]): string {
     const types = ((o.room?.details ?? {}) as { cards?: { card_type?: string }[] }).cards?.map((c) => c.card_type) ?? [];
     const left = ids.map((_, i) => i);
     order = [];
+    const chosen = /Removal/.test(purpose) ? takeRemoveNext(o, ids) : undefined;
+    if (chosen !== undefined) order.push(left.splice(chosen, 1)[0]!);
     while (left.length > 0) {
       const w = worstCard(left.map((i) => ids[i]!), o.deck_cards, left.map((i) => types[i]));
       order.push(left.splice(w, 1)[0]!);

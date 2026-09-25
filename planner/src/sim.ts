@@ -675,6 +675,8 @@ function exhaustCard(s: State, card: Card): void {
   gainBlock(s, s.player.powers["FEEL_NO_PAIN"] ?? 0);
   // Dark Embrace draws for every card exhausted.
   if (has(s.player, "DARK_EMBRACE")) draw(s, s.player.powers["DARK_EMBRACE"] ?? 1);
+  // Drum of Battle's energy is for being exhausted (IL: AfterCardExhausted, the card itself).
+  if (card.id === "DRUM_OF_BATTLE") s.energy += card.vars["Energy"] ?? 2;
 }
 
 /** HP a card costs the player (Offering, Hemokinesis, Brand): Rupture turns it into Strength. */
@@ -940,6 +942,16 @@ const SPECIAL: Record<string, Rule> = {
     gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     applyPower(s, s.player, "COLOSSUS", num(c, "Colossus"));
   },
+  // The hit, then a random card of the hand exhausted (IL: Rng.NextItem over PileType.Hand, then
+  // CardCmd.Exhaust). Which one is not known: the first in hand, and the line is not exact.
+  CINDER: (s, c, t) => {
+    strike(s, one(t), dmg(s, c), 1);
+    if (s.hand.length === 0) return;
+    s.exact = false;
+    for (const x of s.hand.splice(0, 1)) exhaustCard(s, x);
+  },
+  // Draws, no more: its Energy is for being exhausted (exhaustCard), where the vars read as played gave it now.
+  DRUM_OF_BATTLE: (s, c) => draw(s, num(c, "Cards")),
   // Hits twice if the target is Vulnerable.
   DISMANTLE: (s, c, t) => strike(s, one(t), dmg(s, c), t && has(t, "VULNERABLE") ? 2 : 1),
   // Vulnerable, then Strength for every Vulnerable the target has now (IL: PowerCmd.Apply of
