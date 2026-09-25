@@ -222,6 +222,8 @@ export function futureDamage(s: State, pace: Pace = deckPace(s), blockAware = fa
 }
 
 const WIN = 1e6;
+/** What a Dazed put into the draw pile costs, in HP: a card slot of a hand to come. */
+const DAZED_COST = 3;
 /** What a turn of Sandpit short of the kill costs, in HP. */
 const SANDPIT_TURN = 20;
 
@@ -314,6 +316,9 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     if (attacking) score += Math.min(3, e.powers["WEAK"] ?? 0) * w.weak;
   }
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
+  // A Dazed in the draw pile is a card slot lost in a hand to come: few big hits into an Entomancer,
+  // not many small ones (its Personal Hive put 3-4 Dazed in every hand by turn 4).
+  score -= (s.dazedAdded ?? 0) * DAZED_COST;
   // Imbalanced (Bowlbug Rock; IL: ImbalancedPower.AfterDamageGiven): its attack fully blocked stuns it,
   // its next attack gone — worth that attack when this turn's block covers all that is coming.
   if (endOfTurnBlock(s) >= incomingDamage(s)) {

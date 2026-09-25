@@ -190,3 +190,11 @@ test("illusion: a Parafright's HP is no progress", () => {
   const hitObscura = at(state([STRIKE], [obscura, { ...fright, powers: { ...fright.powers } }]), 0, 1);
   assert.ok(evaluate(hitObscura) > evaluate(hitFright));
 });
+
+test("personal hive: every hit on the Entomancer is a Dazed; one big hit beats many small ones", () => {
+  const ento = () => foe("ENTOMANCER", 100, { PERSONAL_HIVE: 1 });
+  const twin = card("TWIN_STRIKE", "Attack", "AnyEnemy", { Damage: 5, Repeat: 2 });
+  assert.equal(at(state([twin], [ento()]), 0).dazedAdded, 2);
+  const heavy = card("BLUDGEON", "Attack", "AnyEnemy", { Damage: 10 });
+  assert.ok(evaluate(at(state([heavy], [ento()]), 0)) > evaluate(at(state([twin], [ento()]), 0)));
+});

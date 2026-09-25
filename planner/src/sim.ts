@@ -136,6 +136,8 @@ export interface State {
   potionSlots: number;
   /** Potions drunk since the observation (the evaluation charges for each). */
   potionsUsed: number;
+  /** Dazed an Entomancer's Personal Hive put into the draw pile this turn (the evaluation charges for each). */
+  dazedAdded?: number;
   /** This turn's one Bound card has been played (Chains of Binding's boundCardPlayed). */
   boundPlayed?: boolean;
   /** Second lives spent since the observation: a death Lizard Tail or Fairy in a Bottle undid. */
@@ -296,6 +298,7 @@ function clone(s: State): State {
     potionSlots: s.potionSlots,
     potionsUsed: s.potionsUsed,
     ...(s.boundPlayed ? { boundPlayed: true } : {}),
+    ...(s.dazedAdded ? { dazedAdded: s.dazedAdded } : {}),
     ...(s.revivals ? { revivals: s.revivals } : {}),
     ...(s.facing !== undefined ? { facing: s.facing } : {}),
   };
@@ -805,6 +808,9 @@ function strike(s: State, victims: readonly Enemy[], base: number, times: number
       // Slow (Bygone Effigy): 10% more for every card played this turn, this one not yet counted.
       const slow = has(e, "SLOW") ? 1 + (powerVar(e, "SLOW", "SlowAmount", 0) + s.played) / 10 : 1;
       const lost = hit(e, attackDamage(base, s.player, e, slow));
+      // Personal Hive (Entomancer; IL: PersonalHivePower.AfterDamageReceived): every hit of the
+      // player's attacks on it puts its amount of Dazed into the draw pile, blocked or not.
+      if (has(e, "PERSONAL_HIVE")) s.dazedAdded = (s.dazedAdded ?? 0) + (e.powers["PERSONAL_HIVE"] ?? 0);
       // Curl Up (Louse Progenitor): the first HP it loses curls it up, for block once the card is done.
       if (lost > 0 && has(e, "CURL_UP")) curling.set(e, e.powers["CURL_UP"] ?? 0);
       if (lost > 0 && has(e, "SKITTISH") && !e.skittishUsed) skittish.add(e);
@@ -1273,5 +1279,5 @@ export function stateKey(s: State): string {
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
   const potions = s.potions.map((p) => p.slot).join(",");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}`;
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}|${s.dazedAdded ?? 0}`;
 }
