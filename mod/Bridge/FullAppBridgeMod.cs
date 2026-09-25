@@ -87,11 +87,36 @@ public static class FullAppBridgeMod
             if (moveNext != null) harmony.Patch(moveNext, transpiler: new HarmonyMethod(typeof(FullAppBridgeMod), nameof(RaiseMaxFloor)));
         }
         catch (Exception ex) { GD.PrintErr($"[FullAppBridge] max floor: {ex.Message}"); }
+        // spire-jev: AutoSlay gives a screen 30 s and a room 2 min (AutoSlayConfig), then fails the run.
+        // Our choices are made inside those waits, and spar's bouts can take tens of seconds on a
+        // rewards screen (a Kaiser Crab or Kin boss): vet-s3 lost 4 runs of 270 to "Operation timed
+        // out" (three rewards screens, a shop). The config's fields are static readonly, set before
+        // the mod loads: the waits that pass them are lengthened instead. The run keeps its 25 minutes.
+        try
+        {
+            MethodInfo? withTimeout = AccessTools.Method(typeof(WaitHelper), nameof(WaitHelper.WithTimeout));
+            if (withTimeout != null) harmony.Patch(withTimeout, prefix: new HarmonyMethod(typeof(FullAppBridgeMod), nameof(LongerWait)));
+        }
+        catch (Exception ex) { GD.PrintErr($"[FullAppBridge] timeouts: {ex.Message}"); }
         // spire-jev: every new run is made here, whoever starts it (AutoSlay starts ours at ascension 0).
         TryPatchPrefix(harmony, typeof(RunState), nameof(RunState.CreateForNewRun), nameof(OnCreateForNewRun));
 
         FullAppBridgeServer.Start(port, portFile);
     }
+
+    /// <summary>A wait for a screen (AutoSlayConfig.defaultScreenTimeout) or a room (defaultRoomTimeout), made longer.</summary>
+    private static void LongerWait(ref TimeSpan timeout)
+    {
+        TimeSpan was = timeout;
+        if (timeout == AutoSlayConfig.defaultScreenTimeout) timeout = TimeSpan.FromMinutes(3);
+        else if (timeout == AutoSlayConfig.defaultRoomTimeout) timeout = TimeSpan.FromMinutes(8);
+        if (timeout != was && !_waitLogged)
+        {
+            _waitLogged = true;
+            GD.Print($"[spire-jev] AutoSlay's waits lengthened ({was} -> {timeout}, and the others)");
+        }
+    }
+    private static bool _waitLogged;
 
     /// <summary>PlayRunAsync's `TotalFloor < 49` (its only 49 after a TotalFloor read) becomes `< 99`.</summary>
     private static IEnumerable<CodeInstruction> RaiseMaxFloor(IEnumerable<CodeInstruction> instructions)
