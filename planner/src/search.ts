@@ -723,6 +723,62 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
   return { actions: chosen.actions, score: chosenValue, exact: chosen.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
 }
 
+/**
+ * Rollouts (the act 3 research, another session: A10 winners' decks win 6% of their first act 3 boss
+ * in our planner's hands, which let Cruelty, Automation, Juggling sit unplayed and fed the Test
+ * Subject's Enrage; a one-turn evaluation sees none of what a power or an enemy's Strength does after
+ * this turn). The best `ends` lines of this turn, each played on for `depth` more turns `samples`
+ * times (the enemies' turn, a shuffled draw, this planner's own best line at `nodes` a turn), ranked
+ * by where they end: the evaluation there, a win as a win, a death by the HP the enemies had left.
+ */
+export interface Rollouts {
+  ends: number;
+  samples: number;
+  depth: number;
+  nodes: number;
+}
+export const ROLL: Rollouts = { ends: 5, samples: 4, depth: 3, nodes: 1500 };
+export function planTurnRoll(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000, r: Rollouts = ROLL): Plan {
+  const t0 = performance.now();
+  const { best, top, nodes, truncated } = explore(start, w, maxNodes, r.ends);
+  let nodesAll = nodes;
+  let chosen = best;
+  let chosenValue = -Infinity;
+  const left = (st: State) => st.enemies.reduce((a, e) => a + (e.alive ? e.hp : 0) + formsToCome(e), 0);
+  for (const line of top) {
+    let value: number;
+    if (line.score >= WIN || line.score <= -WIN) value = line.score;
+    else {
+      let sum = 0;
+      const seed = hash(stateKey(line.state));
+      for (let i = 0; i < r.samples; i++) {
+        const rng = seeded(seed + i * 7919);
+        let st = line.state;
+        let v = line.score;
+        for (let d = 0; d < r.depth; d++) {
+          const next = nextTurn(st, rng, expectedIntents);
+          if (!next) {
+            v = -WIN - left(st);
+            break;
+          }
+          const turn = explore(next, w, r.nodes, 0);
+          nodesAll += turn.nodes;
+          v = turn.best.score;
+          if (v >= WIN || v <= -WIN) break;
+          st = turn.best.state;
+        }
+        sum += v;
+      }
+      value = sum / r.samples;
+    }
+    if (value > chosenValue) {
+      chosenValue = value;
+      chosen = line;
+    }
+  }
+  return { actions: chosen.actions, score: chosenValue, exact: chosen.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
+}
+
 /** The bridge's id for an action, against the current hand's indices. */
 export function actionId(a: Action): string {
   if (a.kind === "end") return "end_turn";

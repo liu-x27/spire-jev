@@ -19,7 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { setIntentAscension } from "./intents.ts";
-import { expectedIntents, planTurn, TURN_WEIGHTS } from "./search.ts";
+import { expectedIntents, type Plan, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
 import { moveIntents } from "./scripts.ts";
 import { type Card, cardOf, type Enemy, formsToCome, play, setKnownDraws, type State } from "./sim.ts";
@@ -142,6 +142,12 @@ export interface Player {
 }
 export const BARE: Player = { hp: 80, maxHp: 80, energy: 3, maxEnergy: 3, hand: 5, block: 0, powers: {}, relics: [] };
 
+/** The planner a bout plays with (planTurn at 3000 nodes; an experiment can put another: planTurn2, planTurnRoll). */
+let boutPlanner: (s: State) => Plan = (s) => planTurn(s, TURN_WEIGHTS, 3000);
+export function useBoutPlanner(plan: (s: State) => Plan): void {
+  boutPlanner = plan;
+}
+
 export interface Bout {
   /** The HP the fight needed in all (every monster's and forms to come): damage / pool is the burden taken off. */
   pool?: number;
@@ -194,7 +200,7 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
   const blowing = (st: State) => st.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
   for (let t = 1; t <= turns || blowing(s); t++) {
     for (let step = 0; step < 15; step++) {
-      const a = planTurn(s, TURN_WEIGHTS, 3000).actions[0];
+      const a = boutPlanner(s).actions[0];
       if (!a || a.kind !== "play") break;
       setKnownDraws(true);
       try {
