@@ -466,6 +466,15 @@ states, and only a simulator is fast enough for that.
      12; act 1 deaths 111 → 81. The Kin 2/16 → 11/21, Matriarch 12/31 → 22/33,
      Soul Fysh 15/28 → 22/29, Vantom 12/23 → 17/24; the Waterfall Giant 9/18 →
      8/21 (its fight outlasts spar's eight turns).
+   - spar confirmed on 496-585 (`vet-conf4s-a10` against vet-conf2): mean
+     floor 22.0 → 25.0 (further on 42 seeds, shorter on 19), act 1 bosses
+     56/79 (71%), act 1 deaths 49 → 34. Adopted into the run flags.
+   - **No A10 run could have been won**: AutoSlay's PlayRunAsync abandons a run
+     once its total floor reaches 49 ("Run completed (max floor reached)") —
+     A10's second act 3 boss is on floor 49. Seed 497 beat Aeonglass on floor
+     48 and was abandoned. Fixed (b5d1c92, a transpiler raising 49 to 99); the
+     replay of 497 then met the Test Subject on floor 49 at 48 of 128 HP and
+     lost in four turns: the furthest run so far, one fight from a clear.
    - Colourless cards: shops offered them 9,092 times (38 kinds), bought 0 —
      `cardValue` gives cards missing from its tables 0.3. Mostly right:
      strong players' Elo puts nearly all of them below skipping (Spire Codex
