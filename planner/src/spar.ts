@@ -22,7 +22,7 @@ import { setIntentAscension } from "./intents.ts";
 import { expectedIntents, type Plan, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
 import { moveIntents } from "./scripts.ts";
-import { type Card, cardOf, type Enemy, formsToCome, play, redSkull, relicDamage, setKnownDraws, type State } from "./sim.ts";
+import { type Card, cardOf, type Enemy, formsToCome, play, type Potion, redSkull, relicDamage, setKnownDraws, type State } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
 // SPIRE_JEV_CATALOG: another catalogue (an older one, to replay the choices it made).
@@ -141,6 +141,9 @@ export interface Player {
   relicVars?: Record<string, Record<string, number>>;
   /** Its energy, hand, block and powers are a fight's own opening already (spar3's): the relics' opening is in them. */
   opened?: boolean;
+  /** The belt the bout may drink from (spar3: the run's own), and its slots. */
+  potions?: readonly Potion[];
+  potionSlots?: number;
 }
 export const BARE: Player = { hp: 80, maxHp: 80, energy: 3, maxEnergy: 3, hand: 5, block: 0, powers: {}, relics: [] };
 
@@ -234,7 +237,7 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
     player: { hp, maxHp: me.maxHp, block: me.block, powers: { ...me.powers, ...(boss.player ?? {}) } }, energy: me.energy, maxEnergy: me.maxEnergy, turn: 1,
     hand: pile.splice(Math.max(0, pile.length - me.hand), me.hand), draw: pile, discard: [], exhaust: [], enemies,
     drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: me.relics, ...(me.relicVars ? { relicVars: me.relicVars } : {}), played: 0, skills: 0,
-    unmovableUsed: false, potions: [], potionSlots: 0, potionsUsed: 0,
+    unmovableUsed: false, potions: [...(me.potions ?? [])], potionSlots: me.potionSlots ?? 0, potionsUsed: 0,
     ...(surrounded ? { facing: monsters.length } : {}),
   };
   // The fight's HP before anything is dealt: the opening relics' damage is the bout's too.

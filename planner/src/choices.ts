@@ -365,7 +365,14 @@ function sparring(o: Observation, act: Act): Sparring | undefined {
   const maxHp = o.player_max_hp > 0 ? o.player_max_hp : BARE.maxHp;
   return {
     boss,
-    me: { ...BARE, ...(opening ? { ...opening, opened: true } : {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}) },
+    me: {
+      ...BARE, ...(opening ? { ...opening, opened: true } : {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}),
+      // --flags sparpots: the belt the run holds, drunk in the bout as the planner would (a boss fight's).
+      ...(flags.has("sparpots") ? {
+        potions: (o.potion_details ?? []).map((p) => ({ slot: p.slot, id: p.id, target: p.target ?? "None", usage: p.usage ?? "", vars: p.vars ?? {} })),
+        potionSlots: o.potion_slots ?? 3,
+      } : {}),
+    },
   };
 }
 /** pantograph: the HP a boss fight starts with, Pantograph's 25 on top (at most max HP). */
