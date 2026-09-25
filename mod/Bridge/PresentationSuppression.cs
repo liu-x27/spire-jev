@@ -37,6 +37,12 @@ public static class PresentationSuppression
         // the main thread forever (seeds 17, 20, 27 froze on entering it, the log's last line
         // "Creating NCombatRoom with mode=VisualOnly encounter=PUNCH_OFF_EVENT_ENCOUNTER").
         TryPatchSkipTask(harmony, typeof(MegaCrit.Sts2.Core.Models.Events.PunchOff), "PunchEachOther");
+        // spire-jev: a card's preview (CardCmd.PreviewInternal: a card gained, a card added to a pile)
+        // is finished by its tween's callback, which headless and under load can throw (a
+        // NullReferenceException in <PreviewInternal>b__1) and never set it: whatever awaits it waits
+        // for ever, and the bridge gets no reply (seeds 589 and 591, 2026-09-25: "step: no reply in
+        // 120 s", right after a card reward and mid-combat). The preview only shows: done at once.
+        TryPatchCompletedPreview(harmony);
 
         try
         {
@@ -145,6 +151,34 @@ public static class PresentationSuppression
         {
             Godot.GD.PrintErr($"[FullAppBridge] skip {type.Name}.{methodName}: {ex.Message}");
         }
+    }
+
+    private static void TryPatchCompletedPreview(Harmony harmony)
+    {
+        try
+        {
+            MethodInfo? method = AccessTools.Method(typeof(CardCmd), "PreviewInternal");
+            if (method is not null && method.ReturnType == typeof(TaskCompletionSource))
+            {
+                harmony.Patch(method, prefix: new HarmonyMethod(typeof(PresentationSuppression), nameof(CompletedPreview)));
+            }
+            else
+            {
+                Godot.GD.PrintErr("[FullAppBridge] no CardCmd.PreviewInternal returning a TaskCompletionSource to skip");
+            }
+        }
+        catch (Exception ex)
+        {
+            Godot.GD.PrintErr($"[FullAppBridge] skip CardCmd.PreviewInternal: {ex.Message}");
+        }
+    }
+
+    private static bool CompletedPreview(ref TaskCompletionSource __result)
+    {
+        var done = new TaskCompletionSource();
+        done.SetResult();
+        __result = done;
+        return false;
     }
 
     private static bool SkipTaskMethod(ref Task __result)
