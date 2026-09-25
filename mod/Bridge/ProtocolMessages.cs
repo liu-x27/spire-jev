@@ -78,6 +78,11 @@ public sealed class ObservationDto
     [JsonPropertyName("floor")]
     public int Floor { get; set; }
 
+    // spire-jev: the engine's frame count when the observation was made; under Movie Maker a frame
+    // of the recording each, so a recording can be cut at a floor or a fight.
+    [JsonPropertyName("frame")]
+    public ulong Frame { get; set; }
+
     [JsonPropertyName("gold")]
     public int Gold { get; set; }
 

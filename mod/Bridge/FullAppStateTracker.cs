@@ -241,6 +241,7 @@ public static class FullAppStateTracker
             ActBoss = BossOf(runState, second: false),
             ActSecondBoss = BossOf(runState, second: true),
             Floor = runState?.TotalFloor ?? 0,
+            Frame = Godot.Engine.GetProcessFrames(),
             Gold = player?.Gold ?? 0,
             PlayerHp = player?.Creature.CurrentHp ?? 0,
             PlayerMaxHp = player?.Creature.MaxHp ?? 0,

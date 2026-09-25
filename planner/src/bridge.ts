@@ -35,6 +35,29 @@ const PROFILE_FILE: Record<string, string | undefined> = {
 };
 if (!(PROFILE in PROFILE_FILE)) throw new Error(`SPIRE_JEV_PROFILE: veteran, unlocked or locked, not ${PROFILE}`);
 
+/**
+ * A game on screen instead of headless (SPIRE_JEV_VISUAL=1), for showing it play: the bridge then
+ * leaves the animations, effects and sounds on. SPIRE_JEV_WINDOW is its size (1280x720), and
+ * SPIRE_JEV_MOVIE a file Godot's Movie Maker records every frame to (.avi, or .png for a sequence),
+ * at SPIRE_JEV_MOVIE_FPS (30) frames per second of game time, whatever the window is behind.
+ */
+const VISUAL = process.env["SPIRE_JEV_VISUAL"] === "1";
+const WINDOW = (process.env["SPIRE_JEV_WINDOW"] ?? "1280x720").split("x").map(Number) as [number, number];
+const MOVIE = process.env["SPIRE_JEV_MOVIE"];
+/** SPIRE_JEV_TIMELINE: a file each request and the observation it got back are appended to, frame first, to cut a recording by. */
+const TIMELINE = process.env["SPIRE_JEV_TIMELINE"];
+
+function toTimeline(method: string, params: Record<string, unknown>, result: unknown): void {
+  const o = (method === "observe" ? result : (result as { observation?: unknown } | undefined)?.observation) as Observation | undefined;
+  if (!TIMELINE || !o || typeof o !== "object" || !("phase" in o)) return;
+  const line = {
+    frame: o.frame, t: Date.now(), method, action: params["action_id"], phase: o.phase, ascension: o.ascension, act: o.act, boss: o.act_boss, floor: o.floor,
+    hp: o.player_hp, max_hp: o.player_max_hp, gold: o.gold, terminal: o.is_terminal,
+    ...(o.combat ? { turn: o.combat.turn, enemies: o.combat.enemies.filter((e) => e.is_alive).map((e) => `${e.model_id}:${e.hp}`) } : {}),
+  };
+  fs.appendFileSync(TIMELINE, `${JSON.stringify(line)}\n`);
+}
+
 /** The profile's save folder in a sandbox: current_run.save is the run in progress. */
 export const savesDir = (sandbox: string) => path.join(sandbox, "userdata", "SlayTheSpire2", "default", "1", "modded", "profile1", "saves");
 
@@ -78,7 +101,16 @@ function prepare(sandbox: string, resume?: string): void {
 
   const settingsDir = path.join(sandbox, "userdata", "SlayTheSpire2", "default", "1");
   fs.mkdirSync(settingsDir, { recursive: true });
-  const settings = { mod_settings: { mods_enabled: true, mod_list: [] }, fullscreen: false, skip_intro_logo: true };
+  const settings: Record<string, unknown> = { mod_settings: { mods_enabled: true, mod_list: [] }, fullscreen: false, skip_intro_logo: true };
+  if (VISUAL) {
+    // A window of a fixed size (what a movie is recorded at), drawn at full speed when it is not in
+    // front, in English, and past the early access notice.
+    Object.assign(settings, {
+      window_size: { X: WINDOW[0], Y: WINDOW[1] }, window_position: { X: 0, Y: 0 }, aspect_ratio: "sixteen_by_nine",
+      resize_windows: true, limit_fps_in_background: false, vsync: "off", fps_limit: 500,
+      language: process.env["SPIRE_JEV_LANGUAGE"] ?? "eng", seen_ea_disclaimer: true,
+    });
+  }
   fs.writeFileSync(path.join(settingsDir, "settings.save"), JSON.stringify(settings, null, 2));
   fs.mkdirSync(path.join(sandbox, "local_userdata"), { recursive: true });
 }
@@ -105,9 +137,12 @@ export class Game {
     prepare(sandbox, resume);
     const portFile = path.join(sandbox, "userdata", "bridge_port.txt");
     fs.rmSync(portFile, { force: true });
+    const display = VISUAL
+      ? [`--resolution`, WINDOW.join("x"), ...(MOVIE ? ["--write-movie", MOVIE, "--fixed-fps", process.env["SPIRE_JEV_MOVIE_FPS"] ?? "30"] : [])]
+      : ["--headless"];
     const child = spawn(
       path.join(sandbox, "SlayTheSpire2.exe"),
-      ["--headless", "--force-steam=off", `--log-file=${path.join(sandbox, "full_app.log")}`],
+      [...display, "--force-steam=off", `--log-file=${path.join(sandbox, "full_app.log")}`],
       {
         cwd: sandbox,
         stdio: "ignore",
@@ -164,6 +199,7 @@ export class Game {
     if (line.done) throw new Error(`${method}: the bridge closed the connection`);
     const reply = JSON.parse(line.value.replace(/^\uFEFF/, "")) as { result?: T; error?: unknown };
     if (reply.error) throw new Error(`${method}: ${JSON.stringify(reply.error)}`);
+    toTimeline(method, params, reply.result);
     return reply.result as T;
   }
 

@@ -16,6 +16,14 @@ public static class PresentationSuppression
 
         NonInteractiveMode.AutoSlayerCheck = () => true;
 
+        // spire-jev: a game on screen, played for a recording (SPIRE_JEV_VISUAL=1), keeps its
+        // animations, effects and sounds; the Punch Off's loop waits on real animations there.
+        if (System.Environment.GetEnvironmentVariable("SPIRE_JEV_VISUAL") == "1")
+        {
+            Godot.GD.Print("[spire-jev] visual: presentation left on");
+            return;
+        }
+
         // Strictly patch leaf presentation sinks (audio, visual effects, speech bubbles, camera animations)
         TryPatchAllMethods(harmony, typeof(MegaCrit.Sts2.Core.Commands.VfxCmd));
         TryPatchAllMethods(harmony, typeof(MegaCrit.Sts2.Core.Audio.Debug.NDebugAudioManager));

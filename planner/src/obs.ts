@@ -74,6 +74,8 @@ export interface Observation {
   act_boss?: string;
   act_second_boss?: string;
   floor: number;
+  /** The engine's frame count: under Movie Maker, the frame of the recording. */
+  frame?: number;
   gold: number;
   player_hp: number;
   player_max_hp: number;

@@ -11,3 +11,4 @@ mod/Bridge/obj/
 mod/build.log
 tools/inspect/build.log
 planner/runs/
+recordings/
