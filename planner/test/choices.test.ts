@@ -212,3 +212,17 @@ test("with Sozu no potion is wanted, the belt empty or not", () => {
   assert.equal(wantsPotion(obs({ potions: [], potion_slots: 2, relics: ["SOZU"] }), 2), false);
   assert.equal(wantsPotion(obs({ potions: [], potion_slots: 2 }), 2), true);
 });
+
+test("pantograph: the shop's Pantograph before anything else", () => {
+  const legal = [
+    act("shop_buy:0:MerchantCardEntry", { entry_type: "MerchantCardEntry", item_id: "OFFERING", price: 80, affordable: true, stocked: true }),
+    act("shop_buy:1:MerchantRelicEntry", { entry_type: "MerchantRelicEntry", item_id: "PANTOGRAPH", price: 180, affordable: true, stocked: true }),
+    act("shop_leave"),
+  ];
+  setFlags(["pantograph"]);
+  try {
+    assert.equal(chooseShop(obs({ phase: "shop", gold: 300, act: 2, floor: 40 }), legal), "shop_buy:1:MerchantRelicEntry");
+  } finally {
+    setFlags([]);
+  }
+});

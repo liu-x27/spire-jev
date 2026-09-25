@@ -244,7 +244,9 @@ export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed 
 const PAIR_TURNS = 20;
 export function pairScore(ids: readonly string[], first: Boss, second: Boss, samples = 8, seed = 1, me: Player = BARE, from = 0, hpWeight = 0.7): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
-  const heal = (["BURNING_BLOOD", "BLACK_BLOOD"] as const).reduce((a, id) => a + (me.relics.includes(id) ? me.relicVars?.[id]?.["Heal"] ?? 6 : 0), 0);
+  // The heals for winning, and Pantograph's 25 as the second boss fight starts.
+  const heal = (["BURNING_BLOOD", "BLACK_BLOOD"] as const).reduce((a, id) => a + (me.relics.includes(id) ? me.relicVars?.[id]?.["Heal"] ?? 6 : 0), 0)
+    + (me.relics.includes("PANTOGRAPH") ? 25 : 0);
   const turns = () => PAIR_TURNS;
   let total = 0;
   for (let i = from; i < from + samples; i++) {

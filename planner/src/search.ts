@@ -286,7 +286,7 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
     // how much HP it leaves (a blow that looks lethal still depends on next turn's draw).
     // A potion costs what it does elsewhere, on this scale of 10 a point of HP.
     const pending = s.enemies.some((e) => !e.alive && !e.blowNow && (e.deathBlow ?? 0) > 0);
-    return (pending ? WIN / 2 + (hpLeft - blowToCome(s)) * 10 : WIN + hpLeft * 10) - s.potionsUsed * potionCost(s, w) * 10;
+    return (pending ? WIN / 2 + (hpLeft - blowToCome(s)) * 10 * hpScale : WIN + hpLeft * 10 * hpScale) - s.potionsUsed * potionCost(s, w) * 10;
   }
   if (blows) hpLeft -= blowToCome(s);
   // wghp: HP the Giant's blow will need, counted twice while short of it.
@@ -310,7 +310,7 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was
   // charged: a state at 70 HP and one at 10 scored the same.) Root HP is the same for every line.
-  let score = hpValue(s, hpLeft, alive, w) * w.hpLoss - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
+  let score = hpValue(s, hpLeft, alive, w) * w.hpLoss * hpScale - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
@@ -468,9 +468,19 @@ let giantMargin = false;
  * floor 48 at A10 came with none (712, 722: both drunk in act 3's elites and hallways, the belt
  * empty for the Queen and the Test Subject); set per fight by run-fights.
  */
-let savingPotions = false;
-export function usePotionSaving(on: boolean): void {
-  savingPotions = on;
+let savingPotions = 1;
+/** The factor a potion drunk costs in this fight: potsave's 4, pot48's 3, else 1 (true is 4). */
+export function usePotionSaving(on: boolean | number): void {
+  savingPotions = on === true ? 4 : on === false ? 1 : on;
+}
+/**
+ * --flags hp48: A10's first act 3 boss (floor 48) is followed by the second with no heal between:
+ * its HP counts more (set per fight by run-fights, 1 elsewhere). The first boss's wins so far cost
+ * 47 (Queen), 79 (Aeonglass), 92 (Test Subject) HP, and the four second bosses met came at 11-44.
+ */
+let hpScale = 1;
+export function useHpScale(x: number): void {
+  hpScale = x;
 }
 export function useGiantRules(potions: boolean, margin: boolean): void {
   giantPotions = potions;
@@ -507,7 +517,7 @@ export function giantBlowAhead(s: State): number {
 function potionCost(s: State, w: Weights): number {
   const big = s.enemies.some((e) => e.maxHp >= 100);
   const full = s.potions.length + s.potionsUsed >= s.potionSlots;
-  return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1) * (giantPotions && giantAlive(s) ? 5 : 1) * (savingPotions ? 4 : 1);
+  return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1) * (giantPotions && giantAlive(s) ? 5 : 1) * savingPotions;
 }
 
 /**

@@ -366,6 +366,11 @@ function sparring(o: Observation, act: Act): Sparring | undefined {
     me: { ...BARE, ...(opening ?? {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}) },
   };
 }
+/** pantograph: the HP a boss fight starts with, Pantograph's 25 on top (at most max HP). */
+function bossEntry(o: Observation, hp: number): number {
+  const heal = flags.has("pantograph") && o.relics.includes("PANTOGRAPH") ? 25 : 0;
+  return Math.max(1, Math.min(o.player_max_hp, hp + heal));
+}
 /** An offered card's id as the deck would hold it ("BASH+"), its description learnt for the bout. */
 function offeredId(id: string, upgrades: unknown, described?: unknown): string {
   const d = described as CardObs | undefined;
@@ -445,8 +450,8 @@ export function chooseRest(o: Observation, legal: LegalAction[]): string {
   // spar4: before the boss, the bout says which: the deck at this HP healed, or upgraded at this HP.
   const at = spar4("rest") && bossNext && heal && smith ? sparring(o, actOf(o)) : undefined;
   if (at) {
-    const now: Player = { ...at.me, hp: Math.max(1, o.player_hp) };
-    const healed: Player = { ...now, hp: Math.min(o.player_max_hp, o.player_hp + Math.round(0.3 * o.player_max_hp)) };
+    const now: Player = { ...at.me, hp: bossEntry(o, o.player_hp) };
+    const healed: Player = { ...now, hp: bossEntry(o, Math.min(o.player_max_hp, o.player_hp + Math.round(0.3 * o.player_max_hp))) };
     const up = sparUpgrade(o, o.deck_cards.filter((c) => !c.endsWith("+")), at, now, false);
     if (up) {
       const n = SPAR_SAMPLES + 128;
@@ -617,6 +622,10 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   const item = (a: LegalAction) => String(a.metadata?.["item_id"] ?? "");
   const cards = stock.filter((a) => type(a) === "Card").map((a) => ({ a, v: cardValue(item(a), actOf(o), o.deck_cards) })).sort((x, y) => y.v - x.v);
   const removal = stock.find((a) => /remov/i.test(type(a)));
+  // --flags pantograph: Pantograph (heal 25 at the start of every boss fight) before anything else;
+  // at A10 it heals four times, twice in act 3's back-to-back pair (docs/relic-tiers.md: A, 0.76).
+  const pantograph = flags.has("pantograph") ? stock.find((a) => type(a) === "Relic" && item(a) === "PANTOGRAPH") : undefined;
+  if (pantograph) return pantograph.action_id;
   const topCard = cards[0];
   // spar4: the bout decides the cards, this one too.
   if (topCard && topCard.v >= 0.85 && !spar4("shop")) return topCard.a.action_id;

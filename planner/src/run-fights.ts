@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, usePotionSaving, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, useHpScale, usePotionSaving, type Weights } from "./search.ts";
 import { learnCard } from "./spar.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
@@ -257,6 +257,8 @@ const BLOW_POTIONS = new Set([
   "BLOCK_POTION", "DEXTERITY_POTION", "SPEED_POTION", "WEAK_POTION", "SWIFT_POTION", "GAMBLERS_BREW", "SKILL_POTION",
   "DUPLICATOR", "FORTIFIER", "HEART_OF_IRON", "LIQUID_BRONZE", "DISTILLED_CHAOS", "COLORLESS_POTION", "LIQUID_MEMORIES",
 ]);
+/** A10's first act 3 boss (floor 48): the second follows on the same HP (pot48, hp48). */
+const firstOfPair = (floor: number, boss: boolean) => boss && ascension >= 10 && floor === 48;
 /** potsave: a fight of act 3 before its two bosses (floors 34-47) keeps its potions for them. */
 const savingFor = (floor: number, boss: boolean) => hasFlag("potsave") && floor > 33 && floor < 48 && !boss;
 /** Potions that work by themselves (Fairy in a Bottle saves a death), or are worth more kept. */
@@ -298,7 +300,8 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   // losing lines at 4.5 (Liquid Bronze 2.7 vs 13, Clarity 3 vs 10.5): one turn sees a fight-long
   // buff as a turn's worth. Not the heals or block (wasted at full HP or with no attack coming), and
   // not single-hit damage while Slippery would take it down to 1.
-  const early = hasFlag("potions2") && boss && bossTurn <= 2;
+  // pot48: the first of A10's two act 3 bosses does not drink the belt at once; the second does.
+  const early = hasFlag("potions2") && boss && bossTurn <= 2 && !(hasFlag("pot48") && firstOfPair(obs.floor, boss));
   const giant = hasFlag("wgpot") && s.enemies.some((e) => e.alive && e.model === "WATERFALL_GIANT");
   const slippery = s.enemies.some((e) => e.alive && (e.powers["SLIPPERY"] ?? 0) > 0);
   const id = (a: LegalAction) => String(a.metadata?.["potion_id"] ?? "");
@@ -358,7 +361,10 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
     turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [], cardsPlayed: {},
   };
   logs.push(log);
-  usePotionSaving(savingFor(o.floor, (o.combat?.enemies ?? []).some((e) => BOSSES.has(e.model_id) || e.max_hp >= 250)));
+  const bossFight = (o.combat?.enemies ?? []).some((e) => BOSSES.has(e.model_id) || e.max_hp >= 250);
+  const firstOfTwo = firstOfPair(o.floor, bossFight);
+  usePotionSaving(savingFor(o.floor, bossFight) ? 4 : firstOfTwo && hasFlag("pot48") ? 3 : 1);
+  useHpScale(firstOfTwo && hasFlag("hp48") ? 1.5 : 1);
   const tried = new Set<string>();
   let cur = start;
   // What nextTurn said the turn after an end of turn would start with, to hold it to the game.

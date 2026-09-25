@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
-import { evaluate, planTurn, usePotionSaving } from "../src/search.ts";
+import { evaluate, planTurn, useHpScale, usePotionSaving } from "../src/search.ts";
 import { chooseEvent } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
@@ -222,5 +222,17 @@ test("potsave: a potion drunk before act 3's bosses costs four times as much", (
     assert.ok(Math.abs(cost() - 4 * plain) < 1e-9, `${cost()} vs ${plain}`);
   } finally {
     usePotionSaving(false);
+  }
+});
+
+test("hp48: the first of A10's two act 3 bosses prices HP half as much again", () => {
+  const hurt = state([], [foe("NIBBIT", 50)], 50);
+  const whole = state([], [foe("NIBBIT", 50)], 60);
+  const plain = evaluate(whole) - evaluate(hurt);
+  useHpScale(1.5);
+  try {
+    assert.ok(Math.abs(evaluate(whole) - evaluate(hurt) - 1.5 * plain) < 1e-9);
+  } finally {
+    useHpScale(1);
   }
 });
