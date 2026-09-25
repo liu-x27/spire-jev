@@ -959,10 +959,15 @@ public static class FullAppBridgeMod
                 // spire-jev: some events (the Ancients after a boss among them)
                 // show their options a moment after the room opens; leaving at
                 // once left AutoSlay waiting for a proceed button that never came.
+                // A card select the option opened (Spirit Grafter) hides them while the planner chooses,
+                // and spar4's upgrade bouts can take longer than the five seconds (seeds 701, 793 left
+                // the event there): the wait starts again after it, for five minutes at most.
                 bool appeared = false;
-                for (int wait = 0; wait < 50 && !appeared && GodotObject.IsInstanceValid(eventRoom); wait++)
+                var since = System.Diagnostics.Stopwatch.StartNew();
+                for (int wait = 0; wait < 50 && !appeared && GodotObject.IsInstanceValid(eventRoom) && since.Elapsed < TimeSpan.FromMinutes(5); wait++)
                 {
                     await Task.Delay(100);
+                    if (CardSelectBridge.Pending > 0) wait = 0;
                     appeared = UiHelper.FindAll<NEventOptionButton>(eventRoom).Any(b => b.Option != null && !b.Option.IsLocked);
                 }
                 if (!appeared)

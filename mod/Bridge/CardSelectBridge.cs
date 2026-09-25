@@ -52,13 +52,25 @@ public static class CardSelectBridge
         return false;
     }
 
+    /// <summary>Selections waiting on the planner: an event's options are hidden meanwhile (FullAppBridgeMod's event loop waits).</summary>
+    public static int Pending;
+
     private static async Task<IEnumerable<CardModel>> SelectAsync(List<CardModel> cards, int minSelect, int maxSelect)
     {
         string purpose = _purpose;
         _purpose = "";
         if (cards.Count == 0) return Array.Empty<CardModel>();
         var context = new CardSelectContext { Purpose = purpose, MinSelect = minSelect, MaxSelect = maxSelect, Cards = cards };
-        string actionId = await FullAppBridgeServer.WaitForCoordinatorActionAsync("card_select", isTerminal: false, isVictory: false, context);
+        string actionId;
+        Interlocked.Increment(ref Pending);
+        try
+        {
+            actionId = await FullAppBridgeServer.WaitForCoordinatorActionAsync("card_select", isTerminal: false, isVictory: false, context);
+        }
+        finally
+        {
+            Interlocked.Decrement(ref Pending);
+        }
 
         var chosen = new List<CardModel>();
         if (actionId.StartsWith("choose_cards:", StringComparison.Ordinal))
