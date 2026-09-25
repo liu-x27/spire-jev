@@ -451,6 +451,21 @@ states, and only a simulator is fast enough for that.
      2/16, Waterfall Giant 14/22 → 8/17 — not the merge: the 155 boss-swapped
      Giant fights are the same fight for fight on 9b700c8 (81 wins, 43
      clean); other decks reach it now (the Ancients), and 17 is few.
+   - Act 2: of the 67 runs out of act 1 in vet-dev2, 62 died in act 2, 42 of
+     them outside the boss fight. From the IL: Reattach (Decimillipede), Illusion
+     (The Obscura's Parafright), Slumber (Slumbering Beetle), Imbalanced (Bowlbug
+     Rock), Personal Hive (Entomancer's Dazed). `vet-dev3-a10` (the first four)
+     against vet-dev2: act 2 bosses 5/25 → 7/27, act 2's other fights lost 42 →
+     40 — right, but small: act 2's limit is the deck.
+   - **`--flags spar`** (card rewards and shop picks by what they add to the
+     deck against the act's own boss, played out in the simulator; the act's
+     boss from `act_boss`, the other session's bosses in spar's BOSSES) —
+     `vet-dev4s-a10` against vet-dev3, paired on 316-495: **mean floor 20.1 →
+     23.8** (further on 86 seeds, shorter on 35), **act 1 bosses 68/142 →
+     99/156 (48% → 63%, clean 40 → 65)**, act 2 bosses reached 28 → 58, won 7 →
+     12; act 1 deaths 111 → 81. The Kin 2/16 → 11/21, Matriarch 12/31 → 22/33,
+     Soul Fysh 15/28 → 22/29, Vantom 12/23 → 17/24; the Waterfall Giant 9/18 →
+     8/21 (its fight outlasts spar's eight turns).
    - Colourless cards: shops offered them 9,092 times (38 kinds), bought 0 —
      `cardValue` gives cards missing from its tables 0.3. Mostly right:
      strong players' Elo puts nearly all of them below skipping (Spire Codex
