@@ -533,6 +533,23 @@ states, and only a simulator is fast enough for that.
      that beat act 2's boss in vet-hunt3, ×2: 48 won 3 → 0 (3 discordant, all
      against), act 3 picks 37% → 31% — averaging in a boss the deck loses to
      anyway halves the first boss's signal. Not adopted.
+   - **The arms on the fresh seeds 586-855** (`src/reach.ts`, completions per
+     start, paired; all Staging8, A10, veteran):
+
+     | per start | vet-hunt3 spar (bbda587) | vet-s3 spar3 (ba04ecc) | vet-s3f spar3 + card rules (0efdefd) |
+     |---|---:|---:|---:|
+     | act 1 boss beaten | 144 | 167 (+47/-24, p 0.009) | 188 (+40/-19 on s3, p 0.009) |
+     | act 2 boss beaten | 17 | 20 (+15/-12) | 31 (+22/-11 on s3, p 0.08; on hunt3 p 0.029) |
+     | floor 48 won | 1 | 1 | 2 (the first Test Subject wins: 681, 708) |
+     | won | 0 | 0 | 0 |
+
+     Act 1 bosses 59% → 67% → 75%, act 2's 24% → 24% → 32%. The two floor-48
+     wins came to 49 with 11 and 22 HP. vet-s3 lost 4 runs and s3f 6 to
+     AutoSlay's 30 s screen wait (spar's bouts on a rewards screen): the
+     bridge lengthens those waits from Staging9 (f43a6c8). The s3f mismatches by
+     card: Restlessness, Salvo, Panic Button, Equilibrium, Omnislice, Sword
+     Boomerang far fewer; Tear Asunder one hit too many (fixed, 47acb58, with
+     Intimidating Helmet, Ornamental Fan, Game Piece, Iron Club, Pen Nib).
    - `sparpair`: in e23d63b's eight turns no act 3 deck beat Aeonglass, and the
      second bout was never played; fought out (20 turns) it still is not, mid
      act 3 (407's decks 0/32 against Aeonglass at 8, 12 and 20 turns): it is
