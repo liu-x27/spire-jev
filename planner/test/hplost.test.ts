@@ -52,16 +52,14 @@ function screen(hp: number, turn: number, giant: { hp: number; intent: { type: s
   return { observation, legal_actions: [{ action_id: "end_turn", action_type: "end_turn", description: "" }] };
 }
 
+const rewards = (hp: number): StepResult => ({
+  observation: { ...screen(hp, 12, { hp: 0, intent: { type: "Unknown", damage: 0, hits: 0 } }).observation, phase: "rewards", combat: null },
+  legal_actions: [{ action_id: "proceed", action_type: "proceed", description: "" }],
+});
+const blow = (damage: number) => ({ hp: 999999996, intent: { type: "DeathBlow", damage, hits: 1 } });
+
 test("a fight won in the enemies' turn counts that turn: the Giant's DeathBlow as it dies", async () => {
-  const rewards: StepResult = {
-    observation: { ...screen(31, 12, { hp: 0, intent: { type: "Unknown", damage: 0, hits: 0 } }).observation, phase: "rewards", combat: null },
-    legal_actions: [{ action_id: "proceed", action_type: "proceed", description: "" }],
-  };
-  const screens = [
-    screen(62, 11, { hp: 11, intent: { type: "Attack", damage: 0, hits: 1 } }),
-    screen(62, 12, { hp: 999999996, intent: { type: "DeathBlow", damage: 37, hits: 1 } }),
-    rewards,
-  ];
+  const screens = [screen(62, 11, { hp: 11, intent: { type: "Attack", damage: 0, hits: 1 } }), screen(62, 12, blow(37)), rewards(31)];
   const game = { step: async () => screens.shift()! };
   const logs: FightLog[] = [];
   const { log } = await fight(game, screen(65, 10, { hp: 45, intent: { type: "Attack", damage: 3, hits: 1 } }), "planner", "JEV00675", logs);
@@ -71,4 +69,17 @@ test("a fight won in the enemies' turn counts that turn: the Giant's DeathBlow a
   // 3 on turn 10, 37 on turn 12 (the old count stopped at 3): with the 13 before turn 10, the game's 53.
   assert.equal(log.hpLost, 40);
   assert.equal(log.hpLostWinning, 37);
+  // The blow's turn is held to the simulator's DeathBlow; the turns are still the two it went on after.
+  assert.deepEqual(log.endTurn.map(({ turn, predicted, actual }) => ({ turn, predicted, actual })).at(-1), { turn: 12, predicted: 37, actual: 37 });
+  assert.equal(log.endTurn.length, 3);
+  assert.equal(log.turns, 2);
+});
+
+test("a DeathBlow the heal hides is counted by the guess, and not held to the prediction", async () => {
+  // 86 of 86 and a blow of 3: 83, and Burning Blood back to 86 — as from any of 80 to 86.
+  const screens = [rewards(86)];
+  const { log } = await fight({ step: async () => screens.shift()! }, screen(86, 12, blow(3)), "planner", "JEV00675", []);
+  assert.equal(log.won, true);
+  assert.equal(log.hpLost, 3);
+  assert.equal(log.endTurn.length, 0);
 });

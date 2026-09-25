@@ -318,6 +318,16 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
  * taken as it is.
  */
 export function hpBeforeWinHeals(before: Pick<Observation, "player_max_hp" | "relics" | "relic_vars">, after: Pick<Observation, "player_hp" | "player_max_hp">, guess: number): number {
+  let best: number | undefined;
+  for (const hp of hpsBeforeWinHeals(before, after)) {
+    const d = Math.abs(hp - guess) - (best === undefined ? Infinity : Math.abs(best - guess));
+    if (d < 0 || (d === 0 && hp > best!)) best = hp;
+  }
+  return best ?? after.player_hp - Math.max(0, after.player_max_hp - before.player_max_hp);
+}
+
+/** Every HP the heals for winning bring to `after`'s (hpBeforeWinHeals), lowest first: one, unless a heal was cut short. */
+export function hpsBeforeWinHeals(before: Pick<Observation, "player_max_hp" | "relics" | "relic_vars">, after: Pick<Observation, "player_hp" | "player_max_hp">): number[] {
   const maxHp = after.player_max_hp;
   const gained = Math.max(0, maxHp - before.player_max_hp);
   const heal = (id: string) => (before.relics.includes(id) ? (before.relic_vars?.[id]?.["Heal"] ?? 0) : 0);
@@ -328,13 +338,9 @@ export function hpBeforeWinHeals(before: Pick<Observation, "player_max_hp" | "re
     for (const id of ["BURNING_BLOOD", "BLACK_BLOOD"]) h = Math.min(maxHp, h + heal(id));
     return h;
   };
-  let best: number | undefined;
-  for (let hp = 1; hp <= before.player_max_hp; hp++) {
-    if (healed(hp) !== after.player_hp) continue;
-    const d = Math.abs(hp - guess) - (best === undefined ? Infinity : Math.abs(best - guess));
-    if (d < 0 || (d === 0 && hp > best!)) best = hp;
-  }
-  return best ?? after.player_hp - gained;
+  const hps: number[] = [];
+  for (let hp = 1; hp <= before.player_max_hp; hp++) if (healed(hp) === after.player_hp) hps.push(hp);
+  return hps;
 }
 
 /** One fight, logged into `logs` as it goes, so a game that dies mid-fight still leaves what it did. */
@@ -442,16 +448,16 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       (log.sequence ??= []).push(`t${obs.combat!.turn}:POTION:${potion}`);
       // Only the potions the model can drink are held to its prediction.
       if (inCombat && held && drinkable(held)) for (const m of compare(`POTION:${potion}`, drink(s, a), fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
-    } else if (inCombat || after.phase === "game_over") {
-      // (A fight that ends in the enemies' turn — one escapes, or dies to Flame Barrier — shows HP
-      // after the win's heals: its loss is counted above, but not held to the prediction, which
-      // picks between the HPs that heal alike.)
-      log.turns++;
+    } else if (!won || hpsBeforeWinHeals(obs, after).length === 1) {
+      // A fight won in the enemies' turn — a Waterfall Giant's DeathBlow as it dies, one that
+      // escapes or dies to Flame Barrier — shows HP after the win's heals: held to the prediction
+      // when only one HP heals to it (not when the guess picked between HPs), and no turn gone on after.
+      if (!won) log.turns++;
       // HP cannot fall below 0: a lethal turn shows only the HP there was, and one that Lizard Tail
       // or Fairy in a Bottle undoes shows a gain (seed 17's Queen, turn 5: 18 HP to 52, -34).
       const end = hpAfterTurn(s);
       const predicted = end.hp > 0 ? s.player.hp - end.hp : s.player.hp;
-      log.endTurn.push({ turn: obs.combat!.turn, predicted, actual: obs.player_hp - after.player_hp, before: brief(obs) });
+      log.endTurn.push({ turn: obs.combat!.turn, predicted, actual: obs.player_hp - hpAfter, before: brief(obs) });
     }
     cur = next;
   }
