@@ -123,3 +123,26 @@ test("sparpair: the second boss is fought only after the first is won, on the HP
   // The starter deck loses to Aeonglass every time: the pair is the first bout alone.
   assert.equal(pairScore(STARTER, aeonglass, subject, 8, 5), sparScore(STARTER, aeonglass, 8, 5));
 });
+
+test("spar4's parts are their own flags: the rest's bout alone, and its upgrade is the one smithed", () => {
+  const legal = [act("choose_rest:0:heal"), act("choose_rest:1:smith")];
+  const at = (hp: number): Observation => ({ ...reward("VANTOM_BOSS"), phase: "rest_site", floor: 16, player_hp: hp });
+  const offers = ["STRIKE_IRONCLAD", "DEFEND_IRONCLAD", "BASH"].map((id, i) => act(`choose_upgrade:${i}:${id}`));
+  try {
+    // spar4up alone leaves the rest to the rules: at 70/80 before the boss, 85% says heal.
+    setFlags(["spar", "spar3", "spar4up"]);
+    setActBoss("VANTOM_BOSS");
+    assert.equal(chooseRest(at(60), legal), "choose_rest:0:heal");
+    setFlags(["spar", "spar3", "spar4rest"]);
+    assert.equal(chooseRest(at(80), legal), "choose_rest:1:smith");
+    const planned = chooseUpgrade(at(80), offers);
+    assert.ok(offers.some((a) => a.action_id === planned));
+    // Once: the next smith (another floor) is the rules' again.
+    setFlags(["spar", "spar3"]);
+    const rules = chooseUpgrade({ ...at(80), floor: 20 }, offers);
+    assert.equal(chooseUpgrade({ ...at(80), floor: 20 }, offers), rules);
+  } finally {
+    setFlags([]);
+    setActBoss("");
+  }
+});
