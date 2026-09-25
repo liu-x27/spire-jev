@@ -550,6 +550,19 @@ states, and only a simulator is fast enough for that.
      card: Restlessness, Salvo, Panic Button, Equilibrium, Omnislice, Sword
      Boomerang far fewer; Tear Asunder one hit too many (fixed, 47acb58, with
      Intimidating Helmet, Ornamental Fan, Game Piece, Iron Club, Pen Nib).
+   - **Act 3's pair, from the 55 f47 saves** (`runs/saves-f47-all`: 36 seeds,
+     the arms' libraries, every order; 56214be, Staging10; floor 47's rest and
+     both bosses, paired): base wins floor 48 4/55 (Queen 2/24, Aeonglass 1/24,
+     Test Subject 1/7), losing 71 HP on average, and 49 0/4 (at 11, 42, 44, 65
+     HP). `torch` (the Queen's HP at half while her Torch lives) 3/55; `potwin`
+     (each potion in its window, heals kept for 49) 4/55, one more potion into
+     49; `hp48b` (HP under the second boss's need counted twice) 3/55: 849's
+     four-turn Aeonglass win became a seven-turn loss; all three 3/55; `pot48`
+     4/55. None helps: 51 of the 55 decks lose the first boss whatever they
+     hold back, and drink to survive it (69-70 of 71 potions). The act 3
+     handbook (the other session, from 66 floor 48/49 fights) had found why: the
+     first boss's win costs 36-44 (Queen), 72 (Aeonglass), 75-96 (Test Subject)
+     HP, the second needs ~60/85/90. The pair is a deck-strength question.
    - `sparpair`: in e23d63b's eight turns no act 3 deck beat Aeonglass, and the
      second bout was never played; fought out (20 turns) it still is not, mid
      act 3 (407's decks 0/32 against Aeonglass at 8, 12 and 20 turns): it is
