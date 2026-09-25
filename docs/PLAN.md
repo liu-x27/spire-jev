@@ -477,6 +477,4 @@ states, and only a simulator is fast enough for that.
 
 - Do not publish decompiled game code or game assets; the repo holds only our
   code, and reads the game from the local install.
-- No model-training or distillation demo in public before 2026-12-17 (it
-  overlaps the paper under review).
 - Private repo; commit locally; push only when asked.
