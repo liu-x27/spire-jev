@@ -22,7 +22,7 @@ import { setIntentAscension } from "./intents.ts";
 import { expectedIntents, type Plan, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
 import { moveIntents } from "./scripts.ts";
-import { type Card, cardOf, type Enemy, formsToCome, play, setKnownDraws, type State } from "./sim.ts";
+import { type Card, cardOf, type Enemy, formsToCome, play, redSkull, relicDamage, setKnownDraws, type State } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
 // SPIRE_JEV_CATALOG: another catalogue (an older one, to replay the choices it made).
@@ -139,6 +139,8 @@ export interface Player {
   powers: Record<string, number>;
   relics: readonly string[];
   relicVars?: Record<string, Record<string, number>>;
+  /** Its energy, hand, block and powers are a fight's own opening already (spar3's): the relics' opening is in them. */
+  opened?: boolean;
 }
 export const BARE: Player = { hp: 80, maxHp: 80, energy: 3, maxEnergy: 3, hand: 5, block: 0, powers: {}, relics: [] };
 
@@ -163,15 +165,54 @@ const over = (s: State) => s.enemies.every((e) => !e.alive && !((e.deathBlow ?? 
 const pool = (s: State) => s.enemies.reduce((a, e) => a + (e.alive ? e.hp : 0) + formsToCome(e), 0);
 
 /**
+ * What the player's relics give as a fight opens (IL: BeforeCombatStart, AfterRoomEntered, the first
+ * turn's hooks): block, Strength, Dexterity, Plating, Thorns, Vigor, energy, cards, a heal. A live
+ * observation shows these already; a bout from a deck needs them, and spar3's opening has them
+ * (opened), so they are not given twice. Paper Phrog's marker is not an opening's and always goes on.
+ */
+export function relicOpening(me: Player): Player {
+  const has = (r: string) => me.relics.includes(r);
+  const v = (r: string, k: string, fb: number) => me.relicVars?.[r]?.[k] ?? fb;
+  const powers: Record<string, number> = { ...me.powers, ...(has("PAPER_PHROG") ? { PAPER_PHROG: 1 } : {}) };
+  if (me.opened) return { ...me, powers };
+  const add = (k: string, n: number) => {
+    powers[k] = (powers[k] ?? 0) + n;
+  };
+  if (has("VAJRA")) add("STRENGTH", v("VAJRA", "StrengthPower", 1));
+  if (has("ODDLY_SMOOTH_STONE")) add("DEXTERITY", v("ODDLY_SMOOTH_STONE", "DexterityPower", 1));
+  if (has("GORGET")) add("PLATING", v("GORGET", "PlatingPower", 4));
+  if (has("BRONZE_SCALES")) add("THORNS", v("BRONZE_SCALES", "ThornsPower", 3));
+  if (has("AKABEKO")) add("VIGOR", v("AKABEKO", "VigorPower", 8));
+  // Venerable Tea Set: 2 energy in the fight after a rest site, which a boss's is.
+  const tea = has("VENERABLE_TEA_SET") && v("VENERABLE_TEA_SET", "_gainEnergyInNextCombat", 1) === 1 ? v("VENERABLE_TEA_SET", "Energy", 2) : 0;
+  return {
+    ...me, powers,
+    block: me.block + (has("ANCHOR") ? v("ANCHOR", "Block", 10) : 0),
+    energy: me.energy + (has("LANTERN") ? v("LANTERN", "Energy", 1) : 0) + tea,
+    hand: me.hand + (has("BAG_OF_PREPARATION") ? v("BAG_OF_PREPARATION", "Cards", 2) : 0),
+    hp: Math.min(me.maxHp, me.hp + (has("BLOOD_VIAL") ? v("BLOOD_VIAL", "Heal", 2) : 0)),
+  };
+}
+
+/**
  * One shuffle of the deck against the boss, for at most `turns` turns (The Insatiable's Sandpit gives
  * about eight), and the two turns a killed Waterfall Giant takes to strike.
  */
-export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, me: Player = BARE): Bout {
-  const hp = me.hp;
+export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, player: Player = BARE): Bout {
+  const me = relicOpening(player);
+  const hp = player.hp;
   const pile = [...deck];
   for (let i = pile.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [pile[i], pile[j]] = [pile[j]!, pile[i]!];
+  }
+  // Stone Cracker (IL: AfterRoomEntered): 2 random upgradable cards of the draw pile upgraded for the fight.
+  if (me.relics.includes("STONE_CRACKER") && !me.opened) {
+    const up = pile.map((c, i) => (c.upgrades === 0 ? i : -1)).filter((i) => i >= 0);
+    for (let n = 0; n < (me.relicVars?.["STONE_CRACKER"]?.["Cards"] ?? 2) && up.length > 0; n++) {
+      const i = up.splice(Math.floor(rng() * up.length), 1)[0]!;
+      pile[i] = cardFromId(`${pile[i]!.id}+`) ?? pile[i]!;
+    }
   }
   // The monsters as the fight opens; a scripted boss shows its first move (a claw behind the player
   // with it: the player faces the Rocket, the last monster, at the start).
@@ -196,7 +237,21 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
     unmovableUsed: false, potions: [], potionSlots: 0, potionsUsed: 0,
     ...(surrounded ? { facing: monsters.length } : {}),
   };
+  // The fight's HP before anything is dealt: the opening relics' damage is the bout's too.
   const full = pool(s);
+  // The relics that act on the enemies as the fight opens (always: an opening seen in a fight is the
+  // player's side only): Bag of Marbles' Vulnerable and Red Mask's Weak (their first turn), Festive
+  // Popper's 9 and Mercury Hourglass's first 3 to every enemy, after the draw.
+  for (const [relic, power] of [["BAG_OF_MARBLES", "VULNERABLE"], ["RED_MASK", "WEAK"]] as const) {
+    if (!me.relics.includes(relic)) continue;
+    for (const e of s.enemies) {
+      if ((e.powers["ARTIFACT"] ?? 0) > 0) e.powers["ARTIFACT"]! -= 1;
+      else e.powers[power] = (e.powers[power] ?? 0) + (me.relicVars?.[relic]?.[`${power === "WEAK" ? "Weak" : "Vulnerable"}Power`] ?? 1);
+    }
+  }
+  if (me.relics.includes("FESTIVE_POPPER")) relicDamage(s, me.relicVars?.["FESTIVE_POPPER"]?.["Damage"] ?? 9, true);
+  if (me.relics.includes("MERCURY_HOURGLASS")) relicDamage(s, me.relicVars?.["MERCURY_HOURGLASS"]?.["Damage"] ?? 3, true);
+  redSkull(s);
   const blowing = (st: State) => st.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
   for (let t = 1; t <= turns || blowing(s); t++) {
     for (let step = 0; step < 15; step++) {

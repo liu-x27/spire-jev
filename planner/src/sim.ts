@@ -156,6 +156,9 @@ export interface State {
   bombs?: { turns: number; damage: number }[];
   /** The end of the turn (endOfTurn: Stampede, the Bombs) has been played out on this state. */
   ended?: boolean;
+  /** Vambrace: armed while the fight's first block card resolves, and whether it gained block (resolve only). */
+  vambraceArmed?: boolean;
+  vambraceHit?: boolean;
   /**
    * Surrounded (Kaiser Crab; IL: SurroundedPower.UpdateDirection): the claw the player faces, the
    * one last targeted by a card or potion; the other is behind and deals ×1.5.
@@ -223,7 +226,8 @@ export function fromObservation(obs: Observation): State {
   return {
     player: {
       hp: obs.player_hp, maxHp: obs.player_max_hp, block: obs.player_block,
-      powers: powersOf(obs.player_powers), powerVars,
+      // Paper Phrog: a marker power attackDamage reads (the bridge's Vulnerable still says 1.5).
+      powers: { ...powersOf(obs.player_powers), ...(obs.relics.includes("PAPER_PHROG") ? { PAPER_PHROG: 1 } : {}) }, powerVars,
     },
     energy: obs.player_energy,
     maxEnergy: c.max_energy,
@@ -369,7 +373,10 @@ export function attackDamage(base: number, attacker: Unit, target: Unit, extra =
   if (present(attacker, "SHRINK")) d *= 1 - powerVar(attacker, "SHRINK", "DamageDecrease", 30) / 100;
   // Cruelty (IL: CrueltyPower.ModifyVulnerableMultiplier): the owner's attacks add Amount/100 to
   // Vulnerable's multiplier, 1.5 to 1.75.
-  if (has(target, "VULNERABLE")) d *= powerVar(target, "VULNERABLE", "DamageIncrease", 1.5) + Math.max(0, attacker.powers["CRUELTY"] ?? 0) / 100;
+  // Paper Phrog (IL: PaperPhrog.ModifyVulnerableMultiplier): the owner's attacks 0.25 more.
+  if (has(target, "VULNERABLE")) {
+    d *= powerVar(target, "VULNERABLE", "DamageIncrease", 1.5) + Math.max(0, attacker.powers["CRUELTY"] ?? 0) / 100 + (has(attacker, "PAPER_PHROG") ? 0.25 : 0);
+  }
   // Flutter (Thieving Hopper): attacks on it deal DamageDecrease percent less.
   if (has(target, "FLUTTER")) d *= 1 - powerVar(target, "FLUTTER", "DamageDecrease", 50) / 100;
   return Math.max(0, Math.floor(d));
@@ -625,6 +632,12 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
   s.potions.splice(i, 1);
   s.potionsUsed++;
   const v = p.vars;
+  // Reptile Trinket (IL: AfterPotionUsed): 3 Strength for the turn (turn.ts TEMPORARY takes it back).
+  if (s.relics.includes("REPTILE_TRINKET")) {
+    const n = relicVar(s, "REPTILE_TRINKET", "StrengthPower", 3);
+    addPower(s.player, "STRENGTH", n);
+    addPower(s.player, "REPTILE_TRINKET", n);
+  }
   const special = POTION_SPECIAL[p.id];
   if (special) {
     special(s, v["Cards"] ?? Object.values(v)[0] ?? 0);
@@ -685,6 +698,12 @@ function gainBlock(s: State, n: number, fromCard = false): void {
   if (n <= 0) return;
   // No Block (Panic Button; IL: NoBlockPower): no block from cards while it lasts.
   if (fromCard && has(s.player, "NO_BLOCK")) return;
+  // Vambrace (IL: ModifyBlockMultiplicative): the fight's first card that gains block, doubled
+  // (every block of it; resolve arms it and marks it used). Doubled after the rounding: off by one under Frail.
+  if (fromCard && s.vambraceArmed) {
+    n *= 2;
+    s.vambraceHit = true;
+  }
   // Unmovable: the first block a card gives each turn is doubled.
   if (fromCard && has(s.player, "UNMOVABLE") && !s.unmovableUsed) {
     n *= 2;
@@ -702,6 +721,34 @@ function gainBlock(s: State, n: number, fromCard = false): void {
   }
 }
 
+/** A relic's number, or `fallback` where the bridge (or a spar bout) did not say. */
+const relicVar = (s: State, id: string, name: string, fallback: number) => s.relicVars?.[id]?.[name] ?? fallback;
+/** A relic's counter or flag set for the rest of the fight: a new object, since states share relicVars. */
+function setRelicVar(s: State, id: string, name: string, n: number): void {
+  s.relicVars = { ...(s.relicVars ?? {}), [id]: { ...(s.relicVars?.[id] ?? {}), [name]: n } };
+}
+/** Damage no Strength or Vulnerable changes (a relic's), through block: every living enemy, or a random one. */
+export function relicDamage(s: State, n: number, all: boolean): void {
+  const alive = s.enemies.filter((e) => e.alive);
+  if (!all && alive.length > 1) s.exact = false;
+  for (const e of all ? alive : alive.slice(0, 1)) {
+    hit(e, n);
+    if (!e.alive) died(s, e);
+  }
+}
+/**
+ * Red Skull (IL: RedSkull, on every HP change): at half max HP or under, 3 Strength; above again, taken
+ * back. Its _strengthApplied says which, where the observation had it.
+ */
+export function redSkull(s: State): void {
+  if (!s.relics.includes("RED_SKULL")) return;
+  const low = 2 * s.player.hp <= s.player.maxHp;
+  const on = relicVar(s, "RED_SKULL", "_strengthApplied", 0) === 1;
+  if (low === on) return;
+  addPower(s.player, "STRENGTH", (low ? 1 : -1) * relicVar(s, "RED_SKULL", "StrengthPower", 3));
+  setRelicVar(s, "RED_SKULL", "_strengthApplied", low ? 1 : 0);
+}
+
 /** Into the exhaust pile. Feel No Pain blocks for every card exhausted, not changed by Dexterity or Frail. */
 function exhaustCard(s: State, card: Card): void {
   s.exhaust.push(card);
@@ -711,6 +758,13 @@ function exhaustCard(s: State, card: Card): void {
   if (has(s.player, "DARK_EMBRACE")) draw(s, s.player.powers["DARK_EMBRACE"] ?? 1);
   // Drum of Battle's energy is for being exhausted (IL: AfterCardExhausted, the card itself).
   if (card.id === "DRUM_OF_BATTLE") s.energy += card.vars["Energy"] ?? 2;
+  // Joss Paper (IL: AfterCardExhausted): every 5th card exhausted, counted across fights, draws 1.
+  if (s.relics.includes("JOSS_PAPER")) {
+    const n = relicVar(s, "JOSS_PAPER", "_cardsExhausted", 0) + 1;
+    const every = relicVar(s, "JOSS_PAPER", "ExhaustAmount", 5) || 5;
+    if (n >= every) draw(s, Math.floor(n / every) * relicVar(s, "JOSS_PAPER", "Cards", 1));
+    setRelicVar(s, "JOSS_PAPER", "_cardsExhausted", n % every);
+  }
 }
 
 /** HP a card costs the player (Offering, Hemokinesis, Brand): Rupture turns it into Strength. */
@@ -743,6 +797,14 @@ function loseHp(s: State, n: number): void {
   s.lostHp = true;
   s.hurt = (s.hurt ?? 0) + 1;
   if (s.player.hp <= 0) revive(s);
+  // Centennial Puzzle (IL: AfterDamageReceived): the fight's first damage past block draws 3.
+  if (s.relics.includes("CENTENNIAL_PUZZLE") && relicVar(s, "CENTENNIAL_PUZZLE", "_usedThisCombat", 0) === 0) {
+    setRelicVar(s, "CENTENNIAL_PUZZLE", "_usedThisCombat", 1);
+    draw(s, relicVar(s, "CENTENNIAL_PUZZLE", "Cards", 3));
+  }
+  // Self-Forming Clay (IL: AfterDamageReceived): 3 block next turn for every such damage.
+  if (s.relics.includes("SELF_FORMING_CLAY")) addPower(s.player, "SELF_FORMING_CLAY", relicVar(s, "SELF_FORMING_CLAY", "BlockNextTurn", 3));
+  redSkull(s);
 }
 
 export type Reviver = "FAIRY_IN_A_BOTTLE" | "LIZARD_TAIL";
@@ -964,6 +1026,8 @@ function damageOf(s: State, card: Card, target?: Enemy): number | undefined {
   if (damage !== undefined && card.id.includes("STRIKE") && s.relics.includes("STRIKE_DUMMY")) {
     damage += s.relicVars?.["STRIKE_DUMMY"]?.["ExtraDamage"] ?? 3;
   }
+  // Miniature Cannon (IL: ModifyDamageAdditive): an upgraded card's hits 3 more, like Strength.
+  if (damage !== undefined && card.upgrades > 0 && s.relics.includes("MINIATURE_CANNON")) damage += relicVar(s, "MINIATURE_CANNON", "ExtraDamage", 3);
   return damage;
 }
 
@@ -1333,6 +1397,8 @@ const RETURNING = new Set(["BOLAS", "THRUMMING_HATCHET"]);
  * plays the Strikes drawn. The draws and plays are unknown, the state already inexact.
  */
 export function startOfTurn(s: State): void {
+  // Mercury Hourglass (IL: AfterPlayerTurnStart): 3 to every enemy, every turn.
+  if (s.relics.includes("MERCURY_HOURGLASS")) relicDamage(s, relicVar(s, "MERCURY_HOURGLASS", "Damage", 3), true);
   const inferno = s.player.powers["INFERNO"] ?? 0;
   const self = inferno > 0 ? powerVar(s.player, "INFERNO", "SelfDamage", 1) : 0;
   if (self > 0) {
@@ -1427,6 +1493,8 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   const helmet = s.relics.includes("INTIMIDATING_HELMET") ? s.relicVars?.["INTIMIDATING_HELMET"] : undefined;
   if (helmet && paid >= (helmet["Energy"] ?? 2)) gainBlock(s, helmet["Block"] ?? 4);
   resolve(s, card, target, x);
+  // A heal of the card's (Feed, Not Yet) crosses Red Skull's line too.
+  redSkull(s);
   return s;
 }
 
@@ -1466,6 +1534,8 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
   const nib = card.type === "Attack" && s.relics.includes("PEN_NIB") ? s.relicVars?.["PEN_NIB"] : undefined;
   const doubled = nib !== undefined && ((nib["_attacksPlayed"] ?? 0) + (s.attacks ?? 0)) % 10 === 0;
   if (doubled) s.player.powers["PEN_NIB_DOUBLE"] = 1;
+  s.vambraceArmed = s.relics.includes("VAMBRACE") && relicVar(s, "VAMBRACE", "_blockGainedThisCombat", 0) === 0;
+  s.vambraceHit = false;
   const special = SPECIAL[card.id];
   if (special) special(s, card, target, x);
   else standard(s, card, target, x);
@@ -1503,6 +1573,9 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
       s.exact = false;
     }
   }
+  if (s.vambraceHit) setRelicVar(s, "VAMBRACE", "_blockGainedThisCombat", 1);
+  delete s.vambraceArmed;
+  delete s.vambraceHit;
   s.played++;
   // Iron Club (IL: AfterCardPlayed): every 4th card played this combat draws 1 (its _cardsPlayed at the observation).
   const club = s.relics.includes("IRON_CLUB") ? s.relicVars?.["IRON_CLUB"] : undefined;
@@ -1512,6 +1585,21 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
   if (fan && ((fan["_attacksPlayedThisTurn"] ?? 0) + (s.attacks ?? 0)) % (fan["Cards"] || 3) === 0) gainBlock(s, fan["Block"] ?? 4);
   // Game Piece (IL: AfterCardPlayed): a power played draws 1.
   if (card.type === "Power" && s.relics.includes("GAME_PIECE")) draw(s, s.relicVars?.["GAME_PIECE"]?.["Cards"] ?? 1);
+  // Permafrost (IL: AfterCardPlayed): the fight's first power gives 7 block.
+  if (card.type === "Power" && s.relics.includes("PERMAFROST") && relicVar(s, "PERMAFROST", "_activatedThisCombat", 0) === 0) {
+    gainBlock(s, relicVar(s, "PERMAFROST", "Block", 7));
+    setRelicVar(s, "PERMAFROST", "_activatedThisCombat", 1);
+  }
+  if (card.type === "Attack") {
+    // Nunchaku (IL: AfterCardPlayed): every 10th attack, counted across fights, 1 energy.
+    if (s.relics.includes("NUNCHAKU") && (relicVar(s, "NUNCHAKU", "_attacksPlayed", 0) + (s.attacks ?? 0)) % (relicVar(s, "NUNCHAKU", "Cards", 10) || 10) === 0) {
+      s.energy += relicVar(s, "NUNCHAKU", "Energy", 1);
+    }
+    // Kusarigama (IL: AfterCardPlayed): every 3rd attack of the turn, 6 to a random enemy.
+    if (s.relics.includes("KUSARIGAMA") && (relicVar(s, "KUSARIGAMA", "_attacksPlayedThisTurn", 0) + (s.attacks ?? 0)) % (relicVar(s, "KUSARIGAMA", "Cards", 3) || 3) === 0) {
+      relicDamage(s, relicVar(s, "KUSARIGAMA", "Damage", 6), false);
+    }
+  }
   // Withering Presence (Aeonglass; IL: WitheringPresencePower.AfterCardPlayed): CardsLeft counts the
   // cards played, across turns; the one that takes it to 0 puts a Wither into the hand (the discard
   // pile if the hand is full), and it starts again at 6. A Wither held deals its Damage at the end
@@ -1529,6 +1617,10 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
     s.skills++;
     const fork = s.relics.includes("TUNING_FORK") ? s.relicVars?.["TUNING_FORK"] : undefined;
     if (fork && ((fork["_skillsPlayed"] ?? 0) + s.skills) % (fork["Cards"] || 10) === 0) gainBlock(s, fork["Block"] ?? 7);
+    // Letter Opener (IL: AfterCardPlayed): every 3rd skill of the turn, 5 to every enemy.
+    if (s.relics.includes("LETTER_OPENER") && (relicVar(s, "LETTER_OPENER", "_skillsPlayedThisTurn", 0) + s.skills) % (relicVar(s, "LETTER_OPENER", "Cards", 3) || 3) === 0) {
+      relicDamage(s, relicVar(s, "LETTER_OPENER", "Damage", 5), true);
+    }
   }
   // Tender (Hunter Killer): every card played takes that much Strength and Dexterity, after it resolves.
   const tender = s.player.powers["TENDER"] ?? 0;
@@ -1565,7 +1657,8 @@ export function endOfTurn(s0: State): State {
   if (s0.ended) return s0;
   const stampede = s0.player.powers["STAMPEDE"] ?? 0;
   const howls = s0.exhaust.some((c) => c.id === "HOWL_FROM_BEYOND");
-  if (stampede <= 0 && !howls && !(s0.bombs ?? []).some((b) => b.turns <= 1)) return s0;
+  const blockRelics = ["ORICHALCUM", "RIPPLE_BASIN", "PARRYING_SHIELD"].some((r) => s0.relics.includes(r));
+  if (stampede <= 0 && !howls && !blockRelics && !(s0.bombs ?? []).some((b) => b.turns <= 1)) return s0;
   const s = clone(s0);
   s.ended = true;
   // Howl from Beyond in the exhaust pile plays itself, and so leaves it for the discard pile
@@ -1591,6 +1684,18 @@ export function endOfTurn(s0: State): State {
     }
   }
   if (s.bombs) s.bombs = s.bombs.filter((b) => b.turns > 1);
+  // Orichalcum (IL: BeforeTurnEnd): no block at the turn's end, 6.
+  if (s.relics.includes("ORICHALCUM") && s.player.block === 0) gainBlock(s, relicVar(s, "ORICHALCUM", "Block", 6));
+  // Ripple Basin: no attack played this turn, 4 block. Attacks before the observation are known only
+  // where a relic counts them (Ornamental Fan, Kusarigama).
+  if (s.relics.includes("RIPPLE_BASIN")) {
+    const before = relicVar(s, "ORNAMENTAL_FAN", "_attacksPlayedThisTurn", relicVar(s, "KUSARIGAMA", "_attacksPlayedThisTurn", 0));
+    if (before + (s.attacks ?? 0) === 0) gainBlock(s, relicVar(s, "RIPPLE_BASIN", "Block", 4));
+  }
+  // Parrying Shield (IL: AfterTurnEnd): 10 block or more at the turn's end, 6 to a random enemy.
+  if (s.relics.includes("PARRYING_SHIELD") && endOfTurnBlock(s) >= relicVar(s, "PARRYING_SHIELD", "Block", 10)) {
+    relicDamage(s, relicVar(s, "PARRYING_SHIELD", "Damage", 6), false);
+  }
   return s;
 }
 
@@ -1688,5 +1793,10 @@ export function stateKey(s: State): string {
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
   const potions = s.potions.map((p) => p.slot).join(",");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}|${s.dazedAdded ?? 0}|${s.hurt ?? 0}/${s.attacks ?? 0}/${s.onTop ?? 0}|${(s.bombs ?? []).map((b) => `${b.turns}:${b.damage}`).join(",")}`;
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}|${s.dazedAdded ?? 0}|${s.hurt ?? 0}/${s.attacks ?? 0}/${s.onTop ?? 0}|${(s.bombs ?? []).map((b) => `${b.turns}:${b.damage}`).join(",")}|${RELIC_FLAGS.map(([r, k]) => s.relicVars?.[r]?.[k] ?? "").join(",")}`;
 }
+/** Relic flags and counters a play can change: states that differ in them are not the same. */
+const RELIC_FLAGS: [string, string][] = [
+  ["VAMBRACE", "_blockGainedThisCombat"], ["PERMAFROST", "_activatedThisCombat"], ["CENTENNIAL_PUZZLE", "_usedThisCombat"],
+  ["RED_SKULL", "_strengthApplied"], ["JOSS_PAPER", "_cardsExhausted"],
+];
