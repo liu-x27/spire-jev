@@ -25,6 +25,10 @@ export interface EnemyTurn {
   /** The player's piles, before the next hand is drawn (new arrays; the cards in them are shared). */
   draw: Card[];
   discard: Card[];
+  /** The other enemies, as the player's turn left them (the Queen asks whether her Torch Head lives). */
+  allies: readonly Enemy[];
+  /** Powers the move gives every other living enemy (the Queen's Burn Bright for Me), after all have moved. */
+  allyPowers: Record<string, number>;
 }
 
 interface Move {
@@ -45,6 +49,7 @@ const status = (id: string, vars: Record<string, number>, keywords: string[]): C
   id, cost: id === "BECKON" ? 1 : -1, costsX: false, type: "Status", target: "None", keywords, vars, upgrades: 0, locked: false, glows: false,
 });
 const burn = () => status("BURN", { Damage: 2 }, ["Unplayable"]);
+const torchAlive = (t: EnemyTurn) => t.allies.some((a) => a.alive && a.model === "TORCH_HEAD_AMALGAM");
 const beckon = () => status("BECKON", { HpLoss: 6 }, []);
 
 /** Script by model, then move id. */
@@ -158,6 +163,41 @@ export const SCRIPTS: Record<string, Record<string, Move>> = {
       next: "PHASE3_LACERATE_MOVE",
     },
   },
+  // The Queen (IL: Queen.GenerateMoveStateMachine): Puppet Strings, You Are Mine, then Burn Bright
+  // for Me every turn while the Torch Head Amalgam lives; once it is dead, Off with Your Head,
+  // Execution, Enrage over and over. Its death with Burn Bright shown turns that into Enrage at once
+  // (Queen.AfterDeath: sim.ts died).
+  QUEEN: {
+    PUPPET_STRINGS_MOVE: { shows: ["CardDebuff"], effect: (t) => add(t.player, "CHAINS_OF_BINDING", 3), next: "YOU_ARE_MINE_MOVE" },
+    YOU_ARE_MINE_MOVE: {
+      shows: ["Debuff"],
+      effect: (t) => {
+        for (const d of ["FRAIL", "WEAK", "VULNERABLE"]) add(t.player, d, 99);
+      },
+      next: (t) => (torchAlive(t) ? "BURN_BRIGHT_FOR_ME_MOVE" : "OFF_WITH_YOUR_HEAD_MOVE"),
+    },
+    // 1 Strength to every teammate but herself, then 20 block on her.
+    BURN_BRIGHT_FOR_ME_MOVE: {
+      shows: ["Buff", "Defend"],
+      effect: (t) => {
+        add(t.allyPowers, "STRENGTH", 1);
+        t.block += 20;
+      },
+      next: (t) => (torchAlive(t) ? "BURN_BRIGHT_FOR_ME_MOVE" : "OFF_WITH_YOUR_HEAD_MOVE"),
+    },
+    OFF_WITH_YOUR_HEAD_MOVE: { damage: 4, hits: 5, next: "EXECUTION_MOVE" },
+    EXECUTION_MOVE: { damage: 18, next: "ENRAGE_MOVE" },
+    ENRAGE_MOVE: { shows: ["Buff"], effect: (t) => add(t.powers, "STRENGTH", 2), next: "OFF_WITH_YOUR_HEAD_MOVE" },
+  },
+  // A minion of the Queen's (IL: TorchHeadAmalgam): Strong Tackle and Tackle once, then Beam and two
+  // Weak Tackles over and over.
+  TORCH_HEAD_AMALGAM: {
+    STRONG_TACKLE_MOVE: { damage: 32, next: "TACKLE_2_MOVE" },
+    TACKLE_2_MOVE: { damage: 22, next: "BEAM_MOVE" },
+    BEAM_MOVE: { damage: 8, hits: 3, next: "TACKLE_3_MOVE" },
+    TACKLE_3_MOVE: { damage: 16, next: "TACKLE_4_MOVE" },
+    TACKLE_4_MOVE: { damage: 16, next: "BEAM_MOVE" },
+  },
   AEONGLASS: {
     EBB_MOVE: { damage: 26, shows: ["Defend"], effect: (t) => void (t.block += 33), next: "EYE_LASERS_MOVE" },
     EYE_LASERS_MOVE: { damage: 12, hits: 2, next: "INCREASING_INTENSITY_MOVE" },
@@ -185,6 +225,7 @@ export const OPENING: Record<string, string> = {
   KIN_FOLLOWER: "QUICK_SLASH_MOVE", KIN_PRIEST: "ORB_OF_FRAILTY_MOVE", CEREMONIAL_BEAST: "STAMP_MOVE",
   LAGAVULIN_MATRIARCH: "SLEEP_MOVE", SOUL_FYSH: "BECKON_MOVE", KNOWLEDGE_DEMON: "CURSE_OF_KNOWLEDGE_MOVE",
   CRUSHER: "THRASH_MOVE", ROCKET: "TARGETING_RETICLE_MOVE", TEST_SUBJECT: "BITE_MOVE", AEONGLASS: "EBB_MOVE",
+  QUEEN: "PUPPET_STRINGS_MOVE", TORCH_HEAD_AMALGAM: "STRONG_TACKLE_MOVE",
 };
 
 export const scripted = (e: Enemy): boolean => e.move !== undefined && SCRIPTS[e.model]?.[e.move] !== undefined;

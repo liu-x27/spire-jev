@@ -781,6 +781,15 @@ function died(s: State, e: Enemy): void {
     o.block += powerVar(o, "CRAB_RAGE", "Block", 99);
     delete o.powers["CRAB_RAGE"];
   }
+  // The Torch Head Amalgam's death (IL: Queen.AfterDeath): a Queen showing Burn Bright for Me
+  // switches to Enrage at once; later moves go the Off with Your Head way (scripts.ts).
+  if (e.model === "TORCH_HEAD_AMALGAM") {
+    for (const o of s.enemies) {
+      if (!o.alive || o.model !== "QUEEN" || o.move !== "BURN_BRIGHT_FOR_ME_MOVE") continue;
+      o.move = "ENRAGE_MOVE";
+      o.intents = [{ type: "Buff", damage: 0, hits: 0 }];
+    }
+  }
   if (s.facing !== undefined) {
     const claws = s.enemies.filter((o) => o.alive && isClaw(o));
     if (claws.length === 1) s.facing = claws[0]!.id;

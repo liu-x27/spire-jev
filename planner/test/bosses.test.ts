@@ -377,3 +377,67 @@ test("withering presence: the card that takes CardsLeft to 0 puts a Wither in ha
   assert.equal(hpLoss(two), 0);
   assert.equal(hpLoss({ ...two, player: { ...two.player, block: 0 } }), 6);
 });
+
+// ---------------------------------------------------------------- The Queen (IL: Queen, TorchHeadAmalgam)
+
+function court(queenMove: string, torchMove = "STRONG_TACKLE_MOVE"): [Enemy, Enemy] {
+  return [
+    { ...foe("TORCH_HEAD_AMALGAM", 211, { MINION: 1 }, 1, 32), move: torchMove },
+    { ...foe("QUEEN", 419, {}, 2, 0), move: queenMove, intents: [{ type: "CardDebuff", damage: 0, hits: 0 }] },
+  ];
+}
+
+test("queen: Puppet Strings binds the first three cards of the next hand, and You Are Mine is shown next", () => {
+  const next = nextTurn(state([], court("PUPPET_STRINGS_MOVE")), seeded(1), none)!;
+  assert.equal(next.player.powers["CHAINS_OF_BINDING"], 3);
+  assert.deepEqual(next.hand.map((c) => c.bound === true), [true, true, true, false, false]);
+  assert.equal(next.enemies[1]!.move, "YOU_ARE_MINE_MOVE");
+  // The Torch Head's Strong Tackle, then Tackle 22.
+  assert.equal(next.enemies[0]!.move, "TACKLE_2_MOVE");
+  assert.equal(next.enemies[0]!.intents[0]!.damage, 22);
+});
+
+test("queen: You Are Mine is 99 Frail, Weak and Vulnerable; the Torch Head's hits show the Vulnerable", () => {
+  const next = nextTurn(state([], court("YOU_ARE_MINE_MOVE", "TACKLE_2_MOVE")), seeded(1), none)!;
+  for (const d of ["FRAIL", "WEAK", "VULNERABLE"]) assert.equal(next.player.powers[d], 99);
+  assert.equal(next.enemies[1]!.move, "BURN_BRIGHT_FOR_ME_MOVE");
+  assert.deepEqual(next.enemies[0]!.intents.map((i) => `${i.type}${i.damage}x${i.hits}`), ["Attack12x3"]);
+});
+
+test("queen: Burn Bright for Me gives the Torch Head 1 Strength, not her, and her 20 block", () => {
+  const next = nextTurn(state([], court("BURN_BRIGHT_FOR_ME_MOVE", "TACKLE_3_MOVE")), seeded(1), none)!;
+  const [torch, queen] = next.enemies;
+  assert.equal(torch!.powers["STRENGTH"], 1);
+  assert.equal(queen!.powers["STRENGTH"], undefined);
+  assert.equal(queen!.block, 20);
+  assert.equal(queen!.move, "BURN_BRIGHT_FOR_ME_MOVE");
+  // Its next Weak Tackle shows the Strength: 16 + 1.
+  assert.equal(torch!.move, "TACKLE_4_MOVE");
+  assert.equal(torch!.intents[0]!.damage, 17);
+});
+
+test("queen: the Torch Head killed turns a Burn Bright shown into Enrage, then Off with Your Head 4x5, Execution 18", () => {
+  const [torch, queen] = court("BURN_BRIGHT_FOR_ME_MOVE", "BEAM_MOVE");
+  const s = at(state([STRIKE], [{ ...torch!, hp: 5 }, queen!]), 0, 1);
+  assert.equal(s.enemies[0]!.alive, false);
+  assert.equal(s.enemies[1]!.move, "ENRAGE_MOVE");
+  assert.equal(incomingDamage(s), 0);
+  const t2 = nextTurn(s, seeded(1), none)!;
+  assert.equal(t2.enemies[1]!.powers["STRENGTH"], 2);
+  assert.deepEqual(t2.enemies[1]!.intents.map((i) => `${i.type}${i.damage}x${i.hits}`), ["Attack6x5"]);
+  const t3 = nextTurn(t2, seeded(1), none)!;
+  assert.equal(t3.enemies[1]!.move, "EXECUTION_MOVE");
+  assert.equal(t3.enemies[1]!.intents[0]!.damage, 20);
+});
+
+test("queen: the Torch Head dead before You Are Mine, the Queen goes on to Off with Your Head", () => {
+  const [torch, queen] = court("YOU_ARE_MINE_MOVE");
+  const next = nextTurn(state([], [{ ...torch!, alive: false, hp: 0 }, queen!]), seeded(1), none)!;
+  assert.equal(next.enemies[1]!.move, "OFF_WITH_YOUR_HEAD_MOVE");
+});
+
+test("queen: killing her ends the fight, her minion with her", () => {
+  const [torch, queen] = court("BURN_BRIGHT_FOR_ME_MOVE");
+  const s = at(state([STRIKE], [torch!, { ...queen!, hp: 5 }]), 0, 2);
+  assert.ok(s.enemies.every((e) => !e.alive));
+});
