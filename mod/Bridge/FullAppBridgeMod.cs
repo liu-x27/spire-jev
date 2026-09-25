@@ -998,6 +998,21 @@ public static class FullAppBridgeMod
 
             if (isProceed) break;
         }
+
+        // spire-jev: an option whose fight replaces the event room (Battleworn Dummy's three settings):
+        // the loop ends with the room gone and a fight starting, and AutoSlay then waited for a map that
+        // was not coming (seeds 374, 413, 545, 580 lost in act 3). Play the fight and what it offers here.
+        if (!GodotObject.IsInstanceValid(eventRoom) || !eventRoom.IsInsideTree())
+        {
+            for (int wait = 0; wait < 40 && CombatManager.Instance?.IsInProgress != true; wait++) await Task.Delay(50);
+            if (CombatManager.Instance?.IsInProgress == true)
+            {
+                GD.Print("[spire-jev] event: its fight replaced the room; playing it");
+                await RunCombatLoopAsync(random, ct);
+                await Task.Delay(200);
+                while (await HandleOfferedScreenAsync(random, ct)) await Task.Delay(50);
+            }
+        }
     }
 
     private static bool HandleTreasureRoomAsync(Rng random, CancellationToken ct, ref Task __result)

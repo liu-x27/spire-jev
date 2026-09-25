@@ -475,6 +475,19 @@ states, and only a simulator is fast enough for that.
      48 and was abandoned. Fixed (b5d1c92, a transpiler raising 49 to 99); the
      replay of 497 then met the Test Subject on floor 49 at 48 of 128 HP and
      lost in four turns: the furthest run so far, one fight from a clear.
+   - `--flags spar2` (twelve turns for the long bosses) against spar on 316-495:
+     neutral (mean floor 23.8 → 23.5, 13 seeds changed). Not adopted.
+   - Astra's fourth review (`docs/astra-review-4.md`): of 270 spar starts,
+     act 2 ends 136 (88% of act 1's survivors), its boss only 69; spar's bout is
+     unlike the run it scores (80/80 HP, three energy, no relics or potions,
+     Queen missing from BOSSES, upgraded offers scored bare, 32 shuffles against
+     a five-point threshold); shops, removal, upgrades and rests still follow the
+     old rules; act 3 needs both bosses on one HP bar. Next: scorer fidelity and
+     censoring, one evaluator for rewards/shops/removal/upgrades judged by act 2
+     completions per start, a double-boss evaluator, then 300 fresh seeds.
+   - Battleworn Dummy (act 3): each setting's fight replaces the event room, and
+     AutoSlay waited for a map (seeds 374, 413, 545, 580 lost). Fixed in the
+     event loop.
    - Colourless cards: shops offered them 9,092 times (38 kinds), bought 0 —
      `cardValue` gives cards missing from its tables 0.3. Mostly right:
      strong players' Elo puts nearly all of them below skipping (Spire Codex
