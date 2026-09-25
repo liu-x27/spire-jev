@@ -562,6 +562,27 @@ states, and only a simulator is fast enough for that.
      shortlist (12 shuffles each, the best 4 fully): a smith of 25 cards had
      outrun AutoSlay's three minutes. Staging11 (c31c5b6) also stops a card
      preview's tween from hanging a run (the other session: 589, 591, 627).
+   - **Can our planner pilot the decks humans win with?** (another session's act
+     3 research, Spire Codex's v0.111.0 export: 2,418 A10 solo Ironclad runs,
+     1,017 at act 3's bosses.) Winners' decks at floor 48: 30 cards, 10 attacks
+     / 14 skills / 4 powers, 98% HP; ours at 47: 24, 13 / 8 / 1.4, 57% before
+     the rest. The bot never took the engine cards (Feel No Pain 0/92, Burning
+     Pact 0/76, Barricade 0/29) — spar scored them negative — and in spar's bout
+     (fought out, full HP, their relics) the winners' own decks beat their
+     first act 3 boss 3-4% of the time (60 decks × 8, 480 bouts): planTurn 3.1%,
+     with engines+setup 4.2%, planTurn2 4.0% / 4.4%, planTurnRoll (b514909: this
+     turn's best lines ranked by rollouts two turns on) 3.3% / 4.4%; losers
+     0.4-0.6%, ours 1.7-3.8%. No planner variant moves it: the simulator is
+     the limit. The Queen: 1.5% (her Torch killed first, 2.6%); the Test
+     Subject 0.4%, against the bot's own 2/11 and 2/26 on floor 48 in the game.
+     Most of the relics those decks hold are not in the simulator at all (Bag of
+     Preparation, Gorget, Centennial Puzzle, Lantern, Anchor, Oddly Smooth Stone,
+     Bag of Marbles, Vajra, Mercury Hourglass, Nunchaku, Miniature Cannon — 626's
+     upgraded attacks hit 3 harder than predicted, every time), a bout has no
+     potions, and a bout starts without what a relic gives at the start. Next:
+     the relics (the other session, as for the cards), potions in the bout, and
+     this pilot as the measure — the winners' decks should win in the simulator
+     before spar can prefer what makes them win.
    - **Act 3's pair, from the 55 f47 saves** (`runs/saves-f47-all`: 36 seeds,
      the arms' libraries, every order; 56214be, Staging10; floor 47's rest and
      both bosses, paired): base wins floor 48 4/55 (Queen 2/24, Aeonglass 1/24,
