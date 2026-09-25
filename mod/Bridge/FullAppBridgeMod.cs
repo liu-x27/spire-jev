@@ -189,8 +189,10 @@ public static class FullAppBridgeMod
 
     private static void OnCreateForNewRun(ref int ascensionLevel)
     {
+        // spire-jev: 0 is an ascension too: the veteran profile prefers 10, and a request for 0 left
+        // every "A0" run at A10 (the showcase session's demo-a0 evals, seeds 600-718). -1: not asked.
         int requested = FullAppBridgeServer.RequestedAscension;
-        if (requested > 0 && ascensionLevel != requested)
+        if (requested >= 0 && ascensionLevel != requested)
         {
             GD.Print($"[spire-jev] new run at ascension {requested} (was asked for {ascensionLevel})");
             ascensionLevel = requested;
@@ -229,7 +231,7 @@ public static class FullAppBridgeMod
         // character (setting one resets the lobby's ascension to what that character has unlocked),
         // and past the sandbox profile's unlocks: lift MaxAscension, then set Ascension.
         int ascension = FullAppBridgeServer.RequestedAscension;
-        if (ascension > 0)
+        if (ascension >= 0)
         {
             try
             {
@@ -239,7 +241,7 @@ public static class FullAppBridgeMod
                     if (prop?.SetMethod != null) prop.SetValue(__instance, ascension);
                     else typeof(StartRunLobby).GetField($"<{name}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(__instance, ascension);
                 }
-                SetInt("MaxAscension");
+                if (ascension > __instance.MaxAscension) SetInt("MaxAscension");
                 SetInt("Ascension");
                 __instance.SyncAscensionChange(ascension);
                 GD.Print($"[spire-jev] ascension requested {ascension}, lobby now {__instance.Ascension} (max {__instance.MaxAscension})");

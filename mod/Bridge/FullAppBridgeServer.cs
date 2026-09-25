@@ -26,7 +26,8 @@ public static class FullAppBridgeServer
 
     public static string RequestedSeed { get; private set; } = "A1B2C3D4E5";
     public static string RequestedCharacter { get; private set; } = "IRONCLAD";
-    public static int RequestedAscension { get; private set; } = 0;
+    // spire-jev: -1 until start_run asks for one (0 included: the profile's preferred ascension is not A0).
+    public static int RequestedAscension { get; private set; } = -1;
     public static bool IsRunStarted { get; private set; }
     /// <summary>spire-jev: start_run with "continue": resume the run in the profile's save instead of a new one.</summary>
     public static bool ContinueRequested { get; private set; }
