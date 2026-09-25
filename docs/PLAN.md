@@ -437,6 +437,20 @@ states, and only a simulator is fast enough for that.
      Wrigglers (18-22 HP at A8+) when it dies, and the planner took the kill
      for the win, as with the Giant. Modelled (sim.ts `died`), its Wrigglers
      counted as HP still to take while it lives.
+   - Tablet of Truth (every Decipher doubles its max HP cost; 34 of 36 visits
+     left 20+ max HP behind, runs at 1 max HP): decipher once or twice, then
+     give up. `vet-dev1-a10` (Infested + Tablet), paired on 316-495: mean
+     floor 18.4 → 19.0, act 1 bosses 53/133 → 55/142.
+   - The Ancients' relics by §10.9's orders (Neow had given Lost Coffer 22 of
+     43 times offered); the other session's eight bosses merged (9b700c8);
+     `--flags sleep` (Lagavulin Matriarch left asleep). `vet-dev2-a10` against
+     vet-dev1, paired: mean floor 19.0 → 19.9, **act 1 bosses 55/141 → 67/141
+     (39% → 48%, clean 30 → 40)**, act 1 deaths 124 → 111, act 2 bosses 4/19
+     → 5/25. By boss: Ceremonial Beast 11/24 → 18/26, Soul Fysh 10/30 →
+     15/28, Matriarch 7/26 → 12/31, Vantom 9/23 → 12/23, The Kin 4/17 →
+     2/16, Waterfall Giant 14/22 → 8/17 — not the merge: the 155 boss-swapped
+     Giant fights are the same fight for fight on 9b700c8 (81 wins, 43
+     clean); other decks reach it now (the Ancients), and 17 is few.
    - Colourless cards: shops offered them 9,092 times (38 kinds), bought 0 —
      `cardValue` gives cards missing from its tables 0.3. Mostly right:
      strong players' Elo puts nearly all of them below skipping (Spire Codex
