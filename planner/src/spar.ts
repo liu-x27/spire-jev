@@ -237,19 +237,22 @@ export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed 
  * sparpair (astra-review-4 #3): A10's act 3, both bosses on one HP bar. The first bout, then the
  * second on what the first left (and the heals for winning: Burning Blood, Black Blood), on its own
  * shuffles; the second is only fought if the first is won. The score is the two bouts' together,
- * the second's win worth as much as the first's.
+ * the second's win worth as much as the first's. Both are played out (PAIR_TURNS at most): in eight
+ * turns no act 3 deck beats Aeonglass's 535 HP, and the second was never fought (e23d63b, seeds
+ * 377, 407, 533: not a pick changed).
  */
+const PAIR_TURNS = 20;
 export function pairScore(ids: readonly string[], first: Boss, second: Boss, samples = 8, seed = 1, me: Player = BARE, from = 0, hpWeight = 0.7): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   const heal = (["BURNING_BLOOD", "BLACK_BLOOD"] as const).reduce((a, id) => a + (me.relics.includes(id) ? me.relicVars?.[id]?.["Heal"] ?? 6 : 0), 0);
-  const turns = (b: Boss) => (bossTurns ? b.turns ?? 8 : 8);
+  const turns = () => PAIR_TURNS;
   let total = 0;
   for (let i = from; i < from + samples; i++) {
-    const a = bout(deck, first, seeded(seed * 1000 + i), turns(first), me);
+    const a = bout(deck, first, seeded(seed * 1000 + i), turns(), me);
     total += a.damage + (a.won ? 60 : 0) - hpWeight * a.hpLost;
     if (!a.won) continue;
     const hp = Math.min(me.maxHp, me.hp - a.hpLost + heal);
-    const b = bout(deck, second, seeded(seed * 1000 + i + 500_000), turns(second), { ...me, hp });
+    const b = bout(deck, second, seeded(seed * 1000 + i + 500_000), turns(), { ...me, hp });
     total += b.damage + (b.won ? 60 : 0) - hpWeight * b.hpLost;
   }
   return total / samples;
