@@ -463,6 +463,15 @@ export function revival(s: State): number | undefined {
  */
 let giantPotions = false;
 let giantMargin = false;
+/**
+ * --flags potsave: act 3's fights before its two bosses keep their potions. The runs that came to
+ * floor 48 at A10 came with none (712, 722: both drunk in act 3's elites and hallways, the belt
+ * empty for the Queen and the Test Subject); set per fight by run-fights.
+ */
+let savingPotions = false;
+export function usePotionSaving(on: boolean): void {
+  savingPotions = on;
+}
 export function useGiantRules(potions: boolean, margin: boolean): void {
   giantPotions = potions;
   giantMargin = margin;
@@ -498,7 +507,7 @@ export function giantBlowAhead(s: State): number {
 function potionCost(s: State, w: Weights): number {
   const big = s.enemies.some((e) => e.maxHp >= 100);
   const full = s.potions.length + s.potionsUsed >= s.potionSlots;
-  return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1) * (giantPotions && giantAlive(s) ? 5 : 1);
+  return w.potion * (big ? 0.3 : 1) * (full ? 0.6 : 1) * (giantPotions && giantAlive(s) ? 5 : 1) * (savingPotions ? 4 : 1);
 }
 
 /**

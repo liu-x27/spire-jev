@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
-import { evaluate, planTurn } from "../src/search.ts";
+import { evaluate, planTurn, usePotionSaving } from "../src/search.ts";
 import { chooseEvent } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
@@ -210,4 +210,17 @@ test("Cinder hits, then exhausts a card from the hand; Drum of Battle draws, its
   const d = at(state([drum], [foe("NIBBIT", 50)]), 0);
   assert.equal(d.energy, 2);
   assert.equal(d.drawn, 2);
+});
+
+test("potsave: a potion drunk before act 3's bosses costs four times as much", () => {
+  const drunk = { ...state([], [foe("NIBBIT", 50)]), potionsUsed: 1 };
+  const kept = state([], [foe("NIBBIT", 50)]);
+  const cost = () => evaluate(kept) - evaluate(drunk);
+  const plain = cost();
+  usePotionSaving(true);
+  try {
+    assert.ok(Math.abs(cost() - 4 * plain) < 1e-9, `${cost()} vs ${plain}`);
+  } finally {
+    usePotionSaving(false);
+  }
 });

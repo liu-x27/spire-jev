@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, usePotionSaving, type Weights } from "./search.ts";
 import { learnCard } from "./spar.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
@@ -257,6 +257,8 @@ const BLOW_POTIONS = new Set([
   "BLOCK_POTION", "DEXTERITY_POTION", "SPEED_POTION", "WEAK_POTION", "SWIFT_POTION", "GAMBLERS_BREW", "SKILL_POTION",
   "DUPLICATOR", "FORTIFIER", "HEART_OF_IRON", "LIQUID_BRONZE", "DISTILLED_CHAOS", "COLORLESS_POTION", "LIQUID_MEMORIES",
 ]);
+/** potsave: a fight of act 3 before its two bosses (floors 34-47) keeps its potions for them. */
+const savingFor = (floor: number, boss: boolean) => hasFlag("potsave") && floor > 33 && floor < 48 && !boss;
 /** Potions that work by themselves (Fairy in a Bottle saves a death), or are worth more kept. */
 const KEEP_POTIONS = new Set(["FAIRY_IN_A_BOTTLE"]);
 const BOSSES = new Set(["VANTOM", "THE_KIN", "CEREMONIAL_BEAST", "WATERFALL_GIANT", "LAGAVULIN_MATRIARCH", "SOUL_FYSH",
@@ -284,7 +286,8 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   }
   const elite = s.enemies.some((e) => e.alive && ELITES.test(e.model));
   const hurt = s.player.hp < 0.5 * s.player.maxHp;
-  if (!(hopeless || (boss && bossTurn <= 2) || (elite && hurt))) return undefined;
+  // potsave: act 3's elites before its two bosses drink only when nothing else survives.
+  if (!(hopeless || (boss && bossTurn <= 2) || (elite && hurt && !savingFor(obs.floor, boss)))) return undefined;
   const byHp = [...s.enemies].filter((e) => e.alive).sort((a, b) => a.hp - b.hp);
   // A potion tried this turn and still held was refused: not again this turn.
   // Only potions the search cannot model — it already weighs the ones it can (a Block Potion was
@@ -355,6 +358,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
     turns: 0, plays: 0, planMs: [], nodes: [], truncated: 0, inexact: 0, mismatches: [], endTurn: [], illegal: [], cardsPlayed: {},
   };
   logs.push(log);
+  usePotionSaving(savingFor(o.floor, (o.combat?.enemies ?? []).some((e) => BOSSES.has(e.model_id) || e.max_hp >= 250)));
   const tried = new Set<string>();
   let cur = start;
   // What nextTurn said the turn after an end of turn would start with, to hold it to the game.
