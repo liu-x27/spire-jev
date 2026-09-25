@@ -135,4 +135,7 @@ if (Number(values["stop-floor"]) < 999) {
   const at = plain.map((r) => r.fights.find((f) => f.floor === floor)).filter((f): f is FightLog => f !== undefined);
   console.log(`  reached floor ${floor}: ${at.length} of ${plain.length}; won there ${at.filter((f) => f.won).length} (clean ${at.filter((f) => f.won && f.hpEnd >= 0.3 * f.maxHp).length}); HP coming in ${Math.round(100 * mean(at.map((f) => f.hpStart / f.maxHp)))}%`);
 }
+// A replay resumed after a hang or crash (run-fights resumeRun) is not a clean one: say which.
+const resumedReplays = results.filter((r) => r.fights.some((f) => (f.resumed?.length ?? 0) > 0));
+if (resumedReplays.length) console.log(`  resumed after a hang or crash: ${resumedReplays.length} of ${results.length} replays (${resumedReplays.map((r) => `${seedOf(r.save)}${r.explore ? `/e${r.explore}` : ""}@${r.fights.find((f) => f.resumed)!.resumed!.map((x) => x.floor).join(",")}`).join(" ")})`);
 console.log(`  per save: ${results.map((r) => `${(r.save.match(/JEV0*(\d+)/)?.[1] ?? "?")}:${r.fights.at(-1)?.won ? "W" : "L"}${r.fights.at(-1)?.hpEnd ?? "?"}`).join(" ")}`);

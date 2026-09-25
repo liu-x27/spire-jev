@@ -1099,3 +1099,20 @@ export function chooseMap(o: Observation, legal: LegalAction[]): string {
   });
   return offers[best]!.action_id;
 }
+
+/** What the choices carry from one screen to the next: run-fights snapshots it, and restores it on a resume. */
+export interface ChoiceState {
+  removeNext: typeof removeNext;
+  smithNext: typeof smithNext;
+  opening: typeof opening;
+  selectFor: "best" | "worst";
+}
+export function saveChoiceState(): ChoiceState {
+  return { removeNext, smithNext, opening, selectFor };
+}
+export function restoreChoiceState(c: ChoiceState): void {
+  removeNext = c.removeNext;
+  smithNext = c.smithNext;
+  opening = c.opening;
+  selectFor = c.selectFor;
+}

@@ -115,6 +115,14 @@ function prepare(sandbox: string, resume?: string): void {
   fs.mkdirSync(path.join(sandbox, "local_userdata"), { recursive: true });
 }
 
+/**
+ * SPIRE_JEV_CRASH_STEP (the test of run-fights' resume): the game is killed once, as the n-th step
+ * of the process is sent, the way a crash or a hang would end it.
+ */
+const CRASH_STEP = Number(process.env["SPIRE_JEV_CRASH_STEP"] ?? 0);
+let stepsSent = 0;
+let crashed = false;
+
 export interface StepResult {
   observation: Observation;
   legal_actions: LegalAction[];
@@ -189,6 +197,11 @@ export class Game {
   /** One request, one reply line. The bridge answers `step` only at the next decision, so a game that hangs would hang this: it times out instead. */
   async call<T>(method: string, params: Record<string, unknown> = {}, timeoutMs = 120_000): Promise<T> {
     if (!this.socket || !this.lines) throw new Error("not connected");
+    if (method === "step" && CRASH_STEP > 0 && !crashed && ++stepsSent === CRASH_STEP) {
+      crashed = true;
+      await this.kill();
+      throw new Error(`${method}: the bridge closed the connection (SPIRE_JEV_CRASH_STEP ${CRASH_STEP})`);
+    }
     this.next++;
     this.socket.write(`${JSON.stringify({ id: this.next, method, params })}\n`);
     let timer: NodeJS.Timeout | undefined;

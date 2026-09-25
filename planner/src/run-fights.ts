@@ -29,6 +29,7 @@ import { parseArgs } from "node:util";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
+import { type ChoiceState, restoreChoiceState, saveChoiceState } from "./choices.ts";
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
@@ -44,6 +45,8 @@ let weights: Weights = DEFAULT_WEIGHTS;
 
 export interface FightLog {
   seed: string;
+  /** The resumes its run took (resumeRun), on every fight of the run: bench's runs stop before a RunEnd. */
+  resumed?: Resume[];
   floor: number;
   enemies: string[];
   relics: string[];
@@ -112,6 +115,18 @@ export interface RunEnd {
   relics: string[];
   /** Set when the run stopped on an error (a lost connection, a timeout), not on the game's terms. */
   error?: string;
+  /**
+   * The resumes the run took (resumeRun): where the game's save brought it back (floor and screen),
+   * and the error before it. A run with any is not a clean one; eval.ts counts them.
+   */
+  resumed?: Resume[];
+}
+export interface Resume {
+  floor: number;
+  phase: string;
+  error: string;
+  /** No snapshot for that screen: the logs were kept as they were, and may hold a fight twice. */
+  unmatched?: boolean;
 }
 const ends: RunEnd[] = [];
 
@@ -550,13 +565,74 @@ let usePotions = false;
 let stopFloor = 999;
 /** Floors whose map screen's save is copied into runs/saves (--capture). */
 let capture = new Set<number>();
-/** The exploration's generator, when exploring (--explore). */
+/** The exploration's generator, when exploring (--explore): its draws counted, for a resume to pick up where it was. */
 let exploring: (() => number) | undefined;
+let exploreSeed = 0;
+let exploreDraws = 0;
+function startExploring(seedValue: number, draws = 0): void {
+  const base = seeded(seedValue);
+  for (let i = 0; i < draws; i++) base();
+  exploreSeed = seedValue;
+  exploreDraws = draws;
+  exploring = () => {
+    exploreDraws++;
+    return base();
+  };
+}
+
+/**
+ * A run interrupted by a hang or a crash (the bridge's "no reply", ECONNRESET, the game exiting)
+ * is resumed from the game's own save, as bench resumes a boss save: at most MAX_RESUMES times a
+ * run. Which save: the one of the room the run was in, copied as its first screen showed (the game
+ * writes current_run.save as the map's node is chosen, before the room). Not the game's latest: a
+ * fight won writes one too, before its rewards, and continued it brings the room back with its
+ * fight over, which AutoSlay then waits for ("Combat did not start": seed 586, killed on its floor
+ * 8 rewards). The run is deterministic: the planner is put back as it was the first time it saw
+ * that screen (floor and phase), and the fights and rooms logged since are dropped, to be logged
+ * again as they are played again.
+ */
+const MAX_RESUMES = 2;
+const RESUMABLE = /no reply in|ECONNRESET|closed the connection|not connected|EPIPE|game exited/;
+interface Checkpoint {
+  logs: number;
+  rooms: number;
+  fights: number;
+  choices: ChoiceState;
+  exploreDraws: number;
+  skippedCardsOn: number;
+}
+/** The run's first sight of each screen, by `${floor}|${phase}`. */
+const checkpoints = new Map<string, Checkpoint & { floor: number }>();
+/** The run's resumes so far, and the error the next start resumes after. */
+let resumes: Resume[] = [];
+let resumeAfter: string | undefined;
+/** The last observation the run had: a run that ended (a death) is not resumed. */
+let lastObservation: Observation | undefined;
+/** The save of the room the run is in (a copy, out of the profile's saves: each launch empties them), and its floor. */
+let roomSave: string | undefined;
+let roomSaveFloor = -1;
 
 async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[], resume = false, sandbox = ""): Promise<void> {
   let cur = await game.startRun(seed, ascension, resume);
   const captured = new Set<number>();
   let fights = 0;
+  if (resumeAfter !== undefined) {
+    const o = cur.observation;
+    const exact = checkpoints.get(`${o.floor}|${o.phase}`);
+    // A screen never seen before (it should not happen): the floor's first sight, if any.
+    const cp = exact ?? [...checkpoints.values()].filter((c) => c.floor === o.floor).sort((a, b) => a.logs - b.logs || a.rooms - b.rooms)[0];
+    if (cp) {
+      logs.length = cp.logs;
+      rooms.length = cp.rooms;
+      fights = cp.fights;
+      restoreChoiceState(cp.choices);
+      skippedCardsOn = cp.skippedCardsOn;
+      if (exploring) startExploring(exploreSeed, cp.exploreDraws);
+    }
+    resumes.push({ floor: o.floor, phase: o.phase, error: resumeAfter, ...(exact ? {} : { unmatched: true }) });
+    console.log(`  resumed at floor ${o.floor}, ${o.phase}${exact ? "" : cp ? " (the floor's first screen)" : " (no snapshot: logs kept)"}`);
+    resumeAfter = undefined;
+  }
   // A screen that comes back unchanged after its action did nothing (a reward that cannot be taken,
   // a button the game ignores) cost whole runs: 2,000 steps on one rewards screen after Punch Off's
   // fight. Seen 25 times, say so and try another action; 200 times, give the run up as stuck.
@@ -564,6 +640,19 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
   let repeats = 0;
   let stuck: string | undefined;
   for (let steps = 0; !cur.observation.is_terminal && steps < MAX_STEPS; steps++) {
+    lastObservation = cur.observation;
+    if (sandbox && cur.observation.floor !== roomSaveFloor) {
+      const from = path.join(savesDir(sandbox), "current_run.save");
+      if (fs.existsSync(from)) {
+        roomSave = path.join(sandbox, "..", `resume-${path.basename(sandbox)}.save`);
+        fs.copyFileSync(from, roomSave);
+        roomSaveFloor = cur.observation.floor;
+      }
+    }
+    const key = `${cur.observation.floor}|${cur.observation.phase}`;
+    if (!checkpoints.has(key)) {
+      checkpoints.set(key, { floor: cur.observation.floor, logs: logs.length, rooms: rooms.length, fights, choices: saveChoiceState(), exploreDraws, skippedCardsOn });
+    }
     if (cur.observation.phase === "combat" && cur.observation.combat) {
       if (fights++ >= maxFights) return;
       if (logs.length > 0 && logs[logs.length - 1]!.seed === seed && logs[logs.length - 1]!.floor >= stopFloor) return;
@@ -616,7 +705,11 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
     cur = await game.step(chosen);
   }
   const o = cur.observation;
-  ends.push({ seed, floor: o.floor, terminal: o.is_terminal, victory: o.is_victory, hp: o.player_hp, maxHp: o.player_max_hp, deck: o.deck_cards, relics: o.relics, ...(stuck ? { error: stuck } : {}) });
+  lastObservation = o;
+  ends.push({
+    seed, floor: o.floor, terminal: o.is_terminal, victory: o.is_victory, hp: o.player_hp, maxHp: o.player_max_hp, deck: o.deck_cards, relics: o.relics,
+    ...(stuck ? { error: stuck } : {}), ...(resumes.length ? { resumed: [...resumes] } : {}),
+  });
 }
 
 /**
@@ -736,7 +829,7 @@ async function main(): Promise<void> {
   });
   capture = new Set(values.capture.split(",").filter(Boolean).map(Number));
   stopFloor = Number(values["stop-floor"]);
-  if (values.explore !== undefined) exploring = seeded(Number(values.explore) * 7919 + 17);
+  if (values.explore !== undefined) startExploring(Number(values.explore) * 7919 + 17);
   const policy = values.policy as Policy;
   weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
   useRules = values.choices === "rules" || values.choices === "rules2";
@@ -756,27 +849,57 @@ async function main(): Promise<void> {
     const seed = `JEV${String(Number(values.seed) + r).padStart(5, "0")}`;
     console.log(`${policy} ${seed}`);
     const t0 = Date.now();
-    let game: Game | undefined;
-    try {
-      game = await Game.launch(sandbox, Number(values.port), values.resume);
-      await playRun(game, seed, policy, Number(values["max-fights"]), values.cards === "take", logs, values.resume !== undefined, sandbox);
-      // The history file is written as the run ends: give it a moment, then take the game's word.
-      for (let wait = 0; wait < 10; wait++) {
-        const win = historyWin(sandbox, seed, t0);
-        const end = ends[ends.length - 1];
-        if (win !== undefined && end?.seed === seed) {
-          end.victory = win;
-          if (win) console.log(`  VICTORY (the game's run history says win)`);
-          break;
+    const firstLog = logs.length;
+    checkpoints.clear();
+    resumes = [];
+    resumeAfter = undefined;
+    lastObservation = undefined;
+    roomSave = undefined;
+    roomSaveFloor = -1;
+    let resumeFrom = values.resume;
+    for (let attempt = 0; ; attempt++) {
+      let game: Game | undefined;
+      let again = false;
+      try {
+        game = await Game.launch(sandbox, Number(values.port), resumeFrom);
+        await playRun(game, seed, policy, Number(values["max-fights"]), values.cards === "take", logs, resumeFrom !== undefined, sandbox);
+        // The history file is written as the run ends: give it a moment, then take the game's word.
+        for (let wait = 0; wait < 10; wait++) {
+          const win = historyWin(sandbox, seed, t0);
+          const end = ends[ends.length - 1];
+          if (win !== undefined && end?.seed === seed) {
+            end.victory = win;
+            if (win) console.log(`  VICTORY (the game's run history says win)`);
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 500));
         }
-        await new Promise((r) => setTimeout(r, 500));
+      } catch (err) {
+        const message = (err as Error).message;
+        const save = roomSave ?? path.join(savesDir(sandbox), "current_run.save");
+        // (Set by playRun: the narrowing from the reset above does not see it.)
+        const last = lastObservation as Observation | undefined;
+        const over = last !== undefined && (last.is_terminal || last.phase === "game_over" || last.player_hp <= 0);
+        if (attempt < MAX_RESUMES && RESUMABLE.test(message) && !over && fs.existsSync(save)) {
+          // Out of the profile's saves, which the next launch empties before it puts this one back.
+          const copy = path.join(sandbox, "..", `resume-${path.basename(sandbox)}-from.save`);
+          fs.copyFileSync(save, copy);
+          resumeFrom = copy;
+          // The resumed attempt copies its own room saves again from its first screen.
+          roomSaveFloor = -1;
+          resumeAfter = message;
+          again = true;
+          console.log(`  run interrupted (${message}): resuming from the game's save (${attempt + 1} of ${MAX_RESUMES})`);
+        } else {
+          console.log(`  run stopped: ${message}`);
+          ends.push({ seed, floor: -1, terminal: false, victory: false, hp: 0, maxHp: 0, deck: [], relics: [], error: message, ...(resumes.length ? { resumed: [...resumes] } : {}) });
+        }
+      } finally {
+        await game?.kill();
       }
-    } catch (err) {
-      console.log(`  run stopped: ${(err as Error).message}`);
-      ends.push({ seed, floor: -1, terminal: false, victory: false, hp: 0, maxHp: 0, deck: [], relics: [], error: (err as Error).message });
-    } finally {
-      await game?.kill();
+      if (!again) break;
     }
+    if (resumes.length) for (const l of logs.slice(firstLog)) l.resumed = [...resumes];
     console.log(`  (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
   }
 

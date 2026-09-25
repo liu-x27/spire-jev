@@ -68,7 +68,7 @@ const parts = await Promise.all(
 
 const fights: FightLog[] = [];
 const rooms: unknown[] = [];
-const ends: { seed: string; victory: boolean }[] = [];
+const ends: { seed: string; victory: boolean; resumed?: { floor: number; phase: string }[] }[] = [];
 /** Every card seen, as the game described it (spar.ts builds its catalogue from these). */
 const cards: Record<string, unknown> = {};
 let weights: unknown;
@@ -77,7 +77,7 @@ for (const file of parts) {
     console.log(`missing ${file}: see sandbox/eval-${values.tag}-*.log`);
     continue;
   }
-  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[]; rooms?: unknown[]; ends?: { seed: string; victory: boolean }[]; cards?: Record<string, unknown> };
+  const part = JSON.parse(fs.readFileSync(file, "utf8")) as { weights: unknown; fights: FightLog[]; rooms?: unknown[]; ends?: { seed: string; victory: boolean; resumed?: { floor: number; phase: string }[] }[]; cards?: Record<string, unknown> };
   for (const [k, v] of Object.entries(part.cards ?? {})) cards[k] ??= v;
   weights = part.weights;
   fights.push(...part.fights);
@@ -99,5 +99,8 @@ console.log(`${values.tag}  weights ${JSON.stringify(weights)}`);
 console.log(`floors reached (last fight's floor; + if it was won): ${floors.join(" ")}  mean ${mean.toFixed(1)}`);
 const wins = ends.filter((e) => e.victory).map((e) => e.seed.slice(-2));
 console.log(`victories: ${wins.length} of ${ends.length} runs${wins.length ? ` (seeds ${wins.join(" ")})` : ""}`);
+// A run resumed after a hang or a crash (run-fights resumeRun) is not a clean one: say which.
+const resumed = ends.filter((e) => (e.resumed?.length ?? 0) > 0);
+console.log(`resumed after a hang or crash: ${resumed.length} of ${ends.length} runs${resumed.length ? ` (${resumed.map((e) => `${e.seed.slice(-3)}@${e.resumed!.map((r) => `${r.floor}/${r.phase}`).join(",")}`).join(" ")})` : ""}`);
 console.log(summarise(values.tag, fights).split("\n").filter((l) => !l.startsWith("    ")).join("\n"));
 console.log(`${((Date.now() - t0) / 60000).toFixed(1)} min, merged into ${path.relative(here, merged)}`);
