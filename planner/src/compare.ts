@@ -63,6 +63,11 @@ const rows = seeds.map((s) => {
 const mean = (m: Map<string, FightLog>) => [...m.values()].reduce((x, f) => x + f.floor, 0) / Math.max(1, m.size);
 
 console.log(`${a.tag} vs ${b.tag}`);
+// hpLost counts a fight won in the enemies' turn only since 2026-09-24 (run-fights.ts hpLostWinning).
+const counted = (e: Evaluation) => e.fights.some((f) => f.hpLostWinning !== undefined);
+if (counted(a) !== counted(b)) {
+  console.log(`  note: ${counted(a) ? b.tag : a.tag} was logged before HP lost counted a fight won in the enemies' turn (a Waterfall Giant's DeathBlow): HP lost is not like for like`);
+}
 console.log(`  floors reached (${a.tag}/${b.tag}): ${rows.join(" ")}`);
 console.log(`  mean floor ${mean(endA).toFixed(1)} vs ${mean(endB).toFixed(1)}; ${b.tag} further on ${further} seeds, shorter on ${shorter}`);
 console.log(`  ${shared} fights both played: HP lost ${lostA} vs ${lostB} (${(((lostB - lostA) / Math.max(1, lostA)) * 100).toFixed(0)}%), won ${wonA} vs ${wonB}`);

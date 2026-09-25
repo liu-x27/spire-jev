@@ -54,8 +54,13 @@ export interface FightLog {
   hpStart: number;
   /** After the fight, so after relics that heal on a win (Burning Blood). */
   hpEnd: number;
-  /** Taken during the fight. */
+  /** Taken during the fight, the step that won it included (its HP before the heals for winning). */
   hpLost: number;
+  /**
+   * Of hpLost, what the step that won the fight took: a fight won in the enemies' turn (a Waterfall
+   * Giant's DeathBlow as it dies) is counted since 2026-09-24. Logs without it left that turn out.
+   */
+  hpLostWinning?: number;
   maxHp: number;
   turns: number;
   plays: number;
@@ -302,8 +307,38 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   return uses[0]?.action_id;
 }
 
+/**
+ * The HP a won fight ended on, before the heals for winning, which the screen after it already has.
+ * The game's order (IL, CombatManager.EndCombatInternal): Hook.AfterCombatEnd — Chosen Cheese's max
+ * HP, which heals as much (CreatureCmd.GainMaxHp) — then Hook.AfterCombatVictory, every
+ * AfterCombatVictoryEarly — Meat on the Bone, at or under HpThreshold% of max HP — before every
+ * AfterCombatVictory — Burning Blood, Black Blood. No other model heals there. A heal cut short by
+ * max HP, or Meat on the Bone's threshold, can bring two HPs to the same screen: `guess`, what the
+ * simulator expected, picks between them. A screen no HP heals to (a heal that did not happen) is
+ * taken as it is.
+ */
+export function hpBeforeWinHeals(before: Pick<Observation, "player_max_hp" | "relics" | "relic_vars">, after: Pick<Observation, "player_hp" | "player_max_hp">, guess: number): number {
+  const maxHp = after.player_max_hp;
+  const gained = Math.max(0, maxHp - before.player_max_hp);
+  const heal = (id: string) => (before.relics.includes(id) ? (before.relic_vars?.[id]?.["Heal"] ?? 0) : 0);
+  const meat = before.relics.includes("MEAT_ON_THE_BONE") ? Math.floor((maxHp * (before.relic_vars?.["MEAT_ON_THE_BONE"]?.["HpThreshold"] ?? 50)) / 100) : -1;
+  const healed = (hp: number) => {
+    let h = hp + gained;
+    if (h <= meat) h = Math.min(maxHp, h + heal("MEAT_ON_THE_BONE"));
+    for (const id of ["BURNING_BLOOD", "BLACK_BLOOD"]) h = Math.min(maxHp, h + heal(id));
+    return h;
+  };
+  let best: number | undefined;
+  for (let hp = 1; hp <= before.player_max_hp; hp++) {
+    if (healed(hp) !== after.player_hp) continue;
+    const d = Math.abs(hp - guess) - (best === undefined ? Infinity : Math.abs(best - guess));
+    if (d < 0 || (d === 0 && hp > best!)) best = hp;
+  }
+  return best ?? after.player_hp - gained;
+}
+
 /** One fight, logged into `logs` as it goes, so a game that dies mid-fight still leaves what it did. */
-async function fight(game: Game, start: StepResult, policy: Policy, seed: string, logs: FightLog[]): Promise<{ log: FightLog; next: StepResult }> {
+export async function fight(game: Pick<Game, "step">, start: StepResult, policy: Policy, seed: string, logs: FightLog[]): Promise<{ log: FightLog; next: StepResult }> {
   const o = start.observation;
   const log: FightLog = {
     seed, floor: o.floor, enemies: (o.combat?.enemies ?? []).map((e) => e.model_id), relics: o.relics, relicVars: o.relic_vars ?? {}, potions: o.potions,
@@ -380,15 +415,21 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
     }
     const after = next.observation;
     const inCombat = after.phase === "combat" && after.combat !== null;
-    // Once the fight is won the HP shown already includes the heal for winning.
-    if (inCombat || after.phase === "game_over") log.hpLost += Math.max(0, obs.player_hp - after.player_hp);
+    const won = !inCombat && after.phase !== "game_over";
+    const played = a.kind === "play" ? play(s, a) : undefined;
+    // Once the fight is won the HP shown already includes the heals for winning: undone, so that a
+    // fight won in the enemies' turn counts that turn too (JEV00675's Waterfall Giant: its DeathBlow
+    // took 62 HP to 25, Burning Blood made it 31, and the fight logged 16 lost where the game has 53).
+    const hpAfter = won ? hpBeforeWinHeals(obs, after, played ? played.player.hp : a.kind === "end" ? hpAfterTurn(s).hp : obs.player_hp) : after.player_hp;
+    const lost = Math.max(0, obs.player_hp - hpAfter);
+    log.hpLost += lost;
+    if (won) log.hpLostWinning = lost;
     if (a.kind === "play") {
       log.plays++;
       const card = s.hand[a.hand]!;
       log.cardsPlayed[label(card)] = (log.cardsPlayed[label(card)] ?? 0) + 1;
       (log.sequence ??= []).push(`t${obs.combat!.turn}:${label(card)}`);
-      const predicted = play(s, a);
-      if (!inCombat && after.phase !== "game_over") log.hpLost += Math.max(0, obs.player_hp - predicted.player.hp);
+      const predicted = played!;
       if (inCombat) {
         for (const m of compare(label(card), predicted, fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
       } else if (after.phase !== "game_over" && predicted.enemies.some((e) => e.alive)) {
@@ -402,8 +443,9 @@ async function fight(game: Game, start: StepResult, policy: Policy, seed: string
       // Only the potions the model can drink are held to its prediction.
       if (inCombat && held && drinkable(held)) for (const m of compare(`POTION:${potion}`, drink(s, a), fromObservation(after))) log.mismatches.push({ ...m, before: brief(obs) });
     } else if (inCombat || after.phase === "game_over") {
-      // (A fight that ends in the enemies' turn — one escapes, or dies to
-      // Flame Barrier — shows HP after the win's heal: nothing to compare.)
+      // (A fight that ends in the enemies' turn — one escapes, or dies to Flame Barrier — shows HP
+      // after the win's heals: its loss is counted above, but not held to the prediction, which
+      // picks between the HPs that heal alike.)
       log.turns++;
       // HP cannot fall below 0: a lethal turn shows only the HP there was, and one that Lizard Tail
       // or Fairy in a Bottle undoes shows a gain (seed 17's Queen, turn 5: 18 HP to 52, -34).
