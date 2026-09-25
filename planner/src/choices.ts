@@ -675,6 +675,9 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
 
 /** §10.8: take a potion when there is a free slot (3, or 2 at A4+). */
 export function wantsPotion(o: Observation, slots = 3): boolean {
+  // Sozu: no potion is ever obtained, a free slot or not (JEV00593 asked a shop for Entropic Brew
+  // 25 times with its belt empty).
+  if (o.relics.includes("SOZU")) return false;
   return o.potions.filter((p) => p && p !== "EMPTY").length < slots;
 }
 

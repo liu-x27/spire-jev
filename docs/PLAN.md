@@ -521,6 +521,22 @@ states, and only a simulator is fast enough for that.
      term (the healed Ironclad, losing as well, lost more); what the bout turned
      down the rules no longer buy. spar3 and spar3+spar4 on the fresh seeds
      586-855 against vet-hunt3 (spar) in a frozen worktree (ba04ecc).
+   - The floor-49 Test Subject (497, 712, 722 all died to it at 42-48 HP):
+     the other session's replays from 712's and 722's f47 saves put the need at
+     ~80-100 HP (37-60 HP 0/16, ~80 2/8, ~100 4/8), against the 44-61 the Queen
+     leaves; the Queen's loss was already the best line the planner finds; both
+     came with no potions; heal or smith at 47 changed nothing on 49. Its third
+     form (313 HP, intangible every other turn) is a burst test: ~310 damage in
+     its first turn not intangible, or ~155 in two. `--flags potsave` keeps act
+     3's potions for its bosses (to test). `--flags sparboth2` (the second boss
+     at half HP, its own horizon, averaged with the first) on the 17 f32 saves
+     that beat act 2's boss in vet-hunt3, ×2: 48 won 3 → 0 (3 discordant, all
+     against), act 3 picks 37% → 31% — averaging in a boss the deck loses to
+     anyway halves the first boss's signal. Not adopted.
+   - `sparpair`: in e23d63b's eight turns no act 3 deck beat Aeonglass, and the
+     second bout was never played; fought out (20 turns) it still is not, mid
+     act 3 (407's decks 0/32 against Aeonglass at 8, 12 and 20 turns): it is
+     spar there, until the deck can beat the first boss.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints

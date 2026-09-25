@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, healCarried, setActBoss, setFlags, worstCard } from "../src/choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, healCarried, setActBoss, setFlags, wantsPotion, worstCard } from "../src/choices.ts";
 import { relicValue } from "../src/relics.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
@@ -206,4 +206,9 @@ test("sparboth: act 3's picks count the second boss too (seed 497, floor 42)", (
     setFlags([]);
     setActBoss(undefined);
   }
+});
+
+test("with Sozu no potion is wanted, the belt empty or not", () => {
+  assert.equal(wantsPotion(obs({ potions: [], potion_slots: 2, relics: ["SOZU"] }), 2), false);
+  assert.equal(wantsPotion(obs({ potions: [], potion_slots: 2 }), 2), true);
 });
