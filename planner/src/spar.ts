@@ -39,12 +39,28 @@ function cards(): Record<string, Omit<CardObs, "index" | "can_play">> {
   return catalog;
 }
 
+/**
+ * A card as the game describes it, learnt while playing (run-fights' collect, a reward's or shop's
+ * offer): until 2026-09-25 the catalogue was the one built from the locked profile's runs, 112 cards,
+ * and 70 of the 201 the veteran decks held (Break, Feeding Frenzy, Dominate, Inferno, every curse)
+ * were dropped from both decks compared, their worth 0 (astra-review-4).
+ */
+export function learnCard(id: string, c: Omit<CardObs, "index" | "can_play">): void {
+  const all = cards();
+  if (all[id]) return;
+  const { affliction: _a, affliction_amount: _b, ...rest } = c as CardObs;
+  all[id] = rest;
+}
+
 /** A deck id ("POMMEL_STRIKE+") as the simulator's card, from the catalogue (the unupgraded one if the upgrade was never seen). */
 export function cardFromId(id: string): Card | undefined {
   const c = cards()[id] ?? cards()[id.replace(/\+$/, "")];
   if (!c) return undefined;
   return cardOf({ ...c, index: 0, can_play: true } as CardObs);
 }
+
+/** The deck ids the catalogue does not know at all: sparScore would leave them out. */
+export const unknownCards = (ids: readonly string[]): string[] => ids.filter((id) => !cards()[id] && !cards()[id.replace(/\+$/, "")]);
 
 export interface Boss {
   model: string;
@@ -97,6 +113,24 @@ export const BOSSES: Record<string, Boss> = {
   },
 };
 
+/**
+ * The player a bout plays (spar3, astra-review-4 #1): the run's max HP, its relics and their numbers,
+ * and what its last fight opened with (energy, hand, the relics' Strength, Vigor, block); the default
+ * is the one every bout played before, an 80-HP Ironclad with three energy and nothing else.
+ */
+export interface Player {
+  hp: number;
+  maxHp: number;
+  energy: number;
+  maxEnergy: number;
+  hand: number;
+  block: number;
+  powers: Record<string, number>;
+  relics: readonly string[];
+  relicVars?: Record<string, Record<string, number>>;
+}
+export const BARE: Player = { hp: 80, maxHp: 80, energy: 3, maxEnergy: 3, hand: 5, block: 0, powers: {}, relics: [] };
+
 export interface Bout {
   damage: number;
   hpLost: number;
@@ -113,7 +147,8 @@ const pool = (s: State) => s.enemies.reduce((a, e) => a + (e.alive ? e.hp : 0) +
  * One shuffle of the deck against the boss, for at most `turns` turns (The Insatiable's Sandpit gives
  * about eight), and the two turns a killed Waterfall Giant takes to strike.
  */
-export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, hp = 80): Bout {
+export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, me: Player = BARE): Bout {
+  const hp = me.hp;
   const pile = [...deck];
   for (let i = pile.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -136,9 +171,9 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
     return e;
   });
   let s: State = {
-    player: { hp, maxHp: hp, block: 0, powers: { ...(boss.player ?? {}) } }, energy: 3, maxEnergy: 3, turn: 1,
-    hand: pile.splice(pile.length - 5, 5), draw: pile, discard: [], exhaust: [], enemies,
-    drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: [], played: 0, skills: 0,
+    player: { hp, maxHp: me.maxHp, block: me.block, powers: { ...me.powers, ...(boss.player ?? {}) } }, energy: me.energy, maxEnergy: me.maxEnergy, turn: 1,
+    hand: pile.splice(Math.max(0, pile.length - me.hand), me.hand), draw: pile, discard: [], exhaust: [], enemies,
+    drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false, relics: me.relics, ...(me.relicVars ? { relicVars: me.relicVars } : {}), played: 0, skills: 0,
     unmovableUsed: false, potions: [], potionSlots: 0, potionsUsed: 0,
     ...(surrounded ? { facing: monsters.length } : {}),
   };
@@ -172,11 +207,11 @@ export function useBossTurns(on: boolean): void {
   bossTurns = on;
 }
 
-export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1): number {
+export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1, me: Player = BARE, first = 0): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   let total = 0;
-  for (let i = 0; i < samples; i++) {
-    const b = bout(deck, boss, seeded(seed * 1000 + i), bossTurns ? boss.turns ?? 8 : 8);
+  for (let i = first; i < first + samples; i++) {
+    const b = bout(deck, boss, seeded(seed * 1000 + i), bossTurns ? boss.turns ?? 8 : 8, me);
     total += b.damage + (b.won ? 60 : 0) - 0.7 * b.hpLost;
   }
   return total / samples;
@@ -187,8 +222,11 @@ export const bossForAct = (act: number): Boss => (act === 0 ? BOSSES["VANTOM"]! 
 
 /** The act's boss by its encounter id ("WATERFALL_GIANT_BOSS"), where it is modelled here; else the act's default. */
 export function bossFor(encounter: string, act: number): Boss {
-  return BOSSES[encounter.replace(/^ENCOUNTER\./, "").replace(/_BOSS$/, "")] ?? bossForAct(act);
+  return modelledBoss(encounter) ?? bossForAct(act);
 }
+
+/** The boss itself, or nothing where it is not modelled (the Queen: bossFor gave The Insatiable instead). */
+export const modelledBoss = (encounter: string): Boss | undefined => BOSSES[encounter.replace(/^ENCOUNTER\./, "").replace(/_BOSS$/, "")];
 
 if (import.meta.main) {
   const [arg, bossName] = process.argv.slice(2);

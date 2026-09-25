@@ -12,11 +12,11 @@
 
 import { type MapPoint, planPath } from "./path.ts";
 import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFromAct1 } from "./packages.ts";
-import { useSmartExhaust } from "./sim.ts";
+import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { bossFor, sparScore, useBossTurns } from "./spar.ts";
-import type { LegalAction, Observation } from "./obs.ts";
+import { BARE, type Boss, bossFor, learnCard, modelledBoss, type Player, sparScore, unknownCards, useBossTurns } from "./spar.ts";
+import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
 
@@ -220,28 +220,99 @@ const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, num
  */
 const SPAR_SAMPLES = 32;
 const sparBase = new Map<string, number>();
-function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[]): number {
-  const boss = bossFor(actBoss, act);
-  const key = `${boss.model}/${floor}/${deck.join(",")}`;
+function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[], at?: Sparring, more = 0): number {
+  const boss = at?.boss ?? bossFor(actBoss, act);
+  const me = at?.me ?? BARE;
+  // spar3's closer look: `more` shuffles after the first 32, on their own draws.
+  const first = more > 0 ? SPAR_SAMPLES : 0;
+  const n = more > 0 ? more : SPAR_SAMPLES;
+  const key = `${boss.model}/${floor}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
   let base = sparBase.get(key);
   if (base === undefined) {
     if (sparBase.size > 64) sparBase.clear();
-    base = sparScore(deck, boss, SPAR_SAMPLES, floor);
+    base = sparScore(deck, boss, n, floor, me, first);
     sparBase.set(key, base);
   }
-  return sparScore(change([...deck]), boss, SPAR_SAMPLES, floor) - base;
+  return sparScore(change([...deck]), boss, n, floor, me, first) - base;
+}
+
+/**
+ * spar3 (astra-review-4 #1): what the bout is played with. The run's max HP (at full HP: a rest site
+ * comes before each boss), its relics and their numbers, and its last fight's opening: energy, the
+ * hand drawn, the Strength, Vigor or block its relics gave. Nothing where the act's boss is not
+ * modelled (spar.ts's BOSSES has no Queen): the rules decide there, not a fight with another boss.
+ */
+interface Sparring {
+  boss: Boss;
+  me: Player;
+}
+let opening: Pick<Player, "energy" | "maxEnergy" | "hand" | "block" | "powers"> | undefined;
+// What a relic gives at the start of a fight, not what the encounter puts on the player.
+const OPENING_POWERS = new Set(["STRENGTH", "DEXTERITY", "VIGOR", "THORNS", "PLATED_ARMOR", "METALLICIZE", "ARTIFACT", "REGEN", "BUFFER"]);
+/** A fight's first observation (run-fights, before it is played): its opening, for spar3's bouts. */
+export function noteCombatStart(o: Observation): void {
+  if (!o.combat || (o.combat.turn ?? 1) !== 1) return;
+  try {
+    const s = fromObservation(o);
+    const powers = Object.fromEntries(Object.entries(s.player.powers).filter(([k, v]) => OPENING_POWERS.has(k) && v !== 0));
+    opening = { energy: s.energy, maxEnergy: s.maxEnergy ?? 3, hand: o.combat.hand.length, block: s.player.block, powers };
+  } catch {
+    // an observation the simulator cannot read: keep the last opening
+  }
+}
+function sparring(o: Observation, act: Act): Sparring | undefined {
+  if (!flags.has("spar3")) return { boss: bossFor(actBoss, act), me: BARE };
+  const boss = actBoss ? modelledBoss(actBoss) : bossFor("", act);
+  if (!boss) return undefined;
+  const maxHp = o.player_max_hp > 0 ? o.player_max_hp : BARE.maxHp;
+  return {
+    boss,
+    me: { ...BARE, ...(opening ?? {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}) },
+  };
+}
+/** An offered card's id as the deck would hold it ("BASH+"), its description learnt for the bout. */
+function offeredId(id: string, upgrades: unknown, described?: unknown): string {
+  const d = described as CardObs | undefined;
+  const up = Number(upgrades ?? d?.upgrades ?? 0) > 0;
+  if (d && typeof d === "object" && d.card_id === id) {
+    const { index: _i, can_play: _c, ...rest } = d;
+    learnCard(`${id}${(d.upgrades ?? 0) > 0 ? "+" : ""}`, rest);
+  }
+  return `${id}${up ? "+" : ""}`;
+}
+/**
+ * spar3: the candidates within reach of the line (gain 5), or of the best one, looked at again over
+ * 128 more shuffles: one more win in 32 is worth 1.9 of the 5 points (astra-review-4).
+ */
+function closerLook<T extends { gain: number; change: (d: string[]) => string[] }>(o: Observation, at: Sparring, options: T[]): T[] {
+  if (!flags.has("spar3") || options.length === 0) return options;
+  const best = Math.max(...options.map((x) => x.gain));
+  for (const x of options) {
+    if (!Number.isFinite(x.gain) || (Math.abs(x.gain - 5) > 10 && best - x.gain > 10)) continue;
+    const again = sparGain(o.deck_cards, actOf(o), o.floor, x.change, at, 128);
+    x.gain = (x.gain * SPAR_SAMPLES + again * 128) / (SPAR_SAMPLES + 128);
+  }
+  return options;
 }
 
 export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
   const offers = legal.filter((a) => a.action_id.startsWith("choose_card:"));
-  if (flags.has("spar") && offers.length > 0) {
-    let best: { id: string; gain: number } | undefined;
-    for (const a of offers) {
-      const card = String(a.metadata?.["card_id"] ?? a.action_id.split(":")[2]);
-      if (cardValue(card, actOf(o), o.deck_cards) < 0) continue; // never-take list
-      const gain = sparGain(o.deck_cards, actOf(o), o.floor, (d) => [...d, card]);
-      if (!best || gain > best.gain) best = { id: a.action_id, gain };
-    }
+  const at = flags.has("spar") && offers.length > 0 ? sparring(o, actOf(o)) : undefined;
+  const described = (o.room?.details?.["cards"] ?? []) as unknown[];
+  const ids = offers.map((a) => {
+    const card = String(a.metadata?.["card_id"] ?? a.action_id.split(":")[2]);
+    return flags.has("spar3") ? offeredId(card, a.metadata?.["upgrades"], described[Number(a.metadata?.["card_index"] ?? -1)]) : card;
+  });
+  // spar3: offers with a card the simulator has never seen are valued by the rules.
+  if (at && !(flags.has("spar3") && unknownCards(ids).length > 0)) {
+    const options = offers.map((a, i) => {
+      const card = ids[i]!;
+      const change = (d: string[]) => [...d, card];
+      // never-take list
+      const gain = cardValue(card.replace(/\+$/, ""), actOf(o), o.deck_cards) < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, change, at);
+      return { id: a.action_id, gain, change };
+    });
+    const best = closerLook(o, at, options).sort((x, y) => y.gain - x.gain)[0];
     if (best && best.gain >= 5) return best.id;
     return legal.find((a) => a.action_id === "skip_card")?.action_id ?? best?.id ?? legal[0]!.action_id;
   }
@@ -434,12 +505,28 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   // shop2 (astra-review-2 #2): a card that fills a gap comes before the removal. Removals took 65%
   // of A10 shop gold while eight affordable Inflames were passed over.
   // spar: the shop's cards and the removal on one scale, what each does to the deck against the boss.
-  if (flags.has("spar")) {
+  const at = flags.has("spar") ? sparring(o, actOf(o)) : undefined;
+  // spar3: the card as the shop has it (upgraded or not), from the shop's descriptions by slot.
+  const shopCards = (o.room?.details?.["cards"] ?? {}) as Record<string, unknown>;
+  const shopId = (a: LegalAction) => {
+    if (!flags.has("spar3")) return item(a);
+    const d = shopCards[String(a.metadata?.["slot_index"] ?? "")] as CardObs | undefined;
+    return offeredId(item(a), d?.upgrades, d);
+  };
+  if (at && !(flags.has("spar3") && unknownCards(cards.map((c) => shopId(c.a))).length > 0)) {
     const worst = o.deck_cards[worstCard(o.deck_cards, o.deck_cards)];
     const options = [
-      ...cards.map((c) => ({ a: c.a, gain: c.v < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, (d) => [...d, item(c.a)]) })),
-      ...(removal && worst && REMOVABLE.test(worst) ? [{ a: removal, gain: sparGain(o.deck_cards, actOf(o), o.floor, (d) => { d.splice(d.indexOf(worst), 1); return d; }) }] : []),
-    ].sort((x, y) => y.gain - x.gain);
+      ...cards.map((c) => {
+        const id = shopId(c.a);
+        const change = (d: string[]) => [...d, id];
+        return { a: c.a, change, gain: c.v < 0 ? -Infinity : sparGain(o.deck_cards, actOf(o), o.floor, change, at) };
+      }),
+      ...(removal && worst && REMOVABLE.test(worst) ? [(() => {
+        const change = (d: string[]) => { d.splice(d.indexOf(worst), 1); return d; };
+        return { a: removal, change, gain: sparGain(o.deck_cards, actOf(o), o.floor, change, at) };
+      })()] : []),
+    ];
+    closerLook(o, at, options).sort((x, y) => y.gain - x.gain);
     if (options[0] && options[0].gain >= 5) {
       if (/remov/i.test(type(options[0].a))) resetCardSelect();
       return options[0].a.action_id;

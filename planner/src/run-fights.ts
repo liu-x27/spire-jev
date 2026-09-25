@@ -29,10 +29,11 @@ import { parseArgs } from "node:util";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
-import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
+import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
 import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, type Weights } from "./search.ts";
+import { learnCard } from "./spar.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
 
@@ -125,6 +126,8 @@ function collect(o: Observation): void {
     // An affliction (Bound) lasts the combat, not the card: not in the catalogue.
     const { index: _index, can_play: _canPlay, affliction: _affliction, affliction_amount: _afflictionAmount, ...rest } = card;
     catalog.set(key, rest);
+    // spar3: the bouts know every card the run has shown.
+    if (hasFlag("spar3")) learnCard(key, rest);
   }
 }
 
@@ -522,6 +525,7 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
     if (cur.observation.phase === "combat" && cur.observation.combat) {
       if (fights++ >= maxFights) return;
       if (logs.length > 0 && logs[logs.length - 1]!.seed === seed && logs[logs.length - 1]!.floor >= stopFloor) return;
+      noteCombatStart(cur.observation);
       const { log, next } = await fight(game, cur, policy, seed, logs);
       const ms = log.planMs.length ? ` plan p95 ${pct(log.planMs, 0.95).toFixed(2)} ms` : "";
       console.log(

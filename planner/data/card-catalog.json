@@ -789,6 +789,685 @@
   "enchantment_vars": {},
   "fields": {}
  },
+ "BLOODLETTING+": {
+  "card_id": "BLOODLETTING",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "HpLoss": 3,
+   "Energy": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BURN": {
+  "card_id": "BURN",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Damage": 2
+  },
+  "card_type": "Status",
+  "rarity": "Status",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CLUMSY": {
+  "card_id": "CLUMSY",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Ethereal",
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "IRON_WAVE": {
+  "card_id": "IRON_WAVE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 5,
+   "Block": 5
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "IRON_WAVE+": {
+  "card_id": "IRON_WAVE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7,
+   "Block": 7
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "JUGGERNAUT+": {
+  "card_id": "JUGGERNAUT",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "JuggernautPower": 8
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SALVO": {
+  "card_id": "SALVO",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 12
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SETUP_STRIKE+": {
+  "card_id": "SETUP_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9,
+   "StrengthPower": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SPITE+": {
+  "card_id": "SPITE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 5,
+   "Repeat": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SPOILS_MAP": {
+  "card_id": "SPOILS_MAP",
+  "cost": -1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Gold": 600
+  },
+  "card_type": "Quest",
+  "rarity": "Quest",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_spoilsActIndex": 1
+  }
+ },
+ "SPORE_MIND": {
+  "card_id": "SPORE_MIND",
+  "cost": 1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SWORD_BOOMERANG+": {
+  "card_id": "SWORD_BOOMERANG",
+  "cost": 1,
+  "target_type": "RandomEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 3,
+   "Repeat": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "TAUNT+": {
+  "card_id": "TAUNT",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 7,
+   "VulnerablePower": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "TWIN_STRIKE": {
+  "card_id": "TWIN_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 5
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "VICIOUS": {
+  "card_id": "VICIOUS",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 1
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "WHISTLE+": {
+  "card_id": "WHISTLE",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 44
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "WITHER": {
+  "card_id": "WITHER",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Damage": 3
+  },
+  "card_type": "Status",
+  "rarity": "Status",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_fakeUpgradeLevel": 0
+  }
+ },
+ "BREAK": {
+  "card_id": "BREAK",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 20,
+   "VulnerablePower": 5
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BREAK+": {
+  "card_id": "BREAK",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 30,
+   "VulnerablePower": 7
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BULLY": {
+  "card_id": "BULLY",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 4,
+   "ExtraDamage": 2,
+   "CalculatedDamage": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DEFEND_IRONCLAD+": {
+  "card_id": "DEFEND_IRONCLAD",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 8
+  },
+  "card_type": "Skill",
+  "rarity": "Basic",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MAUL": {
+  "card_id": "MAUL",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 5,
+   "Increase": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_extraDamageFromMaulPlays": 0
+  }
+ },
+ "MAYHEM": {
+  "card_id": "MAYHEM",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "RAGE+": {
+  "card_id": "RAGE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Power": 5
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SETUP_STRIKE": {
+  "card_id": "SETUP_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7,
+   "StrengthPower": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SPITE": {
+  "card_id": "SPITE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 5,
+   "Repeat": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STRIKE_IRONCLAD+": {
+  "card_id": "STRIKE_IRONCLAD",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9
+  },
+  "card_type": "Attack",
+  "rarity": "Basic",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SWORD_BOOMERANG": {
+  "card_id": "SWORD_BOOMERANG",
+  "cost": 1,
+  "target_type": "RandomEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 3,
+   "Repeat": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UPPERCUT": {
+  "card_id": "UPPERCUT",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 13,
+   "Power": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UPPERCUT+": {
+  "card_id": "UPPERCUT",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 13,
+   "Power": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BARRICADE": {
+  "card_id": "BARRICADE",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
  "BASH+": {
   "card_id": "BASH",
   "cost": 2,
@@ -803,27 +1482,6 @@
   },
   "card_type": "Attack",
   "rarity": "Basic",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "BLUDGEON": {
-  "card_id": "BLUDGEON",
-  "cost": 3,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 3,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 32
-  },
-  "card_type": "Attack",
-  "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -855,8 +1513,8 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "BURNING_PACT": {
-  "card_id": "BURNING_PACT",
+ "FEEL_NO_PAIN": {
+  "card_id": "FEEL_NO_PAIN",
   "cost": 1,
   "target_type": "Self",
   "upgrades": 0,
@@ -864,9 +1522,9 @@
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Cards": 2
+   "Power": 3
   },
-  "card_type": "Skill",
+  "card_type": "Power",
   "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
@@ -876,8 +1534,116 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "DISMANTLE": {
-  "card_id": "DISMANTLE",
+ "INJURY": {
+  "card_id": "INJURY",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ANGER+": {
+  "card_id": "ANGER",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BLOOD_WALL": {
+  "card_id": "BLOOD_WALL",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "HpLoss": 2,
+   "Block": 16
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "INFLAME": {
+  "card_id": "INFLAME",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "StrengthPower": 2
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "TREMBLE+": {
+  "card_id": "TREMBLE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "VulnerablePower": 4
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ASHEN_STRIKE": {
+  "card_id": "ASHEN_STRIKE",
   "cost": 1,
   "target_type": "AnyEnemy",
   "upgrades": 0,
@@ -885,7 +1651,58 @@
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 8
+   "CalculationBase": 6,
+   "ExtraDamage": 3,
+   "CalculatedDamage": 6
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {
+   "CalculatedDamage": 6
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DEBT": {
+  "card_id": "DEBT",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Gold": 10
+  },
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DRAMATIC_ENTRANCE": {
+  "card_id": "DRAMATIC_ENTRANCE",
+  "cost": 0,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust",
+   "Innate"
+  ],
+  "vars": {
+   "Damage": 11
   },
   "card_type": "Attack",
   "rarity": "Uncommon",
@@ -897,16 +1714,38 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "DISMANTLE+": {
-  "card_id": "DISMANTLE",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 1,
-  "current_cost": 1,
+ "EQUILIBRIUM": {
+  "card_id": "EQUILIBRIUM",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 10
+   "Block": 13,
+   "Equilibrium": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HOWL_FROM_BEYOND": {
+  "card_id": "HOWL_FROM_BEYOND",
+  "cost": 3,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 18
   },
   "card_type": "Attack",
   "rarity": "Uncommon",
@@ -963,8 +1802,27 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "IRON_WAVE": {
-  "card_id": "IRON_WAVE",
+ "NOSTALGIA": {
+  "card_id": "NOSTALGIA",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "RAMPAGE": {
+  "card_id": "RAMPAGE",
   "cost": 1,
   "target_type": "AnyEnemy",
   "upgrades": 0,
@@ -972,136 +1830,31 @@
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 5,
+   "Damage": 10,
+   "Increase": 5
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SECOND_WIND": {
+  "card_id": "SECOND_WIND",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
    "Block": 5
   },
-  "card_type": "Attack",
-  "rarity": "Common",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "STRIKE_IRONCLAD+": {
-  "card_id": "STRIKE_IRONCLAD",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 1,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 9
-  },
-  "card_type": "Attack",
-  "rarity": "Basic",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "THRASH": {
-  "card_id": "THRASH",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 4
-  },
-  "card_type": "Attack",
-  "rarity": "Rare",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "THRASH+": {
-  "card_id": "THRASH",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 1,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 6
-  },
-  "card_type": "Attack",
-  "rarity": "Rare",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "TWIN_STRIKE": {
-  "card_id": "TWIN_STRIKE",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 5
-  },
-  "card_type": "Attack",
-  "rarity": "Common",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "TWIN_STRIKE+": {
-  "card_id": "TWIN_STRIKE",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 1,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 7
-  },
-  "card_type": "Attack",
-  "rarity": "Common",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "UNRELENTING": {
-  "card_id": "UNRELENTING",
-  "cost": 2,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 2,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 14
-  },
-  "card_type": "Attack",
+  "card_type": "Skill",
   "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
@@ -1132,8 +1885,29 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "ARMAMENTS": {
-  "card_id": "ARMAMENTS",
+ "BLUDGEON": {
+  "card_id": "BLUDGEON",
+  "cost": 3,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 32
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "INFERNO": {
+  "card_id": "INFERNO",
   "cost": 1,
   "target_type": "Self",
   "upgrades": 0,
@@ -1141,42 +1915,20 @@
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Block": 5
+   "InfernoPower": 6
   },
-  "card_type": "Skill"
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
  },
- "ASHEN_STRIKE": {
-  "card_id": "ASHEN_STRIKE",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "CalculationBase": 6,
-   "ExtraDamage": 3,
-   "CalculatedDamage": 6
-  },
-  "card_type": "Attack"
- },
- "BODY_SLAM": {
-  "card_id": "BODY_SLAM",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "CalculationBase": 0,
-   "ExtraDamage": 1,
-   "CalculatedDamage": 0
-  },
-  "card_type": "Attack"
- },
- "DEFEND_IRONCLAD+": {
-  "card_id": "DEFEND_IRONCLAD",
+ "INFERNO+": {
+  "card_id": "INFERNO",
   "cost": 1,
   "target_type": "Self",
   "upgrades": 1,
@@ -1184,207 +1936,63 @@
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Block": 8
+   "InfernoPower": 9
   },
-  "card_type": "Skill"
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
  },
- "HAVOC": {
-  "card_id": "HAVOC",
-  "cost": 1,
+ "JACK_OF_ALL_TRADES": {
+  "card_id": "JACK_OF_ALL_TRADES",
+  "cost": 0,
   "target_type": "Self",
   "upgrades": 0,
-  "current_cost": 1,
+  "current_cost": 0,
   "costs_x": false,
-  "keywords": [],
-  "vars": {},
-  "card_type": "Skill"
- },
- "HEMOKINESIS": {
-  "card_id": "HEMOKINESIS",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "HpLoss": 2,
-   "Damage": 15
-  },
-  "card_type": "Attack"
- },
- "HOWL_FROM_BEYOND": {
-  "card_id": "HOWL_FROM_BEYOND",
-  "cost": 3,
-  "target_type": "AllEnemies",
-  "upgrades": 0,
-  "current_cost": 3,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 18
-  },
-  "card_type": "Attack"
- },
- "MANGLE": {
-  "card_id": "MANGLE",
-  "cost": 3,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 3,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 20,
-   "StrengthLoss": 10
-  },
-  "card_type": "Attack"
- },
- "SETUP_STRIKE": {
-  "card_id": "SETUP_STRIKE",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 7,
-   "StrengthPower": 3
-  },
-  "card_type": "Attack"
- },
- "STOKE": {
-  "card_id": "STOKE",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {},
-  "card_type": "Skill"
- },
- "SWORD_BOOMERANG": {
-  "card_id": "SWORD_BOOMERANG",
-  "cost": 1,
-  "target_type": "RandomEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 3,
-   "Repeat": 3
-  },
-  "card_type": "Attack"
- },
- "TRUE_GRIT": {
-  "card_id": "TRUE_GRIT",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Block": 7
-  },
-  "card_type": "Skill"
- },
- "VICIOUS": {
-  "card_id": "VICIOUS",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
+  "keywords": [
+   "Exhaust"
+  ],
   "vars": {
    "Cards": 1
   },
-  "card_type": "Power"
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
  },
- "VICIOUS+": {
-  "card_id": "VICIOUS",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 1,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Cards": 2
-  },
-  "card_type": "Power"
- },
- "FEEL_NO_PAIN": {
-  "card_id": "FEEL_NO_PAIN",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Power": 3
-  },
-  "card_type": "Power"
- },
- "FORGOTTEN_RITUAL": {
-  "card_id": "FORGOTTEN_RITUAL",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [
-   "Exhaust"
-  ],
-  "vars": {
-   "Energy": 3
-  },
-  "card_type": "Skill"
- },
- "INFERNAL_BLADE": {
-  "card_id": "INFERNAL_BLADE",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [
-   "Exhaust"
-  ],
-  "vars": {},
-  "card_type": "Skill"
- },
- "INFLAME": {
-  "card_id": "INFLAME",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "StrengthPower": 2
-  },
-  "card_type": "Power"
- },
- "IRON_WAVE+": {
-  "card_id": "IRON_WAVE",
+ "MOLTEN_FIST": {
+  "card_id": "MOLTEN_FIST",
   "cost": 1,
   "target_type": "AnyEnemy",
-  "upgrades": 1,
+  "upgrades": 0,
   "current_cost": 1,
   "costs_x": false,
-  "keywords": [],
+  "keywords": [
+   "Exhaust"
+  ],
   "vars": {
-   "Damage": 7,
-   "Block": 7
+   "Damage": 10
   },
-  "card_type": "Attack"
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
  },
  "OFFERING": {
   "card_id": "OFFERING",
@@ -1401,109 +2009,37 @@
    "Energy": 2,
    "Cards": 3
   },
-  "card_type": "Skill"
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
  },
- "PECK": {
-  "card_id": "PECK",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 2,
-   "Repeat": 3
-  },
-  "card_type": "Attack"
- },
- "SECOND_WIND": {
-  "card_id": "SECOND_WIND",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Block": 5
-  },
-  "card_type": "Skill"
- },
- "SPITE": {
-  "card_id": "SPITE",
+ "PACTS_END": {
+  "card_id": "PACTS_END",
   "cost": 0,
-  "target_type": "AnyEnemy",
+  "target_type": "AllEnemies",
   "upgrades": 0,
   "current_cost": 0,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 5,
-   "Repeat": 2
+   "Damage": 18,
+   "Cards": 3
   },
-  "card_type": "Attack"
- },
- "TRUE_GRIT+": {
-  "card_id": "TRUE_GRIT",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 1,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Block": 9
-  },
-  "card_type": "Skill"
- },
- "UPPERCUT": {
-  "card_id": "UPPERCUT",
-  "cost": 2,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 2,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 13,
-   "Power": 1
-  },
-  "card_type": "Attack"
- },
- "JUGGERNAUT": {
-  "card_id": "JUGGERNAUT",
-  "cost": 2,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 2,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "JuggernautPower": 6
-  },
-  "card_type": "Power",
+  "card_type": "Attack",
+  "rarity": "Rare",
   "glows": false,
-  "calculated": {}
- },
- "RELAX": {
-  "card_id": "RELAX",
-  "cost": 3,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 3,
-  "costs_x": false,
-  "keywords": [
-   "Exhaust"
-  ],
-  "vars": {
-   "Block": 16,
-   "Cards": 2,
-   "Energy": 2
-  },
-  "card_type": "Skill",
-  "glows": false,
-  "calculated": {}
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
  },
  "RUPTURE": {
   "card_id": "RUPTURE",
@@ -1517,122 +2053,64 @@
    "StrengthPower": 1
   },
   "card_type": "Power",
+  "rarity": "Uncommon",
   "glows": false,
-  "calculated": {}
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
  },
- "THUNDERCLAP": {
-  "card_id": "THUNDERCLAP",
+ "RUPTURE+": {
+  "card_id": "RUPTURE",
   "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "StrengthPower": 2
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SHOCKWAVE": {
+  "card_id": "SHOCKWAVE",
+  "cost": 2,
   "target_type": "AllEnemies",
   "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 4,
-   "VulnerablePower": 1
-  },
-  "card_type": "Attack",
-  "glows": false,
-  "calculated": {}
- },
- "BODY_SLAM+": {
-  "card_id": "BODY_SLAM",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 1,
-  "current_cost": 0,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "CalculationBase": 0,
-   "ExtraDamage": 1,
-   "CalculatedDamage": 0
-  },
-  "card_type": "Attack",
-  "glows": false,
-  "calculated": {}
- },
- "SETUP_STRIKE+": {
-  "card_id": "SETUP_STRIKE",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 1,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 9,
-   "StrengthPower": 4
-  },
-  "card_type": "Attack",
-  "glows": false,
-  "calculated": {}
- },
- "BARRICADE": {
-  "card_id": "BARRICADE",
-  "cost": 3,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 3,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {},
-  "card_type": "Power",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "fields": {}
- },
- "NORMALITY": {
-  "card_id": "NORMALITY",
-  "cost": -1,
-  "target_type": "None",
-  "upgrades": 0,
-  "current_cost": 0,
+  "current_cost": 2,
   "costs_x": false,
   "keywords": [
-   "Unplayable"
+   "Exhaust"
   ],
   "vars": {
-   "CalculationBase": 3,
-   "CalculationExtra": -1,
-   "CalculatedCards": 3
-  },
-  "card_type": "Curse",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "fields": {}
- },
- "RAGE+": {
-  "card_id": "RAGE",
-  "cost": 0,
-  "target_type": "Self",
-  "upgrades": 1,
-  "current_cost": 0,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Power": 5
+   "Power": 3
   },
   "card_type": "Skill",
+  "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
   "enchantment": "",
   "enchantment_amount": 0,
   "enchanted": {},
+  "enchantment_vars": {},
   "fields": {}
  },
- "SECOND_WIND+": {
-  "card_id": "SECOND_WIND",
+ "TRUE_GRIT": {
+  "card_id": "TRUE_GRIT",
   "cost": 1,
   "target_type": "Self",
-  "upgrades": 1,
+  "upgrades": 0,
   "current_cost": 1,
   "costs_x": false,
   "keywords": [],
@@ -1640,26 +2118,28 @@
    "Block": 7
   },
   "card_type": "Skill",
+  "rarity": "Common",
   "glows": false,
   "calculated": {},
   "enchantment": "",
   "enchantment_amount": 0,
   "enchanted": {},
+  "enchantment_vars": {},
   "fields": {}
  },
- "BRAND": {
-  "card_id": "BRAND",
-  "cost": 0,
+ "ARMAMENTS+": {
+  "card_id": "ARMAMENTS",
+  "cost": 1,
   "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 0,
+  "upgrades": 1,
+  "current_cost": 1,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "HpLoss": 1,
-   "StrengthPower": 1
+   "Block": 5
   },
   "card_type": "Skill",
+  "rarity": "Common",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -1668,40 +2148,193 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "BULLY": {
-  "card_id": "BULLY",
-  "cost": 0,
+ "ASHEN_STRIKE+": {
+  "card_id": "ASHEN_STRIKE",
+  "cost": 1,
   "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 0,
+  "upgrades": 1,
+  "current_cost": 1,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "CalculationBase": 4,
-   "ExtraDamage": 2,
-   "CalculatedDamage": 4
+   "CalculationBase": 6,
+   "ExtraDamage": 4,
+   "CalculatedDamage": 6
   },
   "card_type": "Attack",
+  "rarity": "Uncommon",
   "glows": false,
-  "calculated": {
-   "CalculatedDamage": 4
-  },
+  "calculated": {},
   "enchantment": "",
   "enchantment_amount": 0,
   "enchanted": {},
   "enchantment_vars": {},
   "fields": {}
  },
- "HELLRAISER": {
-  "card_id": "HELLRAISER",
+ "BURNING_PACT": {
+  "card_id": "BURNING_PACT",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DOMINATE": {
+  "card_id": "DOMINATE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "VulnerablePower": 1,
+   "StrengthPerVulnerable": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DOMINATE+": {
+  "card_id": "DOMINATE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "VulnerablePower": 2,
+   "StrengthPerVulnerable": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STAMPEDE": {
+  "card_id": "STAMPEDE",
   "cost": 2,
   "target_type": "Self",
   "upgrades": 0,
   "current_cost": 2,
   "costs_x": false,
   "keywords": [],
+  "vars": {
+   "Power": 1
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UNMOVABLE": {
+  "card_id": "UNMOVABLE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
   "vars": {},
   "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UNRELENTING": {
+  "card_id": "UNRELENTING",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 14
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BLUDGEON+": {
+  "card_id": "BLUDGEON",
+  "cost": 3,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 42
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CRUELTY": {
+  "card_id": "CRUELTY",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CrueltyPower": 25
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -1724,6 +2357,696 @@
    "Block": 30
   },
   "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "KINGLY_KICK": {
+  "card_id": "KINGLY_KICK",
+  "cost": 4,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 4,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 27
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "NEGATIVE_PULSE": {
+  "card_id": "NEGATIVE_PULSE",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 5,
+   "DoomPower": 7
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "NEOWS_FURY": {
+  "card_id": "NEOWS_FURY",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 10,
+   "Cards": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ANOINTED": {
+  "card_id": "ANOINTED",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BATTLE_TRANCE+": {
+  "card_id": "BATTLE_TRANCE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 4
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FORGOTTEN_RITUAL": {
+  "card_id": "FORGOTTEN_RITUAL",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Energy": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HEMOKINESIS": {
+  "card_id": "HEMOKINESIS",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "HpLoss": 2,
+   "Damage": 15
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MAD_SCIENCE": {
+  "card_id": "MAD_SCIENCE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 12,
+   "Block": 8,
+   "SappingWeak": 2,
+   "SappingVulnerable": 2,
+   "ViolenceHits": 3,
+   "ChokingDamage": 6,
+   "EnergizedEnergy": 2,
+   "WisdomCards": 3,
+   "ExpertiseStrength": 2,
+   "ExpertiseDexterity": 2,
+   "CuriousReduction": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SOOT": {
+  "card_id": "SOOT",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Status",
+  "rarity": "Status",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "TRUE_GRIT+": {
+  "card_id": "TRUE_GRIT",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 9
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "VICIOUS+": {
+  "card_id": "VICIOUS",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 2
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CRIMSON_MANTLE": {
+  "card_id": "CRIMSON_MANTLE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CrimsonMantlePower": 7
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DARKNESS": {
+  "card_id": "DARKNESS",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SEEKER_STRIKE": {
+  "card_id": "SEEKER_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9,
+   "Cards": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SIC_EM": {
+  "card_id": "SIC_EM",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "OstyDamage": 5,
+   "SicEmPower": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STRATAGEM": {
+  "card_id": "STRATAGEM",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "WHIRLWIND+": {
+  "card_id": "WHIRLWIND",
+  "cost": 0,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": true,
+  "keywords": [],
+  "vars": {
+   "Damage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "AGGRESSION": {
+  "card_id": "AGGRESSION",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BEAT_DOWN": {
+  "card_id": "BEAT_DOWN",
+  "cost": 3,
+  "target_type": "RandomEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CURSE_OF_THE_BELL": {
+  "card_id": "CURSE_OF_THE_BELL",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Eternal",
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DISMANTLE": {
+  "card_id": "DISMANTLE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HELLRAISER": {
+  "card_id": "HELLRAISER",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "JUGGERNAUT": {
+  "card_id": "JUGGERNAUT",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "JuggernautPower": 6
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UNRELENTING+": {
+  "card_id": "UNRELENTING",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 20
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ARMAMENTS": {
+  "card_id": "ARMAMENTS",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 5
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CATASTROPHE": {
+  "card_id": "CATASTROPHE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FEEDING_FRENZY": {
+  "card_id": "FEEDING_FRENZY",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "StrengthPower": 5
+  },
+  "card_type": "Skill",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FIGHT_ME+": {
+  "card_id": "FIGHT_ME",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6,
+   "Repeat": 2,
+   "StrengthPower": 4,
+   "EnemyStrength": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FORGOTTEN_RITUAL+": {
+  "card_id": "FORGOTTEN_RITUAL",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Energy": 4
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HEADBUTT+": {
+  "card_id": "HEADBUTT",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 12
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HOWL_FROM_BEYOND+": {
+  "card_id": "HOWL_FROM_BEYOND",
+  "cost": 3,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 24
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "INFERNAL_BLADE": {
+  "card_id": "INFERNAL_BLADE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -1742,26 +3065,7 @@
   "keywords": [],
   "vars": {},
   "card_type": "Power",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "JUGGLING+": {
-  "card_id": "JUGGLING",
-  "cost": 1,
-  "target_type": "Self",
-  "upgrades": 1,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [
-   "Innate"
-  ],
-  "vars": {},
-  "card_type": "Power",
+  "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -1782,6 +3086,7 @@
    "Attacks": 1
   },
   "card_type": "Skill",
+  "rarity": "Rare",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -1790,38 +3095,760 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "PYRE": {
-  "card_id": "PYRE",
-  "cost": 2,
-  "target_type": "Self",
+ "PILLAGE": {
+  "card_id": "PILLAGE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
   "upgrades": 0,
-  "current_cost": 2,
+  "current_cost": 1,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Energy": 1
-  },
-  "card_type": "Power",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "STOMP": {
-  "card_id": "STOMP",
-  "cost": 3,
-  "target_type": "AllEnemies",
-  "upgrades": 0,
-  "current_cost": 2,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 12
+   "Damage": 6
   },
   "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PRIMAL_FORCE": {
+  "card_id": "PRIMAL_FORCE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PRODUCTION": {
+  "card_id": "PRODUCTION",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Energy": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "RESTLESSNESS": {
+  "card_id": "RESTLESSNESS",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Retain"
+  ],
+  "vars": {
+   "Cards": 2,
+   "Energy": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STOKE": {
+  "card_id": "STOKE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THRASH": {
+  "card_id": "THRASH",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_extraDamage": 0
+  }
+ },
+ "AGGRESSION+": {
+  "card_id": "AGGRESSION",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Innate"
+  ],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BARRICADE+": {
+  "card_id": "BARRICADE",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BECKON": {
+  "card_id": "BECKON",
+  "cost": 1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "HpLoss": 6
+  },
+  "card_type": "Status",
+  "rarity": "Status",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BLOOD_WALL+": {
+  "card_id": "BLOOD_WALL",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "HpLoss": 2,
+   "Block": 20
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BODY_SLAM+": {
+  "card_id": "BODY_SLAM",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 0,
+   "ExtraDamage": 1,
+   "CalculatedDamage": 0
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {
+   "CalculatedDamage": 0
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BULLY+": {
+  "card_id": "BULLY",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 4,
+   "ExtraDamage": 3,
+   "CalculatedDamage": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {
+   "CalculatedDamage": 7
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CRUELTY+": {
+  "card_id": "CRUELTY",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CrueltyPower": 50
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DEMON_FORM+": {
+  "card_id": "DEMON_FORM",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "StrengthPower": 4
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DISMANTLE+": {
+  "card_id": "DISMANTLE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DRUM_OF_BATTLE+": {
+  "card_id": "DRUM_OF_BATTLE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 2,
+   "Energy": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "EVIL_EYE+": {
+  "card_id": "EVIL_EYE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 11
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": true,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FEEL_NO_PAIN+": {
+  "card_id": "FEEL_NO_PAIN",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Power": 4
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FLAME_BARRIER+": {
+  "card_id": "FLAME_BARRIER",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 16,
+   "DamageBack": 6
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HELLRAISER+": {
+  "card_id": "HELLRAISER",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "IMPERVIOUS+": {
+  "card_id": "IMPERVIOUS",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Block": 40
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "JUGGLING+": {
+  "card_id": "JUGGLING",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Innate"
+  ],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "NORMALITY": {
+  "card_id": "NORMALITY",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "CalculationBase": 3,
+   "CalculationExtra": -1,
+   "CalculatedCards": 3
+  },
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ONE_TWO_PUNCH+": {
+  "card_id": "ONE_TWO_PUNCH",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Attacks": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "RAMPAGE+": {
+  "card_id": "RAMPAGE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10,
+   "Increase": 10
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_extraDamageFromPlays": 0
+  }
+ },
+ "STOKE+": {
+  "card_id": "STOKE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STONE_ARMOR+": {
+  "card_id": "STONE_ARMOR",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "PlatingPower": 6
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "TWIN_STRIKE+": {
+  "card_id": "TWIN_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UNMOVABLE+": {
+  "card_id": "UNMOVABLE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BREAKTHROUGH+": {
+  "card_id": "BREAKTHROUGH",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 13,
+   "HpLoss": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "EXTERMINATE+": {
+  "card_id": "EXTERMINATE",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 4,
+   "Repeat": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "REGRET": {
+  "card_id": "REGRET",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_cardsInHand": 0
+  }
+ },
+ "TEAR_ASUNDER": {
+  "card_id": "TEAR_ASUNDER",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 5,
+   "Repeat": 1,
+   "CalculationBase": 0,
+   "CalculationExtra": 1,
+   "CalculatedHits": 0
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "OFFERING+": {
+  "card_id": "OFFERING",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "HpLoss": 6,
+   "Energy": 2,
+   "Cards": 5
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ULTIMATE_DEFEND": {
+  "card_id": "ULTIMATE_DEFEND",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 11
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -1842,65 +3869,6 @@
    "PlatingPower": 4
   },
   "card_type": "Power",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "ULTIMATE_STRIKE": {
-  "card_id": "ULTIMATE_STRIKE",
-  "cost": 1,
-  "target_type": "AnyEnemy",
-  "upgrades": 0,
-  "current_cost": 1,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "Damage": 14
-  },
-  "card_type": "Attack",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "UNMOVABLE": {
-  "card_id": "UNMOVABLE",
-  "cost": 2,
-  "target_type": "Self",
-  "upgrades": 0,
-  "current_cost": 2,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {},
-  "card_type": "Power",
-  "glows": false,
-  "calculated": {},
-  "enchantment": "",
-  "enchantment_amount": 0,
-  "enchanted": {},
-  "enchantment_vars": {},
-  "fields": {}
- },
- "BLOODLETTING+": {
-  "card_id": "BLOODLETTING",
-  "cost": 0,
-  "target_type": "Self",
-  "upgrades": 1,
-  "current_cost": 0,
-  "costs_x": false,
-  "keywords": [],
-  "vars": {
-   "HpLoss": 3,
-   "Energy": 3
-  },
-  "card_type": "Skill",
   "rarity": "Uncommon",
   "glows": false,
   "calculated": {},
@@ -1910,20 +3878,20 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "CLUMSY": {
-  "card_id": "CLUMSY",
-  "cost": -1,
-  "target_type": "None",
+ "BRAND": {
+  "card_id": "BRAND",
+  "cost": 0,
+  "target_type": "Self",
   "upgrades": 0,
   "current_cost": 0,
   "costs_x": false,
-  "keywords": [
-   "Ethereal",
-   "Unplayable"
-  ],
-  "vars": {},
-  "card_type": "Curse",
-  "rarity": "Curse",
+  "keywords": [],
+  "vars": {
+   "HpLoss": 1,
+   "StrengthPower": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -1954,16 +3922,127 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "ANGER+": {
-  "card_id": "ANGER",
-  "cost": 0,
+ "JACKPOT": {
+  "card_id": "JACKPOT",
+  "cost": 3,
   "target_type": "AnyEnemy",
-  "upgrades": 1,
+  "upgrades": 0,
   "current_cost": 0,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 8
+   "Damage": 25,
+   "Cards": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MANGLE": {
+  "card_id": "MANGLE",
+  "cost": 3,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 20,
+   "StrengthLoss": 10
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PECK": {
+  "card_id": "PECK",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 2,
+   "Repeat": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PECK+": {
+  "card_id": "PECK",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 2,
+   "Repeat": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THRASH+": {
+  "card_id": "THRASH",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BODY_SLAM": {
+  "card_id": "BODY_SLAM",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 0,
+   "ExtraDamage": 1,
+   "CalculatedDamage": 0
   },
   "card_type": "Attack",
   "rarity": "Common",
@@ -1975,19 +4054,1279 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "BLUDGEON+": {
-  "card_id": "BLUDGEON",
-  "cost": 3,
+ "CASCADE": {
+  "card_id": "CASCADE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": true,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CRESCENT_SPEAR": {
+  "card_id": "CRESCENT_SPEAR",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 8,
+   "ExtraDamage": 2,
+   "CalculatedDamage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ENTROPY": {
+  "card_id": "ENTROPY",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 1
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FEAR": {
+  "card_id": "FEAR",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Ethereal"
+  ],
+  "vars": {
+   "Damage": 7,
+   "VulnerablePower": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FEAR+": {
+  "card_id": "FEAR",
+  "cost": 1,
   "target_type": "AnyEnemy",
   "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Ethereal"
+  ],
+  "vars": {
+   "Damage": 8,
+   "VulnerablePower": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FOCUSED_STRIKE": {
+  "card_id": "FOCUSED_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9,
+   "FocusPower": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GIANT_ROCK": {
+  "card_id": "GIANT_ROCK",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 20
+  },
+  "card_type": "Attack",
+  "rarity": "Token",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MONOLOGUE": {
+  "card_id": "MONOLOGUE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Power": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MONOLOGUE+": {
+  "card_id": "MONOLOGUE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Retain"
+  ],
+  "vars": {
+   "Power": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "NOT_YET": {
+  "card_id": "NOT_YET",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Heal": 10
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PURITY": {
+  "card_id": "PURITY",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust",
+   "Retain"
+  ],
+  "vars": {
+   "Cards": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "REFINE_BLADE": {
+  "card_id": "REFINE_BLADE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Forge": 8,
+   "Energy": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "REFINE_BLADE+": {
+  "card_id": "REFINE_BLADE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Forge": 12,
+   "Energy": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SOVEREIGN_BLADE": {
+  "card_id": "SOVEREIGN_BLADE",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Retain"
+  ],
+  "vars": {
+   "Damage": 18,
+   "CalculationBase": 0,
+   "CalculationExtra": 1,
+   "CalculatedBlock": 0,
+   "Repeat": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Token",
+  "glows": false,
+  "calculated": {
+   "CalculatedBlock": 0
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_currentDamage": 18,
+   "_currentRepeats": 1,
+   "_createdThroughForge": 1
+  }
+ },
+ "SUCKER_PUNCH": {
+  "card_id": "SUCKER_PUNCH",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8,
+   "WeakPower": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UPROAR": {
+  "card_id": "UPROAR",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DECAY": {
+  "card_id": "DECAY",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Damage": 2
+  },
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GLITTERSTREAM": {
+  "card_id": "GLITTERSTREAM",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 11,
+   "BlockNextTurn": 5
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HEMOKINESIS+": {
+  "card_id": "HEMOKINESIS",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "HpLoss": 2,
+   "Damage": 20
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "OMNISLICE": {
+  "card_id": "OMNISLICE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PACTS_END+": {
+  "card_id": "PACTS_END",
+  "cost": 0,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 24,
+   "Cards": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PAGESTORM": {
+  "card_id": "PAGESTORM",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 1
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "POKE": {
+  "card_id": "POKE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "OstyDamage": 6
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "POOR_SLEEP": {
+  "card_id": "POOR_SLEEP",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Retain",
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PUTREFY": {
+  "card_id": "PUTREFY",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Power": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "REAVE": {
+  "card_id": "REAVE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10,
+   "Cards": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SOUL": {
+  "card_id": "SOUL",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Cards": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Token",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STRANGLE": {
+  "card_id": "STRANGLE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8,
+   "StranglePower": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STRANGLE+": {
+  "card_id": "STRANGLE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10,
+   "StranglePower": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ULTIMATE_STRIKE": {
+  "card_id": "ULTIMATE_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 14
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "AUTOMATION": {
+  "card_id": "AUTOMATION",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Energy": 1
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BALL_LIGHTNING": {
+  "card_id": "BALL_LIGHTNING",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BALL_LIGHTNING+": {
+  "card_id": "BALL_LIGHTNING",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BLADE_DANCE": {
+  "card_id": "BLADE_DANCE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Cards": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CALCULATED_GAMBLE": {
+  "card_id": "CALCULATED_GAMBLE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CLAW": {
+  "card_id": "CLAW",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 3,
+   "Increase": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_extraDamageFromClawPlays": 0
+  }
+ },
+ "CLAW+": {
+  "card_id": "CLAW",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6,
+   "Increase": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_extraDamageFromClawPlays": 2
+  }
+ },
+ "DEFILE": {
+  "card_id": "DEFILE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Ethereal"
+  ],
+  "vars": {
+   "Damage": 13
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FLASH_OF_STEEL": {
+  "card_id": "FLASH_OF_STEEL",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 5,
+   "Cards": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FLASH_OF_STEEL+": {
+  "card_id": "FLASH_OF_STEEL",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8,
+   "Cards": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GIANT_ROCK+": {
+  "card_id": "GIANT_ROCK",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 24
+  },
+  "card_type": "Attack",
+  "rarity": "Token",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HAVOC": {
+  "card_id": "HAVOC",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "INFLAME+": {
+  "card_id": "INFLAME",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "StrengthPower": 3
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MIND_BLAST": {
+  "card_id": "MIND_BLAST",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Innate"
+  ],
+  "vars": {
+   "CalculationBase": 0,
+   "ExtraDamage": 1,
+   "CalculatedDamage": 0
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {
+   "CalculatedDamage": 7
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "NEOWS_FURY+": {
+  "card_id": "NEOWS_FURY",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 14,
+   "Cards": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PRIMAL_FORCE+": {
+  "card_id": "PRIMAL_FORCE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SHIV": {
+  "card_id": "SHIV",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Token",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SLICE": {
+  "card_id": "SLICE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SLICE+": {
+  "card_id": "SLICE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SPLASH": {
+  "card_id": "SPLASH",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STAMPEDE+": {
+  "card_id": "STAMPEDE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Power": 1
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "STOMP": {
+  "card_id": "STOMP",
+  "cost": 3,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
   "current_cost": 3,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 42
+   "Damage": 12
   },
   "card_type": "Attack",
   "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SYNTHESIS": {
+  "card_id": "SYNTHESIS",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 14
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "TEAR_ASUNDER+": {
+  "card_id": "TEAR_ASUNDER",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7,
+   "Repeat": 1,
+   "CalculationBase": 0,
+   "CalculationExtra": 1,
+   "CalculatedHits": 0
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {
+   "CalculatedHits": 10
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "WISP": {
+  "card_id": "WISP",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Energy": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CASCADE+": {
+  "card_id": "CASCADE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": true,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CINDER+": {
+  "card_id": "CINDER",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 24
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DARK_EMBRACE": {
+  "card_id": "DARK_EMBRACE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -2015,19 +5354,502 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "HOWL_FROM_BEYOND+": {
-  "card_id": "HOWL_FROM_BEYOND",
-  "cost": 3,
-  "target_type": "AllEnemies",
-  "upgrades": 1,
-  "current_cost": 3,
+ "PYRE": {
+  "card_id": "PYRE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 24
+   "Energy": 1
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PYRE+": {
+  "card_id": "PYRE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Energy": 2
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SPOILS_OF_BATTLE": {
+  "card_id": "SPOILS_OF_BATTLE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Forge": 6,
+   "Cards": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ANTICIPATE": {
+  "card_id": "ANTICIPATE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "DexterityPower": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ANTICIPATE+": {
+  "card_id": "ANTICIPATE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "DexterityPower": 4
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CRIMSON_MANTLE+": {
+  "card_id": "CRIMSON_MANTLE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CrimsonMantlePower": 10
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ENTHRALLED": {
+  "card_id": "ENTHRALLED",
+  "cost": 2,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Eternal"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FASTEN": {
+  "card_id": "FASTEN",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "ExtraBlock": 4
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UNTOUCHABLE": {
+  "card_id": "UNTOUCHABLE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Sly"
+  ],
+  "vars": {
+   "Block": 6
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "UNTOUCHABLE+": {
+  "card_id": "UNTOUCHABLE",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Sly"
+  ],
+  "vars": {
+   "Block": 9
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DOWSING": {
+  "card_id": "DOWSING",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Rooms": 5
+  },
+  "card_type": "Quest",
+  "rarity": "Quest",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FEED": {
+  "card_id": "FEED",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 10,
+   "MaxHp": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GUILTY": {
+  "card_id": "GUILTY",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Combats": 5
+  },
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CRUSH_UNDER": {
+  "card_id": "CRUSH_UNDER",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8,
+   "StrengthLoss": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DISCOVERY": {
+  "card_id": "DISCOVERY",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ECHOING_SLASH": {
+  "card_id": "ECHOING_SLASH",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10
   },
   "card_type": "Attack",
   "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MOLTEN_FIST+": {
+  "card_id": "MOLTEN_FIST",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 14
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THUNDERCLAP": {
+  "card_id": "THUNDERCLAP",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 4,
+   "VulnerablePower": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THUNDERCLAP+": {
+  "card_id": "THUNDERCLAP",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7,
+   "VulnerablePower": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ABUNDANCE": {
+  "card_id": "ABUNDANCE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ABUNDANCE+": {
+  "card_id": "ABUNDANCE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HOTFIX": {
+  "card_id": "HOTFIX",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "FocusPower": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "METAMORPHOSIS": {
+  "card_id": "METAMORPHOSIS",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Cards": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Event",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -2058,15 +5880,66 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "STOKE+": {
-  "card_id": "STOKE",
-  "cost": 1,
+ "RELAX": {
+  "card_id": "RELAX",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Block": 16,
+   "Cards": 2,
+   "Energy": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "WHISTLE": {
+  "card_id": "WHISTLE",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 33
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BRAND+": {
+  "card_id": "BRAND",
+  "cost": 0,
   "target_type": "Self",
   "upgrades": 1,
-  "current_cost": 1,
+  "current_cost": 0,
   "costs_x": false,
   "keywords": [],
-  "vars": {},
+  "vars": {
+   "HpLoss": 1,
+   "StrengthPower": 2
+  },
   "card_type": "Skill",
   "rarity": "Rare",
   "glows": false,
@@ -2077,19 +5950,18 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "TAUNT+": {
-  "card_id": "TAUNT",
-  "cost": 1,
+ "CINDER": {
+  "card_id": "CINDER",
+  "cost": 2,
   "target_type": "AnyEnemy",
-  "upgrades": 1,
-  "current_cost": 1,
+  "upgrades": 0,
+  "current_cost": 2,
   "costs_x": false,
   "keywords": [],
   "vars": {
-   "Block": 7,
-   "VulnerablePower": 2
+   "Damage": 18
   },
-  "card_type": "Skill",
+  "card_type": "Attack",
   "rarity": "Common",
   "glows": false,
   "calculated": {},
@@ -2099,8 +5971,8 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "TREMBLE+": {
-  "card_id": "TREMBLE",
+ "FEED+": {
+  "card_id": "FEED",
   "cost": 1,
   "target_type": "AnyEnemy",
   "upgrades": 1,
@@ -2110,10 +5982,11 @@
    "Exhaust"
   ],
   "vars": {
-   "VulnerablePower": 4
+   "Damage": 12,
+   "MaxHp": 4
   },
-  "card_type": "Skill",
-  "rarity": "Common",
+  "card_type": "Attack",
+  "rarity": "Rare",
   "glows": false,
   "calculated": {},
   "enchantment": "",
@@ -2122,16 +5995,16 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "WHIRLWIND+": {
-  "card_id": "WHIRLWIND",
-  "cost": 0,
+ "STOMP+": {
+  "card_id": "STOMP",
+  "cost": 3,
   "target_type": "AllEnemies",
   "upgrades": 1,
-  "current_cost": 0,
-  "costs_x": true,
+  "current_cost": 1,
+  "costs_x": false,
   "keywords": [],
   "vars": {
-   "Damage": 8
+   "Damage": 15
   },
   "card_type": "Attack",
   "rarity": "Uncommon",
@@ -2143,8 +6016,437 @@
   "enchantment_vars": {},
   "fields": {}
  },
- "PRODUCTION": {
-  "card_id": "PRODUCTION",
+ "AFTERLIFE": {
+  "card_id": "AFTERLIFE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Summon": 6
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "COLD_SNAP": {
+  "card_id": "COLD_SNAP",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "REBOUND": {
+  "card_id": "REBOUND",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9
+  },
+  "card_type": "Attack",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ETERNAL_ARMOR": {
+  "card_id": "ETERNAL_ARMOR",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "PlatingPower": 9
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MAUL+": {
+  "card_id": "MAUL",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6,
+   "Increase": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THE_GAMBIT": {
+  "card_id": "THE_GAMBIT",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 50
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DEBRIS": {
+  "card_id": "DEBRIS",
+  "cost": 1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Status",
+  "rarity": "Status",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "VOID": {
+  "card_id": "VOID",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Ethereal",
+   "Unplayable"
+  ],
+  "vars": {
+   "Energy": 1
+  },
+  "card_type": "Status",
+  "rarity": "Status",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SECOND_WIND+": {
+  "card_id": "SECOND_WIND",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 7
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SWEEPING_BEAM": {
+  "card_id": "SWEEPING_BEAM",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6,
+   "Cards": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CALAMITY": {
+  "card_id": "CALAMITY",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BOLAS": {
+  "card_id": "BOLAS",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 3
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CLOAK_OF_STARS": {
+  "card_id": "CLOAK_OF_STARS",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 7
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "COSMIC_INDIFFERENCE": {
+  "card_id": "COSMIC_INDIFFERENCE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 6
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DARK_SHACKLES": {
+  "card_id": "DARK_SHACKLES",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "StrengthLoss": 9
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DEADLY_POISON": {
+  "card_id": "DEADLY_POISON",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "PoisonPower": 5
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DRUM_OF_BATTLE": {
+  "card_id": "DRUM_OF_BATTLE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 2,
+   "Energy": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FINESSE": {
+  "card_id": "FINESSE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 4,
+   "Cards": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "INFERNAL_BLADE+": {
+  "card_id": "INFERNAL_BLADE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PANACHE": {
+  "card_id": "PANACHE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "PanacheDamage": 10
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PANIC_BUTTON": {
+  "card_id": "PANIC_BUTTON",
   "cost": 0,
   "target_type": "Self",
   "upgrades": 0,
@@ -2154,9 +6456,1452 @@
    "Exhaust"
   ],
   "vars": {
+   "Block": 30,
+   "Turns": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "REND": {
+  "card_id": "REND",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 10,
+   "ExtraDamage": 5,
+   "CalculatedDamage": 10
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {
+   "CalculatedDamage": 10
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ROLLING_BOULDER": {
+  "card_id": "ROLLING_BOULDER",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "RollingBoulderPower": 5,
+   "IncrementAmount": 5
+  },
+  "card_type": "Power",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SOW": {
+  "card_id": "SOW",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Retain"
+  ],
+  "vars": {
+   "Damage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ASTRAL_PULSE": {
+  "card_id": "ASTRAL_PULSE",
+  "cost": 0,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 6
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ASTRAL_PULSE+": {
+  "card_id": "ASTRAL_PULSE",
+  "cost": 0,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GRAVEBLAST": {
+  "card_id": "GRAVEBLAST",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Damage": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PILLAGE+": {
+  "card_id": "PILLAGE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SHADOW_SHIELD": {
+  "card_id": "SHADOW_SHIELD",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 11
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SHADOW_SHIELD+": {
+  "card_id": "SHADOW_SHIELD",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 15
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SHAME": {
+  "card_id": "SHAME",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Unplayable"
+  ],
+  "vars": {
+   "Frail": 1
+  },
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BEAM_CELL": {
+  "card_id": "BEAM_CELL",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 3,
+   "VulnerablePower": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BEAM_CELL+": {
+  "card_id": "BEAM_CELL",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 4,
+   "VulnerablePower": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DAGGER_THROW": {
+  "card_id": "DAGGER_THROW",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DAGGER_THROW+": {
+  "card_id": "DAGGER_THROW",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 12
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DISTRACTION": {
+  "card_id": "DISTRACTION",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "KNOW_THY_PLACE": {
+  "card_id": "KNOW_THY_PLACE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "WeakPower": 1,
+   "VulnerablePower": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "LIGHTNING_ROD": {
+  "card_id": "LIGHTNING_ROD",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 4,
+   "LightningRodPower": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "LIGHTNING_ROD+": {
+  "card_id": "LIGHTNING_ROD",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 7,
+   "LightningRodPower": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "MASTER_OF_STRATEGY": {
+  "card_id": "MASTER_OF_STRATEGY",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Cards": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PIERCING_WAIL": {
+  "card_id": "PIERCING_WAIL",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "StrengthLoss": 6
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PREP_TIME": {
+  "card_id": "PREP_TIME",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "PrepTimePower": 4
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SOVEREIGN_BLADE+": {
+  "card_id": "SOVEREIGN_BLADE",
+  "cost": 2,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Retain"
+  ],
+  "vars": {
+   "Damage": 22,
+   "CalculationBase": 0,
+   "CalculationExtra": 1,
+   "CalculatedBlock": 0,
+   "Repeat": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Token",
+  "glows": false,
+  "calculated": {
+   "CalculatedBlock": 0
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {
+   "_currentDamage": 22,
+   "_currentRepeats": 1,
+   "_createdThroughForge": 1
+  }
+ },
+ "SWEEPING_BEAM+": {
+  "card_id": "SWEEPING_BEAM",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 9,
+   "Cards": 1
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THRUMMING_HATCHET": {
+  "card_id": "THRUMMING_HATCHET",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 11
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ULTIMATE_DEFEND+": {
+  "card_id": "ULTIMATE_DEFEND",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 15
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BLIGHT_STRIKE": {
+  "card_id": "BLIGHT_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 8
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FLICK_FLACK": {
+  "card_id": "FLICK_FLACK",
+  "cost": 1,
+  "target_type": "AllEnemies",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Sly"
+  ],
+  "vars": {
+   "Damage": 7
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HOTFIX+": {
+  "card_id": "HOTFIX",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "FocusPower": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "NOT_YET+": {
+  "card_id": "NOT_YET",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Heal": 13
+  },
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PATTER": {
+  "card_id": "PATTER",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 8,
+   "VigorPower": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THINKING_AHEAD": {
+  "card_id": "THINKING_AHEAD",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Cards": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "COMPILE_DRIVER": {
+  "card_id": "COMPILE_DRIVER",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7,
+   "CalculationBase": 0,
+   "CalculationExtra": 1,
+   "CalculatedCards": 0
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SECRET_WEAPON": {
+  "card_id": "SECRET_WEAPON",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "THE_BOMB": {
+  "card_id": "THE_BOMB",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Turns": 3,
+   "BombDamage": 40
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "CHARGE_BATTERY": {
+  "card_id": "CHARGE_BATTERY",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Block": 7,
+   "Energy": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DUAL_WIELD": {
+  "card_id": "DUAL_WIELD",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ENTRENCH": {
+  "card_id": "ENTRENCH",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FISTICUFFS": {
+  "card_id": "FISTICUFFS",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 7
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GREED": {
+  "card_id": "GREED",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Eternal",
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HELLO_WORLD": {
+  "card_id": "HELLO_WORLD",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Power",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ROYAL_GAMBLE": {
+  "card_id": "ROYAL_GAMBLE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Stars": 9
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SCOURGE": {
+  "card_id": "SCOURGE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "DoomPower": 13,
+   "Cards": 1
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "VOLLEY": {
+  "card_id": "VOLLEY",
+  "cost": 0,
+  "target_type": "RandomEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": true,
+  "keywords": [],
+  "vars": {
+   "Damage": 10
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SPOILS_OF_BATTLE+": {
+  "card_id": "SPOILS_OF_BATTLE",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Forge": 9,
+   "Cards": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "RICOCHET": {
+  "card_id": "RICOCHET",
+  "cost": 2,
+  "target_type": "RandomEnemy",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Sly"
+  ],
+  "vars": {
+   "Damage": 3,
+   "Repeat": 4
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "METAMORPHOSIS+": {
+  "card_id": "METAMORPHOSIS",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Cards": 5
+  },
+  "card_type": "Skill",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "EXPECT_A_FIGHT+": {
+  "card_id": "EXPECT_A_FIGHT",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 16,
+   "CalculationExtra": 8,
+   "CalculatedBlock": 16
+  },
+  "card_type": "Skill",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {
+   "CalculatedBlock": 16
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "HAVOC+": {
+  "card_id": "HAVOC",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DUAL_WIELD+": {
+  "card_id": "DUAL_WIELD",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Cards": 2
+  },
+  "card_type": "Skill",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "OUTMANEUVER": {
+  "card_id": "OUTMANEUVER",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
    "Energy": 2
   },
   "card_type": "Skill",
+  "rarity": "Event",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "REAP": {
+  "card_id": "REAP",
+  "cost": 3,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [
+   "Retain"
+  ],
+  "vars": {
+   "Damage": 27
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GOLD_AXE": {
+  "card_id": "GOLD_AXE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "CalculationBase": 0,
+   "ExtraDamage": 1,
+   "CalculatedDamage": 0
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {
+   "CalculatedDamage": 21
+  },
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "RELAX+": {
+  "card_id": "RELAX",
+  "cost": 3,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 3,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {
+   "Block": 18,
+   "Cards": 3,
+   "Energy": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "COLLISION_COURSE": {
+  "card_id": "COLLISION_COURSE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "COLLISION_COURSE+": {
+  "card_id": "COLLISION_COURSE",
+  "cost": 0,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 14
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "DRAIN_POWER": {
+  "card_id": "DRAIN_POWER",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 10,
+   "Cards": 2
+  },
+  "card_type": "Attack",
+  "rarity": "Common",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "FOLLY": {
+  "card_id": "FOLLY",
+  "cost": -1,
+  "target_type": "None",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Eternal",
+   "Ethereal",
+   "Innate",
+   "Unplayable"
+  ],
+  "vars": {},
+  "card_type": "Curse",
+  "rarity": "Curse",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SCRAWL": {
+  "card_id": "SCRAWL",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PANACHE+": {
+  "card_id": "PANACHE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "PanacheDamage": 14
+  },
+  "card_type": "Power",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "APOTHEOSIS": {
+  "card_id": "APOTHEOSIS",
+  "cost": 2,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 2,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust",
+   "Innate"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "ULTIMATE_STRIKE+": {
+  "card_id": "ULTIMATE_STRIKE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "Damage": 20
+  },
+  "card_type": "Attack",
+  "rarity": "Uncommon",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "GOLD_AXE+": {
+  "card_id": "GOLD_AXE",
+  "cost": 1,
+  "target_type": "AnyEnemy",
+  "upgrades": 1,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [
+   "Retain"
+  ],
+  "vars": {
+   "CalculationBase": 0,
+   "ExtraDamage": 1,
+   "CalculatedDamage": 0
+  },
+  "card_type": "Attack",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "SECRET_TECHNIQUE": {
+  "card_id": "SECRET_TECHNIQUE",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [
+   "Exhaust"
+  ],
+  "vars": {},
+  "card_type": "Skill",
+  "rarity": "Rare",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "BRIGHTEST_FLAME+": {
+  "card_id": "BRIGHTEST_FLAME",
+  "cost": 0,
+  "target_type": "Self",
+  "upgrades": 1,
+  "current_cost": 0,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "MaxHp": 2,
+   "Energy": 3,
+   "Cards": 3
+  },
+  "card_type": "Skill",
+  "rarity": "Ancient",
+  "glows": false,
+  "calculated": {},
+  "enchantment": "",
+  "enchantment_amount": 0,
+  "enchanted": {},
+  "enchantment_vars": {},
+  "fields": {}
+ },
+ "PROWESS": {
+  "card_id": "PROWESS",
+  "cost": 1,
+  "target_type": "Self",
+  "upgrades": 0,
+  "current_cost": 1,
+  "costs_x": false,
+  "keywords": [],
+  "vars": {
+   "StrengthPower": 1,
+   "DexterityPower": 1
+  },
+  "card_type": "Power",
   "rarity": "Uncommon",
   "glows": false,
   "calculated": {},

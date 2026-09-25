@@ -1,0 +1,67 @@
+// spar3 (astra-review-4 #1): the bout is played with the run's own player, cards and boss, and says
+// so when it cannot be.
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { setIntentAscension } from "../src/intents.ts";
+import { BARE, BOSSES, learnCard, modelledBoss, sparScore, unknownCards } from "../src/spar.ts";
+import { chooseCardReward, setActBoss, setFlags } from "../src/choices.ts";
+import type { CardObs, LegalAction, Observation } from "../src/obs.ts";
+
+const STARTER = [...Array(5).fill("STRIKE_IRONCLAD"), ...Array(4).fill("DEFEND_IRONCLAD"), "BASH"];
+setIntentAscension(10);
+
+test("a bout with a fourth energy and the relics' Strength does better than the bare Ironclad", () => {
+  const vantom = BOSSES["VANTOM"]!;
+  const bare = sparScore(STARTER, vantom, 16, 3);
+  const strong = sparScore(STARTER, vantom, 16, 3, { ...BARE, energy: 4, maxEnergy: 4, powers: { STRENGTH: 2 } });
+  assert.ok(strong > bare + 10, `${strong} vs ${bare}`);
+});
+
+test("more HP to lose is more HP kept: a 100-HP Ironclad loses less of the score", () => {
+  const insatiable = BOSSES["THE_INSATIABLE"]!;
+  const bare = sparScore(STARTER, insatiable, 16, 3);
+  const big = sparScore(STARTER, insatiable, 16, 3, { ...BARE, hp: 110, maxHp: 110 });
+  assert.ok(big > bare, `${big} vs ${bare}`);
+});
+
+test("a boss spar has no model of is no boss, not another act's", () => {
+  assert.equal(modelledBoss("NOT_A_BOSS_BOSS"), undefined);
+  assert.equal(modelledBoss("WATERFALL_GIANT_BOSS")?.model, "WATERFALL_GIANT");
+});
+
+test("a card is known once the run has shown it", () => {
+  assert.deepEqual(unknownCards(["STRIKE_IRONCLAD", "NO_SUCH_CARD+"]), ["NO_SUCH_CARD+"]);
+  const described: Omit<CardObs, "index" | "can_play"> = {
+    card_id: "NO_SUCH_CARD", cost: 1, current_cost: 1, costs_x: false, target_type: "AnyEnemy", upgrades: 1,
+    keywords: [], vars: { Damage: 30 }, card_type: "Attack",
+  };
+  learnCard("NO_SUCH_CARD+", described);
+  assert.deepEqual(unknownCards(["NO_SUCH_CARD+"]), []);
+});
+
+function reward(boss: string): Observation {
+  return {
+    phase: "card_reward", is_terminal: false, is_victory: false, seed: "T", act: 0, floor: 3, gold: 100, act_boss: boss,
+    player_hp: 70, player_max_hp: 80, player_block: 0, player_energy: 3, player_powers: {},
+    deck_cards: STARTER, relics: [], potions: [], combat: null, room: null,
+  };
+}
+const act = (id: string, metadata?: Record<string, unknown>): LegalAction => ({ action_id: id, action_type: id.split(":")[0]!, description: "", ...(metadata ? { metadata } : {}) });
+
+test("spar3: an unmodelled boss or an unseen card leaves the reward to the rules", () => {
+  const legal = [act("choose_card:0:IRON_WAVE", { card_id: "IRON_WAVE", card_index: 0 }), act("choose_card:1:OFFERING", { card_id: "OFFERING", card_index: 1 }), act("skip_card")];
+  const unseen = [act("choose_card:0:NEVER_SEEN", { card_id: "NEVER_SEEN", card_index: 0 }), ...legal.slice(1)];
+  setFlags([]);
+  const rules = chooseCardReward(reward("NOT_A_BOSS_BOSS"), legal);
+  const rulesUnseen = chooseCardReward(reward("VANTOM_BOSS"), unseen);
+  try {
+    setFlags(["spar", "spar3"]);
+    setActBoss("NOT_A_BOSS_BOSS");
+    assert.equal(chooseCardReward(reward("NOT_A_BOSS_BOSS"), legal), rules);
+    setActBoss("VANTOM_BOSS");
+    assert.equal(chooseCardReward(reward("VANTOM_BOSS"), unseen), rulesUnseen);
+  } finally {
+    setFlags([]);
+    setActBoss("");
+  }
+});
