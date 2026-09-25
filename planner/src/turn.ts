@@ -13,12 +13,12 @@
 
 import type { IntentObs } from "./obs.ts";
 import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
-import { type Card, type Enemy, endOfTurnBlock, hpAfterTurn, incomingDamage, isClaw, spendRevival, type State } from "./sim.ts";
+import { type Card, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, incomingDamage, isClaw, spendRevival, startOfTurn, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
-const TURN_ONLY = ["NO_DRAW", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED"];
+const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED"];
 /** Powers that lose a stack every round. */
-const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN"];
+const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN", "NO_BLOCK"];
 /** Temporary Strength and Dexterity, and what they were added to. */
 const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"]];
 const HAND_LIMIT = 10;
@@ -56,7 +56,9 @@ const tick = (powers: Record<string, number>, keys: readonly string[]) => {
  * if the enemies' turn kills the player. `foresee` says what an enemy will
  * show on the next turn.
  */
-export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: number) => readonly IntentObs[]): State | undefined {
+export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn: number) => readonly IntentObs[]): State | undefined {
+  // The player's end of the turn first (sim.ts endOfTurn: Stampede, Howl from Beyond, the Bombs).
+  const s = endOfTurn(s0);
   // A death the enemies' turn deals is undone by Lizard Tail or Fairy in a Bottle, if there is one.
   const after = hpAfterTurn(s);
   if (after.hp <= 0) return undefined;
@@ -96,10 +98,13 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
   const hand: Card[] = [];
   let discard = s.discard.slice();
   const exhaust = s.exhaust.slice();
-  for (const c of s.hand) {
-    // Bound ends with the turn (Chains of Binding un-Binds the hand).
-    if (keepAll || c.keywords.includes("Retain")) hand.push({ ...free(c), locked: false });
-    else if (c.keywords.includes("Ethereal")) exhaust.push(c);
+  for (const held of s.hand) {
+    // Stomp's cuts are for the turn.
+    const c = uncut(held);
+    // Bound ends with the turn (Chains of Binding un-Binds the hand). Ethereal goes before a kept
+    // hand is looked at (IL: DoTurnEnd, ShouldEtherealTrigger).
+    if (c.keywords.includes("Ethereal")) exhaust.push(c);
+    else if (keepAll || c.keywords.includes("Retain")) hand.push({ ...free(c), locked: false });
     else discard.push(c);
   }
   // The enemies' turn, before the next hand is drawn: a scripted boss's move (scripts.ts) puts its
@@ -137,6 +142,13 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     }
     if (!e.alive) return { ...e, powers: { ...e.powers } };
     const ep = { ...e.powers };
+    // Strength taken for the turn (Mangle, Dark Shackles) comes back at the end of the enemy's turn.
+    for (const k of ["MANGLE", "DARK_SHACKLES"]) {
+      if ((ep[k] ?? 0) <= 0) continue;
+      ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
+      if (ep["STRENGTH"] === 0) delete ep["STRENGTH"];
+      delete ep[k];
+    }
     tick(ep, ["WEAK", "VULNERABLE"]);
     // Intangible goes a stack at the end of the enemies' turn (Soul Fysh's Fade covers one player
     // turn); Nemesis (the Test Subject's third form) puts it on every other turn (IL: NemesisPower).
@@ -225,18 +237,57 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
   const binding = Math.max(0, powers["CHAINS_OF_BINDING"] ?? 0);
   // Mind Rot (the Knowledge Demon's curse; IL: MindRotPower.ModifyHandDraw): the turn's draw, less its amount.
   const handDraw = Math.max(0, 5 - Math.max(0, powers["MIND_ROT"] ?? 0));
-  let pile = shuffle(draw, rng);
+  // Nostalgia's cards are on top, known; the rest of the pile is in an order not known.
+  const top = Math.min(s.onTop ?? 0, draw.length);
+  let pile = [...shuffle(draw.slice(0, draw.length - top), rng), ...draw.slice(draw.length - top)];
+  // Bolas and Thrumming Hatchet played this turn come back before the draw.
+  for (const from of [discard, pile]) {
+    for (let i = from.length - 1; i >= 0; i--) {
+      if (!from[i]!.returns || hand.length >= HAND_LIMIT) continue;
+      const { returns: _r, ...back } = from.splice(i, 1)[0]!;
+      hand.push({ ...back, locked: false });
+    }
+  }
+  // Aggression (IL: AggressionPower, before the draw): a random attack of the discard pile into the
+  // hand a stack, upgraded (its upgraded numbers are not known here: as it is).
+  for (let i = 0; i < (powers["AGGRESSION"] ?? 0) && hand.length < HAND_LIMIT; i++) {
+    const at = discard.map((c, j) => (c.type === "Attack" ? j : -1)).filter((j) => j >= 0);
+    if (at.length === 0) break;
+    hand.push({ ...free(discard.splice(at[Math.floor(rng() * at.length)]!, 1)[0]!), locked: false });
+  }
   for (let i = 0; i < handDraw + extraDraw && hand.length < HAND_LIMIT; i++) {
     if (pile.length === 0) {
       if (discard.length === 0) break;
       pile = shuffle(discard, rng);
       discard = [];
+      // Stratagem (IL: AfterShuffle): a card of the new pile into the hand a stack (the choice: any).
+      for (let k = 0; k < (powers["STRATAGEM"] ?? 0) && pile.length > 1 && hand.length < HAND_LIMIT - 1; k++) hand.push({ ...free(pile.shift()!), locked: false });
     }
     hand.push({ ...free(pile.pop()!), locked: false, ...(i < binding ? { bound: true } : {}) });
   }
 
   // Sloth counts the cards of a turn: the next starts at 0 (IL: SlothPower.BeforeSideTurnStart).
-  const powerVars = s.player.powerVars?.["SLOTH"] ? { ...s.player.powerVars, SLOTH: { ...s.player.powerVars["SLOTH"], _cardsPlayedThisTurn: 0 } } : s.player.powerVars;
+  let powerVars = s.player.powerVars?.["SLOTH"] ? { ...s.player.powerVars, SLOTH: { ...s.player.powerVars["SLOTH"], _cardsPlayedThisTurn: 0 } } : s.player.powerVars;
+  // Juggling counts the attacks of a turn the same way.
+  if (powerVars?.["JUGGLING"]) powerVars = { ...powerVars, JUGGLING: { ...powerVars["JUGGLING"], attacksPlayedThisTurn: 0 } };
+  // The hits of the enemies' turn that got past block (Tear Asunder counts them): the block takes
+  // the hits in turn.
+  let left = endOfTurnBlock(s);
+  let through = 0;
+  for (const e of s.enemies) {
+    if (!e.alive) continue;
+    for (const i of e.intents) {
+      if (i.type !== "Attack") continue;
+      for (let h = 0; h < Math.max(1, i.hits); h++) {
+        if (i.damage > left) {
+          through++;
+          left = 0;
+        } else left -= i.damage;
+      }
+    }
+  }
+  const hurt = (s.hurt ?? 0) + through;
+  const bombs = (s.bombs ?? []).map((b) => ({ ...b, turns: b.turns - 1 }));
   const next: State = {
     player: { ...s.player, hp: Math.min(s.player.maxHp, hp + regen), block, powers, ...(powerVars ? { powerVars } : {}) },
     energy,
@@ -262,9 +313,21 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     potionSlots: s.potionSlots,
     potionsUsed: s.potionsUsed,
     ...(s.revivals ? { revivals: s.revivals } : {}),
+    ...(hurt ? { hurt } : {}),
+    ...(bombs.length ? { bombs } : {}),
   };
   if (after.revived) spendRevival(next, after.revived);
+  // After the draw: Inferno's cost and hit, Mayhem's and Hellraiser's free plays.
+  startOfTurn(next);
+  if (next.player.hp <= 0) return undefined;
   return next;
+}
+
+/** The card at its cost before the turn's cuts (Stomp). */
+function uncut(c: Card): Card {
+  if (c.fullCost === undefined) return c;
+  const { fullCost, ...rest } = c;
+  return { ...rest, cost: fullCost };
 }
 
 /** The card without Bound. */

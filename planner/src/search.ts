@@ -12,7 +12,7 @@
  */
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
-import { type Action, actions, type Card, drink, endOfTurnBlock, type Enemy, endOfTurnRevival, formsToCome, hpLoss, incomingDamage, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
+import { type Action, actions, type Card, drink, endOfTurn, endOfTurnBlock, type Enemy, endOfTurnRevival, formsToCome, hpLoss, incomingDamage, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -244,7 +244,9 @@ function blowToCome(s: State): number {
 }
 
 /** How good it is to end the turn in state `s`. */
-export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
+export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
+  // The turn's end first (sim.ts endOfTurn: Stampede's free attacks, a Bomb going off).
+  const s = endOfTurn(s0);
   const alive = s.enemies.filter((e) => e.alive);
   // Dying to one's own card (Offering, Hemokinesis at low HP, Thorns) is no win.
   if (s.player.hp <= 0) return -WIN * 2;

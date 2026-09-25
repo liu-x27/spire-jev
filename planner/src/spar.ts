@@ -57,7 +57,9 @@ export function learnCard(id: string, c: Omit<CardObs, "index" | "can_play">): v
 export function cardFromId(id: string): Card | undefined {
   const c = cards()[id] ?? cards()[id.replace(/\+$/, "")];
   if (!c) return undefined;
-  return cardOf({ ...c, index: 0, can_play: true } as CardObs);
+  // Without the catalogue's calculated numbers: they are some other fight's (Tear Asunder's 10 hits,
+  // Gold Axe's 21), and sim.ts works them out from the bout's own state.
+  return cardOf({ ...c, calculated: {}, index: 0, can_play: true } as CardObs);
 }
 
 /** The catalogue has this very card ("BASH+" upgraded), not only its unupgraded self. */
