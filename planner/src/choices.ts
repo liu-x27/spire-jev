@@ -15,7 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { BARE, type Boss, bossFor, knownExactly, learnCard, modelledBoss, type Player, sparScore, unknownCards, useBossTurns } from "./spar.ts";
+import { BARE, type Boss, bossFor, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -229,6 +229,17 @@ function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: 
   // spar3's closer look: `more` shuffles after the first 32, on their own draws.
   const first = more > 0 ? SPAR_SAMPLES : 0;
   const n = more > 0 ? more : SPAR_SAMPLES;
+  // sparpair: act 3's two bosses fought one after the other, on one HP bar.
+  if (flags.has("sparpair") && bosses.length === 2) {
+    const key = `pair/${bosses[0]!.model}/${bosses[1]!.model}/${floor}/${me.hp}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
+    let base = sparBase.get(key);
+    if (base === undefined) {
+      if (sparBase.size > 64) sparBase.clear();
+      base = pairScore(deck, bosses[0]!, bosses[1]!, n, floor, me, first);
+      sparBase.set(key, base);
+    }
+    return pairScore(change([...deck]), bosses[0]!, bosses[1]!, n, floor, me, first) - base;
+  }
   let gain = 0;
   for (const boss of bosses) {
     const key = `${boss.model}/${floor}/${me.hp}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
@@ -248,13 +259,14 @@ function sparBosses(act: Act, at?: Sparring): Boss[] {
   // sparboth: seed 497 (A10) beat Aeonglass and died to the Test Subject, whom its act 3 picks were
   // never measured against: floor 42's Taunt, +25 against Aeonglass, is +0 against it, and Stone
   // Armor +18 and +29.
-  const second = flags.has("sparboth") ? modelledBoss(actSecondBoss) : undefined;
+  const second = flags.has("sparboth") || flags.has("sparpair") ? modelledBoss(actSecondBoss) : undefined;
   if (second && second.model !== bosses[0]!.model) bosses.push(second);
   return bosses;
 }
 /** A deck's score (the mean over the bosses), for comparing what the deck and the player both change: spar4's rest. */
 function sparValue(deck: readonly string[], act: Act, floor: number, at: Sparring, me: Player, first = 0, n = SPAR_SAMPLES, hpWeight = 0.7): number {
   const bosses = sparBosses(act, at);
+  if (flags.has("sparpair") && bosses.length === 2) return pairScore(deck, bosses[0]!, bosses[1]!, n, floor, me, first, hpWeight);
   return bosses.reduce((a, boss) => a + sparScore(deck, boss, n, floor, me, first, hpWeight), 0) / bosses.length;
 }
 

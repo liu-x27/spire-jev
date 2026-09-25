@@ -231,6 +231,28 @@ export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed 
   return total / samples;
 }
 
+/**
+ * sparpair (astra-review-4 #3): A10's act 3, both bosses on one HP bar. The first bout, then the
+ * second on what the first left (and the heals for winning: Burning Blood, Black Blood), on its own
+ * shuffles; the second is only fought if the first is won. The score is the two bouts' together,
+ * the second's win worth as much as the first's.
+ */
+export function pairScore(ids: readonly string[], first: Boss, second: Boss, samples = 8, seed = 1, me: Player = BARE, from = 0, hpWeight = 0.7): number {
+  const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
+  const heal = (["BURNING_BLOOD", "BLACK_BLOOD"] as const).reduce((a, id) => a + (me.relics.includes(id) ? me.relicVars?.[id]?.["Heal"] ?? 6 : 0), 0);
+  const turns = (b: Boss) => (bossTurns ? b.turns ?? 8 : 8);
+  let total = 0;
+  for (let i = from; i < from + samples; i++) {
+    const a = bout(deck, first, seeded(seed * 1000 + i), turns(first), me);
+    total += a.damage + (a.won ? 60 : 0) - hpWeight * a.hpLost;
+    if (!a.won) continue;
+    const hp = Math.min(me.maxHp, me.hp - a.hpLost + heal);
+    const b = bout(deck, second, seeded(seed * 1000 + i + 500_000), turns(second), { ...me, hp });
+    total += b.damage + (b.won ? 60 : 0) - hpWeight * b.hpLost;
+  }
+  return total / samples;
+}
+
 /** The boss a deck is measured against in each act (acts 1-2 of this pool; act 3 against the act 2 one for now). */
 export const bossForAct = (act: number): Boss => (act === 0 ? BOSSES["VANTOM"]! : BOSSES["THE_INSATIABLE"]!);
 

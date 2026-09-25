@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { setIntentAscension } from "../src/intents.ts";
-import { BARE, BOSSES, learnCard, modelledBoss, sparScore, unknownCards } from "../src/spar.ts";
+import { BARE, BOSSES, learnCard, modelledBoss, pairScore, sparScore, unknownCards } from "../src/spar.ts";
 import { chooseCardReward, chooseRest, chooseSelect, chooseShop, chooseUpgrade, setActBoss, setFlags } from "../src/choices.ts";
 import type { CardObs, LegalAction, Observation } from "../src/obs.ts";
 
@@ -115,4 +115,11 @@ test("spar4: a smith's offers by what the upgrade adds; one never seen upgraded 
     setFlags([]);
     setActBoss("");
   }
+});
+
+test("sparpair: the second boss is fought only after the first is won, on the HP it left", () => {
+  const aeonglass = BOSSES["AEONGLASS"]!;
+  const subject = BOSSES["TEST_SUBJECT"]!;
+  // The starter deck loses to Aeonglass every time: the pair is the first bout alone.
+  assert.equal(pairScore(STARTER, aeonglass, subject, 8, 5), sparScore(STARTER, aeonglass, 8, 5));
 });

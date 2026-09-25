@@ -493,10 +493,38 @@ states, and only a simulator is fast enough for that.
      strong players' Elo puts nearly all of them below skipping (Spire Codex
      wr50, all characters); only Hidden Gem +27, Finesse +5, Dark Shackles 0
      and Fasten -8 come near.
+   - **spar never saw a third of the veteran cards.** Its catalogue
+     (`data/card-catalog.json`) was built on 2026-09-24 from the locked
+     profile's runs: 112 cards. Of the 201 ids the veteran decks held, 70 were
+     missing (Break, Feeding Frenzy, Molten Fist, Dominate, Inferno, Primal
+     Force, every curse): dropped from both decks compared, their gain 0, never
+     taken. Rebuilt (361). Replaying conf4s's 754 recorded card rewards through
+     chooseCardReward (the old catalogue reproduces 744 of the recorded picks),
+     the new one changes 192: 66 fewer skips, Cinder +26, Molten Fist +23, Drum
+     of Battle +14. Two of those the simulator had wrong by the generic vars
+     (IL): Drum of Battle draws and gives its energy only when exhausted, Cinder
+     exhausts a random card of the hand after its hit. Fixed; the other cards
+     whose IL does more than damage/block/energy/draw/powers are being audited.
+   - `--flags spar3` (astra-review-4 #1): the bout plays the run's max HP,
+     relics and their numbers, and its last fight's opening (energy, hand size,
+     relic Strength/Vigor/block); an upgraded offer is scored upgraded (the
+     bridge's `upgrades`, the offer's own description learnt); a boss spar has
+     no model of, or an offer it has never seen, is left to the rules (bossFor
+     had put The Insatiable in for the Queen); candidates near the line get 128
+     more shuffles. The Queen and her Torch Head are in the simulator now
+     (sim-queen), and `--flags sparboth` measures act 3's picks against both
+     bosses.
+   - `--flags spar4` (astra-review-4 #2): every legal removal weighed (a curse
+     first: the simulator plays Decay, Regret, Doubt as dead cards, all five
+     gave the same +2.1), the select takes that card; upgrades by what they add;
+     before the boss, heal or smith by the bout at this HP, without the HP-lost
+     term (the healed Ironclad, losing as well, lost more); what the bout turned
+     down the rules no longer buy. spar3 and spar3+spar4 on the fresh seeds
+     586-855 against vet-hunt3 (spar) in a frozen worktree (ba04ecc).
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
 
 - Do not publish decompiled game code or game assets; the repo holds only our
   code, and reads the game from the local install.
-- Private repo; commit locally; push only when asked.
+- Public repo (liu-x27/spire-jev); commit locally; push only when asked.
