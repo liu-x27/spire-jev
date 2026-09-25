@@ -153,6 +153,25 @@ test("shop2: an affordable Inflame for a deck with no damage scaling comes befor
   }
 });
 
+test("the shop buys a potion in act 3 only into a free slot: two held fill an A10 belt", () => {
+  // JEV00707, floor 39 (veteran profile, so A10): 148 gold, nothing else it wanted, 2 of 2 slots held.
+  const potion = (i: number, id: string, price: number) =>
+    act(`shop_buy:${i}:MerchantPotionEntry`, { entry_type: "MerchantPotionEntry", item_id: id, price, stocked: true, affordable: true });
+  const legal = [potion(6, "EXPLOSIVE_AMPOULE", 52), potion(7, "SKILL_POTION", 52), potion(8, "BLOCK_POTION", 50), act("shop_leave")];
+  const shop = (potions: string[], slots?: number) =>
+    obs({ phase: "shop", act: 3, floor: 39, gold: 148, deck_cards: ["BASH", "OFFERING"], potions, ...(slots === undefined ? {} : { potion_slots: slots }) });
+  assert.equal(chooseShop(shop(["POWDERED_DEMISE", "SKILL_POTION"], 2), legal), "shop_leave");
+  assert.equal(chooseShop(shop(["POWDERED_DEMISE"], 2), legal), "shop_buy:6:MerchantPotionEntry");
+  assert.equal(chooseShop(shop(["POWDERED_DEMISE", "SKILL_POTION"], 3), legal), "shop_buy:6:MerchantPotionEntry");
+  assert.equal(chooseShop(shop(["POWDERED_DEMISE", "SKILL_POTION", "BLOCK_POTION"]), legal), "shop_leave");
+  setFlags(["shop2"]);
+  try {
+    assert.equal(chooseShop(shop(["POWDERED_DEMISE", "SKILL_POTION"], 2), legal), "shop_leave");
+  } finally {
+    setFlags([]);
+  }
+});
+
 test("smith2: winners' upgrade order, and a smith before the act 2 boss unless under half HP", () => {
   const legal = [act("choose_upgrade:0:POMMEL_STRIKE"), act("choose_upgrade:1:ARMAMENTS"), act("choose_upgrade:2:STRIKE_IRONCLAD")];
   const rest = [act("choose_rest:HEAL"), act("choose_rest:SMITH")];
