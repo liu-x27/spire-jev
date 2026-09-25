@@ -33,7 +33,7 @@ import { type ChoiceState, restoreChoiceState, saveChoiceState } from "./choices
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnRoll, type Rollouts, safetyMargin, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
 import { learnCard } from "./spar.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
@@ -295,6 +295,8 @@ function inWindow(id: string, s: ReturnType<typeof fromObservation>, bossTurn: n
   }
   return false;
 }
+/** bossroll's rollouts: this turn's best 4 ends, each played 2 turns on 3 times, 800 nodes a turn. */
+const BOSS_ROLL: Rollouts = { ends: 4, samples: 3, depth: 2, nodes: 800 };
 /** A10's first act 3 boss (floor 48): the second follows on the same HP (pot48, hp48). */
 const firstOfPair = (floor: number, boss: boolean) => boss && ascension >= 10 && floor === 48;
 /** potsave: a fight of act 3 before its two bosses (floors 34-47) keeps its potions for them. */
@@ -439,7 +441,12 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
         if (obs.floor === 17 || obs.floor === 33) s.hpWorth = { worth: 0.25, margin: safetyMargin(s) };
         else if (obs.floor >= last) s.hpWorth = { worth: 0.05, margin: safetyMargin(s) };
       }
-      const plan = exploring ? planTurnExplore(s, weights, exploring) : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
+      // bossroll: a boss fight's turn by rollouts (search.ts planTurnRoll). The act 3 research's pilot:
+      // A10 winners' decks beat their first act 3 boss 11.7% of 480 bouts with planTurn, 15.6% with
+      // two turns of rollouts (18.3% against 10.8% on 30 decks; four turns and more samples 17.5%).
+      const plan = exploring ? planTurnExplore(s, weights, exploring)
+        : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
+        : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);
       log.nodes.push(plan.nodes);
       if (plan.truncated) log.truncated++;
