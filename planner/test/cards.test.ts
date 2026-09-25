@@ -68,8 +68,12 @@ test("mind blast: the draw pile's size", () => {
 });
 
 test("tear asunder: a hit more for every time the player took damage past block, across the turns", () => {
+  // The game's CalculatedHits is 1 + the count already (2: hurt once before the observation), and once since.
   const tear = card("TEAR_ASUNDER", "Attack", "AnyEnemy", { Damage: 5, Repeat: 1, CalculationBase: 0, CalculationExtra: 1, CalculatedHits: 0 }, 2, [], { calc: { CalculatedHits: 2 } });
-  assert.equal(hp(at(state([tear], [foe(50)], { hurt: 1 }), 0, 1)), 50 - 5 * 4);
+  assert.equal(hp(at(state([tear], [foe(50)], { hurt: 1 }), 0, 1)), 50 - 5 * 3);
+  // No calculated number (spar's cards), never hurt: the one hit.
+  const bare = card("TEAR_ASUNDER", "Attack", "AnyEnemy", { Damage: 5, Repeat: 1, CalculationBase: 0, CalculationExtra: 1, CalculatedHits: 0 }, 2);
+  assert.equal(hp(at(state([bare], [foe(50)]), 0, 1)), 45);
   // A card's HP cost counts.
   const hemo = card("HEMOKINESIS", "Attack", "AnyEnemy", { Damage: 15, HpLoss: 2 });
   assert.equal(at(state([hemo]), 0, 1).hurt, 1);
@@ -340,4 +344,42 @@ test("bolas: played, it is back in the hand before the next draw", () => {
   const n = next(s);
   assert.ok(n.hand.some((c) => c.id === "BOLAS"));
   assert.equal(n.hand.length, 6);
+});
+
+// ---------------------------------------------------------------- relics on cards played
+
+test("intimidating helmet: 4 block before a card paid 2 energy or more for, even under No Block", () => {
+  const bash = card("BASH", "Attack", "AnyEnemy", { Damage: 8, VulnerablePower: 2 }, 2);
+  const s = withPowers(state([bash, STRIKE], [foe(50)], { relics: ["INTIMIDATING_HELMET"], relicVars: { INTIMIDATING_HELMET: { Block: 4, Energy: 2 } } }), { NO_BLOCK: 1 });
+  assert.equal(at(s, 0, 1).player.block, 4);
+  assert.equal(at(s, 1, 1).player.block, 0);
+});
+
+test("game piece: a power played draws a card", () => {
+  const s = state([card("INFLAME", "Power", "Self", { StrengthPower: 2 })], [foe(50)], { draw: [STRIKE], relics: ["GAME_PIECE"], relicVars: { GAME_PIECE: { Cards: 1 } } });
+  assert.equal(at(s, 0).drawn, 1);
+});
+
+test("iron club: every 4th card of the combat draws, counting the ones before the observation", () => {
+  const s = state([DEFEND], [foe(50)], { draw: [STRIKE], relics: ["IRON_CLUB"], relicVars: { IRON_CLUB: { Cards: 4, _cardsPlayed: 3 } } });
+  assert.equal(at(s, 0).drawn, 1);
+  assert.equal(at({ ...s, relicVars: { IRON_CLUB: { Cards: 4, _cardsPlayed: 1 } } }, 0).drawn, 0);
+});
+
+test("ornamental fan: every 3rd attack of the turn gives 4 block; the count starts again next turn", () => {
+  let s = state([STRIKE, STRIKE, STRIKE], [foe(80)], { draw: Array(5).fill(DEFEND) as Card[], relics: ["ORNAMENTAL_FAN"], relicVars: { ORNAMENTAL_FAN: { Cards: 3, Block: 4, _attacksPlayedThisTurn: 1 } } });
+  s = at(s, 0, 1);
+  assert.equal(s.player.block, 0);
+  s = at(s, 0, 1);
+  assert.equal(s.player.block, 4);
+  assert.equal(next(s).relicVars!["ORNAMENTAL_FAN"]!["_attacksPlayedThisTurn"], 0);
+});
+
+test("pen nib: the 10th attack, counting the ones before the observation, deals double; the count goes on next turn", () => {
+  const s = state([STRIKE, STRIKE], [foe(50)], { draw: Array(5).fill(DEFEND) as Card[], relics: ["PEN_NIB"], relicVars: { PEN_NIB: { _attacksPlayed: 9 } } });
+  const first = at(s, 0, 1);
+  assert.equal(hp(first), 38);
+  assert.equal(hp(at(first, 0, 1)), 32);
+  assert.equal(first.player.powers["PEN_NIB_DOUBLE"], undefined);
+  assert.equal(next(at({ ...s, relicVars: { PEN_NIB: { _attacksPlayed: 5 } } }, 0, 1)).relicVars!["PEN_NIB"]!["_attacksPlayed"], 6);
 });

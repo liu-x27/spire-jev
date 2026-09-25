@@ -362,6 +362,8 @@ const addPower = (u: Unit, p: string, n: number) => {
  */
 export function attackDamage(base: number, attacker: Unit, target: Unit, extra = 1): number {
   let d = (base + (attacker.powers["STRENGTH"] ?? 0)) * extra;
+  // Pen Nib's tenth attack (resolve sets PEN_NIB_DOUBLE while it resolves): double.
+  if (has(attacker, "PEN_NIB_DOUBLE")) d *= 2;
   if (has(attacker, "WEAK")) d *= 0.75;
   // Shrink (Shrinker Beetle): the owner's attacks deal DamageDecrease percent less.
   if (present(attacker, "SHRINK")) d *= 1 - powerVar(attacker, "SHRINK", "DamageDecrease", 30) / 100;
@@ -1210,9 +1212,10 @@ const SPECIAL: Record<string, Rule> = {
     gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     applyPower(s, s.player, "NO_BLOCK", num(c, "Turns") || 2);
   },
-  // Once more for every time the player took damage past block this combat (IL: CalculatedHits over
-  // the combat history): the observation's count and the ones since.
-  TEAR_ASUNDER: (s, c, t) => strike(s, one(t), dmg(s, c, t), (num(c, "Repeat") || 1) + (c.calc?.["CalculatedHits"] ?? 0) + (s.hurt ?? 0)),
+  // 1 hit and one more for every time the player took damage past block this combat (IL: WithHitCount
+  // of CalculatedHits, 1 + the count; Repeat is not read): the observation's number, its 1 included,
+  // and the ones since (s.hurt). The s3f runs' 103 mismatches were one hit too many.
+  TEAR_ASUNDER: (s, c, t) => strike(s, one(t), dmg(s, c, t), (c.calc?.["CalculatedHits"] ?? 1) + (s.hurt ?? 0)),
   // The hit, then one of 3 random draw-pile cards picked into the hand; an empty draw pile is not
   // shuffled back (IL: CardSelectCmd over PileType.Draw).
   SEEKER_STRIKE: (s, c, t) => {
@@ -1413,11 +1416,16 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
 
   // X: the energy, and Chemical X's more (IL: CardModel.ResolveEnergyXValue).
   const x = card.costsX ? energyX(s) : 0;
-  s.energy -= card.costsX ? s.energy : costOf(s, card);
+  const paid = card.costsX ? s.energy : costOf(s, card);
+  s.energy -= paid;
   if (card.type === "Attack" && has(s.player, "FREE_ATTACK")) addPower(s.player, "FREE_ATTACK", -1);
   const target = a.target === undefined ? undefined : s.enemies.find((e) => e.id === a.target);
   // Surrounded: a card played at a claw turns the player to face it, before the card resolves.
   if (target && s.facing !== undefined && isClaw(target)) s.facing = target.id;
+  // Intimidating Helmet (IL: BeforeCardPlayed): a card paid 2 energy or more for gives 4 block first,
+  // past Dexterity, Frail and No Block.
+  const helmet = s.relics.includes("INTIMIDATING_HELMET") ? s.relicVars?.["INTIMIDATING_HELMET"] : undefined;
+  if (helmet && paid >= (helmet["Energy"] ?? 2)) gainBlock(s, helmet["Block"] ?? 4);
   resolve(s, card, target, x);
   return s;
 }
@@ -1453,6 +1461,11 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
     }
   }
 
+  // Pen Nib (IL: BeforeCardPlayed, ModifyDamageMultiplicative): every 10th attack, counted across
+  // fights (_attacksPlayed at the observation), deals double damage.
+  const nib = card.type === "Attack" && s.relics.includes("PEN_NIB") ? s.relicVars?.["PEN_NIB"] : undefined;
+  const doubled = nib !== undefined && ((nib["_attacksPlayed"] ?? 0) + (s.attacks ?? 0)) % 10 === 0;
+  if (doubled) s.player.powers["PEN_NIB_DOUBLE"] = 1;
   const special = SPECIAL[card.id];
   if (special) special(s, card, target, x);
   else standard(s, card, target, x);
@@ -1467,6 +1480,7 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
       else standard(s, card, again, x);
     }
   }
+  if (doubled) delete s.player.powers["PEN_NIB_DOUBLE"];
   // Rage: block for every attack played this turn, not changed by Dexterity or Frail.
   if (card.type === "Attack" && has(s.player, "RAGE")) gainBlock(s, s.player.powers["RAGE"] ?? 0);
   // Daughter of the Wind: block for every attack played.
@@ -1490,6 +1504,14 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
     }
   }
   s.played++;
+  // Iron Club (IL: AfterCardPlayed): every 4th card played this combat draws 1 (its _cardsPlayed at the observation).
+  const club = s.relics.includes("IRON_CLUB") ? s.relicVars?.["IRON_CLUB"] : undefined;
+  if (club && ((club["_cardsPlayed"] ?? 0) + s.played) % (club["Cards"] || 4) === 0) draw(s, 1);
+  // Ornamental Fan (IL: AfterCardPlayed): every 3rd attack of the turn gives 4 block, past Dexterity and Frail.
+  const fan = card.type === "Attack" && s.relics.includes("ORNAMENTAL_FAN") ? s.relicVars?.["ORNAMENTAL_FAN"] : undefined;
+  if (fan && ((fan["_attacksPlayedThisTurn"] ?? 0) + (s.attacks ?? 0)) % (fan["Cards"] || 3) === 0) gainBlock(s, fan["Block"] ?? 4);
+  // Game Piece (IL: AfterCardPlayed): a power played draws 1.
+  if (card.type === "Power" && s.relics.includes("GAME_PIECE")) draw(s, s.relicVars?.["GAME_PIECE"]?.["Cards"] ?? 1);
   // Withering Presence (Aeonglass; IL: WitheringPresencePower.AfterCardPlayed): CardsLeft counts the
   // cards played, across turns; the one that takes it to 0 puts a Wither into the hand (the discard
   // pile if the hand is full), and it starts again at 6. A Wither held deals its Damage at the end

@@ -305,7 +305,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     lostHp: false,
     exhaustedThisTurn: false,
     relics: s.relics,
-    ...(s.relicVars ? { relicVars: s.relicVars } : {}),
+    ...(s.relicVars ? { relicVars: nextRelicVars(s) } : {}),
     played: 0,
     skills: 0,
     unmovableUsed: false,
@@ -321,6 +321,21 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
   startOfTurn(next);
   if (next.player.hp <= 0) return undefined;
   return next;
+}
+
+/** Relic counters for the next turn: Ornamental Fan's attacks start again, Iron Club's cards and Pen Nib's attacks go on. */
+function nextRelicVars(s: State): Readonly<Record<string, Record<string, number>>> {
+  const v = s.relicVars!;
+  const fan = v["ORNAMENTAL_FAN"];
+  const club = v["IRON_CLUB"];
+  const nib = v["PEN_NIB"];
+  if (!fan && !club && !nib) return v;
+  return {
+    ...v,
+    ...(nib ? { PEN_NIB: { ...nib, _attacksPlayed: ((nib["_attacksPlayed"] ?? 0) + (s.attacks ?? 0)) % 10 } } : {}),
+    ...(fan ? { ORNAMENTAL_FAN: { ...fan, _attacksPlayedThisTurn: 0 } } : {}),
+    ...(club ? { IRON_CLUB: { ...club, _cardsPlayed: (club["_cardsPlayed"] ?? 0) + s.played } } : {}),
+  };
 }
 
 /** The card at its cost before the turn's cuts (Stomp). */
