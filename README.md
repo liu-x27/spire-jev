@@ -110,3 +110,11 @@ The bridge began as divine-sts2's FullAppBridge (MIT, [mod/LICENSE-divine-sts2](
 and was extended for what a planner needs. `planner/data/card-stats-a10.json` is Spire
 Codex's ascension-10 Ironclad data, and the strategy notes in `docs/` summarise public
 guides and statistics and say where each comes from.
+
+## License
+
+The code written for this project is MIT — see [LICENSE](LICENSE). The bridge's parts from
+divine-sts2 stay under their own MIT license ([mod/LICENSE-divine-sts2](mod/LICENSE-divine-sts2)).
+Not covered, and not ours to license: Slay the Spire 2 and its art and text, which are Mega
+Crit's and appear in the recordings in `docs/media`; the tables and profile saves in
+`planner/data` read from the game; and Spire Codex's data in `planner/data/card-stats-a10.json`.
