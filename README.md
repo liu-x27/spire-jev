@@ -7,13 +7,21 @@ the choices around the fights (card rewards, the path, rest sites, shops, events
 by rules. The simulator is checked against the game card by card, and the results below are
 counted on seeds the rules were not tuned on.
 
+![Floors 48 and 49 at ascension 10: the bot beats Aeonglass, then dies to Test Subject, one fight from a win (2×)](docs/media/a10-497-floor48-49-2x.gif)
+
+*Ascension 10, seed 497, the last two floors: one fight from a win, and not a win. With the
+current rules it beat act 3's first boss, Aeonglass (120 HP in, 48 after), and died on the
+fourth turn against the second, Test Subject, on floor 49. The furthest of the 90
+confirmation seeds below. The whole run: [docs/media/a10-497-run.mp4](docs/media/a10-497-run.mp4)
+(3 min 37 s for 8.4 minutes of play; fights at game speed, the rest 4×).*
+
 ![Floor 48, act 3's boss at ascension 10: the bot kills the Torch Head Amalgam, then dies to the Queen (2×)](docs/media/a10-707-floor48-2x.gif)
 
-*Ascension 10, seed 707, floor 48 of 49, on the rules from before `spar`: the furthest of
-the 102 seeds it was picked from, and not a win. It reached act 3's boss with 53 of 80 HP, killed the Torch Head Amalgam and died on turn 8
-with the Queen at 279 HP. The whole run is [docs/media/a10-707-run.mp4](docs/media/a10-707-run.mp4)
-(3 min 26 s; fights at game speed, the rest 4×); how it was recorded, and why the recording
-is the same run as headless, is [docs/RECORDING.md](docs/RECORDING.md).*
+*Ascension 10, seed 707, floor 48, on the rules from before `spar`: the furthest of the 102
+seeds it was picked from. It reached act 3's boss with 53 of 80 HP, killed the Torch Head
+Amalgam and died on turn 8 with the Queen at 279 HP. The whole run:
+[docs/media/a10-707-run.mp4](docs/media/a10-707-run.mp4) (3 min 26 s). How both were
+recorded, and why a recording is the same run as headless, is [docs/RECORDING.md](docs/RECORDING.md).*
 
 Slay the Spire 2 is Mega Crit's; this project is not affiliated with Mega Crit, and the
 repository holds no game files — the bridge runs against a local install. The name is for

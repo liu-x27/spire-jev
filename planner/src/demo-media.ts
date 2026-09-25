@@ -324,6 +324,9 @@ async function main(): Promise<void> {
     const fights = speed === 1 ? "fights at game speed" : `fights ${speed}×`;
     const label = calm > 1 ? `${who} · ${fights}, the rest ${speed * calm}×` : `${who} · ${speed}× speed`;
     const end = values.outro === "none" ? undefined : (values.outro ?? outro(lines, meta.victory)).replace(/\\n/g, "\n");
+    // The card does not wrap: about 64 characters of its first line fit across the game, 110 of the second.
+    const [head, ...rest] = (end ?? "").split("\n");
+    if (head!.length > 64 || rest.some((l) => l.length > 110)) console.log(`  the outro may not fit across the video: ${JSON.stringify(end)}`);
     fs.writeFileSync(ass, captions(lines, from, to, (f) => timeIn(cut, f), label, MP4_BAR, end));
     const out = path.join(dir, `${name}.mp4`);
     console.log(`run: frames ${from}–${to} (${((to - from) / FPS / 60).toFixed(1)} min of play) → ${timeIn(cut, to).toFixed(0)} s at ${speed}× (calm ${calm}×) → ${out}`);

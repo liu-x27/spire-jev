@@ -1,6 +1,22 @@
 # Recording the bot on screen
 
-## The showcase run: A10, seed 707, floor 48 of 49
+## Seed 497: A10, floor 49 of 49, one fight from a win
+
+![Floors 48 and 49: the bot beats Aeonglass, then dies to Test Subject (2×)](media/a10-497-floor48-49-2x.gif)
+
+Ironclad, ascension 10, seed JEV00497, on the current rules (`--choices rules2 --flags
+pathdp,restbudget,potions2,sleep,spar`, cd6305b with its Visual build): the furthest of the 90
+confirmation seeds, and not a win. It beat act 3's first boss, Aeonglass, on floor 48 (120 HP
+in, 48 after Burning Blood) and died on the fourth turn against the second, Test Subject, on
+floor 49, after the Test Subject's revival. In the confirmation eval this run was given up at
+floor 49 by the game's automated-play framework, before the second boss; recorded after the
+bridge's fix (8243a80), the fights match the headless replay (`eval-clear497-a10`) 20 for 20.
+
+- [`media/a10-497-run.mp4`](media/a10-497-run.mp4): the whole run, 3 min 37 s for 8.4 minutes of
+  play, fights at game speed and the rest 4×. 960 wide, 33 MB.
+- [`media/a10-497-floor49.webp`](media/a10-497-floor49.webp): the fight on floor 49 at game speed.
+
+## Seed 707: A10, floor 48 of 49
 
 ![Act 3's boss, floor 48: the bot kills the Torch Head Amalgam, then dies to the Queen (2×)](media/a10-707-floor48-2x.gif)
 
