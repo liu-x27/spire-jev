@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, healCarried, setFlags, worstCard } from "../src/choices.ts";
+import { cardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseRest, chooseShop, chooseUpgrade, healCarried, setActBoss, setFlags, worstCard } from "../src/choices.ts";
 import { relicValue } from "../src/relics.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
@@ -165,5 +165,26 @@ test("smith2: winners' upgrade order, and a smith before the act 2 boss unless u
     assert.equal(chooseRest(obs({ floor: 11, act: 1, player_hp: 40, player_max_hp: 80 }), rest), "choose_rest:SMITH");
   } finally {
     setFlags([]);
+  }
+});
+
+test("sparboth: act 3's picks count the second boss too (seed 497, floor 42)", () => {
+  const deck = ["ASCENDERS_BANE", "BASH", "BLOODLETTING+", "CONFLAGRATION+", ...Array(4).fill("DEFEND_IRONCLAD"), "DEMON_FORM", "IRON_WAVE", "IRON_WAVE+",
+    "JUGGERNAUT+", "POMMEL_STRIKE+", "RAGE", "SETUP_STRIKE+", "SHRUG_IT_OFF", "SPITE+", ...Array(3).fill("STRIKE_IRONCLAD"), "TAUNT+", "TWIN_STRIKE", "VICIOUS", "WHISTLE+"];
+  const legal = ["TAUNT", "HEADBUTT", "STONE_ARMOR"].map((c, i) => act(`choose_card:${i}:${c}`, { card_id: c }));
+  const o = obs({ act: 3, floor: 42, deck_cards: deck });
+  try {
+    setActBoss("AEONGLASS_BOSS", "TEST_SUBJECT_BOSS");
+    // Against Aeonglass alone Taunt; Stone Armor once the Test Subject counts.
+    setFlags(["spar"]);
+    assert.equal(chooseCardReward(o, legal), "choose_card:0:TAUNT");
+    setFlags(["spar", "sparboth"]);
+    assert.equal(chooseCardReward(o, legal), "choose_card:2:STONE_ARMOR");
+    // No second boss (acts 1-2): the same as spar.
+    setActBoss("AEONGLASS_BOSS");
+    assert.equal(chooseCardReward(o, legal), "choose_card:0:TAUNT");
+  } finally {
+    setFlags([]);
+    setActBoss(undefined);
   }
 });

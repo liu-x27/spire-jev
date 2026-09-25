@@ -225,13 +225,13 @@ export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed 
 /** The boss a deck is measured against in each act (acts 1-2 of this pool; act 3 against the act 2 one for now). */
 export const bossForAct = (act: number): Boss => (act === 0 ? BOSSES["VANTOM"]! : BOSSES["THE_INSATIABLE"]!);
 
-/** The act's boss by its encounter id ("WATERFALL_GIANT_BOSS"), where it is modelled here; else the act's default. */
+/** A boss by its encounter id ("WATERFALL_GIANT_BOSS"), if it is modelled here. */
+export const modelledBoss = (encounter: string): Boss | undefined => BOSSES[encounter.replace(/^ENCOUNTER\./, "").replace(/_BOSS$/, "")];
+
+/** The act's boss by its encounter id, where it is modelled here; else the act's default. */
 export function bossFor(encounter: string, act: number): Boss {
   return modelledBoss(encounter) ?? bossForAct(act);
 }
-
-/** The boss itself, or nothing where it is not modelled (the Queen: bossFor gave The Insatiable instead). */
-export const modelledBoss = (encounter: string): Boss | undefined => BOSSES[encounter.replace(/^ENCOUNTER\./, "").replace(/_BOSS$/, "")];
 
 if (import.meta.main) {
   const [arg, bossName] = process.argv.slice(2);

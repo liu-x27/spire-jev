@@ -103,8 +103,11 @@ export const hasFlag = (name: string) => flags.has(name);
  * profile), and act 1's multi-hit rule was written for its Slippery alone.
  */
 let actBoss = "";
-export function setActBoss(boss: string | undefined): void {
+/** Act 3's second boss at A10 (floor 49, no rest before it); "" in other acts and from older bridges. */
+let actSecondBoss = "";
+export function setActBoss(boss: string | undefined, second?: string): void {
   actBoss = boss ?? "";
+  actSecondBoss = second ?? "";
 }
 const EXTRA_CARDS: Record<string, { tiers: string; pick: [number, number, number] }> = {
   DEMON_FORM: { tiers: "BBBB", pick: [30, 30, 30] }, // §1.2: +3 Strength a turn since v0.111
@@ -221,26 +224,36 @@ const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, num
 const SPAR_SAMPLES = 32;
 const sparBase = new Map<string, number>();
 function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[], at?: Sparring, more = 0): number {
-  const boss = at?.boss ?? bossFor(actBoss, act);
+  const bosses = [at?.boss ?? bossFor(actBoss, act)];
+  // sparboth: act 3's second boss too, the mean of the two. Seed 497 (A10) beat Aeonglass and died
+  // to the Test Subject, whom its act 3 picks were never measured against: floor 42's Taunt, +25
+  // against Aeonglass, is +0 against it, and Stone Armor +18 and +29.
+  const second = flags.has("sparboth") ? modelledBoss(actSecondBoss) : undefined;
+  if (second && second.model !== bosses[0]!.model) bosses.push(second);
   const me = at?.me ?? BARE;
   // spar3's closer look: `more` shuffles after the first 32, on their own draws.
   const first = more > 0 ? SPAR_SAMPLES : 0;
   const n = more > 0 ? more : SPAR_SAMPLES;
-  const key = `${boss.model}/${floor}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
-  let base = sparBase.get(key);
-  if (base === undefined) {
-    if (sparBase.size > 64) sparBase.clear();
-    base = sparScore(deck, boss, n, floor, me, first);
-    sparBase.set(key, base);
+  let gain = 0;
+  for (const boss of bosses) {
+    const key = `${boss.model}/${floor}/${me.maxHp}/${me.maxEnergy}/${me.relics.length}/${first}/${deck.join(",")}`;
+    let base = sparBase.get(key);
+    if (base === undefined) {
+      if (sparBase.size > 64) sparBase.clear();
+      base = sparScore(deck, boss, n, floor, me, first);
+      sparBase.set(key, base);
+    }
+    gain += sparScore(change([...deck]), boss, n, floor, me, first) - base;
   }
-  return sparScore(change([...deck]), boss, n, floor, me, first) - base;
+  return gain / bosses.length;
 }
 
 /**
  * spar3 (astra-review-4 #1): what the bout is played with. The run's max HP (at full HP: a rest site
  * comes before each boss), its relics and their numbers, and its last fight's opening: energy, the
  * hand drawn, the Strength, Vigor or block its relics gave. Nothing where the act's boss is not
- * modelled (spar.ts's BOSSES has no Queen): the rules decide there, not a fight with another boss.
+ * modelled (the Queen was not until 2026-09-25, and bossFor gave The Insatiable): the rules decide
+ * there, not a fight with another boss.
  */
 interface Sparring {
   boss: Boss;

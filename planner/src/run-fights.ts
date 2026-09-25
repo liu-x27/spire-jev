@@ -538,7 +538,7 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       continue;
     }
     const o = cur.observation;
-    setActBoss(o.act_boss);
+    setActBoss(o.act_boss, o.act_second_boss);
     if (o.phase === "map" && capture.has(o.floor) && !captured.has(o.floor) && sandbox) {
       captured.add(o.floor);
       const from = path.join(savesDir(sandbox), "current_run.save");
