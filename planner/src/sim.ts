@@ -41,6 +41,10 @@ export interface Card {
    * end): only one Bound card can be played a turn.
    */
   bound?: boolean;
+  /** Its cost before this turn's cuts (Stomp), given back when it leaves the hand. */
+  fullCost?: number;
+  /** Played this turn and back in the hand before the next draw (Bolas, Thrumming Hatchet). */
+  returns?: boolean;
 }
 
 export interface Unit {
@@ -142,6 +146,16 @@ export interface State {
   boundPlayed?: boolean;
   /** Second lives spent since the observation: a death Lizard Tail or Fairy in a Bottle undid. */
   revivals?: number;
+  /** Times the player took damage past block since the observation, across turns (Tear Asunder hits once more for each). */
+  hurt?: number;
+  /** Attacks played this turn since the observation (Juggling copies the third). */
+  attacks?: number;
+  /** Attacks and skills Nostalgia has put on top of the draw pile this turn; that many top cards are known. */
+  onTop?: number;
+  /** The Bombs ticking on the player: turns to go (it goes off at the end of the turn it reaches 1) and damage. */
+  bombs?: { turns: number; damage: number }[];
+  /** The end of the turn (endOfTurn: Stampede, the Bombs) has been played out on this state. */
+  ended?: boolean;
   /**
    * Surrounded (Kaiser Crab; IL: SurroundedPower.UpdateDirection): the claw the player faces, the
    * one last targeted by a card or potion; the other is behind and deals ×1.5.
@@ -256,6 +270,10 @@ export function fromObservation(obs: Observation): State {
     }),
     ...(surrounded && faced ? { facing: faced.combat_id } : {}),
     colossusAtStart: (obs.player_powers["COLOSSUS_POWER"] ?? 0) > 0,
+    // The Bomb (IL: TheBombPower): its amount the turns to go, Damage what it deals. Two played are
+    // two powers the bridge reports as one: taken as one Bomb.
+    ...((obs.player_powers["THE_BOMB_POWER"] ?? 0) > 0
+      ? { bombs: [{ turns: obs.player_powers["THE_BOMB_POWER"]!, damage: powerVars["THE_BOMB"]?.["Damage"] ?? 40 }] } : {}),
     drawn: 0,
     exact: true,
     lostHp: c.hand.some((card) => card.card_id === "SPITE" && card.glows === true),
@@ -301,6 +319,11 @@ function clone(s: State): State {
     ...(s.dazedAdded ? { dazedAdded: s.dazedAdded } : {}),
     ...(s.revivals ? { revivals: s.revivals } : {}),
     ...(s.facing !== undefined ? { facing: s.facing } : {}),
+    ...(s.hurt ? { hurt: s.hurt } : {}),
+    ...(s.attacks ? { attacks: s.attacks } : {}),
+    ...(s.onTop ? { onTop: s.onTop } : {}),
+    ...(s.bombs ? { bombs: s.bombs.map((b) => ({ ...b })) } : {}),
+    ...(s.ended ? { ended: true } : {}),
   };
 }
 
@@ -481,6 +504,13 @@ function takeFromDraw(s: State): Card | undefined {
     if (s.discard.length === 0) return undefined;
     s.draw = s.discard;
     s.discard = [];
+    // Stratagem (IL: StratagemPower.AfterShuffle): a card of the draw pile, chosen, into the hand a stack.
+    for (let i = 0; i < (s.player.powers["STRATAGEM"] ?? 0) && s.draw.length > 1 && s.hand.length + s.drawn < HAND_LIMIT; i++) {
+      s.exact = false;
+      const picked = s.draw.shift()!;
+      if (knownDraws) s.hand.push({ ...picked, locked: false });
+      else s.drawn++;
+    }
   }
   return s.draw.pop();
 }
@@ -651,6 +681,8 @@ function applyPower(s: State, u: Unit, key: string, n: number): boolean {
  */
 function gainBlock(s: State, n: number, fromCard = false): void {
   if (n <= 0) return;
+  // No Block (Panic Button; IL: NoBlockPower): no block from cards while it lasts.
+  if (fromCard && has(s.player, "NO_BLOCK")) return;
   // Unmovable: the first block a card gives each turn is doubled.
   if (fromCard && has(s.player, "UNMOVABLE") && !s.unmovableUsed) {
     n *= 2;
@@ -707,6 +739,7 @@ function loseHp(s: State, n: number): void {
   if (n <= 0) return;
   s.player.hp -= n;
   s.lostHp = true;
+  s.hurt = (s.hurt ?? 0) + 1;
   if (s.player.hp <= 0) revive(s);
 }
 
@@ -886,13 +919,42 @@ function exhaustOne(s: State): void {
   for (const c of s.hand.splice(i, 1)) exhaustCard(s, c);
 }
 
+/** How many a calculated card counted at the observation, from the game's number then (0 without one). */
+const counted = (c: Card) => {
+  const extra = c.vars["ExtraDamage"] ?? 0;
+  const shown = c.calc?.["CalculatedDamage"];
+  return shown === undefined || extra <= 0 ? 0 : Math.max(0, Math.round((shown - (c.vars["CalculationBase"] ?? 0)) / extra));
+};
+/** Debuffs Rend counts on its target (IL: PowerType Debuff, not ITemporaryPower): less Strength or Dexterity too. */
+const REND_DEBUFFS = new Set(["VULNERABLE", "WEAK", "FRAIL", "POISON", "CONSTRICT", "DOOM", "SHRINK", "SLOW", "TANGLED"]);
+const debuffsOn = (u: Unit) => Object.entries(u.powers).filter(([k, n]) => (REND_DEBUFFS.has(k) && n > 0) || ((k === "STRENGTH" || k === "DEXTERITY") && n < 0)).length;
+
+/**
+ * Calculated damage (IL: CalculatedVar.Calculate, CalculationBase + ExtraDamage × what it counts),
+ * worked out from the state as it stands: the game's number at the observation is stale once the
+ * turn moves on, and a spar catalogue card carries another fight's. Undefined: not known here (a
+ * target's count with no target), the observation's number stands.
+ */
+const COUNTS: Record<string, (s: State, c: Card, t: Enemy | undefined) => number | undefined> = {
+  BODY_SLAM: (s) => s.player.block,
+  // Every Strike in the combat, itself included (exhausted ones too); a blind draw leaves the piles,
+  // so never fewer than at the observation.
+  PERFECTED_STRIKE: (s, c) => Math.max(1 + [...s.hand, ...s.draw, ...s.discard, ...s.exhaust].filter((x) => x.id.includes("STRIKE")).length, counted(c)),
+  BULLY: (_s, _c, t) => (t ? Math.max(0, t.powers["VULNERABLE"] ?? 0) : undefined),
+  ASHEN_STRIKE: (s) => s.exhaust.length,
+  REND: (_s, _c, t) => (t ? debuffsOn(t) : undefined),
+  MIND_BLAST: (s) => s.draw.length,
+  // Cards played this combat before it: the observation's count and the ones since.
+  GOLD_AXE: (s, c) => counted(c) + s.played,
+};
+
 /** A card's attack damage before modifiers: its Damage, or its calculated damage. */
-function damageOf(s: State, card: Card): number | undefined {
+function damageOf(s: State, card: Card, target?: Enemy): number | undefined {
   const v = card.vars;
   let damage: number | undefined;
+  const count = COUNTS[card.id]?.(s, card, target);
   if (v["CalculatedDamage"] === undefined) damage = v["Damage"];
-  // Body Slam: its extra damage per point of block, and block changes within the turn.
-  else if (card.id === "BODY_SLAM") damage = (v["CalculationBase"] ?? 0) + (v["ExtraDamage"] ?? 0) * s.player.block;
+  else if (count !== undefined) damage = (v["CalculationBase"] ?? 0) + (v["ExtraDamage"] ?? 0) * count;
   else damage = card.calc?.["CalculatedDamage"] ?? v["CalculationBase"];
   // Vigor (Akabeko): the next attack played deals that much more.
   if (damage !== undefined && card.type === "Attack") damage += Math.max(0, s.player.powers["VIGOR"] ?? 0);
@@ -906,9 +968,10 @@ function damageOf(s: State, card: Card): number | undefined {
 const one = (t: Enemy | undefined): Enemy[] => (t ? [t] : []);
 const num = (c: Card, name: string) => c.vars[name] ?? 0;
 /** A card's damage as damageOf gives it: relics like Strike Dummy count for special cards too. */
-const dmg = (s: State, c: Card) => damageOf(s, c) ?? 0;
+const dmg = (s: State, c: Card, t?: Enemy) => damageOf(s, c, t) ?? 0;
 
-type Rule = (s: State, card: Card, target: Enemy | undefined) => void;
+/** x: an X card's X (the energy it was played with, Chemical X's more). */
+type Rule = (s: State, card: Card, target: Enemy | undefined, x: number) => void;
 
 /** Cards whose effect is not what their numbers say, each written from what the game did. */
 const SPECIAL: Record<string, Rule> = {
@@ -1103,20 +1166,223 @@ const SPECIAL: Record<string, Rule> = {
       applyPower(s, t, "VULNERABLE", num(c, "Power"));
     }
   },
+  // Only as the one card in hand: draws Cards and gains Energy (IL: Restlessness.IsOnlyCardInHand).
+  RESTLESSNESS: (s, c) => {
+    if (s.hand.length + s.drawn > 0) return;
+    draw(s, num(c, "Cards"));
+    s.energy += num(c, "Energy");
+  },
+  // Strength taken away until the end of the target's turn (IL: DarkShacklesPower, a temporary
+  // Strength debuff: Artifact stops it); DARK_SHACKLES is what gives it back.
+  DARK_SHACKLES: (s, c, t) => {
+    if (t && targetable(t) && applyPower(s, t, "STRENGTH", -num(c, "StrengthLoss"))) addPower(t, "DARK_SHACKLES", num(c, "StrengthLoss"));
+  },
+  // The hit, then the hand is kept at the end of the turn.
+  SALVO: (s, c, t) => {
+    strike(s, one(t), dmg(s, c, t), 1);
+    applyPower(s, s.player, "RETAIN_HAND", 1);
+  },
+  EQUILIBRIUM: (s, c) => {
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
+    applyPower(s, s.player, "RETAIN_HAND", num(c, "Equilibrium") || 1);
+  },
+  // The next attacks this turn, its Attacks of them, are played twice (resolve).
+  ONE_TWO_PUNCH: (s, c) => {
+    applyPower(s, s.player, "ONE_TWO_PUNCH", num(c, "Attacks") || 1);
+  },
+  // Every attack in hand becomes a Giant Rock: 1 energy, 20 damage (24 from the upgraded card).
+  PRIMAL_FORCE: (s, c) => {
+    if (s.drawn > 0) s.exact = false;
+    s.hand = s.hand.map((h) => (h.type !== "Attack" ? h : {
+      id: "GIANT_ROCK", cost: 1, costsX: false, type: "Attack", target: "AnyEnemy", keywords: [],
+      vars: { Damage: c.upgrades > 0 ? 24 : 20 }, upgrades: c.upgrades, locked: false, glows: false,
+    }));
+  },
+  NOT_YET: (s, c) => {
+    s.player.hp = Math.min(s.player.maxHp, s.player.hp + num(c, "Heal"));
+  },
+  // Next turn's block, as much as the player has now, past Dexterity and Frail.
+  PROLONG: (s) => {
+    applyPower(s, s.player, "BLOCK_NEXT_TURN", s.player.block);
+  },
+  // The block, then no block from cards for Turns enemy turns: the rest of this one and all of the next.
+  PANIC_BUTTON: (s, c) => {
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
+    applyPower(s, s.player, "NO_BLOCK", num(c, "Turns") || 2);
+  },
+  // Once more for every time the player took damage past block this combat (IL: CalculatedHits over
+  // the combat history): the observation's count and the ones since.
+  TEAR_ASUNDER: (s, c, t) => strike(s, one(t), dmg(s, c, t), (num(c, "Repeat") || 1) + (c.calc?.["CalculatedHits"] ?? 0) + (s.hurt ?? 0)),
+  // The hit, then one of 3 random draw-pile cards picked into the hand; an empty draw pile is not
+  // shuffled back (IL: CardSelectCmd over PileType.Draw).
+  SEEKER_STRIKE: (s, c, t) => {
+    strike(s, one(t), dmg(s, c, t), 1);
+    if (s.draw.length === 0 || s.hand.length + s.drawn >= HAND_LIMIT) return;
+    if (s.draw.length > 1) s.exact = false;
+    const picked = s.draw.pop()!;
+    if (knownDraws) s.hand.push({ ...picked, locked: false });
+    else s.drawn++;
+  },
+  // Plays Cards random playable cards of the draw pile for free, no shuffle (IL: CardCmd.AutoPlay).
+  CATASTROPHE: (s, c) => {
+    for (let i = 0; i < (num(c, "Cards") || 2); i++) {
+      const at = s.draw.map((x, j) => (x.keywords.includes("Unplayable") ? -1 : j)).filter((j) => j >= 0);
+      if (at.length === 0) break;
+      s.exact = false;
+      autoPlay(s, s.draw.splice(at[at.length - 1]!, 1)[0]!);
+    }
+  },
+  // Up to Cards cards of the hand, chosen, exhausted; nothing drawn. The model gives up statuses and
+  // curses only (junkIndex's order), never a kept status.
+  PURITY: (s, c) => {
+    for (let i = 0; i < (num(c, "Cards") || 3); i++) {
+      const j = s.hand.findIndex((h) => (h.type === "Status" || h.type === "Curse") && !KEEP_STATUS.has(h.id));
+      if (j < 0) break;
+      exhaustCard(s, s.hand.splice(j, 1)[0]!);
+    }
+  },
+  // Draws Cards, then a card of the hand goes back on top of the draw pile: one card fewer in all.
+  THINKING_AHEAD: (s, c) => {
+    draw(s, Math.max(0, (num(c, "Cards") || 2) - 1));
+    s.exact = false;
+  },
+  // Plays the top X cards of the draw pile for free (X+1 upgraded), shuffling when it runs out.
+  CASCADE: (s, c, _t, x) => {
+    const n = x + (c.upgrades > 0 ? 1 : 0);
+    for (let i = 0; i < n; i++) {
+      const top = takeFromDraw(s);
+      if (!top) break;
+      s.exact = false;
+      autoPlay(s, top);
+    }
+  },
+  // Plays Cards random attacks of the discard pile for free: its contents are known, so exact
+  // whenever there are no more attacks there than that.
+  BEAT_DOWN: (s, c) => {
+    const n = num(c, "Cards") || 3;
+    const at = s.discard.map((x, j) => (x.type === "Attack" && !x.keywords.includes("Unplayable") ? j : -1)).filter((j) => j >= 0);
+    if (at.length > n) s.exact = false;
+    const picked = at.slice(0, n).reverse().map((j) => s.discard.splice(j, 1)[0]!);
+    for (const x of picked.reverse()) autoPlay(s, x);
+  },
+  // The hit, then every other enemy takes it too, as dealt (IL: Omnislice: no Strength or Vulnerable again).
+  OMNISLICE: (s, c, t) => {
+    if (!t) return;
+    const d = Math.min(has(t, "INTANGIBLE") ? 1 : Infinity, attackDamage(dmg(s, c, t), s.player, t));
+    strike(s, [t], dmg(s, c, t), 1);
+    for (const e of s.enemies) {
+      if (e === t || !e.alive) continue;
+      hit(e, d);
+      if (!e.alive) died(s, e);
+    }
+  },
+  // Block as much as the hit dealt, overkill and block included (IL: Fisticuffs, ValueProp Move).
+  FISTICUFFS: (s, c, t) => {
+    const d = t ? Math.min(has(t, "INTANGIBLE") ? 1 : Infinity, attackDamage(dmg(s, c, t), s.player, t)) : 0;
+    strike(s, one(t), dmg(s, c, t), 1);
+    gainBlock(s, blockGain(d, s.player), true);
+  },
+  // Cards random colourless cards made into the hand: cards the model does not know.
+  JACK_OF_ALL_TRADES: (s, c) => {
+    for (let i = 0; i < (num(c, "Cards") || 1); i++) if (s.hand.length + s.drawn < HAND_LIMIT) s.drawn++;
+    s.exact = false;
+  },
+  // Draws only with no attack in hand.
+  IMPATIENCE: (s, c) => {
+    if (s.hand.some((h) => h.type === "Attack")) return;
+    if (s.drawn > 0) s.exact = false;
+    draw(s, num(c, "Cards") || 2);
+  },
+  // One of 3 cards of the character's pool, chosen, into the hand and free this turn.
+  DISCOVERY: (s) => {
+    if (s.hand.length + s.drawn < HAND_LIMIT) s.drawn++;
+    s.exact = false;
+  },
+  // Draws until the hand is full.
+  SCRAWL: (s) => draw(s, HAND_LIMIT),
+  // A Bomb of its own: at the end of the turn it counts down to 1, its damage to every enemy.
+  THE_BOMB: (s, c) => {
+    s.bombs = [...(s.bombs ?? []), { turns: num(c, "Turns") || 3, damage: num(c, "BombDamage") || 40 }];
+  },
+  // Weak, then Vulnerable, its Power of each on every enemy.
+  SHOCKWAVE: (s, c) => {
+    for (const e of s.enemies) {
+      if (!targetable(e)) continue;
+      applyPower(s, e, "WEAK", num(c, "Power"));
+      applyPower(s, e, "VULNERABLE", num(c, "Power"));
+    }
+  },
+  // The hit; a kill (not a minion's, not one that comes back) gives MaxHp max HP and heals it.
+  FEED: (s, c, t) => {
+    strike(s, one(t), dmg(s, c, t), 1);
+    if (!t || t.alive || has(t, "MINION") || (t.deathBlow ?? 0) > 0 || (t.revive ?? 0) > 0) return;
+    s.player.maxHp += num(c, "MaxHp");
+    s.player.hp += num(c, "MaxHp");
+  },
 };
+
+/** Cards that come back to the hand before the next draw once played (IL: BeforeHandDraw). */
+const RETURNING = new Set(["BOLAS", "THRUMMING_HATCHET"]);
+
+/**
+ * The start of the player's turn after the draw (turn.ts nextTurn): Inferno costs its SelfDamage
+ * and hits every enemy for its amount; Mayhem plays the draw pile's top card a stack; Hellraiser
+ * plays the Strikes drawn. The draws and plays are unknown, the state already inexact.
+ */
+export function startOfTurn(s: State): void {
+  const inferno = s.player.powers["INFERNO"] ?? 0;
+  const self = inferno > 0 ? powerVar(s.player, "INFERNO", "SelfDamage", 1) : 0;
+  if (self > 0) {
+    loseHp(s, self);
+    for (const e of s.enemies) {
+      if (!e.alive) continue;
+      hit(e, inferno);
+      if (!e.alive) died(s, e);
+    }
+  }
+  for (let i = 0; i < (s.player.powers["MAYHEM"] ?? 0); i++) {
+    const top = takeFromDraw(s);
+    if (!top) break;
+    autoPlay(s, top);
+  }
+  if (has(s.player, "HELLRAISER")) {
+    for (const c of s.hand.filter((h) => h.id.includes("STRIKE"))) {
+      s.hand.splice(s.hand.indexOf(c), 1);
+      autoPlay(s, c);
+    }
+  }
+}
+
+/** The X of an X card played by another's effect: the energy there is, and Chemical X's more. */
+const energyX = (s: State) => s.energy + (s.relics.includes("CHEMICAL_X") ? s.relicVars?.["CHEMICAL_X"]?.["Increase"] ?? 2 : 0);
 
 /** What a card does from its numbers alone. */
 function standard(s: State, card: Card, target: Enemy | undefined, x: number): void {
   const v = card.vars;
-  if (card.costsX || card.target === "RandomEnemy") s.exact = false;
+  if (card.costsX) s.exact = false;
   const repeat = (v["Repeat"] ?? 1) * (card.costsX ? x : 1);
   const victims = card.target === "AllEnemies" ? s.enemies.filter((e) => e.alive)
     : card.target === "RandomEnemy" ? s.enemies.filter((e) => e.alive).slice(0, 1)
     : one(target);
+  // HP first, then the hit (IL: Breakthrough, Hemokinesis): Rupture's Strength is in the hit.
+  if (v["HpLoss"] !== undefined) cardHpLoss(s, v["HpLoss"]);
 
-  const damage = damageOf(s, card);
-  if (damage !== undefined && card.type === "Attack") strike(s, victims, damage, repeat);
-  if (v["Block"] !== undefined) gainBlock(s, blockGain(v["Block"], s.player), true);
+  const damage = damageOf(s, card, target);
+  if (damage !== undefined && card.type === "Attack") {
+    // A random enemy for every hit (Sword Boomerang, Volley): exact with one enemy left; with more,
+    // spread over the living ones in turn, so the damage all lands but no kill is taken for granted.
+    if (card.target === "RandomEnemy") {
+      for (let r = 0; r < repeat; r++) {
+        const alive = s.enemies.filter((e) => e.alive);
+        if (alive.length === 0) break;
+        if (alive.length > 1) s.exact = false;
+        strike(s, [alive[r % alive.length]!], damage, 1);
+      }
+    } else strike(s, victims, damage, repeat);
+  }
+  // Fasten (IL: FastenPower.ModifyBlockAdditive): a Defend's block gains its amount, before Dexterity and Frail.
+  const fasten = /^DEFEND_/.test(card.id) ? Math.max(0, s.player.powers["FASTEN"] ?? 0) : 0;
+  if (v["Block"] !== undefined) gainBlock(s, blockGain(v["Block"] + fasten, s.player), true);
 
   // A var named for a power is that power: on the player for a card that
   // targets itself (Inflame's Strength), else on whoever the card hits.
@@ -1135,7 +1401,6 @@ function standard(s: State, card: Card, target: Enemy | undefined, x: number): v
     else for (const e of victims) if (targetable(e)) applyPower(s, e, powerKey(name), n);
   }
   if (v["Energy"] !== undefined) s.energy += v["Energy"];
-  if (v["HpLoss"] !== undefined) cardHpLoss(s, v["HpLoss"]);
   if (v["Cards"] !== undefined) draw(s, v["Cards"]);
 }
 
@@ -1146,16 +1411,62 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   s.hand.splice(a.hand, 1);
   if (card.bound) s.boundPlayed = true;
 
-  const x = card.costsX ? s.energy : 0;
+  // X: the energy, and Chemical X's more (IL: CardModel.ResolveEnergyXValue).
+  const x = card.costsX ? energyX(s) : 0;
   s.energy -= card.costsX ? s.energy : costOf(s, card);
   if (card.type === "Attack" && has(s.player, "FREE_ATTACK")) addPower(s.player, "FREE_ATTACK", -1);
   const target = a.target === undefined ? undefined : s.enemies.find((e) => e.id === a.target);
   // Surrounded: a card played at a claw turns the player to face it, before the card resolves.
   if (target && s.facing !== undefined && isClaw(target)) s.facing = target.id;
+  resolve(s, card, target, x);
+  return s;
+}
+
+/**
+ * A card played for free by something else (IL: CardCmd.AutoPlay: Stampede, Mayhem, Cascade, Beat
+ * Down…): no energy spent, an X card at the energy there is, a random target (the first living
+ * enemy, and not exact with more), and an Unplayable card goes to its pile without its effect.
+ */
+export function autoPlay(s: State, card: Card): void {
+  if (card.keywords.includes("Unplayable") || card.type === "Curse") {
+    s.discard.push(card);
+    return;
+  }
+  const alive = s.enemies.filter((e) => e.alive);
+  if (alive.length === 0) {
+    s.discard.push(card);
+    return;
+  }
+  if (needsTarget(card) && alive.length > 1) s.exact = false;
+  resolve(s, card, needsTarget(card) ? alive[0] : undefined, card.costsX ? energyX(s) : 0);
+}
+
+/** What a card does once it is paid for, and where it goes after. */
+function resolve(s: State, card: Card, target: Enemy | undefined, x: number): void {
+  // Juggling (IL: JugglingPower.BeforeCardPlayed): the turn's third attack goes into the hand again,
+  // a copy for every stack; the bridge reports the attacks before the observation.
+  if (card.type === "Attack") {
+    s.attacks = (s.attacks ?? 0) + 1;
+    const juggling = s.player.powers["JUGGLING"] ?? 0;
+    if (juggling > 0 && powerVar(s.player, "JUGGLING", "attacksPlayedThisTurn", 0) + s.attacks === 3) {
+      for (let i = 0; i < juggling; i++) (s.hand.length + s.drawn < HAND_LIMIT ? s.hand : s.discard).push({ ...card, locked: false });
+    }
+  }
 
   const special = SPECIAL[card.id];
-  if (special) special(s, card, target);
+  if (special) special(s, card, target, x);
   else standard(s, card, target, x);
+  // One-Two Punch (IL: OneTwoPunchPower.ModifyCardPlayCount): an attack played under it is played
+  // again, a stack taken each time; at the same target, or none if that one died.
+  if (card.type === "Attack" && (s.player.powers["ONE_TWO_PUNCH"] ?? 0) > 0) {
+    addPower(s.player, "ONE_TWO_PUNCH", -1);
+    const again = target && !target.alive ? s.enemies.find((e) => e.alive) : target;
+    if (again !== target) s.exact = false;
+    if (!needsTarget(card) || again) {
+      if (special) special(s, card, again, x);
+      else standard(s, card, again, x);
+    }
+  }
   // Rage: block for every attack played this turn, not changed by Dexterity or Frail.
   if (card.type === "Attack" && has(s.player, "RAGE")) gainBlock(s, s.player.powers["RAGE"] ?? 0);
   // Daughter of the Wind: block for every attack played.
@@ -1169,8 +1480,15 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
     for (const e of s.enemies) if (e.alive && has(e, "VITAL_SPARK")) addPower(s.player, "TAINTED", e.powers["VITAL_SPARK"] ?? 0);
     for (const e of s.enemies) if (e.alive && has(e, "ENRAGE")) addPower(e, "STRENGTH", e.powers["ENRAGE"]!);
   }
-  // Juggling copies an attack into the hand by how many attacks came before it this turn, which the model does not see.
-  if (card.type === "Attack" && has(s.player, "JUGGLING")) s.exact = false;
+  if (card.type === "Attack") {
+    // Stomp (IL: Stomp.BeforeCardPlayed): every attack played makes the Stomps in hand cost 1 less this turn.
+    s.hand = s.hand.map((h) => (h.id === "STOMP" && h.cost > 0 ? { ...h, cost: h.cost - 1, fullCost: h.fullCost ?? h.cost } : h));
+    // Calamity (IL: CalamityPower.AfterCardPlayed): a random Ironclad attack into the hand for every stack.
+    for (let i = 0; i < (s.player.powers["CALAMITY"] ?? 0); i++) {
+      if (s.hand.length + s.drawn < HAND_LIMIT) s.drawn++;
+      s.exact = false;
+    }
+  }
   s.played++;
   // Withering Presence (Aeonglass; IL: WitheringPresencePower.AfterCardPlayed): CardsLeft counts the
   // cards played, across turns; the one that takes it to 0 puts a Wither into the hand (the discard
@@ -1197,13 +1515,60 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
     addPower(s.player, "DEXTERITY", -tender);
   }
 
+  // Rampage (IL: Rampage.OnPlay): each play adds its Increase to its own Damage, for the combat.
+  const after = card.id === "RAMPAGE" ? { ...card, vars: { ...card.vars, Damage: (card.vars["Damage"] ?? 0) + (card.vars["Increase"] ?? 0) } }
+    // Bolas, Thrumming Hatchet (IL: BeforeHandDraw): played this turn, back in the hand before the next draw.
+    : RETURNING.has(card.id) ? { ...card, returns: true } : card;
   if (card.type === "Power") {
     // In play for the rest of the combat; not in any pile.
   } else if (card.keywords.includes("Exhaust")) {
-    exhaustCard(s, card);
+    exhaustCard(s, after);
+  } else if ((card.type === "Attack" || card.type === "Skill") && (s.onTop ?? 0) < (s.player.powers["NOSTALGIA"] ?? 0)) {
+    // Nostalgia (IL: NostalgiaPower.ModifyCardPlayResultLocation): the turn's first attacks or skills,
+    // one a stack, go on top of the draw pile instead (nextTurn draws them first).
+    s.onTop = (s.onTop ?? 0) + 1;
+    s.draw.push(after);
   } else {
-    s.discard.push(card);
+    s.discard.push(after);
   }
+}
+
+/**
+ * The player's side of the end of the turn, before the enemies act (IL: AfterAutoPostPlayPhaseEntered,
+ * BeforeSideTurnEnd): Stampede plays an attack of the hand for free a stack, and a Bomb at 1 goes
+ * off on every enemy, through block, with no Strength or Vulnerable. Once a state (ended): hpLoss,
+ * search's evaluate and nextTurn all read the turn's end through it.
+ */
+export function endOfTurn(s0: State): State {
+  if (s0.ended) return s0;
+  const stampede = s0.player.powers["STAMPEDE"] ?? 0;
+  const howls = s0.exhaust.some((c) => c.id === "HOWL_FROM_BEYOND");
+  if (stampede <= 0 && !howls && !(s0.bombs ?? []).some((b) => b.turns <= 1)) return s0;
+  const s = clone(s0);
+  s.ended = true;
+  // Howl from Beyond in the exhaust pile plays itself, and so leaves it for the discard pile
+  // (IL: HowlFromBeyond.AfterAutoPostPlayPhaseEntered).
+  for (const c of s.exhaust.filter((x) => x.id === "HOWL_FROM_BEYOND")) {
+    s.exhaust.splice(s.exhaust.indexOf(c), 1);
+    autoPlay(s, c);
+  }
+  for (let i = 0; i < stampede; i++) {
+    const attacks = s.hand.filter((c) => c.type === "Attack" && !c.keywords.includes("Unplayable"));
+    if (attacks.length === 0) break;
+    if (new Set(attacks.map((c) => `${c.id}.${c.upgrades}`)).size > 1 || s.drawn > 0) s.exact = false;
+    const c = attacks[0]!;
+    s.hand.splice(s.hand.indexOf(c), 1);
+    autoPlay(s, c);
+  }
+  for (const b of s.bombs ?? []) {
+    if (b.turns > 1) continue;
+    for (const e of s.enemies) {
+      if (!e.alive) continue;
+      hit(e, b.damage);
+      if (!e.alive) died(s, e);
+    }
+  }
+  if (s.bombs) s.bombs = s.bombs.filter((b) => b.turns > 1);
   return s;
 }
 
@@ -1254,7 +1619,8 @@ export function endOfTurnBlock(s: State): number {
  * HP the end of the turn takes. Constrict (Slithering Strangler) hits the
  * player at the end of the turn and block takes it like an attack.
  */
-export function hpLoss(s: State): number {
+export function hpLoss(s0: State): number {
+  const s = endOfTurn(s0);
   // Sandpit (The Insatiable) devours the player when it runs out.
   if (s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
   const constrict = Math.max(0, s.player.powers["CONSTRICT"] ?? 0);
@@ -1300,5 +1666,5 @@ export function stateKey(s: State): string {
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
   const potions = s.potions.map((p) => p.slot).join(",");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}|${s.dazedAdded ?? 0}`;
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}|${s.dazedAdded ?? 0}|${s.hurt ?? 0}/${s.attacks ?? 0}/${s.onTop ?? 0}|${(s.bombs ?? []).map((b) => `${b.turns}:${b.damage}`).join(",")}`;
 }
