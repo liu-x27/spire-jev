@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
-import { planTurn } from "../src/search.ts";
+import { evaluate, planTurn } from "../src/search.ts";
 import { chooseEvent } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
@@ -161,4 +161,32 @@ test("neow: the relic highest in the research's order, not the first listed; the
   assert.equal(offer(["LOST_COFFER", "FISHING_ROD", "LAVA_ROCK"]), "choose_event:1");
   // Leafy Poultice costs 12 max HP: not under 70.
   assert.equal(offer(["LEAFY_POULTICE", "NEW_LEAF"], 60, 65), "choose_event:1");
+});
+
+test("slumber: a hit past its block takes a stack off, the last wakes it stunned", () => {
+  const beetle = foe("SLUMBERING_BEETLE", 60, { SLUMBER: 2 });
+  const once = at(state([STRIKE, STRIKE], [beetle]), 0);
+  assert.equal(once.enemies[0]!.powers["SLUMBER"], 1);
+  const twice = at(once, 0);
+  assert.equal(twice.enemies[0]!.powers["SLUMBER"], undefined);
+  assert.equal(incomingDamage(twice), 0);
+});
+
+test("reattach: a segment killed while another lives is HP still to take; all dead is the win", () => {
+  const seg = (id: number, hp: number) => foe("DECIMILLIPEDE_SEGMENT_FRONT", hp, { REATTACH: 25 }, id);
+  const one = at(state([STRIKE], [seg(1, 5), seg(2, 40)]), 0, 1);
+  const both = at(at(state([STRIKE, STRIKE], [seg(1, 5), seg(2, 5)]), 0, 1), 0, 2);
+  assert.ok(evaluate(both) > evaluate(one) + 1e5);
+  // The same kill without Reattach is worth its 25 HP more (at enemyHp 0.35): the segment comes back.
+  const plain = at(state([STRIKE], [foe("DECIMILLIPEDE_SEGMENT_FRONT", 5, {}, 1), foe("DECIMILLIPEDE_SEGMENT_FRONT", 40, {}, 2)]), 0, 1);
+  assert.ok(Math.abs(evaluate(plain) - evaluate(one) - 25 * 0.35) < 0.01);
+});
+
+test("illusion: a Parafright's HP is no progress", () => {
+  const obscura = foe("THE_OBSCURA", 100, {}, 1);
+  const fright = foe("PARAFRIGHT", 20, { ILLUSION: 1, MINION: 1 }, 2);
+  fright.intents = [];
+  const hitFright = at(state([STRIKE], [obscura, fright]), 0, 2);
+  const hitObscura = at(state([STRIKE], [obscura, { ...fright, powers: { ...fright.powers } }]), 0, 1);
+  assert.ok(evaluate(hitObscura) > evaluate(hitFright));
 });

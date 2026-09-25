@@ -12,7 +12,7 @@
  */
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
-import { type Action, actions, type Card, drink, type Enemy, endOfTurnRevival, formsToCome, hpLoss, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
+import { type Action, actions, type Card, drink, endOfTurnBlock, type Enemy, endOfTurnRevival, formsToCome, hpLoss, incomingDamage, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -263,7 +263,7 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     for (const e of s.enemies) {
       if (!e.asleep || e.asleep.turns < 2) continue;
       enemyHp += Math.max(0, e.asleep.hp - e.hp);
-      if (e.alive && (e.powers["ASLEEP"] ?? 0) <= 0) woken++;
+      if (e.alive && (e.powers[e.asleep.power ?? "ASLEEP"] ?? 0) <= 0) woken++;
     }
   }
   const loss = hpLoss(s);
@@ -294,7 +294,14 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
   // An Infested Phrog Parasite's Wrigglers are HP still to take once it dies: counted from the start,
   // so killing it is not a sudden rise in the enemies' HP the planner would shy from.
   const infested = alive.reduce((a, e) => a + Math.max(0, e.powers["INFESTED"] ?? 0), 0) * WRIGGLER_HP;
-  const hidden = (slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0) + infested;
+  // Reattach (Decimillipede; IL: ReattachPower.DoReattach): a segment killed while another lives comes
+  // back with its amount (25 at A10); only all of them dead ends it. Illusion (The Obscura's Parafright;
+  // IL: IllusionPower.ReviveMove): it comes back, so its HP is no progress — killing it only stops its turn.
+  const reattach = alive.some((e) => (e.powers["REATTACH"] ?? 0) > 0)
+    ? s.enemies.filter((e) => !e.alive && (e.powers["REATTACH"] ?? 0) > 0).reduce((a, e) => a + e.powers["REATTACH"]!, 0)
+    : 0;
+  const illusion = alive.filter((e) => (e.powers["ILLUSION"] ?? 0) > 0).reduce((a, e) => a + e.hp, 0);
+  const hidden = (slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0) + infested + reattach - illusion;
   const extra = w.long > 0 ? longFightExtra(s, alive, w) : 0;
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was
@@ -307,6 +314,11 @@ export function evaluate(s: State, w: Weights = DEFAULT_WEIGHTS): number {
     if (attacking) score += Math.min(3, e.powers["WEAK"] ?? 0) * w.weak;
   }
   score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
+  // Imbalanced (Bowlbug Rock; IL: ImbalancedPower.AfterDamageGiven): its attack fully blocked stuns it,
+  // its next attack gone — worth that attack when this turn's block covers all that is coming.
+  if (endOfTurnBlock(s) >= incomingDamage(s)) {
+    for (const e of alive) if ((e.powers["IMBALANCED"] ?? 0) > 0 && e.intents.some((i) => i.type === "Attack")) score += threat(e) * w.hpLoss;
+  }
   const demon = s.player.powers["DEMON_FORM"] ?? 0;
   if (demon > 0) score += demon * demonFormWorth(s, w);
   if (w.engines > 0) score += enginesWorth(s, w) * w.engines;

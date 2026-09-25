@@ -84,8 +84,11 @@ export interface Enemy extends Unit {
   revive?: number;
   /** Surrounded (Kaiser Crab): this claw was behind the player at the observation, its shown attack ×1.5 already. */
   behindAtStart?: boolean;
-  /** Lagavulin Matriarch asleep at the observation: the enemy turns she had left to sleep, and her HP then. */
-  asleep?: { turns: number; hp: number };
+  /**
+   * Lagavulin Matriarch asleep at the observation: the enemy turns she had left to sleep, and her HP
+   * then; a Slumbering Beetle's Slumber the same way (power: which one holds it asleep, ASLEEP if unset).
+   */
+  asleep?: { turns: number; hp: number; power?: string };
   /** The move it shows, by id (the bridge's NextMove.Id): what scripts.ts plays a boss's turn by. */
   move?: string;
 }
@@ -245,6 +248,7 @@ export function fromObservation(obs: Observation): State {
         ...(e.model_id === "TEST_SUBJECT" && e.hp <= 0 && (powers["ADAPTABLE"] ?? 0) > 0 ? { revive: nextForm(e.max_hp) } : {}),
         ...(surrounded && claws.length > 1 && claws.includes(e) && e !== faced ? { behindAtStart: true } : {}),
         ...((powers["ASLEEP"] ?? 0) > 0 ? { asleep: { turns: powers["ASLEEP"]!, hp: e.hp } } : {}),
+        ...((powers["SLUMBER"] ?? 0) > 0 ? { asleep: { turns: powers["SLUMBER"]!, hp: e.hp, power: "SLUMBER" } } : {}),
         ...(e.intent ? { move: e.intent } : {}),
       };
     }),
@@ -366,6 +370,15 @@ function hit(target: Enemy, damage: number): number {
     delete target.powers["ASLEEP"];
     target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
     target.move = "STUNNED";
+  }
+  // Slumber (Slumbering Beetle; IL: SlumberPower.AfterDamageReceived): a hit past its block takes a stack
+  // off, and the last one wakes it, stunned for this turn (Roll Out next).
+  if (lost > 0 && has(target, "SLUMBER")) {
+    addPower(target, "SLUMBER", -1);
+    if ((target.powers["SLUMBER"] ?? 0) <= 0) {
+      delete target.powers["SLUMBER"];
+      target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+    }
   }
   // Slippery (Inklet): a hit takes at most 1 HP, and uses up a stack.
   if (lost > 0 && has(target, "SLIPPERY")) {
