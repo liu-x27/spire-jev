@@ -12,7 +12,7 @@
  */
 
 import type { IntentObs } from "./obs.ts";
-import { type EnemyTurn, moveIntents, playMove } from "./scripts.ts";
+import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
 import { type Card, type Enemy, endOfTurnBlock, hpAfterTurn, incomingDamage, isClaw, spendRevival, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
@@ -106,6 +106,9 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
   // cards into the piles and its debuffs on the player.
   const draw = s.draw.slice();
   const clawsUp = s.enemies.filter((e) => e.alive && isClaw(e)).length;
+  const gifts: { from: number; powers: Record<string, number> }[] = [];
+  /** Whether the player was Vulnerable when each scripted enemy's next intents were worked out. */
+  const shownWith = new Map<number, boolean>();
   const enemies = s.enemies.map((e): Enemy => {
     // A killed Waterfall Giant: its stun passes, and the turn after it strikes for its DeathBlow (the
     // game shows it with Weak taken off already); once struck it is gone.
@@ -158,8 +161,12 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
       }
     }
     // A boss's move by its id: what it does now, and the move it shows next.
-    const moved: EnemyTurn = { turn: s.turn ?? 1, powers: ep, block: sleepBlock, heal: 0, player: powers, draw, discard };
+    const moved: EnemyTurn = {
+      turn: s.turn ?? 1, powers: ep, block: sleepBlock, heal: 0, player: powers, draw, discard,
+      allies: s.enemies.filter((o) => o !== e), allyPowers: {},
+    };
     const move = playMove(e, moved);
+    if (Object.keys(moved.allyPowers).length > 0) gifts.push({ from: e.id, powers: moved.allyPowers });
     sleepBlock = moved.block;
     // Strength every turn: Byrdonis's Territorial, a Ritual.
     for (const k of ["TERRITORIAL", "RITUAL"]) if ((ep[k] ?? 0) > 0) ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
@@ -179,6 +186,7 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
     const intents = move !== undefined
       ? moveIntents(e.model, move, ep["STRENGTH"] ?? 0, { vulnerable: (powers["VULNERABLE"] ?? 0) > 0, weak: (ep["WEAK"] ?? 0) > 0, behind }, hits)
       : sleeping ? [{ type: "Sleep", damage: 0, hits: 0 }] : foresee(e, turn);
+    if (move !== undefined) shownWith.set(e.id, (powers["VULNERABLE"] ?? 0) > 0);
     return {
       ...rest, powers: ep, block: sleepBlock, hp: Math.max(0, hp), alive: hp > 0,
       intents,
@@ -192,6 +200,26 @@ export function nextTurn(s: State, rng: () => number, foresee: (e: Enemy, turn: 
       ...(sleeping ? { asleep: { turns: ep["ASLEEP"]!, hp: Math.max(0, hp) } } : {}),
     };
   });
+
+  // Powers one enemy's move gives the others (Burn Bright for Me) go on every living one; and an
+  // enemy that moved before another made the player Vulnerable (You Are Mine) shows it all the same:
+  // the game works a shown hit out as it stands.
+  const gifted = new Set<number>();
+  for (const g of gifts) {
+    for (const o of enemies) {
+      if (o.id === g.from || !o.alive) continue;
+      for (const [k, n] of Object.entries(g.powers)) o.powers[k] = (o.powers[k] ?? 0) + n;
+      o.startStrength = o.powers["STRENGTH"] ?? 0;
+      gifted.add(o.id);
+    }
+  }
+  const vulnerable = (powers["VULNERABLE"] ?? 0) > 0;
+  for (const o of enemies) {
+    if (!o.alive || !scripted(o) || !o.intents.some((i) => i.type === "Attack")) continue;
+    if (!gifted.has(o.id) && shownWith.get(o.id) === vulnerable) continue;
+    const mult = { vulnerable, weak: (o.powers["WEAK"] ?? 0) > 0, behind: o.behindAtStart ?? false };
+    o.intents = moveIntents(o.model, o.move!, o.startStrength, mult, o.intents.find((i) => i.type === "Attack")?.hits);
+  }
 
   // Chains of Binding (the Queen): the first cards drawn each turn, as many as its amount, are Bound.
   const binding = Math.max(0, powers["CHAINS_OF_BINDING"] ?? 0);

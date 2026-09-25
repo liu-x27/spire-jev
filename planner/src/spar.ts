@@ -106,6 +106,11 @@ export const BOSSES: Record<string, Boss> = {
     with: [{ model: "ROCKET", hp: 209, powers: { BACK_ATTACK_RIGHT: 1, CRAB_RAGE: 1 }, move: "TARGETING_RETICLE_MOVE", powerVars: { CRAB_RAGE: { StrengthPower: 6, Block: 99 } } }],
     player: { SURROUNDED: 1 },
   },
+  // The Torch Head Amalgam is her minion: it leaves when she dies (IL: Queen, TorchHeadAmalgam).
+  QUEEN: {
+    model: "QUEEN", hp: 419, powers: {}, move: "PUPPET_STRINGS_MOVE", turns: 12,
+    with: [{ model: "TORCH_HEAD_AMALGAM", hp: 211, powers: { MINION: 1 }, move: "STRONG_TACKLE_MOVE" }],
+  },
   TEST_SUBJECT: { model: "TEST_SUBJECT", hp: 111, powers: { ADAPTABLE: 1, ENRAGE: 3 }, move: "BITE_MOVE", turns: 12 },
   AEONGLASS: {
     model: "AEONGLASS", hp: 535, powers: { WITHERING_PRESENCE: 6, ARTIFACT: 3 }, move: "EBB_MOVE", turns: 12,
