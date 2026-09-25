@@ -32,7 +32,7 @@ import type { CardObs, LegalAction, Observation } from "./obs.ts";
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, useHpScale, usePotionSaving, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, safetyMargin, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
 import { learnCard } from "./spar.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
@@ -257,6 +257,29 @@ const BLOW_POTIONS = new Set([
   "BLOCK_POTION", "DEXTERITY_POTION", "SPEED_POTION", "WEAK_POTION", "SWIFT_POTION", "GAMBLERS_BREW", "SKILL_POTION",
   "DUPLICATOR", "FORTIFIER", "HEART_OF_IRON", "LIQUID_BRONZE", "DISTILLED_CHAOS", "COLORLESS_POTION", "LIQUID_MEMORIES",
 ]);
+/** hp48b: the HP each second boss needs coming in (the act 3 handbook; the Test Subject's from the ts49 replays). */
+const SECOND_NEEDS: Record<string, number> = { QUEEN_BOSS: 60, AEONGLASS_BOSS: 85, TEST_SUBJECT_BOSS: 90 };
+/**
+ * potwin: when each kind of potion is drunk in floor 48's fight (the act 3 handbook: all 80 potions
+ * of the act 3 boss fights went on turn 1, by potions2's rule, and floor 49 met none). Burst and
+ * debuffs at the Torch Head while it lives; against Aeonglass, Strength and powers on turn 1, no
+ * debuff into its Artifact; block when 25 or more is coming; heals kept for floor 49.
+ */
+const BURST_POTIONS = new Set(["STRENGTH_POTION", "FLEX_POTION", "ATTACK_POTION", "FIRE_POTION", "EXPLOSIVE_AMPOULE", "DUPLICATOR", "POWER_POTION", "DISTILLED_CHAOS", "ENERGY_POTION"]);
+const DEBUFF_POTIONS = new Set(["WEAK_POTION", "VULNERABLE_POTION"]);
+const GUARD_POTIONS = new Set(["DEXTERITY_POTION", "BLOCK_POTION", "SPEED_POTION", "FORTIFIER", "LIQUID_BRONZE"]);
+function inWindow(id: string, s: ReturnType<typeof fromObservation>, bossTurn: number): boolean {
+  const alive = (m: string) => s.enemies.some((e) => e.alive && e.model === m);
+  const aeonglass = s.enemies.find((e) => e.alive && e.model === "AEONGLASS");
+  const incoming = s.enemies.reduce((a, e) => a + (e.alive ? e.intents.filter((i) => i.type === "Attack").reduce((b, i) => b + i.damage * Math.max(1, i.hits), 0) : 0), 0);
+  if (GUARD_POTIONS.has(id)) return incoming >= 25;
+  if (alive("TORCH_HEAD_AMALGAM") && bossTurn <= 2) return BURST_POTIONS.has(id) || DEBUFF_POTIONS.has(id);
+  if (aeonglass) {
+    if (DEBUFF_POTIONS.has(id)) return (aeonglass.powers["ARTIFACT"] ?? 0) <= 0;
+    return bossTurn <= 1 && (id === "STRENGTH_POTION" || id === "POWER_POTION" || id === "FLEX_POTION");
+  }
+  return false;
+}
 /** A10's first act 3 boss (floor 48): the second follows on the same HP (pot48, hp48). */
 const firstOfPair = (floor: number, boss: boolean) => boss && ascension >= 10 && floor === 48;
 /** potsave: a fight of act 3 before its two bosses (floors 34-47) keeps its potions for them. */
@@ -301,13 +324,16 @@ function potionUrge(obs: Observation, s: ReturnType<typeof fromObservation>, leg
   // buff as a turn's worth. Not the heals or block (wasted at full HP or with no attack coming), and
   // not single-hit damage while Slippery would take it down to 1.
   // pot48: the first of A10's two act 3 bosses does not drink the belt at once; the second does.
-  const early = hasFlag("potions2") && boss && bossTurn <= 2 && !(hasFlag("pot48") && firstOfPair(obs.floor, boss));
+  // potwin: the first drinks each kind in its window (inWindow), a Test Subject first as a last fight.
+  const subject = s.enemies.some((e) => e.model === "TEST_SUBJECT");
+  const windows = hasFlag("potwin") && firstOfPair(obs.floor, boss) && !subject;
+  const early = hasFlag("potions2") && boss && bossTurn <= 2 && !(hasFlag("pot48") && firstOfPair(obs.floor, boss)) && !windows;
   const giant = hasFlag("wgpot") && s.enemies.some((e) => e.alive && e.model === "WATERFALL_GIANT");
   const slippery = s.enemies.some((e) => e.alive && (e.powers["SLIPPERY"] ?? 0) > 0);
   const id = (a: LegalAction) => String(a.metadata?.["potion_id"] ?? "");
   const uses = legal.filter((a) => a.action_id.startsWith("use_potion:") && !KEEP_POTIONS.has(id(a))
     && !tried.has(`${turn}:${a.action_id.split(":")[1]}`)
-    && (hopeless || !modelled.has(Number(a.action_id.split(":")[1])) || (early && !LATE_POTIONS.has(id(a)) && !(slippery && ONE_HIT_POTIONS.has(id(a))) && !(giant && BLOW_POTIONS.has(id(a))))));
+    && (hopeless || (windows ? inWindow(id(a), s, bossTurn) : !modelled.has(Number(a.action_id.split(":")[1])) || (early && !LATE_POTIONS.has(id(a)) && !(slippery && ONE_HIT_POTIONS.has(id(a))) && !(giant && BLOW_POTIONS.has(id(a)))))));
   for (const a of uses) {
     const target = a.metadata?.["target_id"];
     if (target === undefined || !s.enemies.some((e) => e.id === Number(target))) return a.action_id;
@@ -363,8 +389,14 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
   logs.push(log);
   const bossFight = (o.combat?.enemies ?? []).some((e) => BOSSES.has(e.model_id) || e.max_hp >= 250);
   const firstOfTwo = firstOfPair(o.floor, bossFight);
-  usePotionSaving(savingFor(o.floor, bossFight) ? 4 : firstOfTwo && hasFlag("pot48") ? 3 : 1);
+  // potwin keeps floor 48's potions for their windows, and for the second boss; a Test Subject first
+  // is fought as the last fight (the handbook: its win costs 91% of max HP, the second is out of reach).
+  const subjectFirst = (o.combat?.enemies ?? []).some((e) => e.model_id === "TEST_SUBJECT");
+  const windows = firstOfTwo && hasFlag("potwin") && !subjectFirst;
+  usePotionSaving(savingFor(o.floor, bossFight) ? 4 : firstOfTwo && (hasFlag("pot48") || windows) ? 3 : 1);
   useHpScale(firstOfTwo && hasFlag("hp48") ? 1.5 : 1);
+  useHpNeed(firstOfTwo && hasFlag("hp48b") ? SECOND_NEEDS[(o.act_second_boss ?? "").replace(/^ENCOUNTER\./, "")] ?? 0 : 0);
+  useTorchFirst(hasFlag("torch"));
   const tried = new Set<string>();
   let cur = start;
   // What nextTurn said the turn after an end of turn would start with, to hold it to the game.

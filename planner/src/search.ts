@@ -257,11 +257,11 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
   const blows = s.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
   // Nothing alive, but a Test Subject to respawn: no win, the next form's HP still to take.
   const reviving = s.enemies.some((e) => !e.alive && (e.revive ?? 0) > 0);
-  if (alive.length === 0 && !blows && !reviving) return WIN + (s.player.hp - spent) * 10;
+  if (alive.length === 0 && !blows && !reviving) return WIN + hpCounted(s.player.hp - spent) * 10;
   // The Test Subject's forms to come count with its HP (sim.ts formsToCome), so a kill is worth what
   // it took and no more. sleep: damage into a Lagavulin Matriarch asleep for two more turns is worth
   // nothing (her HP as it was), and waking her costs WAKE_COST.
-  let enemyHp = alive.reduce((a, e) => a + e.hp, 0) + s.enemies.reduce((a, e) => a + formsToCome(e), 0);
+  let enemyHp = alive.reduce((a, e) => a + e.hp * hpWeight(e, s), 0) + s.enemies.reduce((a, e) => a + formsToCome(e), 0);
   let woken = 0;
   if (bossRules.sleep) {
     for (const e of s.enemies) {
@@ -286,7 +286,7 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
     // how much HP it leaves (a blow that looks lethal still depends on next turn's draw).
     // A potion costs what it does elsewhere, on this scale of 10 a point of HP.
     const pending = s.enemies.some((e) => !e.alive && !e.blowNow && (e.deathBlow ?? 0) > 0);
-    return (pending ? WIN / 2 + (hpLeft - blowToCome(s)) * 10 * hpScale : WIN + hpLeft * 10 * hpScale) - s.potionsUsed * potionCost(s, w) * 10;
+    return (pending ? WIN / 2 + hpCounted(hpLeft - blowToCome(s)) * 10 : WIN + hpCounted(hpLeft) * 10) - s.potionsUsed * potionCost(s, w) * 10;
   }
   if (blows) hpLeft -= blowToCome(s);
   // wghp: HP the Giant's blow will need, counted twice while short of it.
@@ -310,7 +310,8 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was
   // charged: a state at 70 HP and one at 10 scored the same.) Root HP is the same for every line.
-  let score = hpValue(s, hpLeft, alive, w) * w.hpLoss * hpScale - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
+  let score = (hpValue(s, hpLeft, alive, w) * hpScale + (hpNeed > 0 ? Math.min(Math.max(0, hpLeft), hpNeed) : 0)) * w.hpLoss
+    - (enemyHp + hidden) * w.enemyHp - extra - s.potionsUsed * potionCost(s, w);
   if (w.future > 0) score -= futureDamage(s, deckPace(s), w.futureBlock > 0) * w.future;
   for (const e of alive) {
     score += Math.min(3, e.powers["VULNERABLE"] ?? 0) * w.vulnerable;
@@ -481,6 +482,32 @@ export function usePotionSaving(on: boolean | number): void {
 let hpScale = 1;
 export function useHpScale(x: number): void {
   hpScale = x;
+}
+/**
+ * --flags hp48b: floor 48's HP by what the second boss needs (the act 3 handbook's thresholds: the
+ * Queen ~60, Aeonglass ~85, the Test Subject ~90): every HP under it counts twice, the rest once.
+ */
+let hpNeed = 0;
+export function useHpNeed(need: number): void {
+  hpNeed = need;
+}
+/** HP left as the evaluation counts it: hp48's scale, hp48b's second count under the threshold. */
+const hpCounted = (hp: number) => hp * hpScale + (hpNeed > 0 ? Math.min(Math.max(0, hp), hpNeed) : 0);
+/**
+ * --flags torch: the Queen's HP counts half, her Torch Head Amalgam's half as much again, while
+ * both live. With the Torch alive she gains 20 block a turn and it Strength; of 26 floor-48 Queen
+ * fights, the 22 whose Torch lived past turn 3 were all lost, 2 of the 4 where it did not were won,
+ * and the lost ones had put 0-171 damage into the Queen meanwhile (the act 3 handbook).
+ */
+let torchFirst = false;
+export function useTorchFirst(on: boolean): void {
+  torchFirst = on;
+}
+function hpWeight(e: Enemy, s: State): number {
+  if (!torchFirst) return 1;
+  const both = s.enemies.some((x) => x.alive && x.model === "QUEEN") && s.enemies.some((x) => x.alive && x.model === "TORCH_HEAD_AMALGAM");
+  if (!both) return 1;
+  return e.model === "QUEEN" ? 0.5 : e.model === "TORCH_HEAD_AMALGAM" ? 1.5 : 1;
 }
 export function useGiantRules(potions: boolean, margin: boolean): void {
   giantPotions = potions;

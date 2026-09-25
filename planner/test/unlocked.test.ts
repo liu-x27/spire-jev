@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
-import { evaluate, planTurn, useHpScale, usePotionSaving } from "../src/search.ts";
+import { evaluate, planTurn, useHpNeed, useHpScale, usePotionSaving, useTorchFirst } from "../src/search.ts";
 import { chooseEvent } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
 
@@ -234,5 +234,29 @@ test("hp48: the first of A10's two act 3 bosses prices HP half as much again", (
     assert.ok(Math.abs(evaluate(whole) - evaluate(hurt) - 1.5 * plain) < 1e-9);
   } finally {
     useHpScale(1);
+  }
+});
+
+test("torch: while her Torch Head lives the Queen's HP counts half, the Torch's half as much again", () => {
+  const queen = { ...foe("QUEEN", 400), id: 1 };
+  const torch = { ...foe("TORCH_HEAD_AMALGAM", 200), id: 2 };
+  const hitQueen = state([], [{ ...queen, hp: 380 }, torch]);
+  const hitTorch = state([], [queen, { ...torch, hp: 180 }]);
+  assert.ok(Math.abs(evaluate(hitQueen) - evaluate(hitTorch)) < 1e-9);
+  useTorchFirst(true);
+  try {
+    assert.ok(evaluate(hitTorch) > evaluate(hitQueen));
+  } finally {
+    useTorchFirst(false);
+  }
+});
+
+test("hp48b: under the second boss's need every HP counts twice", () => {
+  const at = (hp: number) => evaluate(state([], [foe("NIBBIT", 50)], hp));
+  useHpNeed(60);
+  try {
+    assert.ok(Math.abs(at(50) - at(40) - 2 * (at(80) - at(70))) < 1e-9);
+  } finally {
+    useHpNeed(0);
   }
 });
