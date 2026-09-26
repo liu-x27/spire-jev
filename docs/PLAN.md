@@ -735,7 +735,9 @@ states, and only a simulator is fast enough for that.
      no one of them more than 2. The game's Crab fights (124): 70 of the 93
      losses end with both claws up — the Crusher at 74 of 219 on average,
      the Rocket at 126 of 209, in 5 turns from 65 HP: out-damaged, as the
-     Giant's are.
+     Giant's are. `powelite` (powbonus's planner in elite fights too, 95772ce)
+     on the same 111: act 2's elites won 41/59 against 42/59, the act 2 boss
+     reached 45 against 46, won 14 both; 3 of the 111 went differently.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
