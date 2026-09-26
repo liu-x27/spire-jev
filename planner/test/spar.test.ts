@@ -43,6 +43,19 @@ test("the Matriarch starts a bout asleep as a fight's observation has her, for t
   assert.deepEqual(first?.asleep, { turns: 3, hp: 233 });
 });
 
+test("the Kin's followers and the Queen's Torch Head stand before their boss, as in the game", () => {
+  const order = (name: string) => {
+    let models: string[] = [];
+    bout(STARTER.map(cardFromId).filter((c) => c !== undefined), BOSSES[name]!, seeded(1), 1, BARE, (_end, _full, start) => {
+      if (models.length === 0) models = start.enemies.map((e) => e.model);
+    });
+    return models;
+  };
+  assert.deepEqual(order("THE_KIN"), ["KIN_FOLLOWER", "KIN_FOLLOWER", "KIN_PRIEST"]);
+  assert.deepEqual(order("QUEEN"), ["TORCH_HEAD_AMALGAM", "QUEEN"]);
+  assert.deepEqual(order("KAISER_CRAB"), ["CRUSHER", "ROCKET"]);
+});
+
 test("a boss spar has no model of is no boss, not another act's", () => {
   assert.equal(modelledBoss("NOT_A_BOSS_BOSS"), undefined);
   assert.equal(modelledBoss("WATERFALL_GIANT_BOSS")?.model, "WATERFALL_GIANT");

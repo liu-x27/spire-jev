@@ -79,6 +79,12 @@ export interface Boss {
   powerVars?: Record<string, Record<string, number>>;
   /** The encounter's other monsters: The Kin's followers, the Kaiser Crab's Rocket. */
   with?: Omit<Boss, "with" | "player">[];
+  /**
+   * The game's order has them before the boss (E1, E2: The Kin's followers, the Queen's Torch Head).
+   * Damage short of a kill weighs the same on any enemy, so the planner's first target is the first
+   * enemy: with the Priest first the bout hit the Priest while the followers hit it back.
+   */
+  alliesFirst?: boolean;
   /** What the encounter puts on the player (the Crab's Surrounded, facing the Rocket). */
   player?: Record<string, number>;
   /**
@@ -97,7 +103,7 @@ export const BOSSES: Record<string, Boss> = {
   WATERFALL_GIANT: { model: "WATERFALL_GIANT", hp: 250, powers: { STEAM_ERUPTION: 17 }, turns: 12 },
   // The Priest is the one to kill: its followers are minions, gone with it.
   THE_KIN: {
-    model: "KIN_PRIEST", hp: 199, powers: {}, move: "ORB_OF_FRAILTY_MOVE",
+    model: "KIN_PRIEST", hp: 199, powers: {}, move: "ORB_OF_FRAILTY_MOVE", alliesFirst: true,
     with: [
       { model: "KIN_FOLLOWER", hp: 62, powers: { MINION: 1 }, move: "POWER_DANCE_MOVE" },
       { model: "KIN_FOLLOWER", hp: 63, powers: { MINION: 1 }, move: "QUICK_SLASH_MOVE" },
@@ -115,7 +121,7 @@ export const BOSSES: Record<string, Boss> = {
   },
   // The Torch Head Amalgam is her minion: it leaves when she dies (IL: Queen, TorchHeadAmalgam).
   QUEEN: {
-    model: "QUEEN", hp: 419, powers: {}, move: "PUPPET_STRINGS_MOVE", turns: 12,
+    model: "QUEEN", hp: 419, powers: {}, move: "PUPPET_STRINGS_MOVE", turns: 12, alliesFirst: true,
     with: [{ model: "TORCH_HEAD_AMALGAM", hp: 211, powers: { MINION: 1 }, move: "STRONG_TACKLE_MOVE" }],
   },
   TEST_SUBJECT: { model: "TEST_SUBJECT", hp: 111, powers: { ADAPTABLE: 1, ENRAGE: 3 }, move: "BITE_MOVE", turns: 12 },
@@ -222,7 +228,7 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
   }
   // The monsters as the fight opens; a scripted boss shows its first move (a claw behind the player
   // with it: the player faces the Rocket, the last monster, at the start).
-  const monsters = [boss, ...(boss.with ?? [])];
+  const monsters = boss.alliesFirst ? [...(boss.with ?? []), boss] : [boss, ...(boss.with ?? [])];
   const surrounded = (boss.player?.["SURROUNDED"] ?? 0) > 0;
   const enemies = monsters.map((m, i): Enemy => {
     const e: Enemy = {
