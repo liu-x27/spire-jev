@@ -33,8 +33,8 @@ import { type ChoiceState, restoreChoiceState, saveChoiceState } from "./choices
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
-import { learnCard } from "./spar.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, TURN_WEIGHTS, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
+import { learnCard, useBoutPlanner } from "./spar.ts";
 import { loadValueNet } from "./value.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, actions, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
@@ -857,6 +857,9 @@ async function main(): Promise<void> {
   setFlags(values.flags.split(","));
   useGiantRules(hasFlag("wgpot"), hasFlag("wghp"), hasFlag("wgblow"));
   useBossRules({ sleep: hasFlag("sleep") });
+  // sparpow: spar's bouts played with powbonus's planner, so a reward's engine is played in the bout
+  // that weighs it (the planner left powers in hand, and spar scored engines below attacks).
+  if (hasFlag("sparpow")) useBoutPlanner((st) => planTurnPowers(st, TURN_WEIGHTS, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 3000));
   // bossvalue: a boss fight's lines by the evaluation plus the learned value (value.ts; the net in
   // SPIRE_JEV_VALUE_NET or data/value-net.json, its share SPIRE_JEV_VALUE_MIX, 1 by default).
   if (hasFlag("bossvalue")) {
