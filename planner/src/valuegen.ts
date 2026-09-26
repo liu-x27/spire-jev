@@ -15,9 +15,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { setIntentAscension } from "./intents.ts";
-import { BARE, BOSSES, type Boss, bout, cardFromId, outcomeScore, type Player, SPAR5_TURNS, useBoutPlanner } from "./spar.ts";
-import { planTurn, planTurnValue, TURN_WEIGHTS, useValueNet } from "./search.ts";
-import { type Card, type State } from "./sim.ts";
+import { BARE, BOSSES, type Boss, bout, cardFromId, continueBout, outcomeScore, type Player, SPAR5_TURNS, useBoutPlanner } from "./spar.ts";
+import { planTurn, planTurnValue, topEnds, TURN_WEIGHTS, useValueNet } from "./search.ts";
+import { type Card, type State, stateKey } from "./sim.ts";
 import { seeded } from "./turn.ts";
 import { features, loadValueNet } from "./value.ts";
 
@@ -34,6 +34,8 @@ const { values } = parseArgs({
     net: { type: "string" },
     // --policy value: the net's share added to the evaluation (0: the net alone).
     mix: { type: "string", default: "1" },
+    // Leaves turned down each turn, played out for their own labels.
+    alts: { type: "string", default: "2" },
   },
 });
 if (!values.out) throw new Error("--out is required");
@@ -90,6 +92,7 @@ fs.mkdirSync(path.dirname(path.resolve(values.out)), { recursive: true });
 const out = fs.openSync(path.resolve(values.out), "w");
 const rng = seeded(Number(values.seed) * 7777);
 const perDeck = Number(values.bouts);
+const alts = Number(values.alts);
 let rows = 0;
 let fights = 0;
 let wins = 0;
@@ -108,15 +111,31 @@ for (const [di, d] of decks.entries()) {
     const me: Player = { ...BARE, hp, maxHp: d.maxHp, relics: d.relics, ...(d.relicVars ? { relicVars: d.relicVars } : {}) };
     const states: number[][] = [];
     const turnsOf: number[] = [];
-    const result = bout(deck, boss, seeded(di * 1009 + b * 31 + Number(values.seed)), SPAR5_TURNS, me, (s: State) => {
-      states.push(features(s));
-      turnsOf.push(s.turn ?? 1);
+    // The leaves the planner turned down (the other session's review: the net scores many a leaf it
+    // never saw played), each labelled by its own rest of the bout.
+    const others: { x: number[]; y: number; won: number; turn: number }[] = [];
+    const altRng = seeded(di * 7919 + b * 131 + Number(values.seed) * 3);
+    const result = bout(deck, boss, seeded(di * 1009 + b * 31 + Number(values.seed)), SPAR5_TURNS, me, (end: State, full: number, turnStart: State) => {
+      states.push(features(end));
+      turnsOf.push(end.turn ?? 1);
+      if (alts <= 0) return;
+      const chosen = stateKey(end);
+      const ends = topEnds(turnStart, TURN_WEIGHTS, 3000, 6).filter((e) => stateKey(e) !== chosen);
+      for (let k = 0; k < alts && ends.length > 0; k++) {
+        const alt = ends.splice(Math.floor(altRng() * ends.length), 1)[0]!;
+        const r = continueBout(alt, seeded(Math.floor(altRng() * 1e9)), SPAR5_TURNS, full, me.hp);
+        others.push({ x: features(alt), y: outcomeScore(r, me), won: r.won ? 1 : 0, turn: alt.turn ?? 1 });
+      }
     });
     const y = outcomeScore(result, me);
     fights++;
     if (result.won) wins++;
     for (const [i, x] of states.entries()) {
       fs.writeSync(out, `${JSON.stringify({ g: fights, x, y, boss: boss.model, turn: turnsOf[i], won: result.won ? 1 : 0 })}\n`);
+      rows++;
+    }
+    for (const o of others) {
+      fs.writeSync(out, `${JSON.stringify({ g: fights, x: o.x, y: o.y, boss: boss.model, turn: o.turn, won: o.won, alt: 1 })}\n`);
       rows++;
     }
   }

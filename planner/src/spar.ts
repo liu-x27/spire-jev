@@ -201,7 +201,9 @@ export function relicOpening(me: Player): Player {
  * One shuffle of the deck against the boss, for at most `turns` turns (The Insatiable's Sandpit gives
  * about eight), and the two turns a killed Waterfall Giant takes to strike.
  */
-export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, player: Player = BARE, record?: (s: State) => void): Bout {
+/** value.ts's training data: an end of turn, the fight's HP at its start, and the state the turn began from. */
+export type BoutRecord = (end: State, full: number, turnStart: State) => void;
+export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, player: Player = BARE, record?: BoutRecord): Bout {
   const me = relicOpening(player);
   const hp = player.hp;
   const pile = [...deck];
@@ -255,8 +257,15 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
   if (me.relics.includes("FESTIVE_POPPER")) relicDamage(s, me.relicVars?.["FESTIVE_POPPER"]?.["Damage"] ?? 9, true);
   if (me.relics.includes("MERCURY_HOURGLASS")) relicDamage(s, me.relicVars?.["MERCURY_HOURGLASS"]?.["Damage"] ?? 3, true);
   redSkull(s);
+  return playOut(s, rng, 1, turns, full, hp, record);
+}
+
+/** A bout from the start of turn `t` on, to `turns` (and a killed Giant's blow): the planner's turns and the enemies'. */
+function playOut(start: State, rng: () => number, t0: number, turns: number, full: number, hp: number, record?: BoutRecord): Bout {
+  let s = start;
   const blowing = (st: State) => st.enemies.some((e) => !e.alive && (e.deathBlow ?? 0) > 0);
-  for (let t = 1; t <= turns || blowing(s); t++) {
+  for (let t = t0; t <= turns || blowing(s); t++) {
+    const turnStart = s;
     for (let step = 0; step < 15; step++) {
       const a = boutPlanner(s).actions[0];
       if (!a || a.kind !== "play") break;
@@ -270,13 +279,26 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
       if (s.player.hp <= 0) return { pool: full, damage: full - pool(s), hpLost: hp, won: false, turns: t };
     }
     // value.ts's training data: each end of turn, as the planner's leaves are.
-    record?.(s);
+    record?.(s, full, turnStart);
     const next = nextTurn(s, rng, expectedIntents);
     if (!next) return { pool: full, damage: full - pool(s), hpLost: hp, won: false, turns: t };
     s = next;
     if (over(s)) return { pool: full, damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
   }
   return { pool: full, damage: full - pool(s), hpLost: hp - s.player.hp, won: false, turns };
+}
+
+/**
+ * The rest of a bout from an end of turn another line reached (value.ts's data: the leaves the
+ * planner turned down, labelled by where they lead): the enemies' turn, then the planner's.
+ */
+export function continueBout(end: State, rng: () => number, turns: number, full: number, hp: number): Bout {
+  if (over(end)) return { pool: full, damage: full, hpLost: hp - end.player.hp, won: true, turns: end.turn ?? 1 };
+  const t = end.turn ?? 1;
+  const next = nextTurn(end, rng, expectedIntents);
+  if (!next) return { pool: full, damage: full - pool(end), hpLost: hp, won: false, turns: t };
+  if (over(next)) return { pool: full, damage: full, hpLost: hp - next.player.hp, won: true, turns: t };
+  return playOut(next, rng, t + 1, turns, full, hp);
 }
 
 /** A deck's score against a boss: damage dealt, a win's worth, HP lost; the mean over `samples` shuffles from `seed`. */

@@ -797,6 +797,10 @@ export function valueScore(s: State, w: Weights): number {
   const v = valueOf(valueNet, features(s));
   return valueMix > 0 ? plain + valueMix * v : v;
 }
+/** This turn's best `keep` distinct ends (value.ts's data: the leaves the planner would weigh). */
+export function topEnds(start: State, w: Weights, maxNodes: number, keep: number): State[] {
+  return explore(start, w, maxNodes, keep).top.map((l) => l.state);
+}
 export function planTurnValue(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
   const t0 = performance.now();
   const { best, nodes, truncated } = explore(start, w, maxNodes, 0, valueScore);
