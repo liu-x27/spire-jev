@@ -7,15 +7,35 @@ the choices around the fights (card rewards, the path, rest sites, shops, events
 by rules. The simulator is checked against the game card by card, and the results below are
 counted on seeds the rules were not tuned on.
 
-![Floors 48 and 49 at ascension 10: the bot beats Aeonglass with 3 HP left, then Test Subject, and wins the run (2×)](docs/media/a10-849-floor48-49-2x.gif)
+https://github.com/user-attachments/assets/3398cbf3-1c98-44e3-91c5-41305deeca78
 
-*Ascension 10, seed 849, the last two floors: the first A10 win. Aeonglass took it from 100 HP
-to 3; Burning Blood and Pantograph brought it to 34 for the Test Subject, beaten with 18 left.
+*Ascension 10, seed 849, the last two floors at game speed: the first A10 win, and beside the
+game what the bot decided — every card it played, the positions its search expanded for it and
+the milliseconds that took. Aeonglass took it from 100 HP to 3; Burning Blood and Pantograph
+brought it to 34 for the Test Subject, beaten with 18 left. The decisions are the log of a
+headless replay of the same run, which matches the recording card for card, laid beside it
+(the overlay is made outside this repository; without it, the two floors as a GIF:
+[docs/media/a10-849-floor48-49-2x.gif](docs/media/a10-849-floor48-49-2x.gif)).
 A narrow win, not a win rate: it was replayed from the run's floor-32 save (act 2's boss on),
 one of 97 such saves that was won, on the development rules, which are newer than the code
 here (`--flags pathdp,restbudget,potions2,sleep,spar,spar3`). The replay from floor 32:
 [docs/media/a10-849-run.mp4](docs/media/a10-849-run.mp4) (2 min 52 s for 8.9 minutes of play;
 its last card reads 0 HP because the game's closing event takes it after the final boss).*
+
+### Three climbs to act 3
+
+The three runs that reached act 3's bosses, in the order the rules came, each on the code of its
+time and counted from its own logs:
+
+| seed | rules | how far | fights won | combat decisions (p50 / p95) | cards played | card picks and buys played out (bouts) |
+|---|---|---|---|---|---|---|
+| [707](docs/media/a10-707-run.mp4) | before `spar` | floor 48: died to the Queen, 279 HP left in her | 21 of 22 | 514 (0.14 / 2.4 ms) | 417 | none: by the rules |
+| [497](docs/media/a10-497-run.mp4) | `spar` | floor 49: died to the Test Subject, one fight short | 19 of 20 | 437 (0.13 / 1.1 ms) | 338 | 55 (9,216) |
+| [849](docs/media/a10-849-run.mp4) | `spar3`; floors 32–49 from its save | floor 49 of 49: won | 24 of 24 | 428 (0.21 / 7.9 ms) | 355 | 27 (14,144) |
+
+A fight's decisions take well under a millisecond at the median; a card pick played out takes
+seconds (849's, with `spar3`'s closer look, 243 s over the run). The GIFs of 497's and 707's last
+fights are in [docs/RECORDING.md](docs/RECORDING.md).
 
 https://github.com/user-attachments/assets/16900a43-facf-4d3e-a3b5-e86fd102826f
 
@@ -28,22 +48,6 @@ development work since this code, not yet in this repository. The run is two rec
 where the win was: floors 1–32 as the evaluation that saved floor 32 played them, floors 32–49 from
 that save on the newer rules. How, and the one card reward the first had to skip as the original
 did: [docs/RECORDING.md](docs/RECORDING.md).*
-
-![Floors 48 and 49 at ascension 10: the bot beats Aeonglass, then dies to Test Subject, one fight from a win (2×)](docs/media/a10-497-floor48-49-2x.gif)
-
-*Ascension 10, seed 497, the last two floors: one fight from a win, and not a win. With the
-current rules it beat act 3's first boss, Aeonglass (120 HP in, 48 after), and died on the
-fourth turn against the second, Test Subject, on floor 49. The furthest of the 90
-confirmation seeds below. The whole run: [docs/media/a10-497-run.mp4](docs/media/a10-497-run.mp4)
-(3 min 37 s for 8.4 minutes of play; fights at game speed, the rest 4×).*
-
-![Floor 48, act 3's boss at ascension 10: the bot kills the Torch Head Amalgam, then dies to the Queen (2×)](docs/media/a10-707-floor48-2x.gif)
-
-*Ascension 10, seed 707, floor 48, on the rules from before `spar`: the furthest of the 102
-seeds it was picked from. It reached act 3's boss with 53 of 80 HP, killed the Torch Head
-Amalgam and died on turn 8 with the Queen at 279 HP. The whole run:
-[docs/media/a10-707-run.mp4](docs/media/a10-707-run.mp4) (3 min 26 s). How both were
-recorded, and why a recording is the same run as headless, is [docs/RECORDING.md](docs/RECORDING.md).*
 
 Slay the Spire 2 is Mega Crit's; this project is not affiliated with Mega Crit, and the
 repository holds no game files — the bridge runs against a local install. The name is for
@@ -105,6 +109,13 @@ that made things worse — is [docs/PLAN.md](docs/PLAN.md).
   tier lists and pick rates (`docs/STRATEGY-research.md`), a path chosen over the whole map,
   a budget for HP at rest sites, potions drunk by rule, and card picks tried out against the
   act's boss.
+
+![A card reward on seed 849's floor 35: beside the game, each offer played out against act 3's boss — Thunderclap +27.4, Blood Wall+ +25.3, Setup Strike +19.5 — and Thunderclap taken](docs/media/a10-849-card-reward-f35.jpg)
+
+*Seed 849, floor 35: a card reward as `spar3` decides it. Each offer is added to the deck and
+the deck fights the act's boss in the simulator, 32 shuffles, and 128 more for an offer near
+the line or near the best; the pick is the best gain of at least 5 (Thunderclap, from 512 bouts
+in 13 s). Above it, the fights' decisions: the card played, the positions searched, the time.*
 
 ## Running it
 

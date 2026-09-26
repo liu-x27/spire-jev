@@ -44,6 +44,25 @@ offscreen), composed with the recording in ffmpeg. In the run, the bosses play a
 1.5–2×, other fights at 4×, everything else at 16×. HP in the captions is the fight's end, before
 Burning Blood.
 
+### The decisions beside the game
+
+The README's first video (floors 48–49, 31 s, in the page) and the card reward still show what
+the bot decided next to the recording. A recording keeps each request's frame (`timeline.jsonl`)
+but not the planner's reasons, so the runs were played again headless, each on its frozen code
+with a patch that only logs (a line per plan: the card, the positions expanded, the time; a line
+per choice: what `spar` found for each offer and how many bouts it played), and every replay was
+checked against its recording fight by fight and room by room: 849's floors 1–32 18 of 18 fights
+and 78 of 78 rooms, floors 32–49 7 of 7 and 46 of 46, 497 20 of 20 and 148 of 148. Plans are laid
+on the recording's combat steps floor by floor in order, choices on the step that took them. The
+overlay is drawn outside this repository, as the progress video is; the logging patch is not
+committed. The three-run table in the README counts these logs; 707's, whose code has no `spar`,
+from its recording's own log.
+
+707 was also recorded again, in Chinese, on its own code (47fe07d): it is the same run up to floor
+30, where one fight went another way (80 → 52 HP in 3 turns, not 80 → 56 in 4); from there every
+room's choice was the same and it died to the Queen on floor 48 as before, with her at 279 HP. A
+run on screen can come apart from another on screen on the same code and seed.
+
 ## Seed 497: A10, floor 49 of 49, one fight from a win
 
 ![Floors 48 and 49: the bot beats Aeonglass, then dies to Test Subject (2×)](media/a10-497-floor48-49-2x.gif)
