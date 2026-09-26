@@ -17,7 +17,7 @@ here (`--flags pathdp,restbudget,potions2,sleep,spar,spar3`). The replay from fl
 [docs/media/a10-849-run.mp4](docs/media/a10-849-run.mp4) (2 min 52 s for 8.9 minutes of play;
 its last card reads 0 HP because the game's closing event takes it after the final boss).*
 
-[![A progress video, in Chinese: four days from the first headless game to the first A10 win, and seed 849's whole run, floors 1 to 49](docs/media/spire-jev-849-progress-poster.jpg)](docs/media/spire-jev-849-progress-zh.mp4)
+https://github.com/user-attachments/assets/16900a43-facf-4d3e-a3b5-e86fd102826f
 
 *A progress video, in Chinese (5 min 23 s, 1080p, 48 MB):
 [docs/media/spire-jev-849-progress-zh.mp4](docs/media/spire-jev-849-progress-zh.mp4). The four days
