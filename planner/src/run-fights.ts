@@ -849,7 +849,7 @@ async function main(): Promise<void> {
   useRules = values.choices === "rules" || values.choices === "rules2";
   useRules2(values.choices === "rules2");
   setFlags(values.flags.split(","));
-  useGiantRules(hasFlag("wgpot"), hasFlag("wghp"));
+  useGiantRules(hasFlag("wgpot"), hasFlag("wghp"), hasFlag("wgblow"));
   useBossRules({ sleep: hasFlag("sleep") });
   // bossvalue: a boss fight's lines by the evaluation plus the learned value (value.ts; the net in
   // SPIRE_JEV_VALUE_NET or data/value-net.json, its share SPIRE_JEV_VALUE_MIX, 1 by default).

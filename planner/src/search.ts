@@ -287,6 +287,11 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
     // how much HP it leaves (a blow that looks lethal still depends on next turn's draw).
     // A potion costs what it does elsewhere, on this scale of 10 a point of HP.
     const pending = s.enemies.some((e) => !e.alive && !e.blowNow && (e.deathBlow ?? 0) > 0);
+    // wgblow: a blow the deck's next turn is not expected to survive (blowToCome is net of the block
+    // it brings) makes the kill a likely loss, not half a win: the game's lost Giant fights (fix-f16-base)
+    // are nearly all a kill and then its blow.
+    const margin = hpLeft - blowToCome(s);
+    if (pending && giantBlowSafe && margin <= 0) return -WIN / 4 + margin * 10 - s.potionsUsed * potionCost(s, w) * 10;
     return (pending ? WIN / 2 + hpCounted(hpLeft - blowToCome(s)) * 10 : WIN + hpCounted(hpLeft) * 10) - s.potionsUsed * potionCost(s, w) * 10;
   }
   if (blows) hpLeft -= blowToCome(s);
@@ -465,6 +470,7 @@ export function revival(s: State): number | undefined {
  */
 let giantPotions = false;
 let giantMargin = false;
+let giantBlowSafe = false;
 /**
  * --flags potsave: act 3's fights before its two bosses keep their potions. The runs that came to
  * floor 48 at A10 came with none (712, 722: both drunk in act 3's elites and hallways, the belt
@@ -510,9 +516,10 @@ function hpWeight(e: Enemy, s: State): number {
   if (!both) return 1;
   return e.model === "QUEEN" ? 0.5 : e.model === "TORCH_HEAD_AMALGAM" ? 1.5 : 1;
 }
-export function useGiantRules(potions: boolean, margin: boolean): void {
+export function useGiantRules(potions: boolean, margin: boolean, blowSafe = false): void {
   giantPotions = potions;
   giantMargin = margin;
+  giantBlowSafe = blowSafe;
 }
 
 /**
