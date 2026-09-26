@@ -304,8 +304,13 @@ const firstOfPair = (floor: number, boss: boolean) => boss && ascension >= 10 &&
 const savingFor = (floor: number, boss: boolean) => hasFlag("potsave") && floor > 33 && floor < 48 && !boss;
 /** Potions that work by themselves (Fairy in a Bottle saves a death), or are worth more kept. */
 const KEEP_POTIONS = new Set(["FAIRY_IN_A_BOTTLE"]);
-const BOSSES = new Set(["VANTOM", "THE_KIN", "CEREMONIAL_BEAST", "WATERFALL_GIANT", "LAGAVULIN_MATRIARCH", "SOUL_FYSH",
-  "KNOWLEDGE_DEMON", "KAISER_CRAB", "THE_INSATIABLE", "QUEEN", "TEST_SUBJECT", "AEONGLASS"]);
+// By the monsters' ids, as the fights report them: The Kin is its Priest (and followers), the Kaiser
+// Crab its two claws. Until 2026-09-26 the set named those two encounters, which no monster is called,
+// and none of theirs has 250 HP: neither fight counted as a boss's (potions2's early potions, the
+// boss-fight flags; the other session found bossroll and bossvalue identical to the plain planner
+// against the Crab).
+export const BOSSES = new Set(["VANTOM", "KIN_PRIEST", "KIN_FOLLOWER", "CEREMONIAL_BEAST", "WATERFALL_GIANT", "LAGAVULIN_MATRIARCH", "SOUL_FYSH",
+  "KNOWLEDGE_DEMON", "CRUSHER", "ROCKET", "THE_INSATIABLE", "QUEEN", "TORCH_HEAD_AMALGAM", "TEST_SUBJECT", "AEONGLASS"]);
 /** Elites by act (A10-reference): a potion is drunk in them once HP is under half. */
 const ELITES = /^(PHROG_PARASITE|BYGONE_EFFIGY|BYRDONIS|TERROR_EEL|PHANTASMAL_GARDENER|SKULKING_COLONY|DECIMILLIPEDE_SEGMENT_\w+|INFESTED_PRISM|ENTOMANCER|FLAIL_KNIGHT|SPECTRAL_KNIGHT|MAGI_KNIGHT|MECHA_KNIGHT|SOUL_NEXUS)$/;
 
