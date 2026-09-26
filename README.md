@@ -35,7 +35,10 @@ time and counted from its own logs:
 
 A fight's decisions take well under a millisecond at the median; a card pick played out takes
 seconds (849's, with `spar3`'s closer look, 243 s over the run). The GIFs of 497's and 707's last
-fights are in [docs/RECORDING.md](docs/RECORDING.md).
+fights are in [docs/RECORDING.md](docs/RECORDING.md). All three runs in 3 minutes, in the game's
+Chinese interface with the same feed of decisions beside it:
+[on Bilibili](https://www.bilibili.com/video/BV16iax6xEtv) (in Chinese; the fights sped up 2–12×,
+the rest up to 60×, as the corner says).
 
 https://github.com/user-attachments/assets/16900a43-facf-4d3e-a3b5-e86fd102826f
 
