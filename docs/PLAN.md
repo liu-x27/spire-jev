@@ -624,6 +624,36 @@ states, and only a simulator is fast enough for that.
      potions it cannot drink (Skill, Attack, Power, Colorless: the game's bot
      drinks every one by turn 2). value-net.json (v2b) learnt from the bouts
      before these fixes.
+   - **The learned value in the game** (`--flags bossvalue`, planTurnValue:
+     the evaluation plus MIX × the net at a turn's end; boss fights only;
+     paired with the plain planner on the same saves, none in the net's data).
+     The first net (v1, mix 1) cost act 2: f32 30 -> 24 won (+2/-8), the
+     enemies' HP left at the end 14.1 ± 4.9 higher; f47 4 -> 3; f16 188 -> 186.
+     v2b (value.ts v2, the Insatiable's Sandpit; mix 0.3): f32 31 -> 34
+     (+3/-0). v3 (ebc695a, the fixed bout's data, ranking 0.930): f32 31 -> 32
+     (+3/-2), f47 4 -> 3 (HP lost when both won 46 -> 38), f16 190 -> 195
+     (+15/-10, p 0.42: fights 0.26 ± 0.07 turns shorter, the Matriarch left 7 ±
+     3 HP lower); at mix 1 f47 4 -> 4, f32 31 -> 31. In the bout v3 is ahead
+     everywhere (f16 70.2% -> 73.8%, act 3's human winners 12.3% -> 18.3% at
+     mix 1), in the game within noise. A second iteration (data played by
+     v3 at mix 1, 8,400 bouts) scores the same in the bout. Neither the net
+     nor rollouts are the lever the pair needs.
+   - **The Waterfall Giant** is the act 1 boss runs die to most (8-12 of 90
+     dev starts). The game's lost Giant fights (fix-f16-base, 22 of 50) are a
+     kill and then its DeathBlow, 17-43 HP short of it with the next hand's
+     block. On the 50 Giant saves in the bout (400 bouts; the game 56.0%):
+     base 54.0%, `wghp` 55.0%, `wgpot` 51.8%, hpLoss weight 1.5 51.0%, and
+     `wgblow` (a kill whose blow is not expected to be survived counted as a
+     likely loss, a5b7933) 51.0%: held back, the blow grows 3 a turn. The HP
+     goes before the kill; it is the deck's.
+   - **Whole runs with the fixed bout** (ebc695a, dev seeds 586-675, paired
+     with the same flags before it): spar3 act 1 boss 57 -> 63 (+9/-3), act 2
+     boss 8 -> 4 (+2/-6); the combo (spar5, spar4up, spar4shop) 65 -> 65, 12 ->
+     11. The combo against spar3 on the fixed bout: act 1 boss 63 -> 65, act 2
+     boss 4 -> 11 (+10/-3, p 0.09); before the fix it was 8 -> 12 (+9/-5):
+     +19/-8 over the 180 paired starts. The runs die at act 1's boss (17-26 of
+     90: the Giant 8-12), in act 2 before its boss (26-29: Entomancer 5-7,
+     Decimillipede, the Bowlbug trio) and at it (22-30: the Crab 12-17).
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
