@@ -753,8 +753,9 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
       }),
       ...shortlist(o, at, takeOut.map((id) => ({ id, change: withoutOne(id) }))).map(({ id, change }) => ({ a: removal!, change, gain: spar5 ? 0 : sparGain(o.deck_cards, actOf(o), o.floor, change, at), out: id })),
     ];
-    // spar5: the purchase whose outcomes gain, less a standard error, more than nothing.
-    const chosen = spar5 ? spar5Pick(o, at, options) : undefined;
+    // spar5: the purchase whose outcomes gain, less a standard error, more than nothing (spartakeshop:
+    // the best one unless it clearly hurts the next boss, as spartake for rewards).
+    const chosen = spar5 ? spar5Pick(o, at, options, flags.has("spartakeshop")) : undefined;
     if (spar5) {
       options.length = 0;
       if (chosen) options.push({ ...chosen, gain: Infinity });
