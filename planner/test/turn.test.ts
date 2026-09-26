@@ -102,3 +102,13 @@ test("Toasty Mittens: the turn's start exhausts a card of the hand and gives 1 S
   assert.equal(next.exhaust.length, 1);
   assert.equal(next.player.powers["STRENGTH"], 1);
 });
+
+test("energy relics: Seal of Gold every turn, Pael's Flesh on turn 3, Art of War after a turn without an attack", () => {
+  const at = (relics: string[], turn: number, attacks = 1) => nextTurn({ ...state([], 0, [foe(100, 0)]), relics, turn, attacks }, seeded(1), () => [])!.energy;
+  assert.equal(at([], 1), 3);
+  assert.equal(at(["SEAL_OF_GOLD"], 1), 4);
+  assert.equal(at(["PAELS_FLESH"], 1), 3);
+  assert.equal(at(["PAELS_FLESH"], 2), 4);
+  assert.equal(at(["ART_OF_WAR"], 1, 1), 3);
+  assert.equal(at(["ART_OF_WAR"], 1, 0), 4);
+});
