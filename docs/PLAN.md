@@ -763,6 +763,11 @@ states, and only a simulator is fast enough for that.
      -> 69, the act 2 boss 13 -> 13 (+7/-7), floor 48 2 -> 0 — act 1's picks
      change too, and 90 starts reach act 2 some 65 times. Replicated on s3f's
      other f16 saves (706-855) next.
+   - `elitedeath` on act 2 played through (the other session, 111 saves):
+     the act 2 boss reached 47/47, won 14/13; the route differed on 4 seeds.
+     The base's act 2 elite deaths (12, most from 16-60% HP) had the elite as
+     the map's only way on by then: the route was taken at higher HP and the
+     hallway fights drained it. Act 2 is attrition in ordinary fights.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
