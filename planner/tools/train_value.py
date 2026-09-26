@@ -45,7 +45,10 @@ Y = torch.tensor([r["y"] for r in train], dtype=torch.float32).unsqueeze(1)
 Xv = torch.tensor([r["x"] for r in val], dtype=torch.float32)
 Yv = torch.tensor([r["y"] for r in val], dtype=torch.float32).unsqueeze(1)
 mean = X.mean(0)
-std = X.std(0).clamp_min(1e-6)
+# A column that never moves in training is ignored (a huge std), and the rest have a floor: the
+# features are scaled to about 0-3, and a near-constant column must not blow up at play time.
+raw_std = X.std(0)
+std = torch.where(raw_std < 1e-3, torch.full_like(raw_std, 1e6), raw_std.clamp_min(0.05))
 norm = lambda t: (t - mean) / std
 
 layers = []

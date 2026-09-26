@@ -46,7 +46,8 @@ const clip = (x: number, hi = 3) => Math.max(-hi, Math.min(hi, x));
 const hitsOf = (c: Card) => Math.max(1, c.vars["Repeat"] ?? 1);
 const baseDamage = (c: Card) => (c.type === "Attack" ? c.vars["Damage"] ?? c.vars["CalculationBase"] ?? 0 : 0);
 const isJunk = (c: Card) => c.type === "Status" || c.type === "Curse" || c.keywords.includes("Unplayable");
-const isBoss = (e: Enemy) => (BOSS_MODELS as readonly string[]).includes(e.model);
+// The Kaiser Crab's Rocket is its other half, not an ally: both claws must die.
+const isBoss = (e: Enemy) => (BOSS_MODELS as readonly string[]).includes(e.model) || e.model === "ROCKET";
 
 /** The features of an end-of-turn state, in FEATURE_NAMES's order. */
 export function features(s: State): number[] {
@@ -96,13 +97,19 @@ export function features(s: State): number[] {
   const maxOf = (es: readonly Enemy[]) => es.reduce((a, e) => a + e.maxHp + formsToCome(e), 0);
   const bossHp = hpOf(bosses);
   const allyHp = hpOf(allies);
-  const pace = Math.max(1, perAttack * attacksPerHand * weak);
+  const vulnerable = s.enemies.some((e) => e.alive && isBoss(e) && (e.powers["VULNERABLE"] ?? 0) > 0) ? 1.5 : 1;
+  const pace = Math.max(1, perAttack * attacksPerHand * weak * vulnerable);
   const most = (k: string) => alive.reduce((a, e: Enemy) => Math.max(a, e.powers[k] ?? 0), 0);
   const boss = bosses[0];
   // The Test Subject's form (1-3, by the forms still to come) and a form reviving next turn.
   const subject = s.enemies.find((e) => e.model === "TEST_SUBJECT");
-  const form = subject ? 3 - Math.min(2, Math.round(formsToCome(subject) / 200)) : 0;
-  const tangibleNext = boss ? ((boss.powers["INTANGIBLE"] ?? 0) > 0 ? 1 : (boss.powers["NEMESIS"] ?? 0) > 0 ? 0 : 1) : 1;
+  // (Forms still to come: 212 + 313 in the first, 313 in the second, none in the third.)
+  const toCome = subject ? formsToCome(subject) : 0;
+  const form = subject ? (toCome > 400 ? 1 : toCome > 0 ? 2 : 3) : 0;
+  const reviving = subject !== undefined && !subject.alive && (subject.revive ?? 0) > 0;
+  // A third form comes back intangible (turn.ts: its revival brings Intangible 1).
+  const tangibleNext = reviving && toCome > 0 && toCome <= 400 ? 0
+    : boss ? ((boss.powers["INTANGIBLE"] ?? 0) > 0 ? 1 : (boss.powers["NEMESIS"] ?? 0) > 0 ? 0 : 1) : 1;
   f.push(
     alive.length / 5,
     bossHp / 500, bosses.length ? bossHp / Math.max(1, maxOf(bosses)) : 0, allyHp / 300, allies.filter((e) => e.alive).length / 4,
@@ -110,7 +117,7 @@ export function features(s: State): number[] {
     clip(incomingDamage(s) / 100),
     bosses.reduce((a, e) => a + (e.alive ? e.block : 0), 0) / 100, allies.reduce((a, e) => a + (e.alive ? e.block : 0), 0) / 100,
     clip(pace / 60), clip((bossHp || allyHp) / pace / 10),
-    form / 3, subject && !subject.alive && (subject.revive ?? 0) > 0 ? 1 : 0, tangibleNext,
+    form / 3, reviving ? 1 : 0, tangibleNext,
     clip((boss?.powerVars?.["WITHERING_PRESENCE"]?.["CardsLeft"] ?? 0) / 6),
   );
   for (const k of ENEMY_POWERS) f.push(clip(most(k) / 10));
@@ -150,7 +157,9 @@ export function loadValueNet(file = path.resolve(import.meta.dirname, "..", "dat
 }
 /** The net's outcome score (0-130) for the features `x`. */
 export function valueOf(net: ValueNet, x: readonly number[]): number {
-  let h = x.map((v, i) => (v - net.mean[i]!) / (net.std[i]! || 1));
+  // Standardized, and held to ±10: a feature the training never saw move (potions, Sandpit in act 3)
+  // must not throw the net (tools/train_value.py also gives such a column a huge std).
+  let h = x.map((v, i) => Math.max(-10, Math.min(10, (v - net.mean[i]!) / (net.std[i]! || 1))));
   net.layers.forEach((layer, li) => {
     const out = layer.b.slice();
     for (let j = 0; j < out.length; j++) {
