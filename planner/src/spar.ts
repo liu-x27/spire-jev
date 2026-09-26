@@ -230,6 +230,9 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
       weakAtStart: false, startStrength: 0, intents: [],
       ...(m.powerVars ? { powerVars: m.powerVars } : {}),
       ...(m.move ? { move: m.move } : {}),
+      // Asleep as a fight's observation has her (sim.ts fromObservation): the sleep rule (search.ts
+      // useBossRules) reads it, and without it the bout woke the Matriarch on turn 1.
+      ...((m.powers["ASLEEP"] ?? 0) > 0 ? { asleep: { turns: m.powers["ASLEEP"]!, hp: m.hp } } : {}),
     };
     const behind = surrounded && i < monsters.length - 1;
     e.intents = m.move ? moveIntents(m.model, m.move, 0, { vulnerable: false, weak: false, behind }) : expectedIntents(e, 1);

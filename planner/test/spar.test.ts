@@ -35,6 +35,14 @@ test("a potion the bout's plan drinks is drunk, not the turn's end", () => {
   assert.equal(r.turns, 1);
 });
 
+test("the Matriarch starts a bout asleep as a fight's observation has her, for the sleep rule", () => {
+  let first: { asleep?: { turns: number; hp: number } } | undefined;
+  bout(STARTER.map(cardFromId).filter((c) => c !== undefined), BOSSES["LAGAVULIN_MATRIARCH"]!, seeded(1), 1, BARE, (_end, _full, start) => {
+    first ??= start.enemies[0];
+  });
+  assert.deepEqual(first?.asleep, { turns: 3, hp: 233 });
+});
+
 test("a boss spar has no model of is no boss, not another act's", () => {
   assert.equal(modelledBoss("NOT_A_BOSS_BOSS"), undefined);
   assert.equal(modelledBoss("WATERFALL_GIANT_BOSS")?.model, "WATERFALL_GIANT");
