@@ -15,7 +15,7 @@ import { type Beast, loadBestiary } from "./bestiary.ts";
 import { type Action, actions, type Card, drink, endOfTurn, endOfTurnBlock, type Enemy, endOfTurnRevival, formsToCome, hpLoss, incomingDamage, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
-import { nextTurn, seeded } from "./turn.ts";
+import { nextTurn, seeded, temporaryPart } from "./turn.ts";
 import { features, type ValueNet, valueOf } from "./value.ts";
 
 export interface Weights {
@@ -324,7 +324,10 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
     const attacking = e.intents.some((i) => i.type === "Attack");
     if (attacking) score += Math.min(3, e.powers["WEAK"] ?? 0) * w.weak;
   }
-  score += (s.player.powers["STRENGTH"] ?? 0) * w.strength;
+  // Strength kept for the turns to come: the temporary part (Setup Strike, Flex Potion, Reptile
+  // Trinket) is gone at the turn's end, its worth already in this turn's damage. Counted, it had
+  // Setup Strike over a second Defend into 11x4 (a Test Subject bout from an A10 winner's deck).
+  score += ((s.player.powers["STRENGTH"] ?? 0) - temporaryPart(s.player.powers, "STRENGTH")) * w.strength;
   // A Dazed in the draw pile is a card slot lost in a hand to come: few big hits into an Entomancer,
   // not many small ones (its Personal Hive put 3-4 Dazed in every hand by turn 4).
   score -= (s.dazedAdded ?? 0) * DAZED_COST;

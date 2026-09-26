@@ -23,6 +23,9 @@ const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_AT
 const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN", "NO_BLOCK"];
 /** Temporary Strength and Dexterity, and what they were added to. */
 const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"], ["REPTILE_TRINKET", "STRENGTH"]];
+/** The part of `stat` (STRENGTH, DEXTERITY) that goes at the turn's end: Setup Strike's, Flex Potion's, Reptile Trinket's. */
+export const temporaryPart = (powers: Record<string, number>, stat: string): number =>
+  TEMPORARY.reduce((a, [temp, of]) => (of === stat ? a + (powers[temp] ?? 0) : a), 0);
 const HAND_LIMIT = 10;
 
 /** mulberry32: a small seeded generator, so a lookahead is the same every time it is asked. */
