@@ -700,7 +700,17 @@ states, and only a simulator is fast enough for that.
      0.5/2.5, engines 1) move the bout's f16, f32 and act 3 by at most ~1-2
      points. Of the planner changes since the bout matched the game, the
      powers played (powbonus) are what the game confirms; the learned value,
-     rollouts, the second turn's look and the weights are not.
+     rollouts, the second turn's look and the weights are not. A likely
+     reason: in the bout the enemies are the model's own, so anything that
+     looks a turn ahead sees them exactly; in the game the next turn is
+     predicted (ts-*, 2,610 enemy turns: the next hand's size missed 232 times,
+     enemy powers 166, player powers 308), and powers played are the
+     player's own cards, which the model has right.
+   - Aeonglass's Withering Presence reset to 6 each turn in the bout (f4685bd:
+     the game counts across turns; its next hands had 1-3 cards more). Our f47
+     decks against her in the pilot: 12/160 -> 5/160 bouts won (the game 1/24);
+     with powbonus 18/160 -> 6/160 (more cards played cost the bout nothing).
+     Act 3 pilot now: planTurn 10.4/2.7/5.2%, powbonus 15.2/3.8/4.9.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
