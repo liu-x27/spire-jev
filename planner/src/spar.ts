@@ -201,7 +201,7 @@ export function relicOpening(me: Player): Player {
  * One shuffle of the deck against the boss, for at most `turns` turns (The Insatiable's Sandpit gives
  * about eight), and the two turns a killed Waterfall Giant takes to strike.
  */
-export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, player: Player = BARE): Bout {
+export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, player: Player = BARE, record?: (s: State) => void): Bout {
   const me = relicOpening(player);
   const hp = player.hp;
   const pile = [...deck];
@@ -269,6 +269,8 @@ export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns
       if (over(s)) return { pool: full, damage: full, hpLost: hp - s.player.hp, won: true, turns: t };
       if (s.player.hp <= 0) return { pool: full, damage: full - pool(s), hpLost: hp, won: false, turns: t };
     }
+    // value.ts's training data: each end of turn, as the planner's leaves are.
+    record?.(s);
     const next = nextTurn(s, rng, expectedIntents);
     if (!next) return { pool: full, damage: full - pool(s), hpLost: hp, won: false, turns: t };
     s = next;

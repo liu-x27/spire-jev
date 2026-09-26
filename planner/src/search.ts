@@ -16,6 +16,7 @@ import { type Action, actions, type Card, drink, endOfTurn, endOfTurnBlock, type
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
 import { nextTurn, seeded } from "./turn.ts";
+import { features, type ValueNet, valueOf } from "./value.ts";
 
 export interface Weights {
   /** Per point of HP the enemies' attacks will take this turn. */
@@ -596,7 +597,7 @@ interface Line {
 }
 
 /** Every play order from `start`, equal states merged; the best line, and the best `keep` distinct ends. */
-function explore(start: State, w: Weights, maxNodes: number, keep: number): { best: Line; top: Line[]; nodes: number; truncated: boolean } {
+function explore(start: State, w: Weights, maxNodes: number, keep: number, score: (s: State, w: Weights) => number = evaluate): { best: Line; top: Line[]; nodes: number; truncated: boolean } {
   let nodes = 0;
   let truncated = false;
   let best: Line = { score: -Infinity, actions: [{ kind: "end" }], exact: true, state: start };
@@ -605,7 +606,7 @@ function explore(start: State, w: Weights, maxNodes: number, keep: number): { be
 
   const visit = (s: State, path: Action[]): void => {
     nodes++;
-    const here = evaluate(s, w);
+    const here = score(s, w);
     if (here > best.score) best = { score: here, actions: [...path, { kind: "end" }], exact: s.exact, state: s };
     if (keep > 0 && (top.length < keep || here > top[top.length - 1]!.score)) {
       top.push({ score: here, actions: [...path, { kind: "end" }], exact: s.exact, state: s });
@@ -777,6 +778,29 @@ export function planTurnRoll(start: State, w: Weights = DEFAULT_WEIGHTS, maxNode
     }
   }
   return { actions: chosen.actions, score: chosenValue, exact: chosen.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
+}
+
+/**
+ * A learned value's planner (value.ts): this turn's lines scored by what the net says the fight
+ * comes to from where they end; a win or a death as the evaluation has them.
+ */
+let valueNet: ValueNet | undefined;
+/** 0: the net's value alone; above it, the evaluation plus `mix` times the net's value. */
+let valueMix = 0;
+export function useValueNet(net: ValueNet | undefined, mix = 0): void {
+  valueNet = net;
+  valueMix = mix;
+}
+export function valueScore(s: State, w: Weights): number {
+  const plain = evaluate(s, w);
+  if (!valueNet || plain >= WIN || plain <= -WIN) return plain;
+  const v = valueOf(valueNet, features(s));
+  return valueMix > 0 ? plain + valueMix * v : v;
+}
+export function planTurnValue(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
+  const t0 = performance.now();
+  const { best, nodes, truncated } = explore(start, w, maxNodes, 0, valueScore);
+  return { actions: best.actions, score: best.score, exact: best.exact, nodes, ms: performance.now() - t0, truncated };
 }
 
 /** The bridge's id for an action, against the current hand's indices. */
