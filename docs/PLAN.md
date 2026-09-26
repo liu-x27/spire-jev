@@ -738,6 +738,16 @@ states, and only a simulator is fast enough for that.
      Giant's are. `powelite` (powbonus's planner in elite fights too, 95772ce)
      on the same 111: act 2's elites won 41/59 against 42/59, the act 2 boss
      reached 45 against 46, won 14 both; 3 of the 111 went differently.
+   - **The human prior** (the other session, branch human-prior, --flags
+     prior: 2 x the Spire Codex A10 winners' shrunk lift in spar's act 2-3
+     reward gain), whole runs from s3f's 252 f16 saves: the act 2 boss
+     30/103 -> 19/90 (base-only wins 17, prior-only 6, p 0.03), 13 fewer
+     runs reaching it; engine cards taken 19/326 -> 77/286 but rewards
+     skipped 48% -> 63%, the act 2 boss's deck 23.1 -> 22.4. Shelved. From
+     here (the user, 2026-09-26): the other session takes act 2's fights
+     (their play, the bout against the game), this one deck strength.
+     `spartake` (eef4f3b): spar5 takes a reward's best offer unless it
+     clearly hurts the next boss.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
