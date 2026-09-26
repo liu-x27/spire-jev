@@ -600,6 +600,30 @@ states, and only a simulator is fast enough for that.
      second bout was never played; fought out (20 turns) it still is not, mid
      act 3 (407's decks 0/32 against Aeonglass at 8, 12 and 20 turns): it is
      spar there, until the deck can beat the first boss.
+   - **The bout against the game, boss by boss** (2026-09-26): the bench's s3f
+     saves (none in the value data) in spar's bout against their own boss, from
+     the fight's real HP (the save is before floor 16's rest: 15-22 HP under it)
+     and its belt, next to the same fight in the game (val-f16-base,
+     val-f32-base). One turn's prediction in the game is exact (endTurn,
+     predicted = actual to a point a turn for every boss); the whole bout was
+     not. Act 1 won 35.2% of bouts against the game's 74.6%, act 2 11.3%
+     against 30.9%. Four faults, each fixed with a test: a potion the plan drank
+     first ended the bout's turn (f43bcae; the belt cost bouts — act 1 44.8%
+     with it, 52.4% without); Ringing never went (12723ea: after the first
+     Beast Cry a card a turn for good — the Ceremonial Beast 46.6% -> 82.2%,
+     the game 92.3%); the Matriarch started the bout without `asleep`, so the
+     sleep rule could not see her and the bout woke her on turn 1 (3a7298f:
+     44.9% -> 60.9%, the game 66.7%); the Kin's Priest stood first, and with
+     damage short of a kill the same on any enemy the planner hit the first one
+     (2e4f9b5: followers alive at turn 5 1.16 -> 0.26, the game 0.18; 53.9% ->
+     71.1%, the game 71.1%). The Queen's Torch Head now opens before her as in
+     the game too. Now act 1 70.2% against 74.6% (Vantom 75.8/74.2, Giant
+     54.0/56.0, Soul Fysh 78.6/85.7), act 2 26.0% against 30.9% (Knowledge
+     Demon 25.6/35.9, Insatiable 26.9/37.0, Crab 25.8/19.4). What is left is
+     largely the bout's: the save's deck without the rest's upgrade, and the
+     potions it cannot drink (Skill, Attack, Power, Colorless: the game's bot
+     drinks every one by turn 2). value-net.json (v2b) learnt from the bouts
+     before these fixes.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
