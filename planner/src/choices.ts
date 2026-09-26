@@ -431,15 +431,20 @@ function spar5Gain(o: Observation, at: Sparring, change: (d: string[]) => string
   const se = Math.sqrt((p.se ** 2 * n1 * n1 + more.se ** 2 * 128 * 128) / (n1 + 128) ** 2);
   return { mean, se };
 }
-/** spar5's rule: the best change whose difference, less one standard error, is above nothing. */
-function spar5Pick<T extends { change: (d: string[]) => string[]; gain: number }>(o: Observation, at: Sparring, options: T[]): T | undefined {
+/**
+ * spar5's rule: the best change whose difference, less one standard error, is above nothing. `lean`
+ * (--flags spartake, card rewards): the best one unless its difference, plus one standard error, is
+ * below nothing — a card that does not hurt the next boss is taken (the other session's human-prior
+ * skipped 48% -> 63% of act 2-3 rewards and lost act 2: 30/103 -> 19/90).
+ */
+function spar5Pick<T extends { change: (d: string[]) => string[]; gain: number }>(o: Observation, at: Sparring, options: T[], lean = false): T | undefined {
   let best: { x: T; p: Paired } | undefined;
   for (const x of options) {
     if (!Number.isFinite(x.gain)) continue;
     const p = spar5Gain(o, at, x.change);
     if (!best || p.mean > best.p.mean) best = { x, p };
   }
-  return best && best.p.mean - best.p.se > 0 ? best.x : undefined;
+  return best && (lean ? best.p.mean + best.p.se > 0 : best.p.mean - best.p.se > 0) ? best.x : undefined;
 }
 
 /**
@@ -488,7 +493,7 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
       return { id: a.action_id, gain, change };
     });
     if (flags.has("spar5")) {
-      const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })));
+      const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })), flags.has("spartake"));
       if (pick) return pick.id;
       return legal.find((a) => a.action_id === "skip_card")?.action_id ?? legal[0]!.action_id;
     }
