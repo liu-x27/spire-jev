@@ -70,6 +70,14 @@ test("ringing: one card a turn", () => {
   assert.equal(plays(at(s, 1)), 0);
 });
 
+test("ringing: the turn after the cry, not the one after that", () => {
+  const s = state([STRIKE, DEFEND, DEFEND], [{ ...foe("CEREMONIAL_BEAST", 100, {}, 1, 0), move: "BEAST_CRY_MOVE", intents: [{ type: "Debuff", damage: 0, hits: 0 }] }]);
+  const cried = nextTurn(s, seeded(1))!;
+  assert.equal(cried.player.powers["RINGING"], 1);
+  const after = nextTurn(cried, seeded(2))!;
+  assert.equal(after.player.powers["RINGING"], undefined);
+});
+
 // ---------------------------------------------------------------- Lagavulin Matriarch
 
 test("asleep: damage past her block wakes the Matriarch, stunned; into her block it does not", () => {

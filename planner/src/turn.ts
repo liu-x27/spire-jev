@@ -16,7 +16,9 @@ import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
 import { type Card, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
-const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED"];
+// Ringing (the Ceremonial Beast's Beast Cry) is one turn's: the game's fights have it the turn after
+// the cry and not the one after that (bench val-f16-base); held for good, it left the bout a card a turn.
+const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED", "RINGING"];
 /** Powers that lose a stack every round. */
 const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN", "NO_BLOCK"];
 /** Temporary Strength and Dexterity, and what they were added to. */
