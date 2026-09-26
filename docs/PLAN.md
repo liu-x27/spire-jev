@@ -720,6 +720,22 @@ states, and only a simulator is fast enough for that.
      Colorless, Liquid Memories, Touch of Insanity: cards the bout cannot
      make), the Giant at 206.5 after it; the 4 without, 218.3 — the bout's
      219. The potions that make cards are what the bout lacks now.
+   - More of the next turn from the game's checks: energy from Seal of Gold
+     (every turn, 30 of 30 fights), Pael's Flesh (turn 3), Art of War (after a
+     turn without an attack) (91e26f1); Shrink runs down and shows in a
+     scripted boss's next attack (63f0313). With powbonus the game plays f32
+     and f47 fight for fight as before (nt-*: 35, 6) — the fight reads its
+     own turn from the game — and bosslook on top is still worse: f32 35 ->
+     32 (+5/-8; HP left 10.5 ± 4.5 higher), f47 6 -> 4. It is not these
+     errors; the look ahead does not carry over.
+   - **Act 2 played through** from s3f's f16 saves 586-705 (111; powbonus,
+     the fixed bout, --stop-floor 33): the act 1 boss won 82, the act 2
+     boss reached 46 and won 14. Deaths: the Kaiser Crab 16, the Giant 14,
+     the Insatiable 9, the Demon 7, the Kin 5, and act 2's other fights 36,
+     no one of them more than 2. The game's Crab fights (124): 70 of the 93
+     losses end with both claws up — the Crusher at 74 of 219 on average,
+     the Rocket at 126 of 209, in 5 turns from 65 HP: out-damaged, as the
+     Giant's are.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
