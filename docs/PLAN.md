@@ -690,6 +690,17 @@ states, and only a simulator is fast enough for that.
      screen wait (Staging8) ran out under the eval's load; replayed, it took
      Thunderclap. Other s3f seeds may have lost picks the same way;
      Staging9 on waits 3 minutes.
+   - **What does not carry over from the bout.** With powbonus in the game
+     (ts-*, 2f509a9) f16 197, f32 35, f47 6 of the plain planner's 190 / 31
+     / 4. `bosslook` (0576ba7: those turns compared by planTurn2; the act 3
+     pilot's best, 20.2/5.0/11.1%, f32 in the bout 28.4 -> 30.9%) in the game:
+     f16 197 -> 189 (+13/-21), f32 35 -> 33 (+5/-7; HP left 8.2 ± 4.9 higher),
+     f47 6 -> 4 (+2/-4): not adopted. The weights swept with powbonus
+     (enemyHp 0.25-0.6, strength 1/3, vulnerable 1/2.5, weak 0.6/2, drawn
+     0.5/2.5, engines 1) move the bout's f16, f32 and act 3 by at most ~1-2
+     points. Of the planner changes since the bout matched the game, the
+     powers played (powbonus) are what the game confirms; the learned value,
+     rollouts, the second turn's look and the weights are not.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
