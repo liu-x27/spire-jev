@@ -16,7 +16,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { setIntentAscension } from "./intents.ts";
 import { BARE, BOSSES, type Boss, bout, cardFromId, continueBout, outcomeScore, type Player, SPAR5_TURNS, useBoutPlanner } from "./spar.ts";
-import { planTurn, planTurnValue, topEnds, TURN_WEIGHTS, useValueNet } from "./search.ts";
+import { planTurn, planTurnValue, topEnds, TURN_WEIGHTS, useBossRules, useValueNet } from "./search.ts";
 import { type Card, type State, stateKey } from "./sim.ts";
 import { seeded } from "./turn.ts";
 import { features, loadValueNet } from "./value.ts";
@@ -40,6 +40,8 @@ const { values } = parseArgs({
 });
 if (!values.out) throw new Error("--out is required");
 setIntentAscension(10);
+// The bouts played as the runs play (--flags sleep): the Matriarch left asleep.
+useBossRules({ sleep: true });
 
 const ACT_BOSSES: string[][] = [
   ["VANTOM", "WATERFALL_GIANT", "THE_KIN", "CEREMONIAL_BEAST", "LAGAVULIN_MATRIARCH", "SOUL_FYSH"],
