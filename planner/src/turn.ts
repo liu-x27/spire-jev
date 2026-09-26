@@ -163,6 +163,9 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
       delete ep[k];
     }
     tick(ep, ["WEAK", "VULNERABLE"]);
+    // Sandpit (The Insatiable; IL: SandpitPower.AfterSideTurnStartLate) runs down a stack as the enemies'
+    // turn starts; at 0 it devours the player (hpLoss already takes it all when it stands at 1).
+    if ((ep["SANDPIT"] ?? 0) > 0) ep["SANDPIT"] = Math.max(1, ep["SANDPIT"]! - 1);
     // Intangible goes a stack at the end of the enemies' turn (Soul Fysh's Fade covers one player
     // turn); Nemesis (the Test Subject's third form) puts it on every other turn (IL: NemesisPower).
     const intangible = (ep["INTANGIBLE"] ?? 0) > 0;
@@ -201,7 +204,9 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     const heal = (e.model === "WATERFALL_GIANT" && e.intents.some((i) => i.type === "Heal") ? 15 : 0) + moved.heal;
     // Stone Calendar: 52 to every enemy at the end of turn 7.
     const calendar = (s.turn ?? 1) === 7 ? relic("STONE_CALENDAR", "Damage", 52) : 0;
-    const hp = Math.min(e.maxHp, e.hp + heal) - calendar;
+    // Demise (IL: DemisePower.AfterSideTurnEnd): its amount off the enemy at its turn's end, past block.
+    const demise = Math.max(0, ep["DEMISE"] ?? 0);
+    const hp = Math.min(e.maxHp, e.hp + heal) - calendar - demise;
     const { asleep: _asleep, behindAtStart: _behind, move: _move, ...rest } = e;
     const sleeping = (ep["ASLEEP"] ?? 0) > 0;
     // Its next move's intents as the game will show them: Strength, the player's Vulnerable, its own
@@ -263,7 +268,8 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
   // Chains of Binding (the Queen): the first cards drawn each turn, as many as its amount, are Bound.
   const binding = Math.max(0, powers["CHAINS_OF_BINDING"] ?? 0);
   // Mind Rot (the Knowledge Demon's curse; IL: MindRotPower.ModifyHandDraw): the turn's draw, less its amount.
-  const handDraw = Math.max(0, 5 - Math.max(0, powers["MIND_ROT"] ?? 0));
+  // Pael's Blood (IL: PaelsBlood.ModifyHandDraw): a card more every turn.
+  const handDraw = Math.max(0, 5 + relic("PAELS_BLOOD", "Cards", 1) - Math.max(0, powers["MIND_ROT"] ?? 0));
   // Nostalgia's cards are on top, known; the rest of the pile is in an order not known.
   const top = Math.min(s.onTop ?? 0, draw.length);
   let pile = [...shuffle(draw.slice(0, draw.length - top), rng), ...draw.slice(draw.length - top)];

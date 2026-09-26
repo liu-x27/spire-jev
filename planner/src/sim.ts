@@ -1632,6 +1632,8 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
 
   // Rampage (IL: Rampage.OnPlay): each play adds its Increase to its own Damage, for the combat.
   const after = card.id === "RAMPAGE" ? { ...card, vars: { ...card.vars, Damage: (card.vars["Damage"] ?? 0) + (card.vars["Increase"] ?? 0) } }
+    // Frantic Escape (IL: OnPlay, EnergyCost.AddThisCombat): each play costs it 1 more, for the combat.
+    : card.id === "FRANTIC_ESCAPE" ? { ...card, cost: card.cost + 1 }
     // Bolas, Thrumming Hatchet (IL: BeforeHandDraw): played this turn, back in the hand before the next draw.
     : RETURNING.has(card.id) ? { ...card, returns: true } : card;
   if (card.type === "Power") {

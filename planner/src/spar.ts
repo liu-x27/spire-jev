@@ -90,7 +90,8 @@ export interface Boss {
 /** The act bosses at A10 (docs/a10-combat-research.md; the eight from the IL, scratchpad specs). */
 export const BOSSES: Record<string, Boss> = {
   VANTOM: { model: "VANTOM", hp: 183, powers: { SLIPPERY: 9 } },
-  THE_INSATIABLE: { model: "THE_INSATIABLE", hp: 341, powers: {} },
+  // Liquify Ground first: Sandpit 4 and the Frantic Escapes (scripts.ts), the fight a race with the pit.
+  THE_INSATIABLE: { model: "THE_INSATIABLE", hp: 341, powers: {}, move: "LIQUIFY_GROUND_MOVE" },
   // 250 HP at A8+ (wiki, v0.107.1; our A10 logs agree), Steam Eruption 20 from its opening
   // Pressurize and +3 a move: 17 here, so that turn N starts at 20 + 3(N-2) as in the game.
   WATERFALL_GIANT: { model: "WATERFALL_GIANT", hp: 250, powers: { STEAM_ERUPTION: 17 }, turns: 12 },
@@ -192,7 +193,7 @@ export function relicOpening(me: Player): Player {
     ...me, powers,
     block: me.block + (has("ANCHOR") ? v("ANCHOR", "Block", 10) : 0),
     energy: me.energy + (has("LANTERN") ? v("LANTERN", "Energy", 1) : 0) + tea,
-    hand: me.hand + (has("BAG_OF_PREPARATION") ? v("BAG_OF_PREPARATION", "Cards", 2) : 0),
+    hand: me.hand + (has("BAG_OF_PREPARATION") ? v("BAG_OF_PREPARATION", "Cards", 2) : 0) + (has("PAELS_BLOOD") ? v("PAELS_BLOOD", "Cards", 1) : 0),
     hp: Math.min(me.maxHp, me.hp + (has("BLOOD_VIAL") ? v("BLOOD_VIAL", "Heal", 2) : 0)),
   };
 }

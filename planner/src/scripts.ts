@@ -46,7 +46,7 @@ const add = (p: Record<string, number>, k: string, n: number) => {
   p[k] = (p[k] ?? 0) + n;
 };
 const status = (id: string, vars: Record<string, number>, keywords: string[]): Card => ({
-  id, cost: id === "BECKON" ? 1 : -1, costsX: false, type: "Status", target: "None", keywords, vars, upgrades: 0, locked: false, glows: false,
+  id, cost: id === "BECKON" || id === "FRANTIC_ESCAPE" ? 1 : -1, costsX: false, type: "Status", target: id === "FRANTIC_ESCAPE" ? "Self" : "None", keywords, vars, upgrades: 0, locked: false, glows: false,
 });
 const burn = () => status("BURN", { Damage: 2 }, ["Unplayable"]);
 const torchAlive = (t: EnemyTurn) => t.allies.some((a) => a.alive && a.model === "TORCH_HEAD_AMALGAM");
@@ -106,6 +106,23 @@ export const SCRIPTS: Record<string, Record<string, Move>> = {
     // Intangible 2, a stack gone at this turn's end: 1 on the player's turn that follows.
     FADE_MOVE: { shows: ["Buff"], effect: (t) => add(t.powers, "INTANGIBLE", 1), next: "SCREAM_MOVE" },
     SCREAM_MOVE: { damage: 15, shows: ["Debuff"], effect: (t) => add(t.player, "VULNERABLE", 3), next: "BECKON_MOVE" },
+  },
+  // The Insatiable (IL: TheInsatiable.GenerateMoveStateMachine): Liquify Ground once (Sandpit 4 on
+  // itself; six Frantic Escapes, three shuffled into the draw pile and three into the discard), then
+  // Thrash 9x2, Lunging Bite 31, Salivate (+3 Strength), Thrash 9x2 again, round and round.
+  THE_INSATIABLE: {
+    LIQUIFY_GROUND_MOVE: {
+      shows: ["Buff", "StatusCard"],
+      effect: (t) => {
+        add(t.powers, "SANDPIT", 4);
+        for (let i = 0; i < 6; i++) (i < 3 ? t.draw : t.discard).push(status("FRANTIC_ESCAPE", {}, []));
+      },
+      next: "THRASH_MOVE",
+    },
+    THRASH_MOVE: { damage: 9, hits: 2, next: "LUNGING_BITE_MOVE" },
+    LUNGING_BITE_MOVE: { damage: 31, next: "SALIVATE_MOVE" },
+    SALIVATE_MOVE: { shows: ["Buff"], effect: (t) => add(t.powers, "STRENGTH", 3), next: "THRASH_MOVE_2" },
+    THRASH_MOVE_2: { damage: 9, hits: 2, next: "THRASH_MOVE" },
   },
   KNOWLEDGE_DEMON: {
     // The player's pick is made on the enemies' turn (run-fights combatSelect); Disintegration is
@@ -224,6 +241,7 @@ export const SCRIPTS: Record<string, Record<string, Move>> = {
 export const OPENING: Record<string, string> = {
   KIN_FOLLOWER: "QUICK_SLASH_MOVE", KIN_PRIEST: "ORB_OF_FRAILTY_MOVE", CEREMONIAL_BEAST: "STAMP_MOVE",
   LAGAVULIN_MATRIARCH: "SLEEP_MOVE", SOUL_FYSH: "BECKON_MOVE", KNOWLEDGE_DEMON: "CURSE_OF_KNOWLEDGE_MOVE",
+  THE_INSATIABLE: "LIQUIFY_GROUND_MOVE",
   CRUSHER: "THRASH_MOVE", ROCKET: "TARGETING_RETICLE_MOVE", TEST_SUBJECT: "BITE_MOVE", AEONGLASS: "EBB_MOVE",
   QUEEN: "PUPPET_STRINGS_MOVE", TORCH_HEAD_AMALGAM: "STRONG_TACKLE_MOVE",
 };

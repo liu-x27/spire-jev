@@ -18,9 +18,11 @@ test("a bout with a fourth energy and the relics' Strength does better than the 
 });
 
 test("more HP to lose is more HP kept: a 100-HP Ironclad loses less of the score", () => {
-  const insatiable = BOSSES["THE_INSATIABLE"]!;
-  const bare = sparScore(STARTER, insatiable, 16, 3);
-  const big = sparScore(STARTER, insatiable, 16, 3, { ...BARE, hp: 110, maxHp: 110 });
+  // The Insatiable without its opening move, so without its Sandpit (which devours a starter deck
+  // whatever its HP): the player's HP is what the bout is about.
+  const noPit = { model: "THE_INSATIABLE", hp: 341, powers: {} };
+  const bare = sparScore(STARTER, noPit, 16, 3);
+  const big = sparScore(STARTER, noPit, 16, 3, { ...BARE, hp: 110, maxHp: 110 });
   assert.ok(big > bare, `${big} vs ${bare}`);
 });
 
