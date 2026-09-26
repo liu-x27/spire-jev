@@ -456,7 +456,8 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       const power = hasFlag("powfirst") && bossFight && !exploring ? actions(s).find((x) => x.kind === "play" && s.hand[x.hand]?.type === "Power") : undefined;
       const plan = power ? { actions: [power], score: 0, exact: true, nodes: 0, ms: 0, truncated: false }
         : exploring ? planTurnExplore(s, weights, exploring)
-        : hasFlag("powbonus") && bossFight ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10))
+        : hasFlag("powbonus") && (bossFight || (hasFlag("powelite") && s.enemies.some((e) => e.alive && ELITES.test(e.model))))
+          ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10))
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
