@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { BARE, type Boss, bout, cardFromId, type Player, relicOpening } from "../src/spar.ts";
-import { type Card, drink, endOfTurn, type Enemy, play, type State } from "../src/sim.ts";
+import { type Card, drink, endOfTurn, type Enemy, hpLoss, play, type State } from "../src/sim.ts";
 import { nextTurn, seeded } from "../src/turn.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1, extra: Partial<Card> = {}): Card => ({
@@ -120,6 +120,22 @@ test("self-forming clay: 3 block next turn for every damage past block", () => {
   const n = next({ ...s, enemies: [foe(80, 1, 5, 2)] });
   assert.equal(n.player.block, 9);
   assert.equal(n.player.powers["SELF_FORMING_CLAY"], undefined);
+});
+
+test("tungsten rod: every loss of HP 1 less, hit by hit past block (seed 712's Test Subject)", () => {
+  // 8x3 into 9 block and Plating 3: the game took 10 (4 + 8, less 1 each); without the rod, 12.
+  const claw = (hits: number, block: number, plating: number, relics: string[]) =>
+    hpLoss(state([], relics, { player: { hp: 42, maxHp: 80, block, powers: { PLATING: plating } } }, [foe(136, 1, 8, hits)]));
+  assert.equal(claw(3, 9, 3, ["TUNGSTEN_ROD"]), 10);
+  assert.equal(claw(3, 9, 3, []), 12);
+  // The next turn, 8x4 into 15 and Plating 2: 13 (the game), 15 without.
+  assert.equal(claw(4, 15, 2, ["TUNGSTEN_ROD"]), 13);
+  assert.equal(next(state([], ["TUNGSTEN_ROD"], { player: { hp: 32, maxHp: 80, block: 15, powers: { PLATING: 2 } } }, [foe(43, 1, 8, 4)])).player.hp, 19);
+  // A card's own HP: Hemokinesis costs 1, not 2; a cost of 1 costs nothing, and Rupture gives nothing for it.
+  assert.equal(at(state([HEMO], ["TUNGSTEN_ROD"]), 0, 1).player.hp, 59);
+  const s = at(state([{ ...HEMO, vars: { Damage: 15, HpLoss: 1 } }], ["TUNGSTEN_ROD"], { player: { hp: 60, maxHp: 80, block: 0, powers: { RUPTURE: 1 } } }), 0, 1);
+  assert.equal(s.player.hp, 60);
+  assert.equal(s.player.powers["STRENGTH"], undefined);
 });
 
 test("nunchaku: every 10th attack, counted across fights, an energy; the count goes on", () => {
