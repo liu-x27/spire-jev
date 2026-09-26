@@ -768,6 +768,18 @@ states, and only a simulator is fast enough for that.
      The base's act 2 elite deaths (12, most from 16-60% HP) had the elite as
      the map's only way on by then: the route was taken at higher HP and the
      hallway fights drained it. Act 2 is attrition in ordinary fights.
+   - **Act 2's attrition** (the other session, a2-base against Spire Codex's
+     v0.111.0 A10 Ironclad runs, 2,418): the bot loses 1.5-2 times the
+     humans' HP in every act 2 hallway fight (Exoskeleton 17.8% vs 12.1%,
+     Tunneler 17.4 vs 11.1, Myte 27.4 vs 14.1, Hunter Killer 33.2 vs 20.8,
+     Chomper 28.8 vs 18.4) while killing as fast: defence, not damage. The
+     winners' decks hold ~14 skills to ours ~8. Two halves tested on act 2
+     played through: the play (the other session's hallhp / hallhp2,
+     be66b84: an ordinary fight's HP counts 1.5 / 2 times) and the deck
+     (`sparhall`, 173b548: spar weighs a change by the HP kept in act 2's
+     ten commonest ordinary fights too, bouts built from our own logs by
+     tools/hallways.cjs; with s3f's f16 decks they lose Tunneler 22.8% of max
+     HP, Exoskeletons 15.7, Myte 29.9, Hunter Killer 45.2, Chomper 44.6).
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
