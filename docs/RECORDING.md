@@ -1,5 +1,49 @@
 # Recording the bot on screen
 
+## Seed 849: A10, floor 49 of 49, a win
+
+![Floors 48 and 49: the bot beats Aeonglass with 3 HP left, then Test Subject (2×)](media/a10-849-floor48-49-2x.gif)
+
+Ironclad, ascension 10, seed JEV00849, on the development rules (`--choices rules2 --flags
+pathdp,restbudget,potions2,sleep,spar,spar3`, newer than the code published here, with their Visual
+build), replayed from the run's floor-32 save (`record.ts --resume … --stop-floor 50`). Its boss
+fights, HP going in → left at the end (of 100): act 2's Crusher and Rocket 94 → 67, Aeonglass 100
+→ 3, Test Subject 34 → 18 (Burning Blood heals 6 after each fight, Pantograph 25 at a boss's start).
+The game's closing event then takes the HP to 0, which is why the last card reads 0.
+
+A narrow win, and not a win rate: headless, 1 of 97 floor-32 saves on this code was won, this
+one. The recording is that headless run play for play: all seven fights from floor 33 on, every
+card and potion in order and the HP after each, match the headless replay (`bench-prior32-base`).
+
+- [`media/a10-849-run.mp4`](media/a10-849-run.mp4): the replay from floor 32, 2 min 52 s for 8.9
+  minutes of play, fights at game speed and the rest 4×. 960 wide, 14 MB.
+- [`media/a10-849-floor48-49-2x.webp`](media/a10-849-floor48-49-2x.webp): the GIF's two fights as
+  an animated WebP.
+
+### The progress video: seed 849, floors 1 to 49
+
+[`media/spire-jev-849-progress-zh.mp4`](media/spire-jev-849-progress-zh.mp4) (in Chinese, 5 min 23 s,
+1080p, 48 MB) ends with seed 849's whole run in the game's Chinese interface
+(`SPIRE_JEV_LANGUAGE=zhs`). The win is two versions of the code joined at a save, and so is the
+recording, each part in its own frozen worktree with its own Visual build:
+
+- **Floors 1–32**: the original run, on the code of the development evaluation that played it and
+  copied its floor-32 save (`spar3` and the card rules). The original's log has no card reward on
+  floor 6; the game's history shows that floor's gold and potion taken and none of its three
+  cards. Recorded on the same code, the bot took Thunderclap there and the run went another way.
+  In the evaluation, six games at once, the game's automated-play framework had answered that
+  screen itself when its screen wait ran out (spar's bouts run on the rewards screen; later bridge
+  builds wait longer). The recording skips that one card reward, by a switch used for it alone.
+  With that, its 18 fights and the log's other 72 decisions up to floor 32 match the original, and
+  it enters floor 32 with the save's 58 of 94 HP, 295 gold and 26 cards.
+- **Floors 32–49**: the floor-32 save on the rules that won it, as above; all seven fights match the
+  headless replay and the English recording.
+
+The rest of the video was made outside this repository: HTML scenes drawn frame by frame (Electron,
+offscreen), composed with the recording in ffmpeg. In the run, the bosses play at game speed or
+1.5–2×, other fights at 4×, everything else at 16×. HP in the captions is the fight's end, before
+Burning Blood.
+
 ## Seed 497: A10, floor 49 of 49, one fight from a win
 
 ![Floors 48 and 49: the bot beats Aeonglass, then dies to Test Subject (2×)](media/a10-497-floor48-49-2x.gif)

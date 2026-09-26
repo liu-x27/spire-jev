@@ -5,6 +5,7 @@
  *
  *   node src/record.ts --seed 612 [--ascension 0] [--name a0-612] [--port 47190] [--fast fast]
  *                      [--choices rules2] [--flags pathdp,restbudget,potions2,sleep] [--speed 1] [--gif-floors 16]
+ *                      [--resume runs/<library>/<save> --stop-floor 50]   (from a room's save, as bench.ts plays it)
  *
  * The run is the same run as headless on the same seed and settings (eval.ts), so a seed can be
  * picked from an eval and recorded after. Everything lands in recordings/<name>/ (a<ascension>-<seed>
@@ -28,6 +29,9 @@ const { values } = parseArgs({
     choices: { type: "string", default: "rules2" },
     flags: { type: "string", default: "pathdp,restbudget,potions2,sleep" },
     "max-fights": { type: "string", default: "99" },
+    // A run resumed from a room's save (bench.ts's libraries), to its stop floor, as the bench played it.
+    resume: { type: "string" },
+    "stop-floor": { type: "string", default: "999" },
     speed: { type: "string", default: "1" },
     "gif-floors": { type: "string" },
     "no-media": { type: "boolean", default: false },
@@ -58,6 +62,7 @@ const run = spawnSync(
   [
     path.join(here, "src", "run-fights.ts"), "--runs", "1", "--seed", values.seed, "--port", values.port, "--cards", "take",
     "--choices", values.choices, "--ascension", values.ascension, "--flags", values.flags, "--max-fights", values["max-fights"],
+    "--stop-floor", values["stop-floor"], ...(values.resume ? ["--resume", path.resolve(values.resume)] : []),
     "--out", path.join(dir, "run.json"),
   ],
   { cwd: here, env, stdio: "inherit" },
