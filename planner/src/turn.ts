@@ -222,8 +222,14 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
       ? moveIntents(e.model, move, ep["STRENGTH"] ?? 0, { vulnerable: (powers["VULNERABLE"] ?? 0) > 0, weak: (ep["WEAK"] ?? 0) > 0, behind }, hits)
       : sleeping ? [{ type: "Sleep", damage: 0, hits: 0 }] : foresee(e, turn);
     if (move !== undefined) shownWith.set(e.id, (powers["VULNERABLE"] ?? 0) > 0);
+    // Withering Presence (Aeonglass): CardsLeft counts the cards played across turns (sim.ts, after a
+    // card), so the next turn starts with what this one's plays left of it; the bout had it back at 6
+    // every turn, a Wither only for a sixth card in one turn (the game's next hands: 1-3 cards more).
+    const wp = (ep["WITHERING_PRESENCE"] ?? 0) > 0 ? rest.powerVars?.["WITHERING_PRESENCE"] ?? {} : undefined;
+    const withering = wp ? { ...rest.powerVars, WITHERING_PRESENCE: { ...wp, CardsLeft: ((((wp["CardsLeft"] ?? 6) - s.played - 1) % 6) + 6) % 6 + 1 } } : undefined;
     return {
       ...rest, powers: ep, block: sleepBlock, hp: Math.max(0, hp), alive: hp > 0,
+      ...(withering ? { powerVars: withering } : {}),
       intents,
       ...(move !== undefined ? { move } : {}),
       ...(move !== undefined && behind ? { behindAtStart: true } : {}),

@@ -70,6 +70,15 @@ test("ringing: one card a turn", () => {
   assert.equal(plays(at(s, 1)), 0);
 });
 
+test("withering presence: the cards left until a Wither carry over to the next turn", () => {
+  const glass = { ...foe("AEONGLASS", 400, { WITHERING_PRESENCE: 6 }, 1, 0), intents: [{ type: "Buff", damage: 0, hits: 0 }], powerVars: { WITHERING_PRESENCE: { CardsLeft: 3 } } };
+  const left = (played: number) => nextTurn({ ...state([], [glass]), played }, seeded(1), () => [])!.enemies[0]!.powerVars?.["WITHERING_PRESENCE"]?.["CardsLeft"];
+  assert.equal(left(0), 3);
+  assert.equal(left(2), 1);
+  assert.equal(left(3), 6);
+  assert.equal(left(4), 5);
+});
+
 test("ringing: the turn after the cry, not the one after that", () => {
   const s = state([STRIKE, DEFEND, DEFEND], [{ ...foe("CEREMONIAL_BEAST", 100, {}, 1, 0), move: "BEAST_CRY_MOVE", intents: [{ type: "Debuff", damage: 0, hits: 0 }] }]);
   const cried = nextTurn(s, seeded(1), () => [])!;
