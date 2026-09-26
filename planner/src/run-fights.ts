@@ -37,7 +37,7 @@ import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTu
 import { learnCard } from "./spar.ts";
 import { loadValueNet } from "./value.ts";
 import { nextTurn, seeded } from "./turn.ts";
-import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
+import { type Action, actions, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
 
 type Policy = "planner" | "naive";
 
@@ -450,7 +450,12 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       // bossroll: a boss fight's turn by rollouts (search.ts planTurnRoll). The act 3 research's pilot:
       // A10 winners' decks beat their first act 3 boss 11.7% of 480 bouts with planTurn, 15.6% with
       // two turns of rollouts (18.3% against 10.8% on 30 decks; four turns and more samples 17.5%).
-      const plan = exploring ? planTurnExplore(s, weights, exploring)
+      // powfirst: a boss fight's Power cards played as soon as the hand can (a probe: the planner left
+      // them in hand — an A10 winner's deck against Aeonglass kept Demon Form, Feel No Pain and Dark
+      // Embrace all fight; in spar's bout, played first, the winners' decks won 12.3% -> 18.3%).
+      const power = hasFlag("powfirst") && bossFight && !exploring ? actions(s).find((x) => x.kind === "play" && s.hand[x.hand]?.type === "Power") : undefined;
+      const plan = power ? { actions: [power], score: 0, exact: true, nodes: 0, ms: 0, truncated: false }
+        : exploring ? planTurnExplore(s, weights, exploring)
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
