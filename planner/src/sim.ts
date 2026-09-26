@@ -769,8 +769,7 @@ function exhaustCard(s: State, card: Card): void {
 
 /** HP a card costs the player (Offering, Hemokinesis, Brand): Rupture turns it into Strength. */
 function cardHpLoss(s: State, n: number): void {
-  if (n <= 0) return;
-  loseHp(s, n);
+  if (n <= 0 || loseHp(s, n) <= 0) return;
   if (has(s.player, "RUPTURE")) addPower(s.player, "STRENGTH", s.player.powers["RUPTURE"] ?? 1);
   // Inferno (IL: InfernoPower.AfterDamageReceived): HP lost on the player's own turn hits every
   // enemy for its amount.
@@ -791,8 +790,9 @@ function thorns(s: State, e: Enemy): void {
  * The player loses HP during the turn. A death is undone by a second life
  * if there is one (the game's ShouldDie hooks): the fight goes on at what it leaves.
  */
-function loseHp(s: State, n: number): void {
-  if (n <= 0) return;
+function loseHp(s: State, n0: number): number {
+  const n = n0 - rodCut(s);
+  if (n <= 0) return 0;
   s.player.hp -= n;
   s.lostHp = true;
   s.hurt = (s.hurt ?? 0) + 1;
@@ -805,6 +805,7 @@ function loseHp(s: State, n: number): void {
   // Self-Forming Clay (IL: AfterDamageReceived): 3 block next turn for every such damage.
   if (s.relics.includes("SELF_FORMING_CLAY")) addPower(s.player, "SELF_FORMING_CLAY", relicVar(s, "SELF_FORMING_CLAY", "BlockNextTurn", 3));
   redSkull(s);
+  return n;
 }
 
 export type Reviver = "FAIRY_IN_A_BOTTLE" | "LIZARD_TAIL";
@@ -1701,7 +1702,12 @@ export function endOfTurn(s0: State): State {
 
 /** What the enemies' intents will do to the player at the end of this turn. */
 export function incomingDamage(s: State): number {
-  let total = 0;
+  return incomingHits(s).reduce((a, n) => a + n, 0);
+}
+
+/** The enemies' hits at the end of this turn, one by one in the order they land. */
+export function incomingHits(s: State): number[] {
+  const hits: number[] = [];
   for (const e of s.enemies) {
     // The shown damage already includes the enemy's strength and weak and the
     // player's vulnerable as they stood when it was computed; weak applied to
@@ -1714,7 +1720,7 @@ export function incomingDamage(s: State): number {
     const cut = (per: number) => Math.floor(Math.floor(weakened ? per * 0.75 : per) * colossus);
     if (!e.alive) {
       // A killed Waterfall Giant's DeathBlow, at the end of the turn after its stun.
-      if (e.blowNow && (e.deathBlow ?? 0) > 0) total += cut(e.deathBlow!);
+      if (e.blowNow && (e.deathBlow ?? 0) > 0) hits.push(cut(e.deathBlow!));
       continue;
     }
     const strength = (e.powers["STRENGTH"] ?? 0) - e.startStrength;
@@ -1724,11 +1730,15 @@ export function incomingDamage(s: State): number {
     const turned = (per: number) => (back && !e.behindAtStart ? Math.floor(per * 1.5) : !back && e.behindAtStart ? Math.ceil(per / 1.5) : per);
     for (const i of e.intents) {
       if (i.type !== "Attack" && i.type !== "DeathBlow") continue;
-      total += cut(turned(Math.max(0, i.damage + strength))) * Math.max(1, i.hits);
+      const per = cut(turned(Math.max(0, i.damage + strength)));
+      for (let h = 0; h < Math.max(1, i.hits); h++) hits.push(per);
     }
   }
-  return total;
+  return hits;
 }
+
+/** Tungsten Rod (IL: ModifyHpLostAfterOsty): every loss of HP 1 less, never below 0. */
+const rodCut = (s: State) => (s.relics.includes("TUNGSTEN_ROD") ? relicVar(s, "TUNGSTEN_ROD", "HpLossReduction", 1) : 0);
 
 /**
  * Block the player will have when the enemies attack: Plating adds its amount
@@ -1761,7 +1771,22 @@ export function hpLoss(s0: State): number {
   // 6 each, unblockable.
   const mantle = s.player.powers["CRIMSON_MANTLE"] ? s.player.powerVars?.["CRIMSON_MANTLE"]?.["SelfDamage"] ?? 1 : 0;
   const beckons = s.hand.reduce((a, c) => a + (c.id === "BECKON" ? c.vars["HpLoss"] ?? 6 : 0), 0);
-  return Math.max(0, incomingDamage(s) + constrict + statuses + disintegration - endOfTurnBlock(s)) + mantle + beckons;
+  const rod = rodCut(s);
+  if (rod <= 0) return Math.max(0, incomingDamage(s) + constrict + statuses + disintegration - endOfTurnBlock(s)) + mantle + beckons;
+  // Tungsten Rod takes its amount off every hit that gets past block, so the hits go one at a time:
+  // the end of the turn's own damage into block first, then the enemies'.
+  let block = endOfTurnBlock(s);
+  let lost = 0;
+  const statusHits = s.hand.map((c) => (c.type === "Status" ? c.vars["Damage"] ?? 0 : 0));
+  const beckonHits = s.hand.map((c) => (c.id === "BECKON" ? c.vars["HpLoss"] ?? 6 : 0));
+  for (const n of [...statusHits, disintegration, constrict, ...incomingHits(s)]) {
+    if (n <= 0) continue;
+    const absorbed = Math.min(block, n);
+    block -= absorbed;
+    lost += Math.max(0, n - absorbed - rod);
+  }
+  for (const n of [mantle, ...beckonHits]) if (n > 0) lost += Math.max(0, n - rod);
+  return lost;
 }
 
 /**
