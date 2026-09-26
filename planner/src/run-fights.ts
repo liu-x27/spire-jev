@@ -33,7 +33,7 @@ import { type ChoiceState, restoreChoiceState, saveChoiceState } from "./choices
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnRoll, planTurnValue, type Rollouts, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
 import { learnCard } from "./spar.ts";
 import { loadValueNet } from "./value.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -456,6 +456,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       const power = hasFlag("powfirst") && bossFight && !exploring ? actions(s).find((x) => x.kind === "play" && s.hand[x.hand]?.type === "Power") : undefined;
       const plan = power ? { actions: [power], score: 0, exact: true, nodes: 0, ms: 0, truncated: false }
         : exploring ? planTurnExplore(s, weights, exploring)
+        : hasFlag("powbonus") && bossFight ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10))
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);

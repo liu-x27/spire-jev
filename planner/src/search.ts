@@ -660,6 +660,26 @@ export function planTurnExplore(start: State, w: Weights, rng: () => number, p =
 
 const actionKey = (a: Action) => (a.kind === "end" ? "end" : a.kind === "potion" ? `p${a.slot}:${a.target ?? ""}` : `c${a.hand}:${a.target ?? ""}`);
 
+/**
+ * --flags powbonus: a Power the hand can play goes first when the turn planned after it scores within
+ * `bonus` (HP, the evaluation's unit) of the planner's own best line. One turn's evaluation does not
+ * see what a power gives the turns after, so the planner left them in hand (an A10 winner's deck kept
+ * Demon Form, Feel No Pain and Dark Embrace all fight against Aeonglass); played blind (powfirst) one
+ * costs a turn's block.
+ */
+export function planTurnPowers(start: State, w: Weights, bonus: number, maxNodes = 20_000, inner: (s: State) => Plan = (s) => planTurn(s, w, maxNodes)): Plan {
+  const best = inner(start);
+  if (best.score >= WIN / 2) return best;
+  let pick: { a: Action; score: number } | undefined;
+  for (const a of actions(start)) {
+    if (a.kind !== "play" || start.hand[a.hand]?.type !== "Power") continue;
+    if (best.actions[0] && actionKey(best.actions[0]) === actionKey(a)) return best;
+    const after = inner(play(start, a));
+    if (after.score + bonus >= best.score && (!pick || after.score > pick.score)) pick = { a, score: after.score };
+  }
+  return pick ? { ...best, actions: [pick.a], score: pick.score } : best;
+}
+
 export function planTurn(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
   const t0 = performance.now();
   const { best, nodes, truncated } = explore(start, w, maxNodes, 0);
