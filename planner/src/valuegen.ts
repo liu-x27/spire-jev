@@ -17,7 +17,7 @@ import { parseArgs } from "node:util";
 import { setIntentAscension } from "./intents.ts";
 import { BARE, BOSSES, type Boss, bout, cardFromId, continueBout, outcomeScore, type Player, SPAR5_TURNS, useBoutPlanner } from "./spar.ts";
 import { planTurn, planTurnValue, topEnds, TURN_WEIGHTS, useBossRules, useValueNet } from "./search.ts";
-import { type Card, type State, stateKey } from "./sim.ts";
+import { actions, type Card, type State, stateKey } from "./sim.ts";
 import { seeded } from "./turn.ts";
 import { features, loadValueNet } from "./value.ts";
 
@@ -36,6 +36,9 @@ const { values } = parseArgs({
     mix: { type: "string", default: "1" },
     // Leaves turned down each turn, played out for their own labels.
     alts: { type: "string", default: "2" },
+    // A step's chance of playing a Power the hand can play before planning (the planner leaves them
+    // in hand, so the net never saw what they are worth).
+    "explore-powers": { type: "string", default: "0" },
   },
 });
 if (!values.out) throw new Error("--out is required");
@@ -87,8 +90,17 @@ const net = values.policy === "value" ? loadValueNet(values.net) : undefined;
 if (values.policy === "value") {
   if (!net) throw new Error("--policy value needs data/value-net.json (or --net)");
   useValueNet(net, Number(values.mix));
-  useBoutPlanner((s) => planTurnValue(s, TURN_WEIGHTS, 3000));
-} else useBoutPlanner((s) => planTurn(s, TURN_WEIGHTS, 3000));
+}
+const plan = values.policy === "value" ? (s: State) => planTurnValue(s, TURN_WEIGHTS, 3000) : (s: State) => planTurn(s, TURN_WEIGHTS, 3000);
+const explorePowers = Number(values["explore-powers"]);
+const exploreRng = seeded(Number(values.seed) * 104729);
+useBoutPlanner((s) => {
+  if (explorePowers > 0 && exploreRng() < explorePowers) {
+    const a = actions(s).find((x) => x.kind === "play" && s.hand[x.hand]?.type === "Power");
+    if (a) return { actions: [a], score: 0, exact: true, nodes: 0, ms: 0, truncated: false };
+  }
+  return plan(s);
+});
 
 fs.mkdirSync(path.dirname(path.resolve(values.out)), { recursive: true });
 const out = fs.openSync(path.resolve(values.out), "w");
