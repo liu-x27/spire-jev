@@ -711,6 +711,15 @@ states, and only a simulator is fast enough for that.
      decks against her in the pilot: 12/160 -> 5/160 bouts won (the game 1/24);
      with powbonus 18/160 -> 6/160 (more cards played cost the bout nothing).
      Act 3 pilot now: planTurn 10.4/2.7/5.2%, powbonus 15.2/3.8/4.9.
+   - The next turn from the game's checks (50307a9): a Ritual on the player
+     (25 turns a Strength short), Toasty Mittens (54: v0.110's exhaust from
+     the hand, +1 Strength), the Waterfall Giant's Debuff = Weak 1 on turns 2
+     and 7 (73 turns). With the Weak the bout's Giant is 56.0% -> 46.5% (8
+     shuffles; the game 56%): what it had right was two errors cancelling. The
+     game's Giant fights drink on turn 1 in 46 of 50 (Attack, Power,
+     Colorless, Liquid Memories, Touch of Insanity: cards the bout cannot
+     make), the Giant at 206.5 after it; the 4 without, 218.3 — the bout's
+     219. The potions that make cards are what the bout lacks now.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
