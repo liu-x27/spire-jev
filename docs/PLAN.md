@@ -654,6 +654,27 @@ states, and only a simulator is fast enough for that.
      +19/-8 over the 180 paired starts. The runs die at act 1's boss (17-26 of
      90: the Giant 8-12), in act 2 before its boss (26-29: Entomancer 5-7,
      Decimillipede, the Bowlbug trio) and at it (22-30: the Crab 12-17).
+   - **The planner leaves powers in hand.** An A10 winner's deck (Spire Codex,
+     5 turns and 21 HP against Aeonglass) in the bout kept Demon Form, Feel No
+     Pain, Hellraiser and Dark Embrace all fight: one turn's evaluation does
+     not see what a power gives the turns after. Played first whenever the
+     hand can (`powfirst`, 2dc7636, a probe) the act 3 pilot's winners' decks
+     win 12.3% -> 18.3% of bouts (the learned value at its best: 18.3%). In the
+     game, paired on the same saves: f16 190 -> 197 (+8/-1, p 0.039; every act
+     1 boss even or up), f32 31 -> 34 (+5/-2; the enemies' HP left at the end
+     10.5 ± 3.9 lower), f47 4 -> 5 (+2/-1) and 849's floor 49 won — the bench's
+     first (Aeonglass 83 -> 27, the Test Subject in 4 turns; base lost it at 61
+     HP). +15/-4 over 404 fights. Blind, a power costs a turn's block
+     (Hellraiser before Flame Barrier into 30); `powbonus` (5e6637d,
+     planTurnPowers) plays one when the turn after it scores within 10 of the
+     best line: in the pilot 17.7/4.6/9.0% (winners/losers/ours) against
+     powfirst's 18.3/4.4/8.0. Training the net on bouts that play powers at
+     random (valuegen --explore-powers 0.5, v4) did worse than v3 (15.0%).
+     The other session's package test with pow10 in the bout: standalone
+     powers score for the next boss (Demon Form +5.5 to +36.6, Inflame, Barricade;
+     the bout's Demon Form matches the game in 113 fights, 571 turn checks),
+     the exhaust engine (FNP, Dark Embrace, Burning Pact) does not on these
+     decks, which lack its enablers.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
