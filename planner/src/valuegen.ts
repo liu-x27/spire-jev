@@ -32,6 +32,8 @@ const { values } = parseArgs({
     libraries: { type: "string", default: "saves-f47-all,saves-vet-s3f,saves-vet-dev,saves-vet-conf,saves-vet-spar" },
     seed: { type: "string", default: "1" },
     net: { type: "string" },
+    // --policy value: the net's share added to the evaluation (0: the net alone).
+    mix: { type: "string", default: "1" },
   },
 });
 if (!values.out) throw new Error("--out is required");
@@ -80,7 +82,7 @@ if (values.human) {
 const net = values.policy === "value" ? loadValueNet(values.net) : undefined;
 if (values.policy === "value") {
   if (!net) throw new Error("--policy value needs data/value-net.json (or --net)");
-  useValueNet(net);
+  useValueNet(net, Number(values.mix));
   useBoutPlanner((s) => planTurnValue(s, TURN_WEIGHTS, 3000));
 } else useBoutPlanner((s) => planTurn(s, TURN_WEIGHTS, 3000));
 

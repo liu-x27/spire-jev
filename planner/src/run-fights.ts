@@ -33,8 +33,9 @@ import { type ChoiceState, restoreChoiceState, saveChoiceState } from "./choices
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnRoll, type Rollouts, safetyMargin, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnRoll, planTurnValue, type Rollouts, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
 import { learnCard } from "./spar.ts";
+import { loadValueNet } from "./value.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
 
@@ -445,6 +446,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       // A10 winners' decks beat their first act 3 boss 11.7% of 480 bouts with planTurn, 15.6% with
       // two turns of rollouts (18.3% against 10.8% on 30 decks; four turns and more samples 17.5%).
       const plan = exploring ? planTurnExplore(s, weights, exploring)
+        : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);
@@ -844,6 +846,13 @@ async function main(): Promise<void> {
   setFlags(values.flags.split(","));
   useGiantRules(hasFlag("wgpot"), hasFlag("wghp"));
   useBossRules({ sleep: hasFlag("sleep") });
+  // bossvalue: a boss fight's lines by the evaluation plus the learned value (value.ts; the net in
+  // SPIRE_JEV_VALUE_NET or data/value-net.json, its share SPIRE_JEV_VALUE_MIX, 1 by default).
+  if (hasFlag("bossvalue")) {
+    const net = loadValueNet(process.env["SPIRE_JEV_VALUE_NET"]);
+    if (!net) throw new Error("--flags bossvalue needs data/value-net.json");
+    useValueNet(net, Number(process.env["SPIRE_JEV_VALUE_MIX"] ?? 1));
+  }
   ascension = Number(values.ascension);
   setIntentAscension(ascension);
   usePotions = useRules;
