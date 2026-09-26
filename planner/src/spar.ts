@@ -22,7 +22,7 @@ import { setIntentAscension } from "./intents.ts";
 import { expectedIntents, type Plan, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
 import { moveIntents } from "./scripts.ts";
-import { type Card, cardOf, type Enemy, formsToCome, play, type Potion, redSkull, relicDamage, setKnownDraws, type State } from "./sim.ts";
+import { type Card, cardOf, drink, type Enemy, formsToCome, play, type Potion, redSkull, relicDamage, setKnownDraws, type State } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
 // SPIRE_JEV_CATALOG: another catalogue (an older one, to replay the choices it made).
@@ -269,10 +269,12 @@ function playOut(start: State, rng: () => number, t0: number, turns: number, ful
     const turnStart = s;
     for (let step = 0; step < 15; step++) {
       const a = boutPlanner(s).actions[0];
-      if (!a || a.kind !== "play") break;
+      // A potion the plan drinks is drunk (it once ended the turn: the run's own belt, spar3's, cost
+      // the bout the turn it was meant to win).
+      if (!a || a.kind === "end") break;
       setKnownDraws(true);
       try {
-        s = play(s, a);
+        s = a.kind === "potion" ? drink(s, a) : play(s, a);
       } finally {
         setKnownDraws(false);
       }

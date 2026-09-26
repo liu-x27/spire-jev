@@ -3,7 +3,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { setIntentAscension } from "../src/intents.ts";
-import { BARE, BOSSES, learnCard, modelledBoss, pairScore, sparScore, unknownCards } from "../src/spar.ts";
+import { BARE, BOSSES, bout, cardFromId, learnCard, modelledBoss, pairScore, sparScore, unknownCards } from "../src/spar.ts";
+import { seeded } from "../src/turn.ts";
 import { chooseCardReward, chooseRest, chooseSelect, chooseShop, chooseUpgrade, setActBoss, setFlags } from "../src/choices.ts";
 import type { CardObs, LegalAction, Observation } from "../src/obs.ts";
 
@@ -24,6 +25,14 @@ test("more HP to lose is more HP kept: a 100-HP Ironclad loses less of the score
   const bare = sparScore(STARTER, noPit, 16, 3);
   const big = sparScore(STARTER, noPit, 16, 3, { ...BARE, hp: 110, maxHp: 110 });
   assert.ok(big > bare, `${big} vs ${bare}`);
+});
+
+test("a potion the bout's plan drinks is drunk, not the turn's end", () => {
+  const beast = BOSSES["CEREMONIAL_BEAST"]!;
+  const bomb = { slot: 0, id: "FIRE_POTION", target: "AnyEnemy", usage: "CombatOnly", vars: { Damage: 999 } };
+  const r = bout(STARTER.map(cardFromId).filter((c) => c !== undefined), beast, seeded(1), 8, { ...BARE, potions: [bomb], potionSlots: 3 });
+  assert.equal(r.won, true);
+  assert.equal(r.turns, 1);
 });
 
 test("a boss spar has no model of is no boss, not another act's", () => {
