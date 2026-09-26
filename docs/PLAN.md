@@ -678,6 +678,18 @@ states, and only a simulator is fast enough for that.
      the bout's Demon Form matches the game in 113 fights, 571 turn checks),
      the exhaust engine (FNP, Dark Embrace, Burning Pact) does not on these
      decks, which lack its enablers.
+   - The evaluation counted temporary Strength (Setup Strike, Flex Potion,
+     Reptile Trinket) as kept (2f509a9: Setup Strike over a second Defend into
+     11x4); small in the bout (with powbonus f16 71.0 -> 71.3%, f32 27.8 ->
+     28.4%). On the winners' decks whose every card the bout knows (a third
+     hold Wish, Alchemize, Apparition...): planTurn 12.2%, powbonus 14.6%,
+     their losers' 0.4 / 1.8% — the bout tells decks apart; the planner is
+     still far from the humans who won with them.
+   - **s3f's choices have a hole**: the 849 recording (the video session)
+     found s3f's floor 6 card reward never seen by the bot — AutoSlay's 30 s
+     screen wait (Staging8) ran out under the eval's load; replayed, it took
+     Thunderclap. Other s3f seeds may have lost picks the same way;
+     Staging9 on waits 3 minutes.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
