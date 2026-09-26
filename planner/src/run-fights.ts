@@ -457,7 +457,10 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       const plan = power ? { actions: [power], score: 0, exact: true, nodes: 0, ms: 0, truncated: false }
         : exploring ? planTurnExplore(s, weights, exploring)
         : hasFlag("powbonus") && (bossFight || (hasFlag("powelite") && s.enemies.some((e) => e.alive && ELITES.test(e.model))))
-          ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10))
+          // bosslook: the turns compared by planTurn2 (the next turn over its likely draws) in boss fights.
+          // Act 3 pilot: powbonus 17.9/4.8/9.0% (winners/losers/ours), planTurn2 16.7/4.4/9.0, both 20.2/5.0/11.1.
+          ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 20_000,
+            hasFlag("bosslook") && bossFight ? (st) => planTurn2(st, weights) : undefined)
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
