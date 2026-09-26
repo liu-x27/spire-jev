@@ -17,6 +17,18 @@ here (`--flags pathdp,restbudget,potions2,sleep,spar,spar3`). The replay from fl
 [docs/media/a10-849-run.mp4](docs/media/a10-849-run.mp4) (2 min 52 s for 8.9 minutes of play;
 its last card reads 0 HP because the game's closing event takes it after the final boss).*
 
+[![A progress video, in Chinese: four days from the first headless game to the first A10 win, and seed 849's whole run, floors 1 to 49](docs/media/spire-jev-849-progress-poster.jpg)](docs/media/spire-jev-849-progress-zh.mp4)
+
+*A progress video, in Chinese (5 min 23 s, 1080p, 48 MB):
+[docs/media/spire-jev-849-progress-zh.mp4](docs/media/spire-jev-849-progress-zh.mp4). The four days
+from the first headless game to the first A10 win, the results on fresh seeds, where the limit
+turned out to be (the simulator more than the planner), the changes kept and the ones dropped, and
+seed 849's whole run, floors 1 to 49, in the game's Chinese interface. Its figures are from the
+development work since this code, not yet in this repository. The run is two recordings joined
+where the win was: floors 1–32 as the evaluation that saved floor 32 played them, floors 32–49 from
+that save on the newer rules. How, and the one card reward the first had to skip as the original
+did: [docs/RECORDING.md](docs/RECORDING.md).*
+
 ![Floors 48 and 49 at ascension 10: the bot beats Aeonglass, then dies to Test Subject, one fight from a win (2×)](docs/media/a10-497-floor48-49-2x.gif)
 
 *Ascension 10, seed 497, the last two floors: one fight from a win, and not a win. With the
