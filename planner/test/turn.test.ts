@@ -83,3 +83,22 @@ test("seed 17's Vantom, Dismember coming and no block in hand: Demon Form (it wo
   }
   assert.ok(played.includes("DEMON_FORM"), played.join(" "));
 });
+
+test("a Ritual on the player gives its Strength every turn", () => {
+  const s = state([], 0, [foe(100, 0)]);
+  s.player.powers = { RITUAL: 2, STRENGTH: 1 };
+  assert.equal(nextTurn(s, seeded(1), () => [])!.player.powers["STRENGTH"], 3);
+});
+
+test("the Waterfall Giant's Debuff leaves the player Weak 1", () => {
+  const giant: Enemy = { ...foe(200, 16), model: "WATERFALL_GIANT", intents: [{ type: "Attack", damage: 16, hits: 1 }, { type: "Debuff", damage: 0, hits: 0 }] };
+  assert.equal(nextTurn(state([], 0, [giant]), seeded(1), () => [])!.player.powers["WEAK"], 1);
+});
+
+test("Toasty Mittens: the turn's start exhausts a card of the hand and gives 1 Strength", () => {
+  const s = { ...state([], 0, [foe(100, 0)]), relics: ["TOASTY_MITTENS"] };
+  const next = nextTurn(s, seeded(1), () => [])!;
+  assert.equal(next.hand.length, 4);
+  assert.equal(next.exhaust.length, 1);
+  assert.equal(next.player.powers["STRENGTH"], 1);
+});

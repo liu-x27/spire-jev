@@ -91,6 +91,9 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     return s.relics.includes(id) && (seen !== undefined ? (seen + 1) % period === 0 : turn % period === 0);
   };
   if (powers["DEMON_FORM"]) powers["STRENGTH"] = (powers["STRENGTH"] ?? 0) + powers["DEMON_FORM"]!;
+  // A Ritual on the player (Mazaleth's Gift): its Strength every turn, as an enemy's (the game's next
+  // turns: Strength one over the prediction 25 times in ts-*).
+  if (powers["RITUAL"]) powers["STRENGTH"] = (powers["STRENGTH"] ?? 0) + powers["RITUAL"]!;
   const energy = (s.maxEnergy ?? 3) + (powers["ENERGY_NEXT_TURN"] ?? 0)
     + (turn === 2 ? relic("CANDELABRA", "Energy", 2) : 0) + (turn === 3 ? relic("CHANDELIER", "Energy", 3) : 0)
     + (every("HAPPY_FLOWER") ? relic("HAPPY_FLOWER", "Energy", 1) : 0) + (s.relics.includes("BREAD") ? 1 : 0)
@@ -200,6 +203,9 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     };
     const move = playMove(e, moved);
     if (Object.keys(moved.allyPowers).length > 0) gifts.push({ from: e.id, powers: moved.allyPowers });
+    // The Waterfall Giant's Debuff (turns 2 and 7): Weak 1 on the player (ts-f16: 73 of its fights' next
+    // turns had it, the bout none).
+    if (e.model === "WATERFALL_GIANT" && e.intents.some((i) => i.type === "Debuff")) powers["WEAK"] = (powers["WEAK"] ?? 0) + 1;
     sleepBlock = moved.block;
     // Strength every turn: Byrdonis's Territorial, a Ritual.
     for (const k of ["TERRITORIAL", "RITUAL"]) if ((ep[k] ?? 0) > 0) ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
@@ -308,6 +314,14 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
       for (let k = 0; k < (powers["STRATAGEM"] ?? 0) && pile.length > 1 && hand.length < HAND_LIMIT - 1; k++) hand.push({ ...free(pile.shift()!), locked: false });
     }
     hand.push({ ...free(pile.pop()!), locked: false, ...(i < binding ? { bound: true } : {}) });
+  }
+  // Toasty Mittens (v0.110 on): the turn's start exhausts a card of the hand — which is not known here —
+  // and gives 1 Strength (ts-*: Strength one over the prediction in 54 of its fights' turns). Feel No
+  // Pain's block for it; Dark Embrace's draw is left out.
+  if (s.relics.includes("TOASTY_MITTENS") && hand.length > 0) {
+    exhaust.push(hand.splice(Math.floor(rng() * hand.length), 1)[0]!);
+    powers["STRENGTH"] = (powers["STRENGTH"] ?? 0) + relicVar("TOASTY_MITTENS", "StrengthPower", 1);
+    block += powers["FEEL_NO_PAIN"] ?? 0;
   }
 
   // Sloth counts the cards of a turn: the next starts at 0 (IL: SlothPower.BeforeSideTurnStart).
