@@ -758,7 +758,11 @@ states, and only a simulator is fast enough for that.
      powbonus; paired): spar3 the act 2 boss reached 46, won 14; the combo
      44, 18 (+8/-4); the combo with `spartake` 51, 24 — against spar3 +14/-4
      (p 0.031), against the combo +13/-7. Taking the offer that does not
-     hurt the next boss beats spar5's proof of help.
+     hurt the next boss beats spar5's proof of help. In whole runs (dev
+     586-675, eef4f3b) it does not show: against vet-d-nt the act 1 boss 70
+     -> 69, the act 2 boss 13 -> 13 (+7/-7), floor 48 2 -> 0 — act 1's picks
+     change too, and 90 starts reach act 2 some 65 times. Replicated on s3f's
+     other f16 saves (706-855) next.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
