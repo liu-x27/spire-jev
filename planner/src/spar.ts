@@ -21,7 +21,7 @@ import path from "node:path";
 import { setIntentAscension } from "./intents.ts";
 import { expectedIntents, type Plan, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
-import { moveIntents } from "./scripts.ts";
+import { moveIntents, SCRIPTS } from "./scripts.ts";
 import { type Card, cardOf, drink, type Enemy, formsToCome, play, type Potion, redSkull, relicDamage, setKnownDraws, type State } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
@@ -375,6 +375,52 @@ export function outcomeScore(b: Bout, me: Player): number {
   const taken = b.damage / Math.max(1, b.pool ?? b.damage);
   return 60 * Math.min(1, Math.max(0, taken)) + (b.hpLost < me.hp ? 10 * kept : 0);
 }
+/**
+ * Act 2's ordinary fights as bouts (--flags sparhall): data/hallways-a2.json, from the game's own logs
+ * (tools/hallways.cjs: each monster's HP, its own powers, its commonest shown intent turn by turn, the
+ * last two turns repeated). The act loses 1.5-2 times the humans' HP in every one of them (the other
+ * session, against Spire Codex's v0.111.0 A10 runs) while spar weighed a change by the boss alone.
+ * Monsters that summon or escape are left out; the scripts are named HALL_<i>_<j>, not after the
+ * monsters, so the game's fights never read them.
+ */
+export interface Hallway { key: string; n: number; boss: Boss }
+let halls: Hallway[] | undefined;
+export function hallways(): Hallway[] {
+  if (halls) return halls;
+  const file = path.resolve(import.meta.dirname, "..", "data", "hallways-a2.json");
+  const rows = fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")) as { key: string; n: number; monsters: { hp: number; powers: Record<string, number>; turns: string[] }[] }[]) : [];
+  halls = [];
+  rows.forEach((r, i) => {
+    if (r.monsters.some((m) => m.hp <= 0 || m.turns.length === 0 || m.turns.some((t) => /Escape|Summon/.test(t)))) return;
+    const specs = r.monsters.map((m, j) => {
+      const model = `HALL_${i}_${j}`;
+      const k = m.turns.length;
+      SCRIPTS[model] = Object.fromEntries(m.turns.map((t, x) => {
+        const parts = t.split("+");
+        const attack = parts.find((q) => /^Attack\d+x\d+$/.test(q))?.slice(6).split("x").map(Number);
+        return [`T${x + 1}`, {
+          ...(attack ? { damage: attack[0]!, hits: attack[1]! } : {}),
+          shows: parts.filter((q) => !q.startsWith("Attack")),
+          next: x + 1 < k ? `T${x + 2}` : `T${Math.max(1, k - 1)}`,
+        }];
+      }));
+      return { model, hp: m.hp, powers: { ...m.powers }, move: "T1" };
+    });
+    halls!.push({ key: r.key, n: r.n, boss: { ...specs[0]!, with: specs.slice(1) } });
+  });
+  return halls;
+}
+/** The HP a deck keeps in an ordinary fight, a share of max HP (0 when it dies): sparhall's outcome. */
+export function hallOutcomes(ids: readonly string[], hall: Boss, samples: number, seed: number, me: Player, first = 0): number[] {
+  const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
+  const out: number[] = [];
+  for (let i = first; i < first + samples; i++) {
+    const b = bout(deck, hall, seeded(seed * 1000 + i), 12, me);
+    out.push(b.hpLost >= me.hp ? 0 : (100 * (me.hp - b.hpLost)) / Math.max(1, me.maxHp));
+  }
+  return out;
+}
+
 export function sparOutcomes(ids: readonly string[], boss: Boss, samples: number, seed: number, me: Player = BARE, first = 0): number[] {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   const out: number[] = [];

@@ -1,0 +1,629 @@
+[
+ {
+  "key": "THIEVING_HOPPER",
+  "n": 1082,
+  "monsters": [
+   {
+    "model": "THIEVING_HOPPER",
+    "hp": 84,
+    "powers": {
+     "ESCAPE_ARTIST": 5
+    },
+    "turns": [
+     "Attack19x1+CardDebuff",
+     "Buff",
+     "Attack23x1",
+     "Attack16x1",
+     "Escape"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "TUNNELER",
+  "n": 989,
+  "monsters": [
+   {
+    "model": "TUNNELER",
+    "hp": 92,
+    "powers": {},
+    "turns": [
+     "Attack15x1",
+     "Buff+Defend",
+     "Attack26x1",
+     "Attack26x1",
+     "Attack26x1",
+     "Attack15x1",
+     "Attack15x1",
+     "Buff+Defend"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "EXOSKELETON+EXOSKELETON+EXOSKELETON",
+  "n": 977,
+  "monsters": [
+   {
+    "model": "EXOSKELETON",
+    "hp": 30,
+    "powers": {
+     "HARD_TO_KILL": 9
+    },
+    "turns": [
+     "Attack1x4",
+     "Attack9x1",
+     "Buff",
+     "Attack11x1",
+     "Buff",
+     "Buff"
+    ]
+   },
+   {
+    "model": "EXOSKELETON",
+    "hp": 30,
+    "powers": {
+     "HARD_TO_KILL": 9
+    },
+    "turns": [
+     "Attack9x1",
+     "Buff",
+     "Attack11x1",
+     "Buff",
+     "Buff",
+     "Attack13x1",
+     "Attack13x1",
+     "Buff"
+    ]
+   },
+   {
+    "model": "EXOSKELETON",
+    "hp": 30,
+    "powers": {
+     "HARD_TO_KILL": 9
+    },
+    "turns": [
+     "Buff",
+     "Attack11x1",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Attack9x4"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "HUNTER_KILLER",
+  "n": 734,
+  "monsters": [
+   {
+    "model": "HUNTER_KILLER",
+    "hp": 126,
+    "powers": {},
+    "turns": [
+     "Debuff",
+     "Attack19x1",
+     "Attack8x3",
+     "Attack19x1",
+     "Attack8x3",
+     "Attack8x3",
+     "Attack8x3",
+     "Attack8x3"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "CHOMPER+CHOMPER",
+  "n": 703,
+  "monsters": [
+   {
+    "model": "CHOMPER",
+    "hp": 67,
+    "powers": {
+     "ARTIFACT": 2
+    },
+    "turns": [
+     "Attack9x2",
+     "StatusCard",
+     "Attack9x2",
+     "StatusCard",
+     "Attack9x2",
+     "StatusCard",
+     "Attack9x2",
+     "StatusCard"
+    ]
+   },
+   {
+    "model": "CHOMPER",
+    "hp": 67,
+    "powers": {
+     "ARTIFACT": 2
+    },
+    "turns": [
+     "StatusCard",
+     "Attack9x2",
+     "StatusCard",
+     "Attack9x2",
+     "StatusCard",
+     "Attack9x2",
+     "StatusCard",
+     "Attack9x2"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "LOUSE_PROGENITOR",
+  "n": 694,
+  "monsters": [
+   {
+    "model": "LOUSE_PROGENITOR",
+    "hp": 141,
+    "powers": {
+     "CURL_UP": 18
+    },
+    "turns": [
+     "Attack10x1+Debuff",
+     "Defend+Buff",
+     "Attack23x1",
+     "Attack17x1+Debuff",
+     "Defend+Buff",
+     "Attack30x1",
+     "Attack24x1+Debuff",
+     "Defend+Buff"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "MYTE+MYTE",
+  "n": 680,
+  "monsters": [
+   {
+    "model": "MYTE",
+    "hp": 69,
+    "powers": {},
+    "turns": [
+     "StatusCard",
+     "Attack15x1",
+     "Attack6x1+Buff",
+     "StatusCard",
+     "Attack18x1",
+     "Attack9x1+Buff",
+     "StatusCard",
+     "Attack21x1"
+    ]
+   },
+   {
+    "model": "MYTE",
+    "hp": 69,
+    "powers": {},
+    "turns": [
+     "Attack6x1+Buff",
+     "StatusCard",
+     "Attack18x1",
+     "Attack9x1+Buff",
+     "StatusCard",
+     "Attack21x1",
+     "Attack12x1+Buff",
+     "StatusCard"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "THE_OBSCURA",
+  "n": 670,
+  "monsters": [
+   {
+    "model": "THE_OBSCURA",
+    "hp": 129,
+    "powers": {},
+    "turns": [
+     "Summon",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff"
+    ]
+   },
+   {
+    "model": "PARAFRIGHT",
+    "hp": 0,
+    "powers": {},
+    "turns": [
+     "Attack17x1",
+     "Attack17x1",
+     "Attack20x1",
+     "Attack20x1",
+     "Attack20x1",
+     "Attack20x1",
+     "Attack26x1"
+    ]
+   },
+   {
+    "model": "PARAFRIGHT",
+    "hp": 0,
+    "powers": {},
+    "turns": [
+     "Attack17x1",
+     "Attack17x1",
+     "Attack17x1",
+     "Attack20x1",
+     "Attack20x1",
+     "Attack20x1",
+     "Attack20x1"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "EXOSKELETON+EXOSKELETON+EXOSKELETON+EXOSKELETON",
+  "n": 661,
+  "monsters": [
+   {
+    "model": "EXOSKELETON",
+    "hp": 30,
+    "powers": {
+     "HARD_TO_KILL": 9
+    },
+    "turns": [
+     "Attack1x4",
+     "Attack9x1",
+     "Buff",
+     "Attack3x4",
+     "Buff",
+     "Attack13x1",
+     "Buff"
+    ]
+   },
+   {
+    "model": "EXOSKELETON",
+    "hp": 30,
+    "powers": {
+     "HARD_TO_KILL": 9
+    },
+    "turns": [
+     "Attack9x1",
+     "Buff",
+     "Attack11x1",
+     "Buff",
+     "Buff",
+     "Attack5x4",
+     "Attack13x1",
+     "Attack7x4"
+    ]
+   },
+   {
+    "model": "EXOSKELETON",
+    "hp": 30,
+    "powers": {
+     "HARD_TO_KILL": 9
+    },
+    "turns": [
+     "Buff",
+     "Attack11x1",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Attack7x4",
+     "Attack15x1"
+    ]
+   },
+   {
+    "model": "EXOSKELETON",
+    "hp": 30,
+    "powers": {
+     "HARD_TO_KILL": 9
+    },
+    "turns": [
+     "Attack1x4",
+     "Buff",
+     "Buff",
+     "Attack11x1",
+     "Buff",
+     "Buff",
+     "Buff",
+     "Buff"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "BOWLBUG_ROCK+BOWLBUG_SILK+SLUMBERING_BEETLE",
+  "n": 653,
+  "monsters": [
+   {
+    "model": "BOWLBUG_ROCK",
+    "hp": 49,
+    "powers": {
+     "IMBALANCED": 1
+    },
+    "turns": [
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1"
+    ]
+   },
+   {
+    "model": "BOWLBUG_SILK",
+    "hp": 44,
+    "powers": {
+     "IMBALANCED": 1
+    },
+    "turns": [
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack5x2"
+    ]
+   },
+   {
+    "model": "SLUMBERING_BEETLE",
+    "hp": 89,
+    "powers": {
+     "PLATING": 18,
+     "SLUMBER": 3,
+     "IMBALANCED": 2
+    },
+    "turns": [
+     "Sleep",
+     "Sleep",
+     "Sleep",
+     "Attack18x1+Buff",
+     "Attack20x1+Buff",
+     "Attack22x1+Buff",
+     "Attack24x1+Buff",
+     "Attack26x1+Buff"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "SPINY_TOAD",
+  "n": 617,
+  "monsters": [
+   {
+    "model": "SPINY_TOAD",
+    "hp": 124,
+    "powers": {},
+    "turns": [
+     "Buff",
+     "Attack25x1",
+     "Attack19x1",
+     "Buff",
+     "Attack25x1",
+     "Attack19x1",
+     "Buff",
+     "Attack25x1"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "BOWLBUG_EGG+BOWLBUG_ROCK",
+  "n": 535,
+  "monsters": [
+   {
+    "model": "BOWLBUG_ROCK",
+    "hp": 49,
+    "powers": {
+     "IMBALANCED": 1
+    },
+    "turns": [
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1"
+    ]
+   },
+   {
+    "model": "BOWLBUG_EGG",
+    "hp": 24,
+    "powers": {},
+    "turns": [
+     "Attack8x1+Defend",
+     "Attack8x1+Defend",
+     "Attack8x1+Defend",
+     "Attack8x1+Defend",
+     "Attack8x1+Defend"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "BOWLBUG_NECTAR+BOWLBUG_ROCK",
+  "n": 524,
+  "monsters": [
+   {
+    "model": "BOWLBUG_ROCK",
+    "hp": 49,
+    "powers": {
+     "IMBALANCED": 1
+    },
+    "turns": [
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1"
+    ]
+   },
+   {
+    "model": "BOWLBUG_NECTAR",
+    "hp": 39,
+    "powers": {},
+    "turns": [
+     "Attack3x1",
+     "Buff",
+     "Attack19x1",
+     "Attack19x1",
+     "Attack19x1",
+     "Attack19x1",
+     "Attack19x1"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "BOWLBUG_EGG+BOWLBUG_ROCK+BOWLBUG_SILK",
+  "n": 238,
+  "monsters": [
+   {
+    "model": "BOWLBUG_ROCK",
+    "hp": 49,
+    "powers": {
+     "IMBALANCED": 1
+    },
+    "turns": [
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1"
+    ]
+   },
+   {
+    "model": "BOWLBUG_EGG",
+    "hp": 44,
+    "powers": {},
+    "turns": [
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack8x1+Defend",
+     "Debuff",
+     "Attack8x1+Defend",
+     "Attack8x1+Defend",
+     "Attack5x2"
+    ]
+   },
+   {
+    "model": "BOWLBUG_SILK",
+    "hp": 44,
+    "powers": {},
+    "turns": [
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack8x1+Defend",
+     "Attack7x1+Defend",
+     "Attack7x1+Defend"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "BOWLBUG_EGG+BOWLBUG_NECTAR+BOWLBUG_ROCK",
+  "n": 207,
+  "monsters": [
+   {
+    "model": "BOWLBUG_ROCK",
+    "hp": 49,
+    "powers": {
+     "IMBALANCED": 1
+    },
+    "turns": [
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack15x1"
+    ]
+   },
+   {
+    "model": "BOWLBUG_NECTAR",
+    "hp": 39,
+    "powers": {},
+    "turns": [
+     "Attack3x1",
+     "Buff",
+     "Attack19x1",
+     "Attack8x1+Defend",
+     "Attack8x1+Defend",
+     "Attack8x1+Defend"
+    ]
+   },
+   {
+    "model": "BOWLBUG_NECTAR",
+    "hp": 39,
+    "powers": {},
+    "turns": [
+     "Attack3x1",
+     "Buff",
+     "Attack8x1+Defend",
+     "Attack19x1",
+     "Attack19x1",
+     "Attack19x1"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "BOWLBUG_NECTAR+BOWLBUG_ROCK+BOWLBUG_SILK",
+  "n": 190,
+  "monsters": [
+   {
+    "model": "BOWLBUG_ROCK",
+    "hp": 49,
+    "powers": {
+     "IMBALANCED": 1
+    },
+    "turns": [
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1",
+     "Attack16x1"
+    ]
+   },
+   {
+    "model": "BOWLBUG_NECTAR",
+    "hp": 44,
+    "powers": {},
+    "turns": [
+     "Attack3x1",
+     "Buff",
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack19x1",
+     "Debuff",
+     "Attack5x2"
+    ]
+   },
+   {
+    "model": "BOWLBUG_SILK",
+    "hp": 44,
+    "powers": {},
+    "turns": [
+     "Debuff",
+     "Buff",
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack5x2",
+     "Debuff",
+     "Attack5x2"
+    ]
+   }
+  ]
+ }
+]

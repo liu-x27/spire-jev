@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { setIntentAscension } from "../src/intents.ts";
-import { BARE, BOSSES, bout, cardFromId, learnCard, modelledBoss, pairScore, sparScore, unknownCards } from "../src/spar.ts";
+import { BARE, BOSSES, bout, cardFromId, hallOutcomes, hallways, learnCard, modelledBoss, pairScore, sparScore, unknownCards } from "../src/spar.ts";
 import { seeded } from "../src/turn.ts";
 import { chooseCardReward, chooseRest, chooseSelect, chooseShop, chooseUpgrade, setActBoss, setFlags } from "../src/choices.ts";
 import type { CardObs, LegalAction, Observation } from "../src/obs.ts";
@@ -177,4 +177,13 @@ test("spar4's parts are their own flags: the rest's bout alone, and its upgrade 
     setFlags([]);
     setActBoss("");
   }
+});
+
+test("sparhall's ordinary fights: act 2's from the logs, none that summons or escapes, a share of HP kept", () => {
+  const list = hallways();
+  assert.ok(list.length >= 5);
+  assert.ok(list.every((h) => !/THIEVING_HOPPER|THE_OBSCURA/.test(h.key)));
+  const kept = hallOutcomes(STARTER, list[0]!.boss, 4, 1, { ...BARE, hp: 70, maxHp: 80 });
+  assert.equal(kept.length, 4);
+  assert.ok(kept.every((v) => v >= 0 && v <= 100));
 });

@@ -15,7 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { BARE, type Boss, bossFor, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
+import { BARE, type Boss, bossFor, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -412,10 +412,38 @@ interface Paired {
   mean: number;
   se: number;
 }
+/**
+ * sparhall (act 2): each shuffle's difference in the HP kept in one of the act's ordinary fights too
+ * (spar.ts hallways, the commonest ten in turn), at the HP the run has, weighted by the fights left
+ * before the boss (about one every 2.5 floors, a fifth of a point per floor to 32).
+ */
+function hallTerm(o: Observation, at: Sparring, change: (d: string[]) => string[], first: number, n: number): number[] | undefined {
+  if (!flags.has("sparhall") || actOf(o) !== 1 || o.floor >= 32) return undefined;
+  const list = hallways().slice(0, 10);
+  if (list.length === 0) return undefined;
+  const me = { ...at.me, hp: Math.max(1, Math.min(at.me.maxHp, o.player_hp)) };
+  const weight = 0.2 * (32 - o.floor);
+  const deck = change([...o.deck_cards]);
+  return Array.from({ length: n }, (_, i) => {
+    const hall = list[(first + i) % list.length]!.boss;
+    const key = (d: readonly string[]) => `hall/${hall.model}/${o.floor}/${me.hp}/${first + i}/${d.join(",")}`;
+    const one = (d: readonly string[]) => {
+      let v = spar5Base.get(key(d));
+      if (!v) {
+        if (spar5Base.size > 256) spar5Base.clear();
+        v = hallOutcomes(d, hall, 1, o.floor, me, first + i);
+        spar5Base.set(key(d), v);
+      }
+      return v[0]!;
+    };
+    return weight * (one(deck) - one(o.deck_cards));
+  });
+}
 function paired(o: Observation, at: Sparring, change: (d: string[]) => string[], first = 0, n = SPAR_SAMPLES): Paired {
   const base = outcomes(o.deck_cards, at.boss, o.floor, at.me, first, n);
   const next = outcomes(change([...o.deck_cards]), at.boss, o.floor, at.me, first, n);
-  const d = base.map((b, i) => next[i]! - b);
+  const hall = hallTerm(o, at, change, first, n);
+  const d = base.map((b, i) => next[i]! - b + (hall?.[i] ?? 0));
   const mean = d.reduce((a, x) => a + x, 0) / d.length;
   const sd = Math.sqrt(d.reduce((a, x) => a + (x - mean) ** 2, 0) / Math.max(1, d.length - 1));
   return { mean, se: sd / Math.sqrt(d.length) };
