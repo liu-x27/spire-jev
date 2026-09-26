@@ -668,7 +668,10 @@ states, and only a simulator is fast enough for that.
      (Hellraiser before Flame Barrier into 30); `powbonus` (5e6637d,
      planTurnPowers) plays one when the turn after it scores within 10 of the
      best line: in the pilot 17.7/4.6/9.0% (winners/losers/ours) against
-     powfirst's 18.3/4.4/8.0. Training the net on bouts that play powers at
+     powfirst's 18.3/4.4/8.0. In the game: f16 190 -> 197 (+8/-1, the same
+     fights as powfirst), f32 31 -> 34 (+4/-1; HP left 9.9 ± 3.5 lower, the
+     Knowledge Demon's 18.7 ± 7.7), f47 4 -> 6 (+3/-1; the Queen's pair 26 ±
+     15 lower): +15/-3, p 0.008. Training the net on bouts that play powers at
      random (valuegen --explore-powers 0.5, v4) did worse than v3 (15.0%).
      The other session's package test with pow10 in the bout: standalone
      powers score for the next boss (Demon Form +5.5 to +36.6, Inflame, Barricade;
