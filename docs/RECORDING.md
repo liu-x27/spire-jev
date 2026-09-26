@@ -1,5 +1,25 @@
 # Recording the bot on screen
 
+## Seed 849: A10, floor 49 of 49, a win
+
+![Floors 48 and 49: the bot beats Aeonglass with 3 HP left, then Test Subject (2×)](media/a10-849-floor48-49-2x.gif)
+
+Ironclad, ascension 10, seed JEV00849, on the development rules (`--choices rules2 --flags
+pathdp,restbudget,potions2,sleep,spar,spar3`, newer than the code published here, with their Visual
+build), replayed from the run's floor-32 save (`record.ts --resume … --stop-floor 50`). Its boss
+fights, HP going in → left at the end (of 100): act 2's Crusher and Rocket 94 → 67, Aeonglass 100
+→ 3, Test Subject 34 → 18 (Burning Blood heals 6 after each fight, Pantograph 25 at a boss's start).
+The game's closing event then takes the HP to 0, which is why the last card reads 0.
+
+A narrow win, and not a win rate: headless, 1 of 97 floor-32 saves on this code was won, this
+one. The recording is that headless run play for play: all seven fights from floor 33 on, every
+card and potion in order and the HP after each, match the headless replay (`bench-prior32-base`).
+
+- [`media/a10-849-run.mp4`](media/a10-849-run.mp4): the replay from floor 32, 2 min 52 s for 8.9
+  minutes of play, fights at game speed and the rest 4×. 960 wide, 14 MB.
+- [`media/a10-849-floor48-49-2x.webp`](media/a10-849-floor48-49-2x.webp): the GIF's two fights as
+  an animated WebP.
+
 ## Seed 497: A10, floor 49 of 49, one fight from a win
 
 ![Floors 48 and 49: the bot beats Aeonglass, then dies to Test Subject (2×)](media/a10-497-floor48-49-2x.gif)

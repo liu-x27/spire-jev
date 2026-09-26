@@ -7,6 +7,16 @@ the choices around the fights (card rewards, the path, rest sites, shops, events
 by rules. The simulator is checked against the game card by card, and the results below are
 counted on seeds the rules were not tuned on.
 
+![Floors 48 and 49 at ascension 10: the bot beats Aeonglass with 3 HP left, then Test Subject, and wins the run (2×)](docs/media/a10-849-floor48-49-2x.gif)
+
+*Ascension 10, seed 849, the last two floors: the first A10 win. Aeonglass took it from 100 HP
+to 3; Burning Blood and Pantograph brought it to 34 for the Test Subject, beaten with 18 left.
+A narrow win, not a win rate: it was replayed from the run's floor-32 save (act 2's boss on),
+one of 97 such saves that was won, on the development rules, which are newer than the code
+here (`--flags pathdp,restbudget,potions2,sleep,spar,spar3`). The replay from floor 32:
+[docs/media/a10-849-run.mp4](docs/media/a10-849-run.mp4) (2 min 52 s for 8.9 minutes of play;
+its last card reads 0 HP because the game's closing event takes it after the final boss).*
+
 ![Floors 48 and 49 at ascension 10: the bot beats Aeonglass, then dies to Test Subject, one fight from a win (2×)](docs/media/a10-497-floor48-49-2x.gif)
 
 *Ascension 10, seed 497, the last two floors: one fight from a win, and not a win. With the
@@ -30,6 +40,11 @@ judge questions for the calls around it); nothing here calls TypeSafe's Jev API,
 no model is involved at all.
 
 ## Where it stands
+
+**The first A10 win (2026-09-26):** seed 849, replayed from its floor-32 save on the development
+rules (`spar3` and later, not yet in this repository), beat act 2's boss and both of act 3's —
+1 of those 97 floor-32 saves, and narrowly (details in [docs/RECORDING.md](docs/RECORDING.md)).
+The table below is still the confirmation set on the rules published here.
 
 Ironclad at ascension 10, the game's beta v0.111.0, on a profile that has seen every act
 and boss (so runs are drawn as for a player past their first). The best configuration so
