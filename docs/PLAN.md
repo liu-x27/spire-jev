@@ -748,6 +748,12 @@ states, and only a simulator is fast enough for that.
      (their play, the bout against the game), this one deck strength.
      `spartake` (eef4f3b): spar5 takes a reward's best offer unless it
      clearly hurts the next boss.
+   - **Whole runs at a1f3054** (dev seeds 586-675; the combo, powbonus, and
+     spar's bouts with every fix above): the act 1 boss 70/90, the act 2
+     boss 13, floor 48 2 (593, 626), floor 49 none. Against vet-d-pow
+     (1c565ec, the same flags): 67 -> 70, 14 -> 13, 0 -> 2. Against
+     vet-d-base (spar3 on the bout before its fixes): the act 1 boss 57 -> 70
+     (+17/-4, p 0.007), the act 2 boss 8 -> 13 (+9/-4).
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
