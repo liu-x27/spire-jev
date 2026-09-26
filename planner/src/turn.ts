@@ -28,6 +28,10 @@ export const temporaryPart = (powers: Record<string, number>, stat: string): num
   TEMPORARY.reduce((a, [temp, of]) => (of === stat ? a + (powers[temp] ?? 0) : a), 0);
 const HAND_LIMIT = 10;
 
+/** Shrink's share off an enemy's attacks (DamageDecrease, 30 at A10) while it has a stack. */
+const shrinkOf = (powers: Record<string, number>, e: Enemy): number =>
+  (powers["SHRINK"] ?? 0) > 0 ? (e.powerVars?.["SHRINK"]?.["DamageDecrease"] ?? 30) / 100 : 0;
+
 /** mulberry32: a small seeded generator, so a lookahead is the same every time it is asked. */
 export function seeded(seed: number): () => number {
   let a = seed >>> 0;
@@ -175,7 +179,8 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
       if (ep["STRENGTH"] === 0) delete ep["STRENGTH"];
       delete ep[k];
     }
-    tick(ep, ["WEAK", "VULNERABLE"]);
+    // Shrink (Beetle Juice) runs down a stack a turn as Weak does (ts-f32: 4, 3, 2, 1 on the Crab).
+    tick(ep, ["WEAK", "VULNERABLE", "SHRINK"]);
     // Sandpit (The Insatiable; IL: SandpitPower.AfterSideTurnStartLate) runs down a stack as the enemies'
     // turn starts; at 0 it devours the player (hpLoss already takes it all when it stands at 1).
     if ((ep["SANDPIT"] ?? 0) > 0) ep["SANDPIT"] = Math.max(1, ep["SANDPIT"]! - 1);
@@ -230,7 +235,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     const behind = s.facing !== undefined && e.id !== s.facing && clawsUp > 1 && isClaw(e);
     const hits = move === "MULTI_CLAW_MOVE" && e.move === "MULTI_CLAW_MOVE" ? (e.intents.find((i) => i.type === "Attack")?.hits ?? 3) + 1 : undefined;
     const intents = move !== undefined
-      ? moveIntents(e.model, move, ep["STRENGTH"] ?? 0, { vulnerable: (powers["VULNERABLE"] ?? 0) > 0, weak: (ep["WEAK"] ?? 0) > 0, behind }, hits)
+      ? moveIntents(e.model, move, ep["STRENGTH"] ?? 0, { vulnerable: (powers["VULNERABLE"] ?? 0) > 0, weak: (ep["WEAK"] ?? 0) > 0, behind, shrink: shrinkOf(ep, e) }, hits)
       : sleeping ? [{ type: "Sleep", damage: 0, hits: 0 }] : foresee(e, turn);
     if (move !== undefined) shownWith.set(e.id, (powers["VULNERABLE"] ?? 0) > 0);
     // Withering Presence (Aeonglass): CardsLeft counts the cards played across turns (sim.ts, after a
@@ -283,7 +288,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
   for (const o of enemies) {
     if (!o.alive || !scripted(o) || !o.intents.some((i) => i.type === "Attack")) continue;
     if (!gifted.has(o.id) && shownWith.get(o.id) === vulnerable) continue;
-    const mult = { vulnerable, weak: (o.powers["WEAK"] ?? 0) > 0, behind: o.behindAtStart ?? false };
+    const mult = { vulnerable, weak: (o.powers["WEAK"] ?? 0) > 0, behind: o.behindAtStart ?? false, shrink: shrinkOf(o.powers, o) };
     o.intents = moveIntents(o.model, o.move!, o.startStrength, mult, o.intents.find((i) => i.type === "Attack")?.hits);
   }
 

@@ -79,6 +79,14 @@ test("withering presence: the cards left until a Wither carry over to the next t
   assert.equal(left(4), 5);
 });
 
+test("shrink: a scripted boss's next attack shows 30% less, and Shrink runs down a stack", () => {
+  const beast = { ...foe("CEREMONIAL_BEAST", 250, { PLOW: 160, SHRINK: 2 }, 1, 20), move: "PLOW_MOVE" };
+  const next = nextTurn(state([], [beast]), seeded(1), () => [])!.enemies[0]!;
+  assert.equal(next.powers["SHRINK"], 1);
+  // Plow: 20 and 2 Strength, at 0.7.
+  assert.equal(next.intents.find((i) => i.type === "Attack")?.damage, 15);
+});
+
 test("ringing: the turn after the cry, not the one after that", () => {
   const s = state([STRIKE, DEFEND, DEFEND], [{ ...foe("CEREMONIAL_BEAST", 100, {}, 1, 0), move: "BEAST_CRY_MOVE", intents: [{ type: "Debuff", damage: 0, hits: 0 }] }]);
   const cried = nextTurn(s, seeded(1), () => [])!;

@@ -252,12 +252,14 @@ export const scripted = (e: Enemy): boolean => e.move !== undefined && SCRIPTS[e
  * The intents a move shows: its damage with the enemy's Strength, times the player's Vulnerable, the
  * enemy's Weak and a claw's back attack, as the game computes them; `hits` for Multi Claw's count.
  */
-export function moveIntents(model: string, move: string, strength: number, mult: { vulnerable: boolean; weak: boolean; behind: boolean }, hits?: number): IntentObs[] {
+export function moveIntents(model: string, move: string, strength: number, mult: { vulnerable: boolean; weak: boolean; behind: boolean; shrink?: number }, hits?: number): IntentObs[] {
   const m = SCRIPTS[model]?.[move];
   if (!m) return [];
   const out: IntentObs[] = [];
   if (m.damage !== undefined) {
-    const per = Math.max(0, m.damage + strength) * (mult.vulnerable ? 1.5 : 1) * (mult.weak ? 0.75 : 1) * (mult.behind ? 1.5 : 1);
+    // Shrink (Beetle Juice): the game shows the attack its DamageDecrease share less (ts-f32: the Crab's
+    // next attacks at 0.7 of the prediction while it lasted).
+    const per = Math.max(0, m.damage + strength) * (mult.vulnerable ? 1.5 : 1) * (mult.weak ? 0.75 : 1) * (mult.behind ? 1.5 : 1) * (1 - (mult.shrink ?? 0));
     out.push({ type: "Attack", damage: Math.floor(per), hits: hits ?? m.hits ?? 1 });
   }
   for (const t of m.shows ?? []) out.push({ type: t, damage: 0, hits: 0 });
