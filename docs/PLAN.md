@@ -754,6 +754,11 @@ states, and only a simulator is fast enough for that.
      (1c565ec, the same flags): 67 -> 70, 14 -> 13, 0 -> 2. Against
      vet-d-base (spar3 on the bout before its fixes): the act 1 boss 57 -> 70
      (+17/-4, p 0.007), the act 2 boss 8 -> 13 (+9/-4).
+   - **Act 2's deck-building played through** (s3f's f16 saves 586-705, 111;
+     powbonus; paired): spar3 the act 2 boss reached 46, won 14; the combo
+     44, 18 (+8/-4); the combo with `spartake` 51, 24 — against spar3 +14/-4
+     (p 0.031), against the combo +13/-7. Taking the offer that does not
+     hurt the next boss beats spar5's proof of help.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
