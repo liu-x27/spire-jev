@@ -526,6 +526,13 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
     if (flags.has("spar5")) {
       const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })), flags.has("spartake"));
       if (pick) return pick.id;
+      // spartakeall: no skip unless every offer is one never to take — spartake still skipped 15% of act
+      // 2's rewards; skipping less has gone with bigger decks and more act 2 bosses beaten each time
+      // (the core 44% -> 6% with nopickrates: 10 -> 15; the combo 47% -> 15% with spartake: 18 -> 24).
+      if (flags.has("spartakeall")) {
+        const best = options.filter((x) => x.gain !== -Infinity).map((x) => ({ x, p: spar5Gain(o, at, x.change) })).sort((a, b) => b.p.mean - a.p.mean)[0];
+        if (best) return best.x.id;
+      }
       return legal.find((a) => a.action_id === "skip_card")?.action_id ?? legal[0]!.action_id;
     }
     const best = closerLook(o, at, options).sort((x, y) => y.gain - x.gain)[0];
