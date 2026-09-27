@@ -821,7 +821,12 @@ states, and only a simulator is fast enough for that.
      Colossus, Burning Pact, Second Wind, Feel No Pain. Next:
      `spartakeall` (9f85c1c: no skip unless every offer is never to take) and
      `sparmix` (ce858b0: act 2, 11 attacks or more, a non-attack offer first)
-     on all 252.
+     on all 252. On the first 111, against spartake's 24 act 2 boss wins:
+     spartakeall 17 (+2/-9, p 0.065; skipped 0%, 14.4 attacks at the boss) —
+     taking what clearly hurts the next boss costs; sparmix 24 (+5/-5; 13.3
+     attacks, 8.6 skills: the boss's bout seldom lets a block skill through,
+     decks enter act 2 with 10.9 attacks). `sparmix2` (ae272c8: the best
+     non-attack whatever the boss's bout says) next.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
