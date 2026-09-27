@@ -898,6 +898,49 @@ states, and only a simulator is fast enough for that.
      sparhuman2), 133 skills picked at act 2's rewards, hallway HP 25.2%.
      Neither human ranking helps: picking as the humans pick does not play
      as they play. spar5 with spartake's veto stays the reward rule.
+   - **The humans' decks in the bot's hands** (2026-09-27; hdecks.py: 6,362
+     act 2 hallway fights of the Codex v0.111.0 A10 Ironclad runs, each deck
+     rebuilt back to its floor, upgrades undone; the 3,763 whose every card
+     the simulator knows, with their relics and HP, in spar's hallway bout
+     under planTurn, beside 658 of ours from act2-take / act2b-take). HP
+     lost, % of max: humans in the game 14.0, the bot with their decks 21.2
+     (+7.1 over the humans' mean for the encounter); ours in the game 23.2,
+     the bot with ours in the bout 19.3 (+5.0). The bot does worse with the
+     humans' decks than with its own, and the human decks have a tail ours
+     do not (bouts losing half or more: 206 of 3,763, ours 2 of 658), heavy
+     in Burning Pact, Stoke, Havoc, Pyre, Crimson Mantle, Vicious, Rampage.
+     So "draft as they draft" cannot close the gap before the play can use
+     such decks — which is what sparhuman/sparpick found in the game. A
+     ridge over the humans' fights (cards, relics, encounter; HP lost in the
+     game against the bout): the engine and exhaust cards are what the
+     humans get HP from and the bot does not (bout minus game per copy:
+     Havoc +3.9, Dark Embrace +4.0, Stoke +3.0, Aggression +3.0, Burning
+     Pact +2.5, Vicious +2.6, Drum of Battle +2.6, Pyre +2.4), plain attacks
+     the other way (Anger -1.4, Bully -1.7, Setup Strike -1.6, Stomp -1.7).
+     Some of that is the simulator's: Havoc exhausts the top card without
+     playing it, Stoke's new cards never become playable, Pyre's power does
+     nothing. The rest is the one-turn play (known draws inside the turn:
+     21.2 -> 20.0 for the human decks; the drawn weight 0.5 / 3: nothing).
+     Our own fights take no longer than the humans' (2.8 logged end-turns
+     against their 4.2 turns) but lose 2-3 times the HP per turn.
+   - **The Tunneler** (70abb40, from the IL): Bite 15, Burrow (37 block,
+     Burrowed; the block is not cleared while burrowed), Below 26 every turn
+     until the block breaks, which stuns it at once (BurrowedPower
+     .AfterBlockBroken: Tunneler.GetStunned, then Bite). The simulator only
+     took the power off: the planner saw the 26 still coming after a break,
+     and damage into the block as worth nothing (a bout: 37 block untouched
+     four turns, 45 HP lost; the human 7). Now the break stuns, the burrow
+     block counts as HP to take, the script is the game's, and the hallway
+     bouts play it (the logs' commonest intents never burrowed). Bout,
+     Tunneler fights: the human decks 24.2 -> 22.1% (block as HP; priced
+     at its share of the Below 23.5, planTurn2 while burrowed 22-24), ours
+     18.7 -> 18.1; the humans 10.9, ours in the game 20.8. With it the
+     Bowlbug Rock's Imbalanced stun (a fully blocked attack) in nextTurn:
+     the bout never had it. On act 2 played through: queue67 (47106/47107).
+     The hallway bouts' other scripts are the logs' intents with no effects
+     (the Silk's Weak, the Beetle's Strength): ours lose 36.3% to Rock +
+     Silk + Beetle in the game, 19.5 in the bout; four Exoskeletons 27.7 /
+     16.6; Myte 23.7 / 14.6.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
      fresh seeds 856-1515, the spar3 reference against the combo with
      powbonus and spartake, whole runs, floors 16/32/47 captured.
