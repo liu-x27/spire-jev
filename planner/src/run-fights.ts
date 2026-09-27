@@ -463,6 +463,12 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
             hasFlag("bosslook") && bossFight ? (st) => planTurn2(st, weights) : undefined)
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
+        // halllook / hallfuture (ordinary fights): planTurn2's next turn, or the enemies' damage to come
+        // weighed by the order they die in (search.ts futureDamage, 0.5) — act 2's hallways cost the bot
+        // 8-11 points of max HP a fight more than A10 players at every count of block cards and relics
+        // (the other session); every ordinary fight was one turn of planTurn.
+        : !bossFight && hasFlag("halllook") ? planTurn2(s, weights)
+        : !bossFight && hasFlag("hallfuture") ? planTurn(s, { ...weights, future: Math.max(weights.future, 0.5) })
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);
       log.nodes.push(plan.nodes);
