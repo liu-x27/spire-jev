@@ -907,7 +907,7 @@ states, and only a simulator is fast enough for that.
      (+7.1 over the humans' mean for the encounter); ours in the game 23.2,
      the bot with ours in the bout 19.3 (+5.0). The bot does worse with the
      humans' decks than with its own, and the human decks have a tail ours
-     do not (bouts losing half or more: 206 of 3,763, ours 2 of 658), heavy
+     do not (bouts losing half or more: 143 of 3,763, ours 5 of 658), heavy
      in Burning Pact, Stoke, Havoc, Pyre, Crimson Mantle, Vicious, Rampage.
      So "draft as they draft" cannot close the gap before the play can use
      such decks — which is what sparhuman/sparpick found in the game. A
