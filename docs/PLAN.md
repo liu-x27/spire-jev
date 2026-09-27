@@ -840,7 +840,15 @@ states, and only a simulator is fast enough for that.
      (17%), Anger 65% (21%), Cinder 36% (7%). ~70% of the humans' copies come
      from card rewards. `sparhuman` (097e01c; data/take-rates-a10.json by
      act, 09dcf54): the offers the boss's bout does not clearly turn down,
-     ranked by the act's human take rate; on act 2 played through next.
+     ranked by the act's human take rate. The veto lets most defensive
+     offers through (re-scored on 150 act 2 screens: Shrug 77%, True Grit
+     74%, Flame Barrier 71%, Burning Pact 67%, Feel No Pain 60%; their mean
+     gains -3 to +2, SE ~4 — the boss's bout can barely tell them apart). On
+     act 2 played through against spartake: reached 51 -> 40, won 24 -> 19
+     (the runs less far +12/-26, p 0.034); it skipped 29% (a best offer
+     humans take under 10% of the time is skipped; act 2's humans skip 35%)
+     and held 11.9 attacks, 8.0 skills at the boss. `sparhuman2` (51fc8dc:
+     the ranking without that skip) next.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
      fresh seeds 856-1515, the spar3 reference against the combo with
      powbonus and spartake, whole runs, floors 16/32/47 captured.
