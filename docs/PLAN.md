@@ -870,8 +870,10 @@ states, and only a simulator is fast enough for that.
      The other session's oracle bouts (hall_oracle.mts, boss_oracle.mts: real
      fights' decks, HP and relics; paired shuffles), act 2 hallways, HP lost:
      planTurn 19.0%, planTurn2 21.1 (+2.1 ± 0.4), the exact future 1 / 2 / 3
-     turns ahead 16.4 / 15.3 / 14.6 — only perfect information reaches the
-     humans' level; bosses f17 75.8 -> look 75.0, fair 16-sample lookahead
+     turns ahead 16.4 / 15.3 / 14.6 — the bout is easier than the game there
+     (19.0% against 22.7%), so carried over as a share (-23%) perfect
+     information 3 turns ahead would leave the game's ~17.5% against the
+     humans' 14.3: half the gap; bosses f17 75.8 -> look 75.0, fair 16-sample lookahead
      75.8, oracle 2 turns 90.0; f33 28.3 -> 30.0 / 25.8 / 47.5; act 3 5.0 ->
      9.2 / 13.3 / 15.0 — a fair look ahead pays in act 3's long fights only.
      halllook dropped. The turn itself is planned on right numbers: 97.3%
