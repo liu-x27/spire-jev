@@ -866,7 +866,17 @@ states, and only a simulator is fast enough for that.
      humans with 8 or fewer still lose 15.4% to our 22-25%. What is left, ~6
      points, is in the turn: every ordinary fight is planTurn's one turn.
      Next: `halllook` (planTurn2 in ordinary fights) and `hallfuture`
-     (futureDamage 0.5 there: which of several enemies to hit), ab54390. `sparpick` (94b26b2: the other
+     (futureDamage 0.5 there: which of several enemies to hit), ab54390.
+     The other session's oracle bouts (hall_oracle.mts, boss_oracle.mts: real
+     fights' decks, HP and relics; paired shuffles), act 2 hallways, HP lost:
+     planTurn 19.0%, planTurn2 21.1 (+2.1 ± 0.4), the exact future 1 / 2 / 3
+     turns ahead 16.4 / 15.3 / 14.6 — only perfect information reaches the
+     humans' level; bosses f17 75.8 -> look 75.0, fair 16-sample lookahead
+     75.8, oracle 2 turns 90.0; f33 28.3 -> 30.0 / 25.8 / 47.5; act 3 5.0 ->
+     9.2 / 13.3 / 15.0 — a fair look ahead pays in act 3's long fights only.
+     halllook dropped. The turn itself is planned on right numbers: 97.3%
+     of 3,537 act 2 hallway turns' HP loss predicted exactly, ~0.7 HP a fight
+     missed (the Ovicopter most). `sparpick` (94b26b2: the other
      session's conditional logit by act, skip only when every offer is
      vetoed) next.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
