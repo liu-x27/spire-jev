@@ -848,7 +848,12 @@ states, and only a simulator is fast enough for that.
      (the runs less far +12/-26, p 0.034); it skipped 29% (a best offer
      humans take under 10% of the time is skipped; act 2's humans skip 35%)
      and held 11.9 attacks, 8.0 skills at the boss. `sparhuman2` (51fc8dc:
-     the ranking without that skip) next.
+     the ranking without that skip): skipped 15% as spartake did, reached 44,
+     won 20 (+3/-7; the runs less far +10/-18), 13.0 attacks, 8.1 skills,
+     hallway HP 25.3% — the humans' take rates in place of the boss's bout
+     do not give the bot the humans' deck. `sparpick` (94b26b2: the other
+     session's conditional logit by act, skip only when every offer is
+     vetoed) next.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
      fresh seeds 856-1515, the spar3 reference against the combo with
      powbonus and spartake, whole runs, floors 16/32/47 captured.
