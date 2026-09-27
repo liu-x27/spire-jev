@@ -826,7 +826,11 @@ states, and only a simulator is fast enough for that.
      taking what clearly hurts the next boss costs; sparmix 24 (+5/-5; 13.3
      attacks, 8.6 skills: the boss's bout seldom lets a block skill through,
      decks enter act 2 with 10.9 attacks). `sparmix2` (ae272c8: the best
-     non-attack whatever the boss's bout says) next.
+     non-attack whatever the boss's bout says): 24 -> 14 (+1/-11, p 0.006;
+     12.4 attacks, 8.6 skills, hallway HP lost 25.1 -> 25.8%) — it takes
+     weaker cards, not the block the winners hold. The boss's bout is
+     right about boss wins; a mix rule that overrides it is not the
+     winners' mix. Kept: spartake (+23/-15 over 252).
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
