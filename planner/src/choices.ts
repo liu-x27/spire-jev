@@ -556,7 +556,7 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
           .filter((y) => y.p.mean + y.p.se > 0);
         judged.sort((a, b) => (b.u ?? -Infinity) - (a.u ?? -Infinity) || b.p.mean - a.p.mean);
         const best = judged[0];
-        if (best && (best.u === undefined || best.u >= humanSkipScore(act))) return best.x.id;
+        if (best && (best.u === undefined || best.u >= humanSkipScore())) return best.x.id;
         return legal.find((a) => a.action_id === "skip_card")?.action_id ?? legal[0]!.action_id;
       }
       if (flags.has("sparhuman") || flags.has("sparhuman2")) {
