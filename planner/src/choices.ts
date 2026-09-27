@@ -530,9 +530,14 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
       // 1.5, 2.0, as many cards (the other session, Spire Codex v0.111.0 against act2-take), and
       // lose 1.5-2 times their HP in act 2's hallways.
       const attacks = o.deck_cards.filter((c) => cardFromId(c)?.type === "Attack").length;
-      if (flags.has("sparmix") && actOf(o) === 1 && attacks >= 11) {
+      if ((flags.has("sparmix") || flags.has("sparmix2")) && actOf(o) === 1 && attacks >= 11) {
         const others = options.filter((x) => x.gain !== -Infinity && cardFromId(ids[options.indexOf(x)]!)?.type !== "Attack");
-        const pickOther = others.length ? spar5Pick(o, at, others.map((x) => ({ ...x, gain: 0 })), flags.has("spartake")) : undefined;
+        // sparmix2: the best of them by the bout whatever the bout says of it against the boss — sparmix
+        // left the mix as it was (13.7 -> 13.3 attacks at the act 2 boss): the boss's bout seldom
+        // passes a block skill, and act 2's HP goes in its hallways.
+        const pickOther = !others.length ? undefined : flags.has("sparmix2")
+          ? others.map((x) => ({ x, p: spar5Gain(o, at, x.change) })).sort((a, b) => b.p.mean - a.p.mean)[0]!.x
+          : spar5Pick(o, at, others.map((x) => ({ ...x, gain: 0 })), flags.has("spartake"));
         if (pickOther) return pickOther.id;
       }
       const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })), flags.has("spartake"));
