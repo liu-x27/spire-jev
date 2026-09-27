@@ -15,7 +15,7 @@ import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFr
 import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { relicSurplus } from "./relics.ts";
-import { BARE, type Boss, bossFor, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
+import { BARE, type Boss, bossFor, cardFromId, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -524,6 +524,17 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
       return { id: a.action_id, gain, change };
     });
     if (flags.has("spar5")) {
+      // sparmix (act 2): with 11 attacks or more in the deck, the non-attack offers first — the one
+      // spar5 would take of them, then the attacks only if none. A10 winners go into the act 2 boss
+      // with 10.6 attacks, 11 skills, 2.7 powers, 3.6 block cards past Defend; ours with 14.2, 8.4,
+      // 1.5, 2.0, as many cards (the other session, Spire Codex v0.111.0 against act2-take), and
+      // lose 1.5-2 times their HP in act 2's hallways.
+      const attacks = o.deck_cards.filter((c) => cardFromId(c)?.type === "Attack").length;
+      if (flags.has("sparmix") && actOf(o) === 1 && attacks >= 11) {
+        const others = options.filter((x) => x.gain !== -Infinity && cardFromId(ids[options.indexOf(x)]!)?.type !== "Attack");
+        const pickOther = others.length ? spar5Pick(o, at, others.map((x) => ({ ...x, gain: 0 })), flags.has("spartake")) : undefined;
+        if (pickOther) return pickOther.id;
+      }
       const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })), flags.has("spartake"));
       if (pick) return pick.id;
       // spartakeall: no skip unless every offer is one never to take — spartake still skipped 15% of act
