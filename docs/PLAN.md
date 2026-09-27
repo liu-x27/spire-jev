@@ -786,6 +786,13 @@ states, and only a simulator is fast enough for that.
      ten commonest ordinary fights too, bouts built from our own logs by
      tools/hallways.cjs; with s3f's f16 decks they lose Tunneler 22.8% of max
      HP, Exoskeletons 15.7, Myte 29.9, Hunter Killer 45.2, Chomper 44.6).
+     The play half, against act2-take on the same 111 (the act 1 boss fights
+     identical 111/111): hallway HP lost per won fight 23.4 -> 21.5 (hallhp)
+     / 21.7 (hallhp2) % of max, enemy turns 2.82 -> 2.96 / 3.07, the act 2
+     boss reached 51 -> 52 / 53 at 83 -> 86 / 85% HP, won 24 -> 21 / 19 (+7/-10,
+     +7/-12). A fight's HP weighted harder saves ~2 points of the ~50% gap:
+     the planner is not throwing away HP the cards could keep. Dropped (the
+     other session); the gap is the deck's.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
