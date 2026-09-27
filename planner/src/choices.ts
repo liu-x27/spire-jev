@@ -14,7 +14,7 @@ import { type MapPoint, planPath } from "./path.ts";
 import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFromAct1 } from "./packages.ts";
 import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
-import { humanTake } from "./takerates.ts";
+import { humanScore, humanSkipScore, humanTake } from "./takerates.ts";
 import { relicSurplus } from "./relics.ts";
 import { BARE, type Boss, bossFor, cardFromId, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
@@ -547,6 +547,18 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
       // how often A10 players take each when offered in this act (takerates.ts); spar5's mean breaks
       // ties and orders the cards the data lacks after the rest. Skipped when the best of them humans
       // take less than SKIP_TAKE of the time.
+      // sparpick: the offers the boss's bout does not clearly turn down, by A10 players' within-screen
+      // preference (takerates.ts humanScore), skipped when none beats the skip's own utility.
+      if (flags.has("sparpick")) {
+        const act = actOf(o);
+        const judged = options.filter((x) => x.gain !== -Infinity)
+          .map((x) => ({ x, p: spar5Gain(o, at, x.change), u: humanScore(ids[options.indexOf(x)]!, act) }))
+          .filter((y) => y.p.mean + y.p.se > 0);
+        judged.sort((a, b) => (b.u ?? -Infinity) - (a.u ?? -Infinity) || b.p.mean - a.p.mean);
+        const best = judged[0];
+        if (best && (best.u === undefined || best.u >= humanSkipScore(act))) return best.x.id;
+        return legal.find((a) => a.action_id === "skip_card")?.action_id ?? legal[0]!.action_id;
+      }
       if (flags.has("sparhuman") || flags.has("sparhuman2")) {
         const act = actOf(o);
         const judged = options.filter((x) => x.gain !== -Infinity)
