@@ -854,7 +854,19 @@ states, and only a simulator is fast enough for that.
      do not give the bot the humans' deck. (What it picked at act 2's
      rewards: 134 skills, 169 attacks, 25 powers, 58 skips over 397 screens,
      against spartake's 97, 223, 15, 60 over 411 — it did take the skills;
-     neither the hallway HP nor the boss followed.) `sparpick` (94b26b2: the other
+     neither the hallway HP nor the boss followed.)
+   - **It is not the mix** (the other session, a2_block_cut.py; act 2 hallway
+     monster rooms, each fight less the humans' mean for its encounter):
+     humans with 0-1 / 2 / 3+ block cards past Defend +1.0 / 0.0 / -0.4 of max
+     HP, ours (act2-take) +8.2 / +10.9 / +8.6, act2-human2 +8.6 / +7.6 /
+     +9.7. Not the obvious leaks either: block left in hand on a turn that
+     then lost HP 3% of the HP, potions per hallway fight 0.31 (humans 0.26),
+     upgrades by f32 5.5 (5.6). Relics: humans reaching f33 hold ~14 by f32
+     (ours 8.6; elites give them 4.78 a run), worth 2-3 of the ~9 points;
+     humans with 8 or fewer still lose 15.4% to our 22-25%. What is left, ~6
+     points, is in the turn: every ordinary fight is planTurn's one turn.
+     Next: `halllook` (planTurn2 in ordinary fights) and `hallfuture`
+     (futureDamage 0.5 there: which of several enemies to hit), ab54390. `sparpick` (94b26b2: the other
      session's conditional logit by act, skip only when every offer is
      vetoed) next.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
