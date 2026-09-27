@@ -881,7 +881,18 @@ states, and only a simulator is fast enough for that.
      missed (the Ovicopter most). Act 3 again on 71 distinct f48/49 fights
      (× 6): planTurn 29/426 (6.8%), planTurn2 37/426, the fair 16-sample
      look 37/426 (HP -1.0 ± 0.4) — ~2 points, as bosslook's game result; the
-     40-fight 5 -> 13% was noise. Not prioritised. `sparpick` (94b26b2: the other
+     40-fight 5 -> 13% was noise. Not prioritised. `hallfuture` (futureDamage
+     0.5 in ordinary fights) on act 2 played through: won 24 -> 16 (+3/-11,
+     p 0.057; the runs less far +9/-23, p 0.020); hallway HP 25.1 -> 25.6%,
+     multi-enemy fights 25.5 -> 25.7%. Dropped.
+   - **Reading the act 2 arms**: every one of them was paired with act2-take
+     on 586-705, whose 24 wins of 111 (22%) look lucky beside its 23 of 141
+     on 706-855 (16%) — a different decision sends a run down another of
+     the game's random paths, so each arm carries its own luck. Arms at
+     19-21 (hallhp 21, sparhuman 19, sparhuman2 20, sparpick 21) are then
+     more likely neutral than harmful; the clear falls (sparmix2 14,
+     hallfuture 16, spartakeall 17, sparhall 17, spartakeshop 17) less so.
+     None beats spartake. `sparpick` (94b26b2: the other
      session's conditional logit by act, skip only when every offer is
      vetoed): reached 44, won 21 (+3/-6 against spartake, +2/-1 against
      sparhuman2), 133 skills picked at act 2's rewards, hallway HP 25.2%.
