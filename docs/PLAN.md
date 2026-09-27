@@ -806,7 +806,22 @@ states, and only a simulator is fast enough for that.
      spar3 over the core: 46, 14 (further +26/-10, p 0.011); the combo with
      spartake: 51, 24 (the boss +17/-3, p 0.003). Taking more cards is the
      thread: spartake, nopickrates, and the human prior's skips going the
-     other way.
+     other way. Act 2's rewards skipped and the deck at its boss: the core
+     44%, 20.8 cards; with nopickrates 6%, 24.6; spar3 45%, 22.2; the combo
+     47%, 23.2; with spartake 15%, 25.2.
+   - **What the decks hold** at floor 32 (the other session: Spire Codex
+     v0.111.0 A10 Ironclad decks rebuilt at f32, against act2-take): as many
+     cards (25.9 winners / 25.6 ours) but 10.6 attacks to our 14.2, 11.0
+     skills to 8.4, 2.7 powers to 1.5, 3.6 block cards past Defend to 2.0,
+     2.2 exhaust enablers to 0.8. Humans who died in act 2's hallways held
+     fewer skills (9.9), block cards (3.2) and exhaust enablers (1.7) than
+     those who reached the boss, and more than ours. Ours carry Anger,
+     Cinder, Molten Fist, Setup Strike, Hemokinesis, Bully, Twin Strike where
+     theirs carry Shrug It Off, Flame Barrier, True Grit, Blood Wall,
+     Colossus, Burning Pact, Second Wind, Feel No Pain. Next:
+     `spartakeall` (9f85c1c: no skip unless every offer is never to take) and
+     `sparmix` (ce858b0: act 2, 11 attacks or more, a non-attack offer first)
+     on all 252.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
