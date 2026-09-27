@@ -547,14 +547,16 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
       // how often A10 players take each when offered in this act (takerates.ts); spar5's mean breaks
       // ties and orders the cards the data lacks after the rest. Skipped when the best of them humans
       // take less than SKIP_TAKE of the time.
-      if (flags.has("sparhuman")) {
+      if (flags.has("sparhuman") || flags.has("sparhuman2")) {
         const act = actOf(o);
         const judged = options.filter((x) => x.gain !== -Infinity)
           .map((x) => ({ x, p: spar5Gain(o, at, x.change), t: humanTake(ids[options.indexOf(x)]!, act) }))
           .filter((y) => y.p.mean + y.p.se > 0);
         judged.sort((a, b) => (b.t ?? -1) - (a.t ?? -1) || b.p.mean - a.p.mean);
         const best = judged[0];
-        if (best && (best.t === undefined || best.t >= SKIP_TAKE)) return best.x.id;
+        // sparhuman2: no skip for a low take rate — sparhuman skipped 29% of act 2's rewards (spartake
+        // 15%) and lost act 2 (the runs less far +12/-26 against spartake).
+        if (best && (flags.has("sparhuman2") || best.t === undefined || best.t >= SKIP_TAKE)) return best.x.id;
         return legal.find((a) => a.action_id === "skip_card")?.action_id ?? legal[0]!.action_id;
       }
       const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })), flags.has("spartake"));
