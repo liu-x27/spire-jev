@@ -878,7 +878,10 @@ states, and only a simulator is fast enough for that.
      9.2 / 13.3 / 15.0 — a fair look ahead pays in act 3's long fights only.
      halllook dropped. The turn itself is planned on right numbers: 97.3%
      of 3,537 act 2 hallway turns' HP loss predicted exactly, ~0.7 HP a fight
-     missed (the Ovicopter most). `sparpick` (94b26b2: the other
+     missed (the Ovicopter most). Act 3 again on 71 distinct f48/49 fights
+     (× 6): planTurn 29/426 (6.8%), planTurn2 37/426, the fair 16-sample
+     look 37/426 (HP -1.0 ± 0.4) — ~2 points, as bosslook's game result; the
+     40-fight 5 -> 13% was noise. Not prioritised. `sparpick` (94b26b2: the other
      session's conditional logit by act, skip only when every offer is
      vetoed) next.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
