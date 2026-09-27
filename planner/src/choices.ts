@@ -177,7 +177,10 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   // elo2: only from act 2 — elo alone skipped so much in act 1 that decks met Vantom at 14.8 cards
   // (18.5 before) and won 4 of 24 (elo-a10); act 1 at A10 needs its frontload.
   const fromElo = flags.has("elo") || (flags.has("elo2") && act >= 1) ? eloValue(card) : undefined;
-  let v = fromElo ?? (row ? 0.5 * ([...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5)) + 0.5 * (row.pick[act] / 100) : 0.3);
+  // nopickrates: the tiers alone, no pick rates (Untapped's in CARDS, Spire Codex's in EXTRA_CARDS) —
+  // what a public build without third-party run data would have.
+  const tier = row ? [...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5) : 0;
+  let v = fromElo ?? (row ? (flags.has("nopickrates") ? tier : 0.5 * tier + 0.5 * (row.pick[act] / 100)) : 0.3);
   if (ALWAYS.has(card) && fromElo === undefined) v = Math.max(v, 0.9);
   // §10.1.10, §3.5: the first Battle Trance, not the second; two Trembles at most.
   const copies = deck.filter((c) => base(c) === card).length;
@@ -680,7 +683,8 @@ const JUNK = new Set(["INJURY", "CLUMSY", "SPORE_MIND", "NORMALITY", "DECAY", "G
 function keepValue(id: string): number {
   const card = base(id);
   const row = CARDS[card];
-  let v = row ? 0.5 * ([...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5)) + 0.5 * ((row.pick[0] + row.pick[1] + row.pick[2]) / 300) : 0.3;
+  const tier = row ? [...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5) : 0;
+  let v = row ? (flags.has("nopickrates") ? tier : 0.5 * tier + 0.5 * ((row.pick[0] + row.pick[1] + row.pick[2]) / 300)) : 0.3;
   if (ALWAYS.has(card)) v = Math.max(v, 0.9);
   return v;
 }
