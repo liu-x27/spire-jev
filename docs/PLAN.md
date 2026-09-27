@@ -792,7 +792,12 @@ states, and only a simulator is fast enough for that.
      boss reached 51 -> 52 / 53 at 83 -> 86 / 85% HP, won 24 -> 21 / 19 (+7/-10,
      +7/-12). A fight's HP weighted harder saves ~2 points of the ~50% gap:
      the planner is not throwing away HP the cards could keep. Dropped (the
-     other session); the gap is the deck's.
+     other session); the gap is the deck's. The deck half, `sparhall`, on the
+     same 111: the act 2 boss reached 51 -> 46, won 24 -> 17 (+4/-11, p 0.12;
+     the runs less far +11/-23, p 0.058), hallway HP lost per fight 25.1 ->
+     25.3%: it does not keep the HP it was built to keep. Not adopted — the
+     bouts' scripts (their commonest intent, no potions, no status cards)
+     are not the fights that bleed the runs.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
