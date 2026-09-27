@@ -311,7 +311,12 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
     ? s.enemies.filter((e) => !e.alive && (e.powers["REATTACH"] ?? 0) > 0).reduce((a, e) => a + e.powers["REATTACH"]!, 0)
     : 0;
   const illusion = alive.filter((e) => (e.powers["ILLUSION"] ?? 0) > 0).reduce((a, e) => a + e.hp, 0);
-  const hidden = (slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0) + infested + reattach - illusion;
+  // Burrowed (the Tunneler; IL: BurrowedPower.ShouldClearBlock): its block stays until broken, and
+  // broken it stuns it (sim.ts hit) — HP to take like the rest. Uncounted, the planner defended against
+  // every Below and chipped nothing (a bout: 37 block untouched four turns, 45 HP lost; the human 7).
+  // Priced higher still (its share of the Below the break stops) the bout lost more, not less.
+  const burrow = alive.filter((e) => (e.powers["BURROWED"] ?? 0) > 0).reduce((a, e) => a + e.block, 0);
+  const hidden = (slippery > 0 ? slippery * Math.max(0, deckPace(s).perHit - 1) : 0) + infested + reattach - illusion + burrow;
   const extra = w.long > 0 ? longFightExtra(s, alive, w) : 0;
   // HP at the end of the turn, after the enemies: what the cards spent (Offering, Hemokinesis,
   // Corrupted, Thorns) counts as much as what the enemies take. (Only the end of turn's loss was

@@ -74,6 +74,23 @@ export const SCRIPTS: Record<string, Record<string, Move>> = {
     STOMP_MOVE: { damage: 17, next: "CRUSH_MOVE" },
     CRUSH_MOVE: { damage: 19, shows: ["Buff"], effect: (t) => add(t.powers, "STRENGTH", 4), next: "BEAST_CRY_MOVE" },
   },
+  // Act 2's Tunneler (IL: Tunneler.GenerateMoveStateMachine, A10 numbers): Bite, Burrow (block and
+  // Burrowed, whose block the enemies' turn does not clear: BurrowedPower.ShouldClearBlock), then
+  // Below every turn until the block is broken (sim.ts hit: stunned, Bite next).
+  TUNNELER: {
+    BITE_MOVE: { damage: 15, next: "BURROW_MOVE" },
+    BURROW_MOVE: {
+      shows: ["Buff", "Defend"],
+      effect: (t) => {
+        t.block += 37;
+        add(t.powers, "BURROWED", 1);
+      },
+      next: "BELOW_MOVE",
+    },
+    BELOW_MOVE: { damage: 26, next: "BELOW_MOVE" },
+    STUNNED: { shows: ["Stun"], next: "BITE_MOVE" },
+    DIZZY_MOVE: { shows: ["Stun"], next: "BITE_MOVE" },
+  },
   LAGAVULIN_MATRIARCH: {
     // Asleep (turn.ts counts it down and gives Plating's block): she sleeps until it runs out.
     SLEEP_MOVE: { shows: ["Sleep"], next: (t) => ((t.powers["ASLEEP"] ?? 0) > 0 ? "SLEEP_MOVE" : "SLASH_MOVE") },

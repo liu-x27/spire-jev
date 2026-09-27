@@ -384,15 +384,21 @@ export function outcomeScore(b: Bout, me: Player): number {
  * monsters, so the game's fights never read them.
  */
 export interface Hallway { key: string; n: number; boss: Boss }
+/** Hallway monsters with a script from the IL (scripts.ts), and the move each opens with. */
+const HALL_OWN: Record<string, string> = { TUNNELER: "BITE_MOVE" };
 let halls: Hallway[] | undefined;
 export function hallways(): Hallway[] {
   if (halls) return halls;
   const file = path.resolve(import.meta.dirname, "..", "data", "hallways-a2.json");
-  const rows = fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")) as { key: string; n: number; monsters: { hp: number; powers: Record<string, number>; turns: string[] }[] }[]) : [];
+  const rows = fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf8")) as { key: string; n: number; monsters: { model: string; hp: number; powers: Record<string, number>; turns: string[] }[] }[]) : [];
   halls = [];
   rows.forEach((r, i) => {
     if (r.monsters.some((m) => m.hp <= 0 || m.turns.length === 0 || m.turns.some((t) => /Escape|Summon/.test(t)))) return;
     const specs = r.monsters.map((m, j) => {
+      // A monster scripts.ts has from the IL plays its own script (the Tunneler's Burrow, the block it
+      // keeps and the stun when that breaks: the logs' commonest intents had none of them).
+      const own = HALL_OWN[m.model];
+      if (own) return { model: m.model, hp: m.hp, powers: { ...m.powers }, move: own };
       const model = `HALL_${i}_${j}`;
       const k = m.turns.length;
       SCRIPTS[model] = Object.fromEntries(m.turns.map((t, x) => {

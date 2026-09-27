@@ -13,7 +13,7 @@
 
 import type { IntentObs } from "./obs.ts";
 import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
-import { type Card, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
+import { type Card, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, incomingHitsBy, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
 // Ringing (the Ceremonial Beast's Beast Cry) is one turn's: the game's fights have it the turn after
@@ -144,6 +144,17 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
   const gifts: { from: number; powers: Record<string, number> }[] = [];
   /** Whether the player was Vulnerable when each scripted enemy's next intents were worked out. */
   const shownWith = new Map<number, boolean>();
+  // Imbalanced (Bowlbug Rock; IL: ImbalancedPower.AfterDamageGiven, WasFullyBlocked): an attack the
+  // player's block took all of stuns it, its next move gone. The hits land in the enemies' order.
+  const offBalance = new Set<number>();
+  if (s.enemies.some((e) => e.alive && (e.powers["IMBALANCED"] ?? 0) > 0)) {
+    let guard = endOfTurnBlock(s);
+    incomingHitsBy(s).forEach((hits, i) => {
+      const sum = hits.reduce((a, n) => a + n, 0);
+      if (hits.length > 0 && sum <= guard && (s.enemies[i]!.powers["IMBALANCED"] ?? 0) > 0) offBalance.add(s.enemies[i]!.id);
+      guard = Math.max(0, guard - sum);
+    });
+  }
   const enemies = s.enemies.map((e): Enemy => {
     // A killed Waterfall Giant: its stun passes, and the turn after it strikes for its DeathBlow (the
     // game shows it with Weak taken off already); once struck it is gone.
@@ -206,6 +217,8 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
         sleepBlock = Math.max(0, ep["PLATING"] ?? 0);
       }
     }
+    // Burrowed (the Tunneler; IL: BurrowedPower.ShouldClearBlock): its block outlives its turn.
+    if ((e.powers["BURROWED"] ?? 0) > 0) sleepBlock += e.block;
     // A boss's move by its id: what it does now, and the move it shows next.
     const moved: EnemyTurn = {
       turn: s.turn ?? 1, powers: ep, block: sleepBlock, heal: 0, player: powers, draw, discard,
@@ -246,7 +259,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     return {
       ...rest, powers: ep, block: sleepBlock, hp: Math.max(0, hp), alive: hp > 0,
       ...(withering ? { powerVars: withering } : {}),
-      intents,
+      intents: offBalance.has(e.id) ? [{ type: "Stun", damage: 0, hits: 0 }] : intents,
       ...(move !== undefined ? { move } : {}),
       ...(move !== undefined && behind ? { behindAtStart: true } : {}),
       weakAtStart: (ep["WEAK"] ?? 0) > 0,

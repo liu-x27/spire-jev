@@ -395,8 +395,14 @@ function hit(target: Enemy, damage: number): number {
   const absorbed = Math.min(target.block, damage);
   const hadBlock = target.block > 0;
   target.block -= absorbed;
-  // Burrowed (Tunneler) goes when its block is broken.
-  if (hadBlock && target.block === 0) delete target.powers["BURROWED"];
+  // Burrowed (Tunneler; IL: BurrowedPower.AfterBlockBroken): its block broken, it is stunned at once
+  // (Tunneler.GetStunned, CreatureCmd.Stun to BITE_MOVE) and Burrowed goes: the Below it showed does
+  // not come. Only the power went, and the planner saw no worth in breaking 37 block before the 26.
+  if (hadBlock && target.block === 0 && has(target, "BURROWED")) {
+    delete target.powers["BURROWED"];
+    target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+    target.move = "STUNNED";
+  }
   let lost = damage - absorbed;
   // Asleep (Lagavulin Matriarch; IL: AsleepPower.AfterDamageReceived): damage past her block wakes
   // her: Plating and Asleep go, her block stays, and she is stunned for this turn (Slash next).
@@ -1709,8 +1715,15 @@ export function incomingDamage(s: State): number {
 
 /** The enemies' hits at the end of this turn, one by one in the order they land. */
 export function incomingHits(s: State): number[] {
-  const hits: number[] = [];
+  return incomingHitsBy(s).flat();
+}
+
+/** The hits of each enemy (s.enemies' order) at the end of this turn. */
+export function incomingHitsBy(s: State): number[][] {
+  const by: number[][] = [];
   for (const e of s.enemies) {
+    const hits: number[] = [];
+    by.push(hits);
     // The shown damage already includes the enemy's strength and weak and the
     // player's vulnerable as they stood when it was computed; weak applied to
     // the enemy this turn cuts it by a quarter, and Colossus played this turn
@@ -1736,7 +1749,7 @@ export function incomingHits(s: State): number[] {
       for (let h = 0; h < Math.max(1, i.hits); h++) hits.push(per);
     }
   }
-  return hits;
+  return by;
 }
 
 /** Tungsten Rod (IL: ModifyHpLostAfterOsty): every loss of HP 1 less, never below 0. */

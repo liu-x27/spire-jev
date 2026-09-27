@@ -7,6 +7,7 @@ import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type 
 import { evaluate, planTurn, useHpNeed, useHpScale, usePotionSaving, useTorchFirst } from "../src/search.ts";
 import { chooseEvent } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
+import { nextTurn, seeded } from "../src/turn.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1): Card => ({
   id, cost, costsX: false, type, target, keywords: [], vars, upgrades: 0, locked: false, glows: false,
@@ -259,4 +260,33 @@ test("hp48b: under the second boss's need every HP counts twice", () => {
   } finally {
     useHpNeed(0);
   }
+});
+
+test("burrowed: the Tunneler's block broken stuns it at once; kept, the block outlives its turn", () => {
+  const burrowed = (): Enemy => ({ ...foe("TUNNELER", 60, { BURROWED: 1 }), block: 10, move: "BELOW_MOVE", intents: [{ type: "Attack", damage: 26, hits: 1 }] });
+  const bash = card("BASH", "Attack", "AnyEnemy", { Damage: 12 }, 2);
+  const broken = at(state([bash], [burrowed()]), 0);
+  assert.equal(broken.enemies[0]!.block, 0);
+  assert.equal(broken.enemies[0]!.powers["BURROWED"], undefined);
+  assert.equal(incomingDamage(broken), 0);
+  // Bite after the stun (IL: CreatureCmd.Stun to BITE_MOVE).
+  assert.deepEqual(nextTurn(broken, seeded(1), () => [])!.enemies[0]!.intents, [{ type: "Attack", damage: 15, hits: 1 }]);
+  // Not broken: the Below comes, and the 4 block left is there next turn.
+  const dented = at(state([STRIKE], [burrowed()]), 0);
+  assert.equal(incomingDamage(dented), 26);
+  const next = nextTurn(dented, seeded(1), () => [])!;
+  assert.equal(next.enemies[0]!.block, 4);
+  assert.deepEqual(next.enemies[0]!.intents, [{ type: "Attack", damage: 26, hits: 1 }]);
+  // Its block is HP to take: a Strike into it is worth what a Strike into its HP is.
+  const open = { ...burrowed(), powers: {}, block: 0 };
+  const into = (e: Enemy) => evaluate(at(state([STRIKE], [e]), 0)) - evaluate(state([STRIKE], [e]));
+  assert.ok(Math.abs(into(burrowed()) - into(open)) < 0.01);
+});
+
+test("imbalanced: the Bowlbug Rock's attack fully blocked stuns its next turn", () => {
+  const rock = (): Enemy => ({ ...foe("BOWLBUG_ROCK", 49, { IMBALANCED: 1 }), intents: [{ type: "Attack", damage: 16, hits: 1 }] });
+  const guarded = { ...state([], [rock()]), player: { hp: 80, maxHp: 80, block: 16, powers: {} } };
+  assert.deepEqual(nextTurn(guarded, seeded(1), () => [{ type: "Attack", damage: 16, hits: 1 }])!.enemies[0]!.intents, [{ type: "Stun", damage: 0, hits: 0 }]);
+  const short = { ...state([], [rock()]), player: { hp: 80, maxHp: 80, block: 15, powers: {} } };
+  assert.deepEqual(nextTurn(short, seeded(1), () => [{ type: "Attack", damage: 16, hits: 1 }])!.enemies[0]!.intents, [{ type: "Attack", damage: 16, hits: 1 }]);
 });
