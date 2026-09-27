@@ -883,7 +883,10 @@ states, and only a simulator is fast enough for that.
      look 37/426 (HP -1.0 ± 0.4) — ~2 points, as bosslook's game result; the
      40-fight 5 -> 13% was noise. Not prioritised. `sparpick` (94b26b2: the other
      session's conditional logit by act, skip only when every offer is
-     vetoed) next.
+     vetoed): reached 44, won 21 (+3/-6 against spartake, +2/-1 against
+     sparhuman2), 133 skills picked at act 2's rewards, hallway HP 25.2%.
+     Neither human ranking helps: picking as the humans pick does not play
+     as they play. spar5 with spartake's veto stays the reward rule.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
      fresh seeds 856-1515, the spar3 reference against the combo with
      powbonus and spartake, whole runs, floors 16/32/47 captured.
