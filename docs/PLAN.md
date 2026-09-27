@@ -851,7 +851,10 @@ states, and only a simulator is fast enough for that.
      the ranking without that skip): skipped 15% as spartake did, reached 44,
      won 20 (+3/-7; the runs less far +10/-18), 13.0 attacks, 8.1 skills,
      hallway HP 25.3% — the humans' take rates in place of the boss's bout
-     do not give the bot the humans' deck. `sparpick` (94b26b2: the other
+     do not give the bot the humans' deck. (What it picked at act 2's
+     rewards: 134 skills, 169 attacks, 25 powers, 58 skips over 397 screens,
+     against spartake's 97, 223, 15, 60 over 411 — it did take the skills;
+     neither the hallway HP nor the boss followed.) `sparpick` (94b26b2: the other
      session's conditional logit by act, skip only when every offer is
      vetoed) next.
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
