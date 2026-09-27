@@ -764,7 +764,11 @@ states, and only a simulator is fast enough for that.
      change too, and 90 starts reach act 2 some 65 times. On s3f's other
      f16 saves (706-855, 141) the combo 21 -> 23 with spartake (+10/-8): over
      all 252, 39 -> 47 act 2 boss wins (+23/-15, p 0.26). Positive, smaller
-     than the first 111 said.
+     than the first 111 said. `spartakeshop` (the same for the shop's buys
+     and removal, 422eea9) on the first 111: 24 -> 17 against spartake
+     alone (+1/-8, p 0.039; the runs less far +3/-13) — back to the
+     combo's 18. Not adopted: what the shop's gold does without proof of help
+     is worse spent than kept.
    - `elitedeath` on act 2 played through (the other session, 111 saves):
      the act 2 boss reached 47/47, won 14/13; the route differed on 4 seeds.
      The base's act 2 elite deaths (12, most from 16-60% HP) had the elite as
