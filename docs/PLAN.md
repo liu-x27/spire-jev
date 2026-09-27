@@ -798,6 +798,15 @@ states, and only a simulator is fast enough for that.
      25.3%: it does not keep the HP it was built to keep. Not adopted — the
      bouts' scripts (their commonest intent, no potions, no status cards)
      are not the fights that bleed the runs.
+   - **The Workshop build's core** (the mod session: rules2, pathdp,
+     restbudget, potions2, sleep, powbonus; no spar) on the same 111: the act
+     2 boss reached 40, won 10. `nopickrates` (3fd4607: the tiers alone, no
+     Untapped / Spire Codex pick rates): 47, 15 — the runs further +27/-10
+     (p 0.008), the boss +8/-3; the tiers alone value higher and skip less.
+     spar3 over the core: 46, 14 (further +26/-10, p 0.011); the combo with
+     spartake: 51, 24 (the boss +17/-3, p 0.003). Taking more cards is the
+     thread: spartake, nopickrates, and the human prior's skips going the
+     other way.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
