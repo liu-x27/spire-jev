@@ -14,6 +14,7 @@ import { type MapPoint, planPath } from "./path.ts";
 import { fillsNeed, packageBonus, planBonus, profile, usePackages2, useScalingFromAct1 } from "./packages.ts";
 import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
+import { humanTake } from "./takerates.ts";
 import { relicSurplus } from "./relics.ts";
 import { BARE, type Boss, bossFor, cardFromId, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
@@ -225,6 +226,8 @@ const SKIP_CALIBRATED: { plain: [number, number, number]; packages: [number, num
  * the act's boss, played out in the simulator (spar.ts) — the same shuffles for every candidate.
  */
 const SPAR_SAMPLES = 32;
+/** sparhuman: a reward whose best offer A10 players take less often than this when offered is skipped. */
+const SKIP_TAKE = 0.1;
 const sparBase = new Map<string, number>();
 const sparDone = new Map<string, number>();
 function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[], at?: Sparring, more = 0, quick = 0): number {
@@ -539,6 +542,20 @@ export function chooseCardReward(o: Observation, legal: LegalAction[]): string {
           ? others.map((x) => ({ x, p: spar5Gain(o, at, x.change) })).sort((a, b) => b.p.mean - a.p.mean)[0]!.x
           : spar5Pick(o, at, others.map((x) => ({ ...x, gain: 0 })), flags.has("spartake"));
         if (pickOther) return pickOther.id;
+      }
+      // sparhuman: the offers the next boss's bout does not clearly turn down (spar5's lean rule), ranked by
+      // how often A10 players take each when offered in this act (takerates.ts); spar5's mean breaks
+      // ties and orders the cards the data lacks after the rest. Skipped when the best of them humans
+      // take less than SKIP_TAKE of the time.
+      if (flags.has("sparhuman")) {
+        const act = actOf(o);
+        const judged = options.filter((x) => x.gain !== -Infinity)
+          .map((x) => ({ x, p: spar5Gain(o, at, x.change), t: humanTake(ids[options.indexOf(x)]!, act) }))
+          .filter((y) => y.p.mean + y.p.se > 0);
+        judged.sort((a, b) => (b.t ?? -1) - (a.t ?? -1) || b.p.mean - a.p.mean);
+        const best = judged[0];
+        if (best && (best.t === undefined || best.t >= SKIP_TAKE)) return best.x.id;
+        return legal.find((a) => a.action_id === "skip_card")?.action_id ?? legal[0]!.action_id;
       }
       const pick = spar5Pick(o, at, options.map((x) => ({ ...x, gain: x.gain === -Infinity ? -Infinity : 0 })), flags.has("spartake"));
       if (pick) return pick.id;
