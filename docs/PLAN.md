@@ -831,6 +831,19 @@ states, and only a simulator is fast enough for that.
      weaker cards, not the block the winners hold. The boss's bout is
      right about boss wins; a mix rule that overrides it is not the
      winners' mix. Kept: spartake (+23/-15 over 252).
+   - **Offered as often, taken far less** (the other session: Spire Codex
+     card_choices, 25,171 screens, against ours, 3,217): the defensive skills
+     are offered to the bot as often as to humans and passed on — Flame
+     Barrier taken 1% of 97 offers (humans 52%), Shrug It Off 8% (39%), True
+     Grit 3% (24%), Feel No Pain and Burning Pact 0% (44%, 47%), Colossus 12%
+     (57%) — and the mid attacks humans pass on are taken — Hemokinesis 77%
+     (17%), Anger 65% (21%), Cinder 36% (7%). ~70% of the humans' copies come
+     from card rewards. `sparhuman` (097e01c; data/take-rates-a10.json by
+     act, 09dcf54): the offers the boss's bout does not clearly turn down,
+     ranked by the act's human take rate; on act 2 played through next.
+   - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
+     fresh seeds 856-1515, the spar3 reference against the combo with
+     powbonus and spartake, whole runs, floors 16/32/47 captured.
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
