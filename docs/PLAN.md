@@ -994,7 +994,18 @@ states, and only a simulator is fast enough for that.
      (the game 22.7), planTurn2 as it was +0.4 ± 0.7, with lookfix -1.9 ±
      0.6, a 2-turn rollout -2.0, the cheat one / three turns known -4.2 /
      -6.5; deaths 17 -> 11 (the cheat's 11). In the game: queue68's
-     act2-fixlook / act2b-fixlook (halllook + lookfix).
+     act2-fixlook / act2b-fixlook (halllook + lookfix). A 3-turn rollout
+     (8 samples) -2.6 (deaths 14). Bosses (spar's bouts on HEAD, 40 fights
+     × 3, powbonus's planner inside): act 1 won 79.2% -> planTurn2 +
+     lookfix 79.2 -> a 2-turn rollout + lookfix (5 ends × 8, 1500 nodes)
+     85.8, deaths 25 -> 17 (the Waterfall Giant 13 / 10 / 13 of 24: one
+     turn looked at loses it, two do not; Matriarch 17 -> 21); act 2 21.7
+     -> 24.2 -> 29.2 (the cheat 40.0; the Insatiable 6 / 10 / 13 of 39,
+     the Crab 1 / 3 / 5 of 24, the Knowledge Demon 19 / 16 / 17 of 57 —
+     worse with a look, to watch). `--flags bossroll8` (2662b8b): that
+     rollout as powbonus's inner planner in boss fights (bossroll's own
+     BOSS_ROLL sat behind powbonus in the chain and never ran). A leaf with
+     `long` 1: nothing; with future / futureBlock: worse in hallways.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
