@@ -1209,6 +1209,23 @@ states, and only a simulator is fast enough for that.
      and ranking are calibrated; a whole-run confirmation per switch;
      fixing act 2's boss without looking at act 3. "Stable": 43 wins of
      330, or 80 of 660, most of them clean.
+   - **P1, act 2's boss: the census** (a2boss-base's 97 fights from s3f's
+     f32 saves): 71 of 529 end-of-turn HP predictions missed (13%; the
+     hallways 2.4%) — Crab 26, Knowledge Demon 25, Insatiable 20; 199
+     turn-start fields mismatched. By fight, the patterns: -5, -4, -3 …
+     with Regen and +1 a turn with Inferno are the log's timing (the heal at
+     the turn's end, the SelfDamage at the start, which startOfTurn has);
+     +4 a turn in the 6 fights with Ripple Basin and an energy over in the
+     4 with Art of War were real: "no attack this turn" read a mid-turn
+     rebuilt state's own count, 0 — the runner now counts the turn's
+     attacks into State.attacksBefore (3597943, a9dde2a). Toasty Mittens'
+     hand one over is the check's timing (the game asks for the card to
+     exhaust after the observation). Left: a hand one over in ~6 fights
+     with no common relic (Frantic Escape and Relax held; the catalogue
+     shows no Retain on either), the Crab's HP off by 2-6 at a turn's start.
+     Next: the bot's own entry states — eval-conf-best-a10's f32 saves reach
+     the Crab 94, the Knowledge Demon 110, the Insatiable 103 — ~30 a boss,
+     the lost fights' first important deviation.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
