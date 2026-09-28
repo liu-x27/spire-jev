@@ -1123,7 +1123,16 @@ states, and only a simulator is fast enough for that.
      between batches: Weak on them +0.8 -> -2.4). A linear value of these
      features does not beat the look ahead on 400 labels; the look ahead is
      the best predictor of the real outcome there is. Its gaps are what to
-     work on: the hallway pick (lookadapt next) and bosses' horizon.
+     work on: the hallway pick and bosses' horizon. The pick: at the 53
+     hallway points, hallwide (K 20) 18 / 29 / 6 and lookadapt (the best 3
+     re-rated on 64 hands, 3aa7842) 19 / 29 / 5 against lookfix's 22 / 27 /
+     4 — neither width nor sampling moves the ~18 left; the leaf ranks the
+     human's end below another and the outcome disagrees. Whole fights
+     from the replays' exact saves (fixed state, each arm the whole fight):
+     171 elite and boss fights, C against C,halllook,lookfix,bossroll8:
+     deaths 39 -> 30 (C's alone 18, the look's alone 9, p 0.12), HP -1.6 ±
+     1.1 where both won (123). The 418 exact hallway saves (hC / hlook /
+     hadapt) running.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
