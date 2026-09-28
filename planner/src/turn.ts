@@ -82,6 +82,14 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     powers[stat] = (powers[stat] ?? 0) - powers[temp]!;
     delete powers[temp];
   }
+  // Tender (the Hunter Killer's Goop; IL: TenderPower): the Strength and Dexterity every card of the
+  // turn took come back at its end (the game's next turns: back to where they were). The model kept
+  // the losses for good, and a lookahead or bout against it lost a Strength and Dexterity a card.
+  const tender = Math.max(0, powers["TENDER"] ?? 0) * ((s.player.powerVars?.["TENDER"]?.["_cardsPlayedThisTurn"] ?? 0) + s.played);
+  for (const stat of tender > 0 ? ["STRENGTH", "DEXTERITY"] : []) {
+    powers[stat] = (powers[stat] ?? 0) + tender;
+    if (powers[stat] === 0) delete powers[stat];
+  }
   for (const k of TURN_ONLY) delete powers[k];
   tick(powers, TICKS);
   // The next turn begins.
@@ -221,7 +229,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     if ((e.powers["BURROWED"] ?? 0) > 0) sleepBlock += e.block;
     // A boss's move by its id: what it does now, and the move it shows next.
     const moved: EnemyTurn = {
-      turn: s.turn ?? 1, powers: ep, block: sleepBlock, heal: 0, player: powers, draw, discard,
+      turn: s.turn ?? 1, powers: ep, block: sleepBlock, heal: 0, player: powers, draw, discard, hand,
       allies: s.enemies.filter((o) => o !== e), allyPowers: {},
     };
     const move = playMove(e, moved);
@@ -349,6 +357,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
 
   // Sloth counts the cards of a turn: the next starts at 0 (IL: SlothPower.BeforeSideTurnStart).
   let powerVars = s.player.powerVars?.["SLOTH"] ? { ...s.player.powerVars, SLOTH: { ...s.player.powerVars["SLOTH"], _cardsPlayedThisTurn: 0 } } : s.player.powerVars;
+  if (powerVars?.["TENDER"]) powerVars = { ...powerVars, TENDER: { ...powerVars["TENDER"], _cardsPlayedThisTurn: 0 } };
   // Juggling counts the attacks of a turn the same way.
   if (powerVars?.["JUGGLING"]) powerVars = { ...powerVars, JUGGLING: { ...powerVars["JUGGLING"], attacksPlayedThisTurn: 0 } };
   // The hits of the enemies' turn that got past block (Tear Asunder counts them): the block takes

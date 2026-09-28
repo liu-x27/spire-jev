@@ -25,6 +25,8 @@ export interface EnemyTurn {
   /** The player's piles, before the next hand is drawn (new arrays; the cards in them are shared). */
   draw: Card[];
   discard: Card[];
+  /** The cards the next hand starts with before its draw (kept ones; the Myte's Toxics go here). */
+  hand: Card[];
   /** The other enemies, as the player's turn left them (the Queen asks whether her Torch Head lives). */
   allies: readonly Enemy[];
   /** Powers the move gives every other living enemy (the Queen's Burn Bright for Me), after all have moved. */
@@ -51,6 +53,11 @@ const status = (id: string, vars: Record<string, number>, keywords: string[]): C
 const burn = () => status("BURN", { Damage: 2 }, ["Unplayable"]);
 const torchAlive = (t: EnemyTurn) => t.allies.some((a) => a.alive && a.model === "TORCH_HEAD_AMALGAM");
 const beckon = () => status("BECKON", { HpLoss: 6 }, []);
+/** Dazed (IL: Ethereal, Unplayable). Toxic (IL: costs 1, exhausts; left in hand, 5 at the turn's end into block). */
+const dazed = () => status("DAZED", {}, ["Ethereal", "Unplayable"]);
+const toxic = (): Card => ({ ...status("TOXIC", { Damage: 5 }, ["Exhaust"]), cost: 1 });
+/** The Thieving Hopper's moves in order: Flutter broken on the turn it showed the k-th, the one after it next. */
+const HOPPER_CHAIN = ["THIEVERY_MOVE", "FLUTTER_MOVE", "HAT_TRICK_MOVE", "NAB_MOVE", "ESCAPE_MOVE"] as const;
 
 /** Script by model, then move id. */
 export const SCRIPTS: Record<string, Record<string, Move>> = {
@@ -90,6 +97,151 @@ export const SCRIPTS: Record<string, Record<string, Move>> = {
     BELOW_MOVE: { damage: 26, next: "BELOW_MOVE" },
     STUNNED: { shows: ["Stun"], next: "BITE_MOVE" },
     DIZZY_MOVE: { shows: ["Stun"], next: "BITE_MOVE" },
+  },
+  // Act 2's hallway monsters (IL: each one's GenerateMoveStateMachine, A10; checked against the
+  // intents of 783 act 2 hallway fights of act2-take / act2b-take: every one the machine allows).
+  // Where the game rolls (RandomBranchState: weight 1 a move, CannotRepeat / CanRepeatXTimes), the
+  // rule is in the comment and `next` is a fixed guess, marked RANDOM. A game stun (CreatureCmd.Stun)
+  // puts STUNNED in place of the move shown, and the move it names (or the shown one's) after it.
+  //
+  // Bowlbug Rock: Headbutt every turn; fully blocked, stunned the next (turn.ts offBalance).
+  BOWLBUG_ROCK: {
+    HEADBUTT_MOVE: { damage: 16, next: "HEADBUTT_MOVE" },
+    STUNNED: { shows: ["Stun"], next: "HEADBUTT_MOVE" },
+    DIZZY_MOVE: { shows: ["Stun"], next: "HEADBUTT_MOVE" },
+  },
+  // Bowlbug Silk: Toxic Spit (Weak 1) first, then Thrash 5x2, turn about.
+  BOWLBUG_SILK: {
+    TOXIC_SPIT_MOVE: { shows: ["Debuff"], effect: (t) => add(t.player, "WEAK", 1), next: "THRASH_MOVE" },
+    THRASH_MOVE: { damage: 5, hits: 2, next: "TOXIC_SPIT_MOVE" },
+  },
+  // Bowlbug Nectar: Thrash 3, Buff (+16 Strength), then Thrash (19) for good.
+  BOWLBUG_NECTAR: {
+    THRASH_MOVE: { damage: 3, next: "BUFF_MOVE" },
+    BUFF_MOVE: { shows: ["Buff"], effect: (t) => add(t.powers, "STRENGTH", 16), next: "THRASH2_MOVE" },
+    THRASH2_MOVE: { damage: 3, next: "THRASH2_MOVE" },
+  },
+  // Bowlbug Egg: Bite 8 and 8 block, every turn.
+  BOWLBUG_EGG: {
+    BITE_MOVE: { damage: 8, shows: ["Defend"], effect: (t) => void (t.block += 8), next: "BITE_MOVE" },
+  },
+  // Slumbering Beetle (Plating 18, Slumber 3): Snore while it has Slumber, then Roll Out 18 and +2
+  // Strength every turn. Slumber: a stack off at the enemies' turn's end, and one for every hit that
+  // takes HP (sim.ts hit), the last waking it (Plating gone; by a hit, stunned this turn). Plating: a
+  // stack off as its turn starts (not the first), its amount in block at the turn's end, before
+  // Slumber's tick (the last sleeping turn still gives it).
+  SLUMBERING_BEETLE: {
+    SNORE_MOVE: {
+      shows: ["Sleep"],
+      effect: (t) => {
+        if (t.turn >= 2 && (t.powers["PLATING"] ?? 0) > 0) add(t.powers, "PLATING", -1);
+        t.block += Math.max(0, t.powers["PLATING"] ?? 0);
+        if ((t.powers["SLUMBER"] ?? 0) <= 1) {
+          delete t.powers["SLUMBER"];
+          delete t.powers["PLATING"];
+        } else add(t.powers, "SLUMBER", -1);
+      },
+      next: (t) => ((t.powers["SLUMBER"] ?? 0) > 0 ? "SNORE_MOVE" : "ROLL_OUT_MOVE"),
+    },
+    STUNNED: {
+      shows: ["Stun"],
+      effect: (t) => {
+        delete t.powers["SLUMBER"];
+        delete t.powers["PLATING"];
+      },
+      next: "ROLL_OUT_MOVE",
+    },
+    ROLL_OUT_MOVE: { damage: 18, shows: ["Buff"], effect: (t) => add(t.powers, "STRENGTH", 2), next: "ROLL_OUT_MOVE" },
+  },
+  // Exoskeleton (Hard to Kill 9): Skitter 1x4 -> Mandibles 9 -> Enrage (+2 Strength) -> RANDOM
+  // (Skitter or Mandibles, 50/50, not twice running; logs 93 / 88): by the turn, one then the other,
+  // the rolls' mean (always the bigger hit had the bouts losing 5-7 points more than the game).
+  EXOSKELETON: {
+    SKITTER_MOVE: { damage: 1, hits: 4, next: "MANDIBLES_MOVE" },
+    MANDIBLES_MOVE: { damage: 9, next: "ENRAGE_MOVE" },
+    ENRAGE_MOVE: {
+      shows: ["Buff"],
+      effect: (t) => add(t.powers, "STRENGTH", 2),
+      next: (t) => (t.turn % 2 === 0 ? "SKITTER_MOVE" : "MANDIBLES_MOVE"),
+    },
+  },
+  // Chomper (Artifact 2): Clamp 9x2 and Screech (3 Dazed into the discard pile), turn about.
+  CHOMPER: {
+    CLAMP_MOVE: { damage: 9, hits: 2, next: "SCREECH_MOVE" },
+    SCREECH_MOVE: {
+      shows: ["StatusCard"],
+      effect: (t) => {
+        for (let i = 0; i < 3; i++) t.discard.push(dazed());
+      },
+      next: "CLAMP_MOVE",
+    },
+  },
+  // Myte: Toxic (2 Toxic into the player's hand), Bite 15, Suck 6 and +3 Strength, round.
+  MYTE: {
+    TOXIC_MOVE: { shows: ["StatusCard"], effect: (t) => void t.hand.push(toxic(), toxic()), next: "BITE_MOVE" },
+    BITE_MOVE: { damage: 15, next: "SUCK_MOVE" },
+    SUCK_MOVE: { damage: 6, shows: ["Buff"], effect: (t) => add(t.powers, "STRENGTH", 3), next: "TOXIC_MOVE" },
+  },
+  // Hunter Killer: Tenderizing Goop (Tender 1 on the player, for good: every card played that turn -1
+  // Strength and Dexterity) first, then RANDOM for good: Bite 19 (not twice running) or Puncture 8x3
+  // (not three times): after Bite, Puncture; after a second Puncture, Bite; else 50/50.
+  HUNTER_KILLER: {
+    TENDERIZING_GOOP_MOVE: { shows: ["Debuff"], effect: (t) => add(t.player, "TENDER", 1), next: "PUNCTURE_MOVE" },
+    BITE_MOVE: { damage: 19, next: "PUNCTURE_MOVE" },
+    PUNCTURE_MOVE: { damage: 8, hits: 3, next: "BITE_MOVE" },
+  },
+  // Spiny Toad: Protruding Spikes (+5 Thorns), Spike Explosion 25 (the Thorns off after it), Tongue
+  // Lash 19, round: the Thorns are up the whole player turn that shows the Explosion.
+  SPINY_TOAD: {
+    PROTRUDING_SPIKES_MOVE: { shows: ["Buff"], effect: (t) => add(t.powers, "THORNS", 5), next: "SPIKE_EXPLOSION_MOVE" },
+    SPIKE_EXPLOSION_MOVE: { damage: 25, effect: (t) => add(t.powers, "THORNS", -5), next: "TONGUE_LASH_MOVE" },
+    TONGUE_LASH_MOVE: { damage: 19, next: "PROTRUDING_SPIKES_MOVE" },
+  },
+  // Louse Progenitor (Curl Up 18): Web Cannon 10 and Frail 2, Curl and Grow (18 block, +7 Strength),
+  // Pounce 16, round.
+  LOUSE_PROGENITOR: {
+    WEB_CANNON_MOVE: { damage: 10, shows: ["Debuff"], effect: (t) => add(t.player, "FRAIL", 2), next: "CURL_AND_GROW_MOVE" },
+    CURL_AND_GROW_MOVE: {
+      shows: ["Defend", "Buff"],
+      effect: (t) => {
+        t.block += 18;
+        add(t.powers, "STRENGTH", 7);
+      },
+      next: "POUNCE_MOVE",
+    },
+    POUNCE_MOVE: { damage: 16, next: "WEB_CANNON_MOVE" },
+  },
+  // The Obscura: Illusion first (a Parafright summoned: not modelled here), then RANDOM for good, none
+  // twice running (1/3 each after Illusion, else 50/50 of the other two): Piercing Gaze 11, Wail (+3
+  // Strength to it and every other enemy), Hardening Strike 7 and 7 block.
+  THE_OBSCURA: {
+    ILLUSION_MOVE: { shows: ["Summon"], next: "PIERCING_GAZE_MOVE" },
+    PIERCING_GAZE_MOVE: { damage: 11, next: "HARDENING_STRIKE_MOVE" },
+    SAIL_MOVE: {
+      shows: ["Buff"],
+      effect: (t) => {
+        add(t.powers, "STRENGTH", 3);
+        add(t.allyPowers, "STRENGTH", 3);
+      },
+      next: "PIERCING_GAZE_MOVE",
+    },
+    HARDENING_STRIKE_MOVE: { damage: 7, shows: ["Defend"], effect: (t) => void (t.block += 7), next: "PIERCING_GAZE_MOVE" },
+  },
+  // Parafright (Illusion, Minion): Slam 17 for good; killed, it revives to full at once (not modelled).
+  PARAFRIGHT: {
+    SLAM_MOVE: { damage: 17, next: "SLAM_MOVE" },
+    REVIVE_MOVE: { shows: ["Heal"], next: "SLAM_MOVE" },
+  },
+  // Thieving Hopper (Escape Artist 5): Thievery 19 (and a card of the deck stolen: not modelled),
+  // Flutter (5 stacks: half damage taken, a stack off for every hit that takes HP, the last a stun:
+  // sim.ts hit), Hat Trick 23, Nab 16, Escape.
+  THIEVING_HOPPER: {
+    THIEVERY_MOVE: { damage: 19, shows: ["CardDebuff"], next: "FLUTTER_MOVE" },
+    FLUTTER_MOVE: { shows: ["Buff"], effect: (t) => add(t.powers, "FLUTTER", 5), next: "HAT_TRICK_MOVE" },
+    HAT_TRICK_MOVE: { damage: 23, next: "NAB_MOVE" },
+    NAB_MOVE: { damage: 16, next: "ESCAPE_MOVE" },
+    ESCAPE_MOVE: { shows: ["Escape"], next: "ESCAPE_MOVE" },
+    STUNNED: { shows: ["Stun"], next: (t) => HOPPER_CHAIN[Math.min(t.turn, HOPPER_CHAIN.length - 1)]! },
   },
   LAGAVULIN_MATRIARCH: {
     // Asleep (turn.ts counts it down and gives Plating's block): she sleeps until it runs out.

@@ -334,3 +334,13 @@ test("stampede: the random attack is counted as the weakest, so ending the turn 
   // The Strike (6) is counted, not the Bash (8) that would kill.
   assert.equal(endOfTurn(s).enemies[0]!.hp, 1);
 });
+
+test("tender: the Strength and Dexterity a turn's cards took come back at its end", () => {
+  const s0 = state([STRIKE, DEFEND], [{ ...foe("HUNTER_KILLER", 100), intents: [] }]);
+  s0.player.powers["TENDER"] = 1;
+  const s = at(at(s0, 0), 0);
+  assert.equal(s.player.powers["STRENGTH"], -2);
+  const next = nextTurn(s, seeded(1), () => [])!;
+  assert.equal(next.player.powers["STRENGTH"] ?? 0, 0);
+  assert.equal(next.player.powers["DEXTERITY"] ?? 0, 0);
+});

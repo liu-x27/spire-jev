@@ -384,8 +384,16 @@ export function outcomeScore(b: Bout, me: Player): number {
  * monsters, so the game's fights never read them.
  */
 export interface Hallway { key: string; n: number; boss: Boss }
-/** Hallway monsters with a script from the IL (scripts.ts), and the move each opens with. */
-const HALL_OWN: Record<string, string> = { TUNNELER: "BITE_MOVE" };
+/**
+ * Hallway monsters with a script from the IL (scripts.ts), and the move each opens with; by its place
+ * among its kind in the encounter where that decides (the fourth Exoskeleton rolls: Mandibles).
+ */
+const HALL_OWN: Record<string, string | readonly string[]> = {
+  TUNNELER: "BITE_MOVE", BOWLBUG_ROCK: "HEADBUTT_MOVE", BOWLBUG_SILK: "TOXIC_SPIT_MOVE", BOWLBUG_NECTAR: "THRASH_MOVE",
+  BOWLBUG_EGG: "BITE_MOVE", SLUMBERING_BEETLE: "SNORE_MOVE", EXOSKELETON: ["SKITTER_MOVE", "MANDIBLES_MOVE", "ENRAGE_MOVE", "MANDIBLES_MOVE"],
+  CHOMPER: ["CLAMP_MOVE", "SCREECH_MOVE"], MYTE: ["TOXIC_MOVE", "SUCK_MOVE"], HUNTER_KILLER: "TENDERIZING_GOOP_MOVE",
+  SPINY_TOAD: "PROTRUDING_SPIKES_MOVE", LOUSE_PROGENITOR: "WEB_CANNON_MOVE",
+};
 let halls: Hallway[] | undefined;
 export function hallways(): Hallway[] {
   if (halls) return halls;
@@ -397,8 +405,11 @@ export function hallways(): Hallway[] {
     const specs = r.monsters.map((m, j) => {
       // A monster scripts.ts has from the IL plays its own script (the Tunneler's Burrow, the block it
       // keeps and the stun when that breaks: the logs' commonest intents had none of them).
-      const own = HALL_OWN[m.model];
-      if (own) return { model: m.model, hp: m.hp, powers: { ...m.powers }, move: own };
+      const opens = HALL_OWN[m.model];
+      const kin = r.monsters.slice(0, j).filter((o) => o.model === m.model).length;
+      const own = typeof opens === "string" ? opens : opens?.[Math.min(kin, opens.length - 1)];
+      // Plating's block is there as the fight opens (the Slumbering Beetle: 18 at turn 1 in the logs).
+      if (own) return { model: m.model, hp: m.hp, powers: { ...m.powers }, move: own, ...((m.powers["PLATING"] ?? 0) > 0 ? { block: m.powers["PLATING"] } : {}) };
       const model = `HALL_${i}_${j}`;
       const k = m.turns.length;
       SCRIPTS[model] = Object.fromEntries(m.turns.map((t, x) => {

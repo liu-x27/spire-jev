@@ -421,6 +421,9 @@ function hit(target: Enemy, damage: number): number {
     if ((target.powers["SLUMBER"] ?? 0) <= 0) {
       delete target.powers["SLUMBER"];
       target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+      // Woken by a hit (IL: SlumberPower: CreatureCmd.Stun to ROLL_OUT_MOVE): Plating gone with it.
+      delete target.powers["PLATING"];
+      if (target.move) target.move = "STUNNED";
     }
   }
   // Slippery (Inklet): a hit takes at most 1 HP, and uses up a stack.
@@ -936,12 +939,20 @@ function strike(s: State, victims: readonly Enemy[], base: number, times: number
       // Personal Hive (Entomancer; IL: PersonalHivePower.AfterDamageReceived): every hit of the
       // player's attacks on it puts its amount of Dazed into the draw pile, blocked or not.
       if (has(e, "PERSONAL_HIVE")) s.dazedAdded = (s.dazedAdded ?? 0) + (e.powers["PERSONAL_HIVE"] ?? 0);
-      // Curl Up (Louse Progenitor): the first HP it loses curls it up, for block once the card is done.
-      if (lost > 0 && has(e, "CURL_UP")) curling.set(e, e.powers["CURL_UP"] ?? 0);
+      // Curl Up (Louse Progenitor; IL: CurlUpPower.AfterDamageReceived, a powered attack, blocked or
+      // not): the first hit curls it up, for block once the card is done.
+      if (has(e, "CURL_UP")) curling.set(e, e.powers["CURL_UP"] ?? 0);
       if (lost > 0 && has(e, "SKITTISH") && !e.skittishUsed) skittish.add(e);
       thorns(s, e);
-      // Flutter loses a stack for every hit it takes.
-      if (has(e, "FLUTTER")) addPower(e, "FLUTTER", -1);
+      // Flutter (Thieving Hopper; IL: FlutterPower.AfterDamageReceived): a stack off for every hit that
+      // takes HP (every hit, before), and the last one stuns it — the move it showed does not come.
+      if (lost > 0 && has(e, "FLUTTER")) {
+        addPower(e, "FLUTTER", -1);
+        if (!has(e, "FLUTTER") && e.alive) {
+          e.intents = [{ type: "Stun", damage: 0, hits: 0 }];
+          e.move = "STUNNED";
+        }
+      }
       if (!e.alive) died(s, e);
     }
   }
