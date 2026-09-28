@@ -22,7 +22,7 @@ import { setIntentAscension } from "./intents.ts";
 import { expectedIntents, type Plan, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
 import { moveIntents, SCRIPTS } from "./scripts.ts";
-import { type Card, cardOf, drink, type Enemy, formsToCome, play, type Potion, redSkull, relicDamage, setKnownDraws, type State } from "./sim.ts";
+import { type Card, cardOf, drink, type Enemy, formsToCome, play, type Potion, redSkull, relicDamage, setKnownDraws, type State, useUpgrades } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
 
 // SPIRE_JEV_CATALOG: another catalogue (an older one, to replay the choices it made).
@@ -61,6 +61,9 @@ export function cardFromId(id: string): Card | undefined {
   // Gold Axe's 21), and sim.ts works them out from the bout's own state.
   return cardOf({ ...c, calculated: {}, index: 0, can_play: true } as CardObs);
 }
+
+// Armaments's upgrades (sim.ts): the catalogue's upgraded card, only where it has that very card.
+useUpgrades((c) => (cards()[`${c.id}+`] ? cardFromId(`${c.id}+`) : undefined));
 
 /** The catalogue has this very card ("BASH+" upgraded), not only its unupgraded self. */
 export const knownExactly = (id: string): boolean => cards()[id] !== undefined;

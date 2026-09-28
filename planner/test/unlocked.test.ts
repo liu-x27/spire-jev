@@ -344,3 +344,14 @@ test("tender: the Strength and Dexterity a turn's cards took come back at its en
   assert.equal(next.player.powers["STRENGTH"] ?? 0, 0);
   assert.equal(next.player.powers["DEXTERITY"] ?? 0, 0);
 });
+
+test("armaments: Armaments+ upgrades the hand from the catalogue; Armaments one card", async () => {
+  const { cardFromId } = await import("../src/spar.ts");
+  const plus = cardFromId("ARMAMENTS+")!;
+  const trance = cardFromId("BATTLE_TRANCE")!;
+  const s = at({ ...state([plus, trance, DEFEND], [foe("TUNNELER", 60)]), energy: 3 }, 0);
+  assert.equal(s.hand[0]!.upgrades, 1);
+  assert.equal(s.hand[0]!.vars["Cards"], cardFromId("BATTLE_TRANCE+")!.vars["Cards"]);
+  const one = at({ ...state([cardFromId("ARMAMENTS")!, trance, trance], [foe("TUNNELER", 60)]), energy: 3 }, 0);
+  assert.deepEqual(one.hand.map((c) => c.upgrades), [1, 0]);
+});

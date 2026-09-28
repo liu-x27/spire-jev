@@ -1004,6 +1004,19 @@ export function junkIndex(cards: readonly { id: string; type: string }[]): numbe
  * choice the bridge makes for us — so which one is not known. The model takes
  * the one junkIndex gives up.
  */
+/** The catalogue's upgraded card, where it has one (spar.ts sets this; the simulator has no catalogue). */
+let upgradedOf: (c: Card) => Card | undefined = () => undefined;
+export function useUpgrades(f: (c: Card) => Card | undefined): void {
+  upgradedOf = f;
+}
+/** `c` upgraded for the rest of the fight: the catalogue's numbers, its cost never above what it was. */
+function upgradeCard(c: Card): Card {
+  if (c.upgrades > 0 || c.type === "Status" || c.type === "Curse") return c;
+  const up = upgradedOf(c);
+  if (!up || up.upgrades === 0) return c;
+  return { ...c, vars: { ...up.vars }, keywords: up.keywords, upgrades: c.upgrades + 1, cost: c.cost >= 0 && up.cost >= 0 ? Math.min(c.cost, up.cost) : c.cost };
+}
+
 function exhaustOne(s: State): void {
   if (s.hand.length === 0) return;
   s.exact = false;
@@ -1082,10 +1095,18 @@ const SPECIAL: Record<string, Rule> = {
     strike(s, one(t), dmg(s, c), 1);
     s.discard.push({ ...c });
   },
-  // Upgrades a card in hand, by a choice made for us: its new numbers are not known.
+  // Block, then an upgrade (IL: Armaments.OnPlay): Armaments+ every card of the hand, Armaments one
+  // (the runner's pick, combatSelect: here the first that has an upgrade, so not exact). Its block
+  // alone, before: Battle Trance+ from Armaments+ drew 4 in the game and 3 in the bout (the card-play
+  // session), and a bout or a look ahead valued Armaments at its block.
   ARMAMENTS: (s, c) => {
     gainBlock(s, blockGain(num(c, "Block"), s.player), true);
-    s.exact = false;
+    if (c.upgrades > 0) s.hand = s.hand.map(upgradeCard);
+    else {
+      const i = s.hand.findIndex((h) => upgradeCard(h) !== h);
+      if (i >= 0) s.hand[i] = upgradeCard(s.hand[i]!);
+      s.exact = false;
+    }
   },
   BATTLE_TRANCE: (s, c) => {
     draw(s, num(c, "Cards"));
