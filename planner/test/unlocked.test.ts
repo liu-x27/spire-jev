@@ -386,6 +386,12 @@ test("act 1's scripts: Wrigglers come stunned, a slug stunned by Ravenous comes 
 test("ripple basin: no block at the turn's end once an attack of the turn was played, before the observation too", () => {
   const s0 = { ...state([DEFEND], [{ ...foe("TUNNELER", 60), intents: [] }]), relics: ["RIPPLE_BASIN"], relicVars: { RIPPLE_BASIN: { Block: 4 } } };
   assert.equal(endOfTurn(s0).player.block, 4);
-  const attacked = { ...s0, relicVars: { RIPPLE_BASIN: { Block: 4, _attacksPlayedThisTurn: 1 } } };
+  const attacked = { ...s0, attacksBefore: 1 };
   assert.equal(endOfTurn(attacked).player.block, 0);
+});
+
+test("art of war: no energy next turn once an attack of the turn was played, before the observation too", () => {
+  const s0 = { ...state([], [{ ...foe("TUNNELER", 60), intents: [] }]), relics: ["ART_OF_WAR"] };
+  assert.equal(nextTurn(s0, seeded(1), () => [])!.energy, 4);
+  assert.equal(nextTurn({ ...s0, attacksBefore: 1 }, seeded(1), () => [])!.energy, 3);
 });

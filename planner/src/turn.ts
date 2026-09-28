@@ -114,7 +114,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     // Gold every turn (30 of 30 fights, gold taken for it not modelled), Pael's Flesh on turn 3 (12 of
     // 12), Art of War after a turn without an attack.
     + relic("SEAL_OF_GOLD", "Energy", 1) + (turn === 3 ? relic("PAELS_FLESH", "Energy", 1) : 0)
-    + ((s.attacks ?? 0) === 0 ? relic("ART_OF_WAR", "Energy", 1) : 0);
+    + ((s.attacksBefore ?? 0) + (s.attacks ?? 0) === 0 ? relic("ART_OF_WAR", "Energy", 1) : 0);
   let extraDraw = (powers["DRAW_CARDS_NEXT_TURN"] ?? 0) + (every("PENDULUM") ? relic("PENDULUM", "Cards", 1) : 0);
   block += powers["BLOCK_NEXT_TURN"] ?? 0;
   const relicVar = (id: string, name: string, fallback: number) => s.relicVars?.[id]?.[name] ?? fallback;

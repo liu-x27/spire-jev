@@ -152,6 +152,12 @@ export interface State {
   hurt?: number;
   /** Attacks played this turn since the observation (Juggling copies the third). */
   attacks?: number;
+  /**
+   * Attacks played this turn before the observation the state was rebuilt from: the runner counts them
+   * (the observation does not; Ripple Basin's and Art of War's turns went by the state's own count, 0
+   * after a mid-turn rebuild — 4 block and an energy too many after an attack).
+   */
+  attacksBefore?: number;
   /** Attacks and skills Nostalgia has put on top of the draw pile this turn; that many top cards are known. */
   onTop?: number;
   /** The Bombs ticking on the player: turns to go (it goes off at the end of the turn it reaches 1) and damage. */
@@ -329,6 +335,7 @@ function clone(s: State): State {
     ...(s.facing !== undefined ? { facing: s.facing } : {}),
     ...(s.hurt ? { hurt: s.hurt } : {}),
     ...(s.attacks ? { attacks: s.attacks } : {}),
+    ...(s.attacksBefore ? { attacksBefore: s.attacksBefore } : {}),
     ...(s.onTop ? { onTop: s.onTop } : {}),
     ...(s.bombs ? { bombs: s.bombs.map((b) => ({ ...b })) } : {}),
     ...(s.ended ? { ended: true } : {}),
@@ -1781,7 +1788,7 @@ export function endOfTurn(s0: State): State {
   // Ripple Basin: no attack played this turn, 4 block. Attacks before the observation are known only
   // where a relic counts them (Ornamental Fan, Kusarigama).
   if (s.relics.includes("RIPPLE_BASIN")) {
-    const before = relicVar(s, "RIPPLE_BASIN", "_attacksPlayedThisTurn", relicVar(s, "ORNAMENTAL_FAN", "_attacksPlayedThisTurn", relicVar(s, "KUSARIGAMA", "_attacksPlayedThisTurn", 0)));
+    const before = s.attacksBefore ?? relicVar(s, "ORNAMENTAL_FAN", "_attacksPlayedThisTurn", relicVar(s, "KUSARIGAMA", "_attacksPlayedThisTurn", 0));
     if (before + (s.attacks ?? 0) === 0) gainBlock(s, relicVar(s, "RIPPLE_BASIN", "Block", 4));
   }
   // Parrying Shield (IL: AfterTurnEnd): 10 block or more at the turn's end, 6 to a random enemy.

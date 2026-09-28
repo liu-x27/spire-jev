@@ -449,16 +449,14 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
     const obs = cur.observation;
     collect(obs);
     const s = fromObservation(obs);
-    // Ripple Basin (IL: RippleBasin, its Status off after an attack of the turn): the observation does not
-    // carry it, and a state rebuilt mid-turn counted no attacks — 4 block too many at every end of turn
-    // after an attack (6 of 97 act 2 boss fights: HP 4 over the prediction a turn). The runner counts.
+    // The turn's attacks so far (sim.ts attacksBefore): the observation does not carry them, and a state
+    // rebuilt mid-turn counted none — Ripple Basin's 4 block (6 of 97 act 2 boss fights: HP 4 over the
+    // prediction a turn) and Art of War's energy (4 fights: an energy over) after an attack.
     if (obs.combat!.turn !== attacksTurn) {
       attacksTurn = obs.combat!.turn;
       attacksThisTurn = 0;
     }
-    if (s.relics.includes("RIPPLE_BASIN")) {
-      s.relicVars = { ...(s.relicVars ?? {}), RIPPLE_BASIN: { ...(s.relicVars?.["RIPPLE_BASIN"] ?? {}), _attacksPlayedThisTurn: attacksThisTurn } };
-    }
+    s.attacksBefore = attacksThisTurn;
     if (foreseen && obs.combat!.turn === foreseen.turn + 1) {
       log.transitionChecks++;
       for (const d of compareTurnStart(foreseen.state, s)) log.transitions.push({ turn: obs.combat!.turn, ...d });
