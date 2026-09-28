@@ -1,0 +1,947 @@
+[
+{
+"seed": "P50ZUHWRAB1L",
+"floor": 19,
+"turn": 2,
+"encounter": "TUNNELER_WEAK",
+"kind": "look-says-human",
+"one": -6.7,
+"look": 23.6
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 6,
+"turn": 2,
+"encounter": "FLYCONID_NORMAL",
+"kind": "look-says-human",
+"one": -0.2,
+"look": 12.6
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 23,
+"turn": 6,
+"encounter": "TUNNELER_WEAK",
+"kind": "look-says-human",
+"one": -1000585.8,
+"look": 12
+},
+{
+"seed": "XKUNL6VMLL6A",
+"floor": 11,
+"turn": 1,
+"encounter": "VINE_SHAMBLER_NORMAL",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 7.6
+},
+{
+"seed": "QX9KABTDUEU4",
+"floor": 7,
+"turn": 1,
+"encounter": "CULTISTS_NORMAL",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 6.9
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 8,
+"turn": 6,
+"encounter": "OVERGROWTH_CRAWLERS",
+"kind": "look-says-human",
+"one": -2.8,
+"look": 6.6
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 5,
+"turn": 2,
+"encounter": "SLIMES_NORMAL",
+"kind": "look-says-human",
+"one": -1.5,
+"look": 5.5
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 23,
+"turn": 2,
+"encounter": "TUNNELER_WEAK",
+"kind": "look-says-human",
+"one": -1.1,
+"look": 5.5
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 6,
+"turn": 4,
+"encounter": "SEWER_CLAM_NORMAL",
+"kind": "look-says-human",
+"one": -1.5,
+"look": 4.8
+},
+{
+"seed": "8DLDHMP9GC19",
+"floor": 8,
+"turn": 1,
+"encounter": "PUNCH_CONSTRUCT_NORMAL",
+"kind": "look-says-human",
+"one": 0,
+"look": 4.7
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 3,
+"turn": 1,
+"encounter": "SLIMES_WEAK",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 4.7
+},
+{
+"seed": "SK7MVQBU5Y4L",
+"floor": 2,
+"turn": 3,
+"encounter": "FUZZY_WURM_CRAWLER_WEAK",
+"kind": "look-says-human",
+"one": -1.9,
+"look": 4.5
+},
+{
+"seed": "JK3PQ7NB6Z5X",
+"floor": 2,
+"turn": 2,
+"encounter": "SHRINKER_BEETLE_WEAK",
+"kind": "look-says-human",
+"one": -0.9,
+"look": 4.2
+},
+{
+"seed": "7C7LQ3R01GLU",
+"floor": 8,
+"turn": 1,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-human",
+"one": -0.2,
+"look": 4
+},
+{
+"seed": "X6PAKUC1FATN",
+"floor": 2,
+"turn": 1,
+"encounter": "SLIMES_WEAK",
+"kind": "look-says-human",
+"one": -0.3,
+"look": 4
+},
+{
+"seed": "H27DAGUWXQUH",
+"floor": 3,
+"turn": 2,
+"encounter": "CORPSE_SLUGS_WEAK",
+"kind": "look-says-human",
+"one": -4.7,
+"look": 3.9
+},
+{
+"seed": "PBK68HK7DCQ3",
+"floor": 6,
+"turn": 4,
+"encounter": "SLITHERING_STRANGLER_NORMAL",
+"kind": "look-says-human",
+"one": -0.2,
+"look": 3.9
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 6,
+"turn": 2,
+"encounter": "SEWER_CLAM_NORMAL",
+"kind": "look-says-human",
+"one": -5.8,
+"look": 3.9
+},
+{
+"seed": "2DW5HN7XU6UX",
+"floor": 2,
+"turn": 3,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-human",
+"one": -2.8,
+"look": 3.8
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 29,
+"turn": 1,
+"encounter": "OVICOPTER_NORMAL",
+"kind": "look-says-human",
+"one": -12.0,
+"look": 3.8
+},
+{
+"seed": "DQU1UVMMGXCF",
+"floor": 8,
+"turn": 2,
+"encounter": "GREMLIN_MERC_NORMAL",
+"kind": "look-says-human",
+"one": -2.7,
+"look": 3.7
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 3,
+"turn": 1,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 3.4
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 14,
+"turn": 3,
+"encounter": "CUBEX_CONSTRUCT_NORMAL",
+"kind": "look-says-human",
+"one": -2.3,
+"look": 3.0
+},
+{
+"seed": "JK3PQ7NB6Z5X",
+"floor": 15,
+"turn": 3,
+"encounter": "RUBY_RAIDERS_NORMAL",
+"kind": "look-says-human",
+"one": -0.4,
+"look": 3.0
+},
+{
+"seed": "XKUNL6VMLL6A",
+"floor": 6,
+"turn": 1,
+"encounter": "RUBY_RAIDERS_NORMAL",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 2.9
+},
+{
+"seed": "HE8QSGNZQ7C8",
+"floor": 14,
+"turn": 2,
+"encounter": "SEWER_CLAM_NORMAL",
+"kind": "look-says-human",
+"one": -2.8,
+"look": 2.7
+},
+{
+"seed": "HE8QSGNZQ7C8",
+"floor": 14,
+"turn": 3,
+"encounter": "SEWER_CLAM_NORMAL",
+"kind": "look-says-human",
+"one": -3.1,
+"look": 2.6
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 3,
+"turn": 2,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-human",
+"one": -2.2,
+"look": 2.6
+},
+{
+"seed": "EPNA47LYPA34",
+"floor": 3,
+"turn": 1,
+"encounter": "SLIMES_WEAK",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 2.5
+},
+{
+"seed": "HE8QSGNZQ7C8",
+"floor": 6,
+"turn": 1,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-human",
+"one": -1.1,
+"look": 2.5
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 7,
+"turn": 4,
+"encounter": "DENSE_VEGETATION_EVENT_ENCOUNTER",
+"kind": "look-says-human",
+"one": -0.7,
+"look": 2.5
+},
+{
+"seed": "XKUNL6VMLL6A",
+"floor": 4,
+"turn": 2,
+"encounter": "FUZZY_WURM_CRAWLER_WEAK",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 2.4
+},
+{
+"seed": "JZK7HW924K47",
+"floor": 4,
+"turn": 3,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-human",
+"one": -1.6,
+"look": 2.1
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 6,
+"turn": 3,
+"encounter": "FLYCONID_NORMAL",
+"kind": "look-says-human",
+"one": -3.7,
+"look": 2.1
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 29,
+"turn": 4,
+"encounter": "OVICOPTER_NORMAL",
+"kind": "look-says-human",
+"one": -1000471.5,
+"look": 2
+},
+{
+"seed": "JZK7HW924K47",
+"floor": 4,
+"turn": 4,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-human",
+"one": -1.6,
+"look": 2
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 4,
+"turn": 1,
+"encounter": "SLIMES_WEAK",
+"kind": "look-says-human",
+"one": -5.2,
+"look": 1.9
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 6,
+"turn": 1,
+"encounter": "SEWER_CLAM_NORMAL",
+"kind": "look-says-human",
+"one": -2.7,
+"look": 1.7
+},
+{
+"seed": "EPNA47LYPA34",
+"floor": 2,
+"turn": 4,
+"encounter": "SHRINKER_BEETLE_WEAK",
+"kind": "look-says-human",
+"one": -0.4,
+"look": 1.5
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 12,
+"turn": 1,
+"encounter": "CUBEX_CONSTRUCT_NORMAL",
+"kind": "look-says-human",
+"one": -3.8,
+"look": 1.5
+},
+{
+"seed": "5ECZ864FSRZL",
+"floor": 5,
+"turn": 3,
+"encounter": "HAUNTED_SHIP_NORMAL",
+"kind": "look-says-human",
+"one": -3.0,
+"look": 1.4
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 19,
+"turn": 4,
+"encounter": "THIEVING_HOPPER_WEAK",
+"kind": "look-says-human",
+"one": -1.5,
+"look": 1.4
+},
+{
+"seed": "DQU1UVMMGXCF",
+"floor": 8,
+"turn": 1,
+"encounter": "GREMLIN_MERC_NORMAL",
+"kind": "look-says-human",
+"one": -1.3,
+"look": 1.3
+},
+{
+"seed": "HE8QSGNZQ7C8",
+"floor": 14,
+"turn": 4,
+"encounter": "SEWER_CLAM_NORMAL",
+"kind": "look-says-human",
+"one": -1000380.2,
+"look": 1.3
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 14,
+"turn": 4,
+"encounter": "INKLETS_NORMAL",
+"kind": "look-says-human",
+"one": -4.7,
+"look": 1.2
+},
+{
+"seed": "P50ZUHWRAB1L",
+"floor": 5,
+"turn": 2,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-human",
+"one": -2.7,
+"look": 1.2
+},
+{
+"seed": "5ECZ864FSRZL",
+"floor": 5,
+"turn": 1,
+"encounter": "HAUNTED_SHIP_NORMAL",
+"kind": "look-says-human",
+"one": 0.0,
+"look": 1.1
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 7,
+"turn": 2,
+"encounter": "DENSE_VEGETATION_EVENT_ENCOUNTER",
+"kind": "look-says-human",
+"one": -1.5,
+"look": 1.1
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 19,
+"turn": 3,
+"encounter": "TUNNELER_WEAK",
+"kind": "look-says-human",
+"one": -1.0,
+"look": 8.8
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 19,
+"turn": 3,
+"encounter": "BOWLBUGS_WEAK",
+"kind": "look-says-human",
+"one": -1.1,
+"look": 6.9
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 19,
+"turn": 1,
+"encounter": "TUNNELER_WEAK",
+"kind": "look-says-human",
+"one": -3.0,
+"look": 5.4
+},
+{
+"seed": "6Y6S2JUKAFXS",
+"floor": 4,
+"turn": 2,
+"encounter": "TOADPOLES_WEAK",
+"kind": "look-says-human",
+"one": -0.1,
+"look": 4.8
+},
+{
+"seed": "7C7LQ3R01GLU",
+"floor": 14,
+"turn": 1,
+"encounter": "SEAPUNK_NORMAL",
+"kind": "look-says-human",
+"one": -0.5,
+"look": 4.2
+},
+{
+"seed": "7C7LQ3R01GLU",
+"floor": 14,
+"turn": 4,
+"encounter": "SEAPUNK_NORMAL",
+"kind": "look-says-human",
+"one": -1000540.5,
+"look": 2
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 29,
+"turn": 2,
+"encounter": "OVICOPTER_NORMAL",
+"kind": "look-says-planner",
+"one": -4.1,
+"look": -18.9
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 5,
+"turn": 2,
+"encounter": "RUBY_RAIDERS_NORMAL",
+"kind": "look-says-planner",
+"one": -10.1,
+"look": -14.3
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 12,
+"turn": 3,
+"encounter": "CUBEX_CONSTRUCT_NORMAL",
+"kind": "look-says-planner",
+"one": -3.2,
+"look": -13.9
+},
+{
+"seed": "JK3PQ7NB6Z5X",
+"floor": 5,
+"turn": 1,
+"encounter": "INKLETS_NORMAL",
+"kind": "look-says-planner",
+"one": -11.2,
+"look": -11.1
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 5,
+"turn": 1,
+"encounter": "RUBY_RAIDERS_NORMAL",
+"kind": "look-says-planner",
+"one": -3.1,
+"look": -8.9
+},
+{
+"seed": "JK3PQ7NB6Z5X",
+"floor": 12,
+"turn": 1,
+"encounter": "SLITHERING_STRANGLER_NORMAL",
+"kind": "look-says-planner",
+"one": -11.4,
+"look": -7.7
+},
+{
+"seed": "7C7LQ3R01GLU",
+"floor": 8,
+"turn": 2,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-planner",
+"one": -5.1,
+"look": -7.7
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 8,
+"turn": 5,
+"encounter": "OVERGROWTH_CRAWLERS",
+"kind": "look-says-planner",
+"one": -1.6,
+"look": -7.6
+},
+{
+"seed": "PBK68HK7DCQ3",
+"floor": 6,
+"turn": 1,
+"encounter": "SLITHERING_STRANGLER_NORMAL",
+"kind": "look-says-planner",
+"one": -5.8,
+"look": -6.0
+},
+{
+"seed": "XKUNL6VMLL6A",
+"floor": 6,
+"turn": 2,
+"encounter": "RUBY_RAIDERS_NORMAL",
+"kind": "look-says-planner",
+"one": -6,
+"look": -6.0
+},
+{
+"seed": "DQU1UVMMGXCF",
+"floor": 7,
+"turn": 1,
+"encounter": "TOADPOLES_WEAK",
+"kind": "look-says-planner",
+"one": -5.0,
+"look": -5.0
+},
+{
+"seed": "DQU1UVMMGXCF",
+"floor": 5,
+"turn": 1,
+"encounter": "CORPSE_SLUGS_WEAK",
+"kind": "look-says-planner",
+"one": -4.5,
+"look": -4.8
+},
+{
+"seed": "SK7MVQBU5Y4L",
+"floor": 6,
+"turn": 2,
+"encounter": "NIBBITS_NORMAL",
+"kind": "look-says-planner",
+"one": -4.5,
+"look": -4.8
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 5,
+"turn": 1,
+"encounter": "SLIMES_NORMAL",
+"kind": "look-says-planner",
+"one": -1.5,
+"look": -4.6
+},
+{
+"seed": "5ECZ864FSRZL",
+"floor": 6,
+"turn": 2,
+"encounter": "GREMLIN_MERC_NORMAL",
+"kind": "look-says-planner",
+"one": -3.4,
+"look": -4.6
+},
+{
+"seed": "6Y6S2JUKAFXS",
+"floor": 9,
+"turn": 3,
+"encounter": "FOSSIL_STALKER_NORMAL",
+"kind": "look-says-planner",
+"one": -1.1,
+"look": -4.4
+},
+{
+"seed": "6Y6S2JUKAFXS",
+"floor": 2,
+"turn": 2,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-planner",
+"one": -2.9,
+"look": -4.4
+},
+{
+"seed": "HE8QSGNZQ7C8",
+"floor": 2,
+"turn": 3,
+"encounter": "TOADPOLES_WEAK",
+"kind": "look-says-planner",
+"one": -3.8,
+"look": -4.3
+},
+{
+"seed": "JZK7HW924K47",
+"floor": 5,
+"turn": 1,
+"encounter": "SEAPUNK_WEAK",
+"kind": "look-says-planner",
+"one": -4.2,
+"look": -4.2
+},
+{
+"seed": "HE8QSGNZQ7C8",
+"floor": 2,
+"turn": 4,
+"encounter": "TOADPOLES_WEAK",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -3.7
+},
+{
+"seed": "8DLDHMP9GC19",
+"floor": 9,
+"turn": 2,
+"encounter": "HAUNTED_SHIP_NORMAL",
+"kind": "look-says-planner",
+"one": -3.5,
+"look": -3.5
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 6,
+"turn": 1,
+"encounter": "FOGMOG_NORMAL",
+"kind": "look-says-planner",
+"one": -4.7,
+"look": -3.1
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 9,
+"turn": 1,
+"encounter": "PUNCH_CONSTRUCT_NORMAL",
+"kind": "look-says-planner",
+"one": -3.2,
+"look": -3.1
+},
+{
+"seed": "QX9KABTDUEU4",
+"floor": 5,
+"turn": 3,
+"encounter": "GREMLIN_MERC_NORMAL",
+"kind": "look-says-planner",
+"one": -3.3,
+"look": -3.0
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 2,
+"turn": 1,
+"encounter": "FUZZY_WURM_CRAWLER_WEAK",
+"kind": "look-says-planner",
+"one": -2.9,
+"look": -2.9
+},
+{
+"seed": "2DW5HN7XU6UX",
+"floor": 2,
+"turn": 2,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-planner",
+"one": -2.7,
+"look": -2.8
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 2,
+"turn": 2,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-planner",
+"one": -3.9,
+"look": -2.8
+},
+{
+"seed": "8HWRHHU9CSD1",
+"floor": 8,
+"turn": 2,
+"encounter": "OVERGROWTH_CRAWLERS",
+"kind": "look-says-planner",
+"one": -3.0,
+"look": -2.7
+},
+{
+"seed": "5ECZ864FSRZL",
+"floor": 3,
+"turn": 2,
+"encounter": "TOADPOLES_WEAK",
+"kind": "look-says-planner",
+"one": -2.6,
+"look": -2.6
+},
+{
+"seed": "PBK68HK7DCQ3",
+"floor": 5,
+"turn": 4,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -2.4
+},
+{
+"seed": "8DLDHMP9GC19",
+"floor": 9,
+"turn": 3,
+"encounter": "HAUNTED_SHIP_NORMAL",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -2.1
+},
+{
+"seed": "6Y6S2JUKAFXS",
+"floor": 2,
+"turn": 1,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-planner",
+"one": -1.9,
+"look": -1.9
+},
+{
+"seed": "5ECZ864FSRZL",
+"floor": 2,
+"turn": 1,
+"encounter": "CORPSE_SLUGS_WEAK",
+"kind": "look-says-planner",
+"one": -4.8,
+"look": -1.9
+},
+{
+"seed": "5ECZ864FSRZL",
+"floor": 6,
+"turn": 4,
+"encounter": "GREMLIN_MERC_NORMAL",
+"kind": "look-says-planner",
+"one": -1000502.3,
+"look": -1.9
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 5,
+"turn": 2,
+"encounter": "SLIMES_WEAK",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -1.9
+},
+{
+"seed": "PBK68HK7DCQ3",
+"floor": 5,
+"turn": 1,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-planner",
+"one": -1.9,
+"look": -1.9
+},
+{
+"seed": "PBK68HK7DCQ3",
+"floor": 5,
+"turn": 8,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -1.9
+},
+{
+"seed": "QRBR1WABMFSZ",
+"floor": 5,
+"turn": 3,
+"encounter": "CORPSE_SLUGS_WEAK",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -1.9
+},
+{
+"seed": "PBK68HK7DCQ3",
+"floor": 2,
+"turn": 1,
+"encounter": "FUZZY_WURM_CRAWLER_WEAK",
+"kind": "look-says-planner",
+"one": -1.9,
+"look": -1.8
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 21,
+"turn": 1,
+"encounter": "EXOSKELETONS_WEAK",
+"kind": "look-says-planner",
+"one": -0.3,
+"look": -1.8
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 19,
+"turn": 2,
+"encounter": "THIEVING_HOPPER_WEAK",
+"kind": "look-says-planner",
+"one": -9.1,
+"look": -1.6
+},
+{
+"seed": "JK3PQ7NB6Z5X",
+"floor": 3,
+"turn": 4,
+"encounter": "FUZZY_WURM_CRAWLER_WEAK",
+"kind": "look-says-planner",
+"one": -2.8,
+"look": -1.6
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 22,
+"turn": 3,
+"encounter": "SPINY_TOAD_NORMAL",
+"kind": "look-says-planner",
+"one": -0.8,
+"look": -1.6
+},
+{
+"seed": "KP0PWGL00ZHS",
+"floor": 2,
+"turn": 1,
+"encounter": "SLUDGE_SPINNER_WEAK",
+"kind": "look-says-planner",
+"one": -1.4,
+"look": -1.5
+},
+{
+"seed": "LYBJ3HBBYUD9",
+"floor": 3,
+"turn": 3,
+"encounter": "FUZZY_WURM_CRAWLER_WEAK",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -1.5
+},
+{
+"seed": "EPNA47LYPA34",
+"floor": 2,
+"turn": 2,
+"encounter": "SHRINKER_BEETLE_WEAK",
+"kind": "look-says-planner",
+"one": -2.0,
+"look": -1.4
+},
+{
+"seed": "5ECZ864FSRZL",
+"floor": 5,
+"turn": 7,
+"encounter": "HAUNTED_SHIP_NORMAL",
+"kind": "look-says-planner",
+"one": -1000535.5,
+"look": -1.4
+},
+{
+"seed": "A7R6HPY1A6PZ",
+"floor": 14,
+"turn": 1,
+"encounter": "CUBEX_CONSTRUCT_NORMAL",
+"kind": "look-says-planner",
+"one": -1.4,
+"look": -1.4
+},
+{
+"seed": "PBK68HK7DCQ3",
+"floor": 5,
+"turn": 2,
+"encounter": "NIBBITS_WEAK",
+"kind": "look-says-planner",
+"one": -2.1,
+"look": -1.3
+},
+{
+"seed": "U3F06ZT323WD",
+"floor": 19,
+"turn": 2,
+"encounter": "BOWLBUGS_WEAK",
+"kind": "look-says-planner",
+"one": -9.5,
+"look": -8.2
+},
+{
+"seed": "QX9KABTDUEU4",
+"floor": 2,
+"turn": 2,
+"encounter": "CORPSE_SLUGS_WEAK",
+"kind": "look-says-planner",
+"one": -1.8,
+"look": -5.9
+}
+]

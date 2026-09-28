@@ -524,6 +524,24 @@ public static class FullAppStateTracker
 
             }
 
+            // spire-jev (the human-replay driver): a potion thrown away to make room for one on offer,
+            // as a player does from the belt.
+            if (player is not null)
+            {
+                for (int slot = 0; slot < player.PotionSlots.Count; slot++)
+                {
+                    PotionModel? held = player.PotionSlots[slot];
+                    if (held is null) continue;
+                    legalActions.Add(new LegalActionDto
+                    {
+                        ActionId = $"discard_potion:{slot}",
+                        ActionType = "discard_potion",
+                        Description = $"Discard potion {held.Id.Entry}",
+                        Metadata = new Dictionary<string, object?> { ["potion_index"] = slot, ["potion_id"] = held.Id.Entry }
+                    });
+                }
+            }
+
             legalActions.Add(new LegalActionDto
             {
                 ActionId = "proceed",

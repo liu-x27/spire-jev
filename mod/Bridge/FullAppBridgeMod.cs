@@ -612,6 +612,19 @@ public static class FullAppBridgeMod
                 }
                 break;
             }
+            else if (actionId.StartsWith("discard_potion:", StringComparison.Ordinal))
+            {
+                // spire-jev (the human-replay driver): the belt's potion thrown away, the screen kept.
+                RunManager rm = RunManager.Instance ?? throw new InvalidOperationException("RunManager is unavailable.");
+                Player? me = LocalContext.GetMe(rm.DebugOnlyGetState());
+                int slot = int.Parse(actionId.Split(':')[1]);
+                if (me is not null && slot >= 0 && slot < me.PotionSlots.Count && me.PotionSlots[slot] is not null)
+                {
+                    rm.ActionQueueSynchronizer.RequestEnqueue(new DiscardPotionGameAction(me, (uint)slot, false));
+                    await rm.ActionExecutor.FinishedExecutingActions();
+                    await Task.Delay(50);
+                }
+            }
             else if (actionId.StartsWith("choose_reward:", StringComparison.Ordinal))
             {
                 string[] parts = actionId.Split(':');
@@ -932,6 +945,10 @@ public static class FullAppBridgeMod
     {
         await WaitHelper.ForNode<Node>(((SceneTree)Engine.GetMainLoop()).Root, "/root/Game/RootSceneContainer/Run/RoomContainer/EventRoom", ct, TimeSpan.FromSeconds(15));
         Node eventRoom = ((SceneTree)Engine.GetMainLoop()).Root.GetNode("/root/Game/RootSceneContainer/Run/RoomContainer/EventRoom");
+        // spire-jev: the option that started a fight inside the event, and whether that fight was played.
+        string? fightKey = null;
+        string? lastKey = null;
+        bool fought = false;
 
         while (GodotObject.IsInstanceValid(eventRoom) && eventRoom.IsInsideTree())
         {
@@ -948,12 +965,24 @@ public static class FullAppBridgeMod
             // resumes or ends (veteran seeds 27, 39 clicked Fight over and over).
             if (CombatManager.Instance?.IsInProgress == true)
             {
+                fightKey ??= lastKey;
                 await RunCombatLoopAsync(random, ct);
                 await Task.Delay(100);
+                fought = true;
                 continue;
             }
 
             var optionButtons = UiHelper.FindAll<NEventOptionButton>(eventRoom).Where(b => b.Option != null && !b.Option.IsLocked).ToList();
+            // spire-jev: after the event's own fight, the page that started it can stay up with only its
+            // Fight option (The Lantern Key's Mysterious Knight): the event is over, and the click did
+            // nothing (the replay driver clicked it forty times). Leave as the event's end does.
+            if (fought && fightKey != null && optionButtons.Count > 0 && optionButtons.All(b => b.Option.TextKey == fightKey))
+            {
+                GD.Print($"[spire-jev] event: its fight is over and only {fightKey} is left; leaving");
+                var done = UiHelper.FindFirst<NProceedButton>(eventRoom);
+                if (done != null && GodotObject.IsInstanceValid(done) && done.IsEnabled) await UiHelper.Click(done, 0);
+                break;
+            }
             if (optionButtons.Count == 0)
             {
                 // spire-jev: some events (the Ancients after a boss among them)
@@ -1019,6 +1048,7 @@ public static class FullAppBridgeMod
                 choiceIdx = 0;
 
             NEventOptionButton chosenBtn = optionButtons[choiceIdx];
+            try { lastKey = chosenBtn.Option.TextKey; } catch { lastKey = null; }
             bool isProceed = chosenBtn.Option.IsProceed;
 
             await UiHelper.Click(chosenBtn, 0);
