@@ -1037,8 +1037,15 @@ states, and only a simulator is fast enough for that.
      replay (the human's and the planner's end from the same start, both
      scored): review 6's item 2 data — a leaf value that ranks the human's
      end above the planner's, against the real outcome. Unscripted act 1
-     monsters (the Effigy, the Phrog and Wrigglers) give the look ahead
-     no growth to see: their IL scripts are being drafted.
+     monsters (the Effigy, the Phrog and Wrigglers) gave the look ahead
+     no growth to see: scripts-act1.ts (cf49017; the six elites and 38
+     hallway monsters from the IL, every one of 58,572 monster turns of
+     11,701 act 1 fights in our logs fits) — the Effigy wakes to +10 and
+     Slashes 25 for good, the Wrigglers grow 2 every other turn,
+     Byrdonis 1 a turn. The first fit of a leaf value on the pairs
+     (pairfeat.ts / pairfit.py): 43 usable pairs of 103 (45 have the
+     planner's end with cards drawn unseen), too few — to rerun on the
+     93 drives' pairs.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
