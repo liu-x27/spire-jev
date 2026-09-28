@@ -950,6 +950,34 @@ states, and only a simulator is fast enough for that.
      (the Silk's Weak, the Beetle's Strength): ours lose 36.3% to Rock +
      Silk + Beetle in the game, 19.5 in the bout; four Exoskeletons 27.7 /
      16.6; Myte 23.7 / 14.6.
+   - **A census of act 2's transitions** (review 6's item 1; act2-take /
+     act2b-take, 948 act 2 fights, 11,614 plays; the per-play mismatches and
+     the enemies' turns' HP): 690 mismatched fields (6% of plays; Cascade
+     and Sword Boomerang random by design). Fixed from the IL (da51891,
+     49d0ed7): Spiral (a Spiral Strike or Defend plays twice: 90 of the 196
+     block misses), Pael's Legion (a card's block doubled every other turn:
+     30), Anticipate (its Dexterity is for the turn; the model kept it),
+     The Gambit (an attack past block kills for the rest of the fight: one
+     game death, predicted 20, took 72), Stampede (the game's pick is
+     random; the model took the hand's first, and the planner ended two
+     turns with 4 energy and a hand of attacks on that kill: 24 and 26 HP).
+     The hallway monsters from the IL (01d9fc5; a background agent read
+     their state machines, every intent of 783 fights fits): Bowlbug ×4,
+     Slumbering Beetle, Exoskeleton, Chomper, Myte (Toxics into the hand),
+     Hunter Killer, Spiny Toad, Louse Progenitor, Obscura/Parafright,
+     Thieving Hopper; random branches as fixed guesses. With them: Tender's
+     losses given back at the turn's end (kept for good), Flutter's last
+     stack a stun, Curl Up on blocked hits. The hallway bout against the
+     game on our own fights (658 × 4; potions in the game only): 19.3 ->
+     25.1% against 23.2 (Myte 14.6 -> 24.0 / 23.7, Rock + Silk + Beetle
+     19.5 -> 35.9 / 36.3, Chomper 30.8 / 30.1, Hunter Killer 30.1 / 28.7,
+     three Exoskeletons 16.4 / 16.4; the Tunneler 16.2 / 20.8 — the game
+     fights before its fix). The humans' decks in the bot's hands on the
+     same bout: 27.8% (the humans 14.0). Only the Stampede, Gambit, Spiral,
+     Legion, Anticipate, Tunneler, Flutter and Curl Up rules touch the
+     game's one-turn play; the scripts reach it through nextTurn only (the
+     look ahead), and the bouts. To be shown on real fights before they
+     count (review 6).
    - **The look ahead's scoring** (the card-play session, 2026-09-27):
      planTurn2 sums the second turn's best score over 4 hands, and a kill
      there scores WIN + 10·HP (a death -WIN): each kill adds 250,000 to the
