@@ -614,7 +614,7 @@ interface Line {
 }
 
 /** Every play order from `start`, equal states merged; the best line, and the best `keep` distinct ends. */
-function explore(start: State, w: Weights, maxNodes: number, keep: number, score: (s: State, w: Weights) => number = evaluate): { best: Line; top: Line[]; nodes: number; truncated: boolean } {
+export function explore(start: State, w: Weights, maxNodes: number, keep: number, score: (s: State, w: Weights) => number = evaluate): { best: Line; top: Line[]; nodes: number; truncated: boolean } {
   let nodes = 0;
   let truncated = false;
   let best: Line = { score: -Infinity, actions: [{ kind: "end" }], exact: true, state: start };
@@ -701,6 +701,50 @@ const LOOK_ENDS = 4;
 const LOOK_DRAWS = 4;
 const LOOK_NODES = 3000;
 
+/**
+ * --flags lookfix (the other session's lab, 9-27, hall_oracle's 120 act 2 hallway fights x 4
+ * shuffles): a look ahead's leaves on one scale, and every line on the same draws. evaluate() scores
+ * a win WIN + 10·HP (WIN/2 + 10·HP with a killed Giant's blow to come) and a death -WIN - enemy HP,
+ * but any other end HP less 0.35 an enemy HP: averaged over sampled draws, a 1-in-16 chance of
+ * a kill next turn was worth 62,500 HP, so planTurn2, planTurnRoll and the fair look ahead picked
+ * the line with the most sampled kills whatever it cost (planTurn2 +2.1 HP% over planTurn, fair16
+ * +2.7), and each line drew its own hands (hash(stateKey(line.state))), so two lines were compared
+ * on different draws. With the leaves in HP and the draws shared (480 paired bouts on the logs'
+ * hallway scripts, before the IL's): planTurn2 -0.8 ± 0.3 HP% (5 ends, 16 hands), a two-turn
+ * rollout -1.1 ± 0.3 (8), against the cheat's -2.6 (one turn known) / -4.3 (three); deaths 24 -> 16-18.
+ */
+let lookFix = false;
+export function useLookFix(on: boolean): void {
+  lookFix = on;
+}
+/** lookfix's samples and nodes: 5 ends, 16 hands (planTurn2), as measured. */
+const FIX_ENDS = 5;
+const FIX_DRAWS = 16;
+const FIX_NODES = 1500;
+/** A death at a leaf, in max HPs: worse than any end that lives. */
+const DEATH_SCALE = 2;
+const aliveHp = (s: State) => s.enemies.reduce((a, e) => a + (e.alive ? e.hp : 0), 0);
+/**
+ * evaluate()'s score at a look ahead's leaf, in HP: a win is the HP it keeps (less the potions' cost,
+ * as evaluate has it), a death -DEATH_SCALE max HPs less 0.35 an enemy HP left, the rest as it is.
+ */
+export function leafValue(score: number, s: State): number {
+  const death = DEATH_SCALE * s.player.maxHp;
+  if (score >= 0.9 * WIN) return (score - WIN) / 10;
+  if (score >= 0.4 * WIN) return (score - WIN / 2) / 10;
+  if (score <= -1.5 * WIN) return -death - 100; // dying to one's own card
+  if (score <= -0.9 * WIN) return -death - 0.35 * Math.max(0, -score - WIN);
+  if (score <= -0.2 * WIN) return -death + (score + WIN / 4) / 10; // wgblow's likely loss
+  return score;
+}
+/**
+ * A line whose own score decides it, with no look ahead: a win or a death this turn. A killed
+ * Waterfall Giant's blow still to come (WIN/2, wgblow's -WIN/4) is not: the look ahead plays its
+ * turn (lookfix taking it as settled, on blowToCome's guess, won the Giant 9 of 24 bouts against
+ * the one-turn planner's 13).
+ */
+const settled = (score: number) => (lookFix ? score >= 0.9 * WIN || score <= -0.9 * WIN : score >= WIN || score <= -WIN);
+
 /** A number from a state, to seed its draws: the same state draws the same hands. */
 function hash(text: string): number {
   let h = 2166136261;
@@ -731,27 +775,29 @@ export function expectedIntents(e: Enemy, turn: number): IntentObs[] {
  */
 export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
   const t0 = performance.now();
-  const { best, top, nodes, truncated } = explore(start, w, maxNodes, LOOK_ENDS);
+  const { best, top, nodes, truncated } = explore(start, w, maxNodes, lookFix ? FIX_ENDS : LOOK_ENDS);
   let nodesAll = nodes;
   let chosen = best;
   let chosenValue = -Infinity;
+  const draws = lookFix ? FIX_DRAWS : LOOK_DRAWS;
+  const shared = hash(stateKey(start));
   for (const line of top) {
     let value: number;
-    if (line.score >= WIN || line.score <= -WIN) value = line.score;
+    if (settled(line.score)) value = lookFix ? leafValue(line.score, line.state) : line.score;
     else {
       let sum = 0;
-      const seed = hash(stateKey(line.state));
-      for (let i = 0; i < LOOK_DRAWS; i++) {
+      const seed = lookFix ? shared : hash(stateKey(line.state));
+      for (let i = 0; i < draws; i++) {
         const next = nextTurn(line.state, seeded(seed + i * 7919), expectedIntents);
         if (!next) {
-          sum += -WIN;
+          sum += lookFix ? -DEATH_SCALE * line.state.player.maxHp - 0.35 * aliveHp(line.state) : -WIN;
           continue;
         }
-        const second = explore(next, w, LOOK_NODES, 0);
+        const second = explore(next, w, lookFix ? FIX_NODES : LOOK_NODES, 0);
         nodesAll += second.nodes;
-        sum += second.best.score;
+        sum += lookFix ? leafValue(second.best.score, second.best.state) : second.best.score;
       }
-      value = sum / LOOK_DRAWS;
+      value = sum / draws;
     }
     if (value > chosenValue) {
       chosenValue = value;
@@ -783,29 +829,34 @@ export function planTurnRoll(start: State, w: Weights = DEFAULT_WEIGHTS, maxNode
   let chosen = best;
   let chosenValue = -Infinity;
   const left = (st: State) => st.enemies.reduce((a, e) => a + (e.alive ? e.hp : 0) + formsToCome(e), 0);
+  const shared = hash(stateKey(start));
   for (const line of top) {
     let value: number;
-    if (line.score >= WIN || line.score <= -WIN) value = line.score;
+    if (settled(line.score)) value = lookFix ? leafValue(line.score, line.state) : line.score;
     else {
       let sum = 0;
-      const seed = hash(stateKey(line.state));
+      const seed = lookFix ? shared : hash(stateKey(line.state));
       for (let i = 0; i < r.samples; i++) {
         const rng = seeded(seed + i * 7919);
         let st = line.state;
         let v = line.score;
+        let leaf = st;
+        let dead = false;
         for (let d = 0; d < r.depth; d++) {
           const next = nextTurn(st, rng, expectedIntents);
           if (!next) {
             v = -WIN - left(st);
+            dead = true;
             break;
           }
           const turn = explore(next, w, r.nodes, 0);
           nodesAll += turn.nodes;
           v = turn.best.score;
-          if (v >= WIN || v <= -WIN) break;
+          leaf = turn.best.state;
+          if (settled(v)) break;
           st = turn.best.state;
         }
-        sum += v;
+        sum += !lookFix ? v : dead ? -DEATH_SCALE * st.player.maxHp - 0.35 * aliveHp(st) : leafValue(v, leaf);
       }
       value = sum / r.samples;
     }
