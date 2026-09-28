@@ -1096,7 +1096,16 @@ states, and only a simulator is fast enough for that.
      lookfix + lookdiverse 19 / 28 / 8, + lookwide (K 20) 17 / 30 / 8; the
      human's turn beats the bot's ~1.6× as often and the bot's leads to
      ~40% more deaths whatever the candidates — there the gap is in what
-     the look ahead's leaves and scripts value, not in the lines it sees.
+     the look ahead's leaves and scripts value, not in the lines it sees
+     (lookfix alone 21 / 26 / 8, bot's-turn deaths 21 against C's 20; only
+     the HP where both won shrinks, +1.6 -> +0.1 with lookwide). At the 53
+     hallway points where it backs the human, the look ahead's own choice
+     (halllook + lookfix continuing): 22 / 27 / 4 against C's 40 / 11 / 2
+     — it finds the human's end about half the times it would back it
+     (NORMAL's human end in the one-turn top 5 58%, top 20 89%);
+     `--flags hallwide` (26c2528: halllook at K 20) on the same points
+     next. Bosses and elites need more than two turns seen: a value from
+     real outcomes (the branches), not a wider search.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
