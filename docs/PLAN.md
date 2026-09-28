@@ -1078,7 +1078,25 @@ states, and only a simulator is fast enough for that.
      Item 2 needs the outcome: from a replay's fight save, the human's
      plays driven to turn t, then {the human's line, the planner's line},
      each played on by the bot to the fight's end in the game — the turn's
-     choice priced under the bot's own continuation.
+     choice priced under the bot's own continuation. **Done** (the card-play
+     session's replay-drive.ts forks, 2026-09-28; 200 exact decision points
+     from 23 human runs, mostly act 1: 109 where the one-turn evaluate
+     prefers planTurn's end and the fixed look ahead the human's, 91 the
+     control where the look ahead prefers planTurn's; each branch played
+     on by the bot to the fight's end in the game). With the combo (C)
+     continuing, human's turn better / even / bot's better: where the
+     look ahead backs the human 57 / 37 / 14 (hallways WEAK 21 / 4 / 0,
+     NORMAL 16 / 7 / 2; elites 13 / 12 / 8; bosses 4 / 14 / 4); the
+     control 26 / 14 / 21. So in ordinary fights the look ahead's "the
+     human's end is better" is right against real outcomes nearly every
+     time the one-turn evaluate disagrees; its "the planner's is better"
+     is a coin. At the 95 boss and elite points, the look ahead's own
+     turn-t choice as branch B (each arm continuing with itself): C 17 /
+     26 / 12 (look-says-human; deaths human's turn 15, bot's 20),
+     lookfix + lookdiverse 19 / 28 / 8, + lookwide (K 20) 17 / 30 / 8; the
+     human's turn beats the bot's ~1.6× as often and the bot's leads to
+     ~40% more deaths whatever the candidates — there the gap is in what
+     the look ahead's leaves and scripts value, not in the lines it sees.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
