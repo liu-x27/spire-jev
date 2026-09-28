@@ -1011,7 +1011,13 @@ states, and only a simulator is fast enough for that.
      worse with a look, to watch). `--flags bossroll8` (2662b8b): that
      rollout as powbonus's inner planner in boss fights (bossroll's own
      BOSS_ROLL sat behind powbonus in the chain and never ran). A leaf with
-     `long` 1: nothing; with future / futureBlock: worse in hallways.
+     `long` 1: nothing; with future / futureBlock: worse in hallways. In
+     the game (eval59 at 4a2ab60; s3f's 97 f32 saves, act 2's boss from
+     the same state, a2boss-base / a2boss-roll): won 35 -> 36 (+7/-6, p
+     1.0; the Crab 9 -> 12 of 31, the Knowledge Demon 16 -> 13 of 39, the
+     Insatiable 10 -> 11 of 27), HP -2.0 where both won. Not shown; the
+     bout's +7.5 points did not carry (its base 21.7% against the game's
+     36.1% on these: the bout's act 2 bosses are harder than the game's).
    - **Human runs replayed in the game** (the card-play session, 2026-09-27;
      the user raised it to first priority): Spire Codex's step-by-step
      replays (489 v0.111 A10 Ironclad, 120 wins; Ace Ryo 19 clean wins).
