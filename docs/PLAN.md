@@ -1012,6 +1012,33 @@ states, and only a simulator is fast enough for that.
      rollout as powbonus's inner planner in boss fights (bossroll's own
      BOSS_ROLL sat behind powbonus in the chain and never ran). A leaf with
      `long` 1: nothing; with future / futureBlock: worse in hallways.
+   - **Human runs replayed in the game** (the card-play session, 2026-09-27;
+     the user raised it to first priority): Spire Codex's step-by-step
+     replays (489 v0.111 A10 Ironclad, 120 wins; Ace Ryo 19 clean wins).
+     A human seed on the veteran profile reproduces the run (map, boss,
+     Neow, hands, enemies); the human's plays, driven, end fights at the
+     human's HP exactly (28/29 draw checks; the first drift at floor 13,
+     spawned Wrigglers' HP). The bot then re-fights each fight from the
+     same save — the same deck, relics, potions, HP and draws. Ace Ryo's
+     A7R6HPY1A6PZ, 10 fights: the human lost 122 HP; the combo 284 and
+     died in 3 (the Bygone Effigy f9, the Phrog Parasite f13, the
+     Ceremonial Beast f17 — the human lost 20, 6, 34); with halllook,
+     lookfix, bossroll8 better (Fogmog 37 -> 17, the human 14; the Phrog
+     from dead to -38), the Effigy and the Beast still deaths. The
+     simulator's turn predictions were exact: the play. The bot blocks
+     against scaling enemies where the human races (the Effigy: 25 a turn
+     from turn 3, blocked two cards a turn for 10 turns, dead; the human
+     bursts with Armaments+ into Slow's many-card turns), spreads damage
+     over Wrigglers the human kills one by one, and plays Drum + Pommel
+     where the human's Barricade+ (turn 5) held the Beast 16 turns. On 51
+     of the human's turns: the one-turn evaluate puts the human's end
+     -2.7 below the planner's, the fixed look ahead (16 shared hands) +6.2
+     above (the human's better on 14, the planner's on 10). pairs.jsonl per
+     replay (the human's and the planner's end from the same start, both
+     scored): review 6's item 2 data — a leaf value that ranks the human's
+     end above the planner's, against the real outcome. Unscripted act 1
+     monsters (the Effigy, the Phrog and Wrigglers) give the look ahead
+     no growth to see: their IL scripts are being drafted.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
