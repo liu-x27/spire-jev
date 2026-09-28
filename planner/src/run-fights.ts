@@ -33,7 +33,7 @@ import { type ChoiceState, restoreChoiceState, saveChoiceState } from "./choices
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, TURN_WEIGHTS, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, useLookAdapt, useLookDiverse, useLookFix, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, TURN_WEIGHTS, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, useLookAdapt, useLookTie, useLookDiverse, useLookFix, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
 import { learnCard, useBoutPlanner } from "./spar.ts";
 import { loadValueNet } from "./value.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -901,6 +901,7 @@ export function configure(flags: readonly string[], choices = "rules2", asc = 10
   useLookFix(hasFlag("lookfix"));
   useLookDiverse(hasFlag("lookdiverse"));
   useLookAdapt(hasFlag("lookadapt"));
+  useLookTie(hasFlag("looktie"));
   // sparpow: spar's bouts played with powbonus's planner, so a reward's engine is played in the bout
   // that weighs it (the planner left powers in hand, and spar scored engines below attacks).
   if (hasFlag("sparpow")) useBoutPlanner((st) => planTurnPowers(st, TURN_WEIGHTS, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 3000));

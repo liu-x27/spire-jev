@@ -761,6 +761,12 @@ export function useLookAdapt(on: boolean): void {
 }
 const ADAPT_TOP = 3;
 const ADAPT_DRAWS = 64;
+/** --flags looktie (with lookfix): planTurn2's ends within LOOK_TIE HP by the look go to the higher one-turn score. */
+let lookTie = false;
+export function useLookTie(on: boolean): void {
+  lookTie = on;
+}
+const LOOK_TIE = 1;
 /** lookfix's samples and nodes: 5 ends, 16 hands (planTurn2), as measured. */
 const FIX_ENDS = 5;
 const FIX_DRAWS = 16;
@@ -857,6 +863,14 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
   }
   let chosen = rated[0] ?? { line: best, value: -Infinity };
   for (const r of rated) if (r.value > chosen.value) chosen = r;
+  // looktie (with lookfix): ends within LOOK_TIE HP of the best by the look are a tie at 16 hands; the
+  // tie goes to the higher one-turn score (the card-play session, U3F06ZT323WD f19: four ends within
+  // 0.5, the pick the one that drew first and blocked after — the game's draw then left 15 block
+  // where the one-turn line's 21 stunned the Rock; 3 vs 17 HP).
+  if (lookFix && lookTie) {
+    const near = rated.filter((r) => r.value >= chosen.value - LOOK_TIE);
+    for (const r of near) if (r.line.score > chosen.line.score) chosen = r;
+  }
   return { actions: chosen.line.actions, score: chosen.value, exact: chosen.line.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
 }
 
