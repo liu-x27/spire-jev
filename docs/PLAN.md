@@ -1131,8 +1131,22 @@ states, and only a simulator is fast enough for that.
      from the replays' exact saves (fixed state, each arm the whole fight):
      171 elite and boss fights, C against C,halllook,lookfix,bossroll8:
      deaths 39 -> 30 (C's alone 18, the look's alone 9, p 0.12), HP -1.6 ±
-     1.1 where both won (123). The 418 exact hallway saves (hC / hlook /
-     hadapt) running.
+     1.1 where both won (123). **The hallway look ahead on fixed real
+     states**: 414 exact hallway fight saves of the replays (acts 1-2,
+     non-elite, non-boss; each arm the whole fight from the save), hlook
+     (C,halllook,lookfix) - hC (C): -0.89 ± 0.32 HP% of max (better 136,
+     worse 82; deaths 2 -> 1); WEAK -0.92 ± 0.30 (294), NORMAL -1.06 ± 0.84
+     (117); act 1 -1.10 ± 0.31 (362), act 2 +0.61 ± 1.44 (52, 18 / 18: the
+     Bowlbugs +13.3 on 5, the Spiny Toad +3.7 on 4; Exoskeletons, Mytes,
+     Hunter Killer, Ovicopter better). Shown (review 6's fixed-state step)
+     for act 1's hallways. The act 2 Bowlbugs: a tie at the look's noise
+     (U3F06ZT323WD f19: four ends within 0.5 HP, the pick drew first and
+     blocked after; the game's draw left 15 block where the one-turn line's
+     21 stunned the Rock) — `--flags looktie` (426da02: a tie within 1 HP
+     goes to the higher one-turn score; bout -0.08 ± 0.18, no harm) is the
+     htie arm on the same saves. Next step by the method: a fixed-start
+     continuation, then fresh seeds, of the combo + halllook + lookfix
+     (+ looktie if htie holds).
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
