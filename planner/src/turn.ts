@@ -256,7 +256,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     const behind = s.facing !== undefined && e.id !== s.facing && clawsUp > 1 && isClaw(e);
     const hits = move === "MULTI_CLAW_MOVE" && e.move === "MULTI_CLAW_MOVE" ? (e.intents.find((i) => i.type === "Attack")?.hits ?? 3) + 1 : undefined;
     const intents = move !== undefined
-      ? moveIntents(e.model, move, ep["STRENGTH"] ?? 0, { vulnerable: (powers["VULNERABLE"] ?? 0) > 0, weak: (ep["WEAK"] ?? 0) > 0, behind, shrink: shrinkOf(ep, e) }, hits)
+      ? moveIntents(e.model, move, (ep["STRENGTH"] ?? 0) + (ep["VIGOR"] ?? 0), { vulnerable: (powers["VULNERABLE"] ?? 0) > 0, weak: (ep["WEAK"] ?? 0) > 0, behind, shrink: shrinkOf(ep, e) }, hits)
       : sleeping ? [{ type: "Sleep", damage: 0, hits: 0 }] : foresee(e, turn);
     if (move !== undefined) shownWith.set(e.id, (powers["VULNERABLE"] ?? 0) > 0);
     // Withering Presence (Aeonglass): CardsLeft counts the cards played across turns (sim.ts, after a

@@ -355,3 +355,30 @@ test("armaments: Armaments+ upgrades the hand from the catalogue; Armaments one 
   const one = at({ ...state([cardFromId("ARMAMENTS")!, trance, trance], [foe("TUNNELER", 60)]), energy: 3 }, 0);
   assert.deepEqual(one.hand.map((c) => c.upgrades), [1, 0]);
 });
+
+test("act 1's scripts: the Bygone Effigy wakes to +10 Strength and Slashes 25; its turns come from the IL", () => {
+  const quiet = (s: State) => nextTurn(s, seeded(1), () => [])!;
+  const effigy: Enemy = { ...foe("BYGONE_EFFIGY", 132, { SLOW: 1 }), move: "SLEEP_MOVE", intents: [{ type: "Sleep", damage: 0, hits: 0 }] };
+  const t2 = quiet(state([], [effigy]));
+  assert.equal(t2.enemies[0]!.move, "WAKE_MOVE");
+  const t3 = quiet({ ...t2, hand: [] });
+  assert.equal(t3.enemies[0]!.powers["STRENGTH"], 10);
+  assert.deepEqual(t3.enemies[0]!.intents, [{ type: "Attack", damage: 25, hits: 1 }]);
+});
+
+test("act 1's scripts: Wrigglers come stunned, a slug stunned by Ravenous comes back to its move, the Eel's Shriek leads to Terror", () => {
+  const phrog: Enemy = { ...foe("PHROG_PARASITE", 5, { INFESTED: 4 }), move: "LASH_MOVE" };
+  const bash = card("BASH", "Attack", "AnyEnemy", { Damage: 12 }, 2);
+  const out = at(state([bash], [phrog]), 0);
+  assert.deepEqual(out.enemies.filter((e) => e.model === "WRIGGLER").map((e) => e.move), ["SPAWNED_MOVE", "SPAWNED_MOVE", "SPAWNED_MOVE", "SPAWNED_MOVE"]);
+  const slug = (id: number, hp: number): Enemy => ({ ...foe("CORPSE_SLUG", hp, { RAVENOUS: 5 }, id), move: "GLOMP_MOVE", intents: [{ type: "Attack", damage: 9, hits: 1 }] });
+  const ate = at(state([bash], [slug(1, 5), slug(2, 28)]), 0, 1);
+  assert.equal(ate.enemies[1]!.move, "STUNNED");
+  assert.equal(incomingDamage(ate), 0);
+  const back = nextTurn(ate, seeded(1), () => [])!;
+  assert.equal(back.enemies[1]!.move, "GLOMP_MOVE");
+  const eel: Enemy = { ...foe("TERROR_EEL", 80, { SHRIEK: 75 }), move: "CRASH_MOVE", intents: [{ type: "Attack", damage: 18, hits: 1 }] };
+  const shrieked = at(state([bash], [eel]), 0);
+  assert.equal(shrieked.enemies[0]!.move, "STUNNED");
+  assert.equal(nextTurn(shrieked, seeded(1), () => [])!.enemies[0]!.move, "TERROR_MOVE");
+});

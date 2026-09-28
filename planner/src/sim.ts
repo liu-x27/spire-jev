@@ -95,6 +95,8 @@ export interface Enemy extends Unit {
   asleep?: { turns: number; hp: number; power?: string };
   /** The move it shows, by id (the bridge's NextMove.Id): what scripts.ts plays a boss's turn by. */
   move?: string;
+  /** A Corpse Slug stunned by Ravenous: the move it showed, which comes next turn instead (scripts-act1.ts). */
+  stunnedFrom?: string;
 }
 
 export interface State {
@@ -438,6 +440,8 @@ function hit(target: Enemy, damage: number): number {
   if (lost > 0 && has(target, "SHRIEK") && target.hp - lost > 0 && target.hp - lost <= (target.powers["SHRIEK"] ?? 0)) {
     delete target.powers["SHRIEK"];
     target.intents = [];
+    // CreatureCmd.Stun to TERROR_MOVE (scripts-act1.ts): Terror (99 Vulnerable on the player) next.
+    if (target.move) target.move = "STUNNED";
   }
   // Hardened Shell (Skulking Colony; IL: ModifyHpLostBeforeOstyLate): at most its amount of HP a turn.
   if (has(target, "HARDENED_SHELL")) {
@@ -881,7 +885,7 @@ function died(s: State, e: Enemy): void {
     for (let i = 0; i < infested; i++) {
       s.enemies.push({
         id: id + i, model: "WRIGGLER", hp: WRIGGLER_HP, maxHp: WRIGGLER_HP, block: 0, alive: true, powers: {},
-        weakAtStart: false, startStrength: 0, intents: [],
+        weakAtStart: false, startStrength: 0, intents: [], move: "SPAWNED_MOVE",
       });
     }
   }
@@ -891,6 +895,10 @@ function died(s: State, e: Enemy): void {
     if (o === e || !o.alive || (o.powers["RAVENOUS"] ?? 0) <= 0) continue;
     addPower(o, "STRENGTH", o.powers["RAVENOUS"]!);
     o.intents = [];
+    // The move it showed comes next turn instead (IL: CreatureCmd.Stun, no move named); a second death
+    // the same turn adds the Strength, the stun stays one.
+    if (o.move && o.move !== "STUNNED") o.stunnedFrom = o.move;
+    if (o.move) o.move = "STUNNED";
   }
   // Crab Rage (Kaiser Crab; IL: CrabRagePower.AfterDeath): the claw left gains its Strength and
   // Block (A10: 6 and 99), once; and Surrounded turns the player to face it, so nothing is behind.

@@ -10,6 +10,7 @@
  */
 
 import type { IntentObs } from "./obs.ts";
+import { ACT1_SCRIPTS } from "./scripts-act1.ts";
 import type { Card, Enemy } from "./sim.ts";
 
 /** What the enemies' turn touches, as a move's effect sees it: all for the turn that follows. */
@@ -405,6 +406,9 @@ export const SCRIPTS: Record<string, Record<string, Move>> = {
     },
   },
 };
+
+// Act 1's elites and hallway monsters (scripts-act1.ts), none of them a model the entries above have.
+for (const [model, moves] of Object.entries(ACT1_SCRIPTS)) if (!SCRIPTS[model]) SCRIPTS[model] = moves;
 
 /** The first move of each boss's monsters, and what spar.ts sets them up with (A10). */
 export const OPENING: Record<string, string> = {
