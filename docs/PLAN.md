@@ -1144,9 +1144,17 @@ states, and only a simulator is fast enough for that.
      blocked after; the game's draw left 15 block where the one-turn line's
      21 stunned the Rock) — `--flags looktie` (426da02: a tie within 1 HP
      goes to the higher one-turn score; bout -0.08 ± 0.18, no harm) is the
-     htie arm on the same saves. Next step by the method: a fixed-start
-     continuation, then fresh seeds, of the combo + halllook + lookfix
-     (+ looktie if htie holds).
+     htie arm on the same saves. Act 2 played through, both s3f sets
+     (act2-fix / act2-fixlook 586-705, act2b-fix / act2b-fixlook 706-855):
+     the first hallway fight from the same state -0.12 ± 0.47 (194; the
+     Tunneler +1.0 on 63, the Exoskeletons -1.5 on 41), act 2's boss won 53
+     -> 46 (+13/-20, not shown; potions into it 1.1-1.4 in both, HP 85-86%);
+     the census's fixes on 706-855: act2b-take -> act2b-fix, the boss 23 ->
+     28 (+7/-2), the runs further +16/-9. So the hallway look ahead is
+     shown in act 1 and not in act 2: `--flags halllook1` (halllook on
+     floors 1-17 only). Next by the method: fresh seeds, the combo against
+     the combo + halllook1 + lookfix (+ looktie if htie holds) — act 1's
+     hallway HP carries into act 1's boss and the act 2 entry.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same

@@ -306,6 +306,10 @@ const LOOK_ROLL: Rollouts = { ends: 5, samples: 8, depth: 2, nodes: 1500 };
  * 52% of elite ones; the top 20 in 68%).
  */
 const WIDE_ENDS = 20;
+// halllook1: halllook in act 1 only (floors 1-17). The replays' 414 exact hallway saves, each arm the
+// whole fight: halllook + lookfix - the combo -1.10 ± 0.31 HP% in act 1 (362), +0.61 ± 1.44 in act 2
+// (52); act 2 played through from s3f's f16 saves, the first hallway fight from the same state -0.12 ±
+// 0.47 (194). Shown in act 1, not in act 2.
 // hallwide: the same in every ordinary fight (the forks, 53 hallway points where the look ahead backs
 // the human's turn: with the combo the human's better 40 / even 11 / the bot's 2, with halllook +
 // lookfix's own choice 22 / 27 / 4 — it finds the human's end about half the times it would back it;
@@ -484,7 +488,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
         // weighed by the order they die in (search.ts futureDamage, 0.5) — act 2's hallways cost the bot
         // 8-11 points of max HP a fight more than A10 players at every count of block cards and relics
         // (the other session); every ordinary fight was one turn of planTurn.
-        : !bossFight && hasFlag("halllook") ? planTurn2(s, weights, 20_000, hasFlag("hallwide") || (hasFlag("lookwide") && s.enemies.some((e) => e.alive && ELITES.test(e.model))) ? WIDE_ENDS : undefined)
+        : !bossFight && (hasFlag("halllook") || (hasFlag("halllook1") && obs.floor <= 17)) ? planTurn2(s, weights, 20_000, hasFlag("hallwide") || (hasFlag("lookwide") && s.enemies.some((e) => e.alive && ELITES.test(e.model))) ? WIDE_ENDS : undefined)
         : !bossFight && hasFlag("hallfuture") ? planTurn(s, { ...weights, future: Math.max(weights.future, 0.5) })
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);
