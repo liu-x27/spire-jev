@@ -754,6 +754,13 @@ let lookDiverse = false;
 export function useLookDiverse(on: boolean): void {
   lookDiverse = on;
 }
+/** --flags lookadapt (with lookfix): planTurn2's best ADAPT_TOP ends by 16 hands get ADAPT_DRAWS in all before the pick. */
+let lookAdapt = false;
+export function useLookAdapt(on: boolean): void {
+  lookAdapt = on;
+}
+const ADAPT_TOP = 3;
+const ADAPT_DRAWS = 64;
 /** lookfix's samples and nodes: 5 ends, 16 hands (planTurn2), as measured. */
 const FIX_ENDS = 5;
 const FIX_DRAWS = 16;
@@ -814,34 +821,43 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
   const t0 = performance.now();
   const { best, top, extra, nodes, truncated } = explore(start, w, maxNodes, ends ?? (lookFix ? FIX_ENDS : LOOK_ENDS), evaluate, lookFix && lookDiverse);
   let nodesAll = nodes;
-  let chosen = best;
-  let chosenValue = -Infinity;
   const draws = lookFix ? FIX_DRAWS : LOOK_DRAWS;
   const shared = hash(stateKey(start));
-  for (const line of [...top, ...extra]) {
-    let value: number;
-    if (settled(line.score)) value = lookFix ? leafValue(line.score, line.state) : line.score;
-    else {
-      let sum = 0;
-      const seed = lookFix ? shared : hash(stateKey(line.state));
-      for (let i = 0; i < draws; i++) {
-        const next = nextTurn(line.state, seeded(seed + i * 7919), expectedIntents);
-        if (!next) {
-          sum += lookFix ? -DEATH_SCALE * line.state.player.maxHp - 0.35 * aliveHp(line.state) : -WIN;
-          continue;
-        }
-        const second = explore(next, w, lookFix ? FIX_NODES : LOOK_NODES, 0);
-        nodesAll += second.nodes;
-        sum += lookFix ? leafValue(second.best.score, second.best.state) : second.best.score;
+  /** The sampled next turns of `line`, from the i-th hand to the (to-1)-th: their values' sum. */
+  const sample = (line: Line, from: number, to: number): number => {
+    let sum = 0;
+    const seed = lookFix ? shared : hash(stateKey(line.state));
+    for (let i = from; i < to; i++) {
+      const next = nextTurn(line.state, seeded(seed + i * 7919), expectedIntents);
+      if (!next) {
+        sum += lookFix ? -DEATH_SCALE * line.state.player.maxHp - 0.35 * aliveHp(line.state) : -WIN;
+        continue;
       }
-      value = sum / draws;
+      const second = explore(next, w, lookFix ? FIX_NODES : LOOK_NODES, 0);
+      nodesAll += second.nodes;
+      sum += lookFix ? leafValue(second.best.score, second.best.state) : second.best.score;
     }
-    if (value > chosenValue) {
-      chosenValue = value;
-      chosen = line;
+    return sum;
+  };
+  const rated = [...top, ...extra].map((line) => {
+    if (settled(line.score)) return { line, value: lookFix ? leafValue(line.score, line.state) : line.score, sum: 0, n: 0 };
+    const sum = sample(line, 0, draws);
+    return { line, value: sum / draws, sum, n: draws };
+  });
+  // lookadapt (with lookfix): the best ADAPT_TOP by 16 hands get ADAPT_DRAWS hands in all, and the
+  // pick is made on those — the max of many 16-hand means is a winner's curse (the forks: with 20
+  // candidates the look ahead's own pick still lost to the human's turn it backed, 18 of 53 hallway points).
+  if (lookFix && lookAdapt) {
+    const open = rated.filter((r) => r.n > 0).sort((a, b) => b.value - a.value).slice(0, ADAPT_TOP);
+    for (const r of open) {
+      r.sum += sample(r.line, r.n, ADAPT_DRAWS);
+      r.n = ADAPT_DRAWS;
+      r.value = r.sum / r.n;
     }
   }
-  return { actions: chosen.actions, score: chosenValue, exact: chosen.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
+  let chosen = rated[0] ?? { line: best, value: -Infinity };
+  for (const r of rated) if (r.value > chosen.value) chosen = r;
+  return { actions: chosen.line.actions, score: chosen.value, exact: chosen.line.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
 }
 
 /**
