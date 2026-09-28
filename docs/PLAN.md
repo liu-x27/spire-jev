@@ -778,8 +778,9 @@ states, and only a simulator is fast enough for that.
      v0.111.0 A10 Ironclad runs, 2,418): the bot loses 1.5-2 times the
      humans' HP in every act 2 hallway fight (Exoskeleton 17.8% vs 12.1%,
      Tunneler 17.4 vs 11.1, Myte 27.4 vs 14.1, Hunter Killer 33.2 vs 20.8,
-     Chomper 28.8 vs 18.4) while killing as fast: defence, not damage. The
-     winners' decks hold ~14 skills to ours ~8. Two halves tested on act 2
+     Chomper 28.8 vs 18.4) while killing as fast (review 6: slightly faster
+     once the logs' turns are +1, some multi-enemy fights slower — HP
+     traded for speed). The winners' decks hold ~14 skills to ours ~8. Two halves tested on act 2
      played through: the play (the other session's hallhp / hallhp2,
      be66b84: an ordinary fight's HP counts 1.5 / 2 times) and the deck
      (`sparhall`, 173b548: spar weighs a change by the HP kept in act 2's
@@ -905,12 +906,17 @@ states, and only a simulator is fast enough for that.
      under planTurn, beside 658 of ours from act2-take / act2b-take). HP
      lost, % of max: humans in the game 14.0, the bot with their decks 21.2
      (+7.1 over the humans' mean for the encounter); ours in the game 23.2,
-     the bot with ours in the bout 19.3 (+5.0). The bot does worse with the
-     humans' decks than with its own, and the human decks have a tail ours
-     do not (bouts losing half or more: 143 of 3,763, ours 5 of 658), heavy
-     in Burning Pact, Stoke, Havoc, Pyre, Crimson Mantle, Vicious, Rampage.
-     So "draft as they draft" cannot close the gap before the play can use
-     such decks — which is what sparhuman/sparpick found in the game. A
+     the bot with ours in the bout 19.3 (+5.0). In the bout the bot does
+     worse with the humans' decks than with its own, and the human decks
+     have a tail ours do not (bouts losing half or more: 143 of 3,763, ours
+     5 of 658), heavy in Burning Pact, Stoke, Havoc, Pyre, Crimson Mantle,
+     Vicious, Rampage. That overturns "hallhp saved only 2 points, so the
+     gap is the deck's" — but not more (Astra, review 6): the bout gives no
+     potions or relic counters, its monsters are the logs' intents, 23% of
+     the human fights are left out for an unknown card, the groups are not
+     paired; it does not say the human decks are weaker, and 0.84 (bout /
+     game, ours) is no transfer rate. Drafting as the humans draft did not
+     pay in the game (sparhuman/sparpick) for as long as the play is this. A
      ridge over the humans' fights (cards, relics, encounter; HP lost in the
      game against the bout): the engine and exhaust cards are what the
      humans get HP from and the bot does not (bout minus game per copy:
@@ -920,9 +926,12 @@ states, and only a simulator is fast enough for that.
      Some of that is the simulator's: Havoc exhausts the top card without
      playing it, Stoke's new cards never become playable, Pyre's power does
      nothing. The rest is the one-turn play (known draws inside the turn:
-     21.2 -> 20.0 for the human decks; the drawn weight 0.5 / 3: nothing).
-     Our own fights take no longer than the humans' (2.8 logged end-turns
-     against their 4.2 turns) but lose 2-3 times the HP per turn.
+     22.0 -> 20.0 for the human decks, before the Tunneler's rules below;
+     the drawn weight 0.5 / 3: nothing). A fight log's `turns` is the
+     game's turns_taken less the killing turn (review 6: the mode of 9.4k
+     of our wins is +1), so the Tunneler takes us 3.78 turns, the humans
+     4.21, and some multi-enemy fights take us longer: HP traded for speed,
+     not "killing as fast"; the HP lost per turn is still 2-3 times theirs.
    - **The Tunneler** (70abb40, from the IL): Bite 15, Burrow (37 block,
      Burrowed; the block is not cleared while burrowed), Below 26 every turn
      until the block breaks, which stuns it at once (BurrowedPower
@@ -941,6 +950,44 @@ states, and only a simulator is fast enough for that.
      (the Silk's Weak, the Beetle's Strength): ours lose 36.3% to Rock +
      Silk + Beetle in the game, 19.5 in the bout; four Exoskeletons 27.7 /
      16.6; Myte 23.7 / 14.6.
+   - **The look ahead's scoring** (the card-play session, 2026-09-27):
+     planTurn2 sums the second turn's best score over 4 hands, and a kill
+     there scores WIN + 10·HP (a death -WIN): each kill adds 250,000 to the
+     mean, so the line picked is the one with most turn-2 kills out of 4 and
+     HP only breaks ties; every line also draws its own hands (the seed is
+     its end state's hash: no common random numbers). planTurnRoll and the
+     lab's fair16 average the same way. So bosslook's, halllook's and the
+     oracle study's "a fair look ahead does not pay" measured this, not the
+     game. Their lab fix (a win as the HP it keeps, a death -2·max HP less
+     0.35·enemy HP, shared seeds, 5 ends × 16): act 2 hallways, interim,
+     -0.8 HP% against planTurn's 19.0 (planTurn2 as it is +2.5). To come
+     here behind a flag when their run ends.
+   - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
+     it): the limit is a bounded pilot and a biased bout, which spar then
+     uses to decide the deck — self-reinforcing; more switches on the same
+     scoring are not the main line. Kept: the one-turn search as the
+     candidate generator. Next two weeks: (1) a census of fixed-state real
+     fights (~120 hallway, elite and boss), full start states and
+     transitions checked, the three costliest misplays found and each fix
+     shown on held-out real fights (a fix that only raises the simulator's
+     agreement stops that line) — the Tunneler and the Bowlbug above are of
+     this kind; (2) a fight value trained on real branches (200 decision
+     points × 3-4 differing candidates, played out in the game, held out by
+     source run; stop if it does not rank real candidates better than the
+     linear score). Weeks three and four, by the evidence: act 1's run value
+     (random branches at act 1 forks: safe route against an extra elite,
+     power now against parts for later; labelled by act 2's end), or the
+     corrected look ahead (common random numbers, diverse candidates, 4 →
+     16 → 64 samples, on enemies with reliable scripts). Method: a
+     counterexample, then fixed states, then fixed-start continuations,
+     then one fresh-seed confirmation — not a whole-run round per idea.
+     Detecting +4 points of act 2 needs ~880 pairs, +5 ~560. Stopped:
+     global weight sweeps, bout-made labels at scale, per-card human-rate
+     bonuses, scaling oracle gains. "Stable" (proposed): a frozen policy on
+     fresh seeds with a one-sided 95% lower bound of 10% wins, most of them
+     clean (no revival, 30%+ HP left); on the way, act 2 cleared from the
+     start ~14% -> 25%. The confirmation's interim (review 6, 19:47, 460
+     pairs): act 1 338 -> 365 (67/40, p 0.015), act 2 56 -> 65 (p 0.37).
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
      fresh seeds 856-1515, the spar3 reference against the combo with
      powbonus and spartake, whole runs, floors 16/32/47 captured.
