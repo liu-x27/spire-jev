@@ -1105,7 +1105,17 @@ states, and only a simulator is fast enough for that.
      (NORMAL's human end in the one-turn top 5 58%, top 20 89%);
      `--flags hallwide` (26c2528: halllook at K 20) on the same points
      next. Bosses and elites need more than two turns seen: a value from
-     real outcomes (the branches), not a wider search.
+     real outcomes (the branches), not a wider search. First fit on them
+     (forkfeat.ts / forkfit.py, scratchpad; batch 1's 200 points, C
+     continuing: the human's branch better 94, even 60, the bot's 46):
+     where the outcome differs (140), the sign of the one-turn evaluate's
+     difference is right 32% (it backs the bot's end, wrongly 2 to 1), the
+     fixed look ahead's 62%, a ridge value of the two ends' features held
+     out by run 54-58%. Its weights now read as a value (HP +0.5 an HP;
+     Crimson Mantle +3.3, Feel No Pain +2.5, Barricade +1.1, Dark Embrace
+     +0.9 a stack; -0.9 an enemy alive; -0.8 a potion drunk; Weak / Vulnerable
+     on them +0.8 / +0.5; their Strength -0.6) but 200 points are too few
+     to beat the look ahead. Batch 2 (forks2: 200 more, 69 of act 2) next.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
