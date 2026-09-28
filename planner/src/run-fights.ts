@@ -298,6 +298,8 @@ function inWindow(id: string, s: ReturnType<typeof fromObservation>, bossTurn: n
 }
 /** bossroll's rollouts: this turn's best 4 ends, each played 2 turns on 3 times, 800 nodes a turn. */
 const BOSS_ROLL: Rollouts = { ends: 4, samples: 3, depth: 2, nodes: 800 };
+/** bossroll8's rollouts: 5 ends, 8 samples, 2 turns on, 1500 nodes a turn (3 samples were thin: -0.9 against -1.1 HP% in hallways). */
+const LOOK_ROLL: Rollouts = { ends: 5, samples: 8, depth: 2, nodes: 1500 };
 /** A10's first act 3 boss (floor 48): the second follows on the same HP (pot48, hp48). */
 const firstOfPair = (floor: number, boss: boolean) => boss && ascension >= 10 && floor === 48;
 /** potsave: a fight of act 3 before its two bosses (floors 34-47) keeps its potions for them. */
@@ -459,8 +461,12 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
         : hasFlag("powbonus") && (bossFight || (hasFlag("powelite") && s.enemies.some((e) => e.alive && ELITES.test(e.model))))
           // bosslook: the turns compared by planTurn2 (the next turn over its likely draws) in boss fights.
           // Act 3 pilot: powbonus 17.9/4.8/9.0% (winners/losers/ours), planTurn2 16.7/4.4/9.0, both 20.2/5.0/11.1.
+          // bossroll8 (with lookfix): a two-turn rollout, 5 ends x 8 samples (the card-play session, spar's act 1
+          // bosses on the IL scripts, 40 x 3: won 79.2 -> 85.8%, deaths 25 -> 17; planTurn2 + lookfix 79.2,
+          // the Waterfall Giant 13 -> 10 of 24 with one turn looked at, 13 with two).
           ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 20_000,
-            hasFlag("bosslook") && bossFight ? (st) => planTurn2(st, weights) : undefined)
+            hasFlag("bossroll8") && bossFight ? (st) => planTurnRoll(st, weights, 20_000, LOOK_ROLL)
+            : hasFlag("bosslook") && bossFight ? (st) => planTurn2(st, weights) : undefined)
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
         // halllook / hallfuture (ordinary fights): planTurn2's next turn, or the enemies' damage to come
