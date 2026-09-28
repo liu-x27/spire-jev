@@ -1242,7 +1242,21 @@ states, and only a simulator is fast enough for that.
      in, the Crusher down first in 14 of 17, the damage focused on one claw
      where the losses spread it — JEV00884 201/167 -> 91/96); its play
      mismatches are mostly random-target cards (Sword Boomerang, Cascade) on
-     two claws, by design.
+     two claws, by design. Against the humans' 49 Crab wins (the card-play
+     session's replays, crab_focus.py): the bot's wins look like theirs
+     (a claw killed by turn 5, ~75% of the damage on it, the other left at
+     ~150 for the Rage); 41 of the 68 no-kill losses dealt enough for a
+     claw, spread (the more-hit one left at ~39); by turn 5 the losses dealt
+     214 against the humans' 290. A claw's death gives the other Crab Rage
+     at once (sim.ts died: +6 Strength counted in this turn's hits), so the
+     one-turn score sees a kill as more damage and nothing of the dead
+     claw's attacks gone. `--flags crabfuture` (61a8c21: futureDamage 0.5 in
+     Crab fights) on the 94 Crab states: won 17 -> 15 (+2/-4), plays changed
+     in 85 of 94, the kills and the focus not (a claw killed in 26 both,
+     focus 0.68 both). Dropped. A fresh C arm matches p1-boss-c play for play
+     on all 94: the set is deterministic. Leads: which claw and when to
+     turn (the bot kills the Crusher first 19 of 26, the humans 23 / 26
+     either way; Surrounded's back attacks), and the damage itself.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
