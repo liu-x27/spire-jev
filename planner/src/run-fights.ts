@@ -306,6 +306,18 @@ const LOOK_ROLL: Rollouts = { ends: 5, samples: 8, depth: 2, nodes: 1500 };
  * 52% of elite ones; the top 20 in 68%).
  */
 const WIDE_ENDS = 20;
+/**
+ * crabfuture: the Kaiser Crab fought with the enemies' damage to come in the evaluation (futureDamage,
+ * 0.5: Smith's rule, the kill that ends most damage first). A claw killed gives the other Crab Rage
+ * (+6 Strength, 99 block) at once, so the one-turn score sees the kill as more damage this turn and
+ * nothing of the claw's attacks gone for good: 68 of the bot's 77 Crab losses (p1-boss-c) never
+ * killed a claw, 41 of them with damage enough for one, spread (the card-play session: the humans' 49
+ * wins and the bot's 17 all kill one claw by turn 5).
+ */
+const crabWeights = (s: State): Weights =>
+  hasFlag("crabfuture") && s.enemies.some((e) => e.alive && (e.model === "CRUSHER" || e.model === "ROCKET"))
+    ? { ...weights, future: Math.max(weights.future, 0.5) }
+    : weights;
 // halllook1: halllook in act 1 only (floors 1-17). The replays' 414 exact hallway saves, each arm the
 // whole fight: halllook + lookfix - the combo -1.10 ± 0.31 HP% in act 1 (362), +0.61 ± 1.44 in act 2
 // (52); act 2 played through from s3f's f16 saves, the first hallway fight from the same state -0.12 ±
@@ -489,7 +501,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
           // bossroll8 (with lookfix): a two-turn rollout, 5 ends x 8 samples (the card-play session, spar's act 1
           // bosses on the IL scripts, 40 x 3: won 79.2 -> 85.8%, deaths 25 -> 17; planTurn2 + lookfix 79.2,
           // the Waterfall Giant 13 -> 10 of 24 with one turn looked at, 13 with two).
-          ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 20_000,
+          ? planTurnPowers(s, crabWeights(s), Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 20_000,
             hasFlag("bossroll8") && bossFight ? (st) => planTurnRoll(st, weights, 20_000, hasFlag("lookwide") ? LOOK_ROLL_WIDE : LOOK_ROLL)
             : hasFlag("bosslook") && bossFight ? (st) => planTurn2(st, weights) : undefined)
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
