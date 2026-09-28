@@ -1719,7 +1719,11 @@ export function endOfTurn(s0: State): State {
     const attacks = s.hand.filter((c) => c.type === "Attack" && !c.keywords.includes("Unplayable"));
     if (attacks.length === 0) break;
     if (new Set(attacks.map((c) => `${c.id}.${c.upgrades}`)).size > 1 || s.drawn > 0) s.exact = false;
-    const c = attacks[0]!;
+    // Which attack is random: the weakest is counted, so the planner does not end its turn on the
+    // hope of the right one (act2-take, JEV00593: it ended two turns with 4 energy and a hand of
+    // attacks, the first of them — Sword Boomerang — a kill; the game's pick was not, 24 and 26 HP).
+    const worth = (c: Card) => (c.vars["Damage"] ?? c.calc?.["CalculatedDamage"] ?? 0) * Math.max(1, c.vars["Repeat"] ?? 1);
+    const c = attacks.reduce((a, b) => (worth(b) < worth(a) ? b : a));
     s.hand.splice(s.hand.indexOf(c), 1);
     autoPlay(s, c);
   }

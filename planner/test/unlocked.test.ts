@@ -3,7 +3,7 @@
 // written from the game's IL (tools/inspect --il) and the A10 runs.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { type Action, type Card, type Enemy, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
+import { type Action, type Card, type Enemy, endOfTurn, hpLoss, incomingDamage, play, type State } from "../src/sim.ts";
 import { evaluate, planTurn, useHpNeed, useHpScale, usePotionSaving, useTorchFirst } from "../src/search.ts";
 import { chooseEvent } from "../src/choices.ts";
 import type { LegalAction, Observation } from "../src/obs.ts";
@@ -325,4 +325,12 @@ test("the gambit: an attack past its block kills; blocked, it is 50 block", () =
   assert.equal(s.player.block, 50);
   assert.equal(hpLoss(s), 70);
   assert.equal(hpLoss(at(state([gambit], [{ ...big, intents: [{ type: "Attack", damage: 40, hits: 1 }] }], 70), 0)), 0);
+});
+
+test("stampede: the random attack is counted as the weakest, so ending the turn on it is no sure kill", () => {
+  const bash = card("BASH", "Attack", "AnyEnemy", { Damage: 8, VulnerablePower: 2 }, 2);
+  const s = { ...state([bash, STRIKE], [foe("HUNTER_KILLER", 7)]), energy: 0 };
+  s.player.powers["STAMPEDE"] = 1;
+  // The Strike (6) is counted, not the Bash (8) that would kill.
+  assert.equal(endOfTurn(s).enemies[0]!.hp, 1);
 });
