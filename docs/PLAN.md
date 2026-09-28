@@ -1121,13 +1121,18 @@ states, and only a simulator is fast enough for that.
      batches, 397 points: the one-turn evaluate's sign right 33%, the look
      ahead's 61%, the ridge value held out 57% (its weights unsteady
      between batches: Weak on them +0.8 -> -2.4). A linear value of these
-     features does not beat the look ahead on 400 labels; the look ahead is
-     the best predictor of the real outcome there is. Its gaps are what to
-     work on: the hallway pick and bosses' horizon. The pick: at the 53
-     hallway points, hallwide (K 20) 18 / 29 / 6 and lookadapt (the best 3
-     re-rated on 64 hands, 3aa7842) 19 / 29 / 5 against lookfix's 22 / 27 /
-     4 — neither width nor sampling moves the ~18 left; the leaf ranks the
-     human's end below another and the outcome disagrees. Whole fights
+     features does not beat the look ahead on 400 labels. (Review 7: "the
+     look ahead is the best predictor there is" overstated — "the human's
+     branch is better" alone is right 67.8% of 398 points without ties,
+     the look ahead 60.6%; a value fit must report that baseline, with
+     deaths and HP.) The hallway pick: at the 53 hallway points, hallwide
+     (K 20) 18 / 29 / 6 and lookadapt (3aa7842) 19 / 29 / 5 against
+     lookfix's 22 / 27 / 4. (Review 7: each arm changes both the turn-t
+     move and the continuation, so "it finds the human's end half the
+     times" does not follow; and 3aa7842's lookadapt re-rated the best 3
+     but picked among all, so a noisy 16-hand mean could still win — no
+     test of the sampling error; the pick is among the re-rated since
+     review 7's fix.) Whole fights
      from the replays' exact saves (fixed state, each arm the whole fight):
      171 elite and boss fights, C against C,halllook,lookfix,bossroll8:
      deaths 39 -> 30 (C's alone 18, the look's alone 9, p 0.12), HP -1.6 ±
@@ -1157,7 +1162,52 @@ states, and only a simulator is fast enough for that.
      **The second confirmation** (2026-09-28, spire-jev-conf2 at eeeec65;
      fresh seeds 1516-1845, 330, whole runs at A10, floors 16/32/47
      captured): conf2-c-a10 (C) against conf2-look-a10 (C + halllook1 +
-     lookfix), paired by seed.
+     lookfix), paired by seed. halllook1 is `!bossFight && floor <= 17`:
+     act 1's elites are in it too (review 7) — read conf2 as act 1's
+     non-boss fights. 330 pairs detect ~6.5 points at 80% power.
+   - **Direction, review 7** (Astra, 2026-09-28, docs/astra-review-7.md in
+     the card-play session's worktree; the user asked): review 6 holds.
+     Combat decisions and fidelity stay the main line, now aimed at act 2's
+     boss; small causal run-level tests start now; widening or resampling
+     the hallway look ahead stops. The funnel (eval-conf-best): act 1 done
+     528, act 2's boss reached 307 (58% of those), beaten 102 (33.2%),
+     act 3's first boss reached 60, beaten 6 — act 3 is the next wall, not
+     a consequence of fixing act 2; +10 points of act 2's boss beaten is
+     ~+4.65 of act 2 completion; 25% completion needs ~54% at the boss.
+     Corrections: the replays' "exact" checks HP after fights and draws,
+     not the full state (04Y1GLVP01WK f5: an extra Lantern in the game,
+     its later pairs still "exact"): bot-against-bot A/B on one save stands,
+     human-against-bot gaps are not all play; recomputed, the drives are
+     exact to a median floor 11, act 1 whole in 21, none past floor 33;
+     155 of the 171 elite and boss saves are act 1's. The act 2 bout
+     against the game (21.7 against 36.1% at the boss) is unmatched: 35 of
+     the 97 base boss fights had simulator mismatches, 48 inexact plans —
+     cards, transitions and the state's reconstruction to check, not the
+     boss scripts alone. The ± are standard errors; clustered by source
+     run act 1's is ~0.28 and holds; promotion needs deaths, net HP after
+     the fight, potions / revivals and the tail too. Plan: P0 (day 1) the
+     evidence frozen (hashes, lists, exclusions), the tables one command
+     to rebuild; P1 (days 1-4) act 2's boss calibrated — ~30 of the bot's
+     own entry states a boss, the first important deviation in the lost
+     fights, fixes by impact, then bounded multi-step rollouts; +10 points
+     on held-out real states (200-300 pairs); P2 (days 3-8) candidates
+     against value — the human's move injected as a candidate at 60-90
+     high-loss points; if ranking is it, ~600 new points × 4 candidates
+     (half the bot's own act 2 boss and elite states, a quarter mechanism
+     counterexamples, a quarter random), split 400 / 200 by source run, a
+     small nonlinear model (trees) on lookfix as the base or residual,
+     death risk apart from net resources; the 398 points so far are for
+     development only; P3 (days 4-10) run-level tests from one save to act
+     2's end: hallway potion pricing (~150 pairs), one more act 1 elite,
+     one build investment (~120 pairs each), +5 of act 2 completion; P4
+     (days 8-14) one candidate on fresh seeds (+5 points needs ~560
+     pairs). Stopped: hallway K / sampling / tie sweeps; bout win rates,
+     imitation rate or relic counts as promotion evidence; the imitation
+     model and linear fits as a value; the replays' long-tail exactness;
+     deeper search, ISMCTS or a big simulator rewrite before transitions
+     and ranking are calibrated; a whole-run confirmation per switch;
+     fixing act 2's boss without looking at act 3. "Stable": 43 wins of
+     330, or 80 of 660, most of them clean.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same

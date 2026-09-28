@@ -853,6 +853,10 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
   // lookadapt (with lookfix): the best ADAPT_TOP by 16 hands get ADAPT_DRAWS hands in all, and the
   // pick is made on those — the max of many 16-hand means is a winner's curse (the forks: with 20
   // candidates the look ahead's own pick still lost to the human's turn it backed, 18 of 53 hallway points).
+  // The pick is then made among those re-rated (and the settled ends) only: an end left on its 16-hand
+  // mean could otherwise win on its noise once the re-rated ones fell back (Astra, review 7 — the
+  // first lookadapt arm was no test of the sampling error).
+  let pool = rated;
   if (lookFix && lookAdapt) {
     const open = rated.filter((r) => r.n > 0).sort((a, b) => b.value - a.value).slice(0, ADAPT_TOP);
     for (const r of open) {
@@ -860,15 +864,16 @@ export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes =
       r.n = ADAPT_DRAWS;
       r.value = r.sum / r.n;
     }
+    pool = rated.filter((r) => r.n === 0 || open.includes(r));
   }
-  let chosen = rated[0] ?? { line: best, value: -Infinity };
-  for (const r of rated) if (r.value > chosen.value) chosen = r;
+  let chosen = pool[0] ?? { line: best, value: -Infinity };
+  for (const r of pool) if (r.value > chosen.value) chosen = r;
   // looktie (with lookfix): ends within LOOK_TIE HP of the best by the look are a tie at 16 hands; the
   // tie goes to the higher one-turn score (the card-play session, U3F06ZT323WD f19: four ends within
   // 0.5, the pick the one that drew first and blocked after — the game's draw then left 15 block
   // where the one-turn line's 21 stunned the Rock; 3 vs 17 HP).
   if (lookFix && lookTie) {
-    const near = rated.filter((r) => r.value >= chosen.value - LOOK_TIE);
+    const near = pool.filter((r) => r.value >= chosen.value - LOOK_TIE);
     for (const r of near) if (r.line.score > chosen.line.score) chosen = r;
   }
   return { actions: chosen.line.actions, score: chosen.value, exact: chosen.line.exact, nodes: nodesAll, ms: performance.now() - t0, truncated };
