@@ -988,8 +988,13 @@ states, and only a simulator is fast enough for that.
      oracle study's "a fair look ahead does not pay" measured this, not the
      game. Their lab fix (a win as the HP it keeps, a death -2·max HP less
      0.35·enemy HP, shared seeds, 5 ends × 16): act 2 hallways, interim,
-     -0.8 HP% against planTurn's 19.0 (planTurn2 as it is +2.5). To come
-     here behind a flag when their run ends.
+     -0.8 HP% against planTurn's 19.0 (planTurn2 as it is +2.5). Here as
+     `--flags lookfix` (b9a9f9e, their patch). On the IL's hallway scripts
+     (01d9fc5; 120 act2-take fights × 2 shuffles, paired): planTurn 24.4%
+     (the game 22.7), planTurn2 as it was +0.4 ± 0.7, with lookfix -1.9 ±
+     0.6, a 2-turn rollout -2.0, the cheat one / three turns known -4.2 /
+     -6.5; deaths 17 -> 11 (the cheat's 11). In the game: queue68's
+     act2-fixlook / act2b-fixlook (halllook + lookfix).
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
