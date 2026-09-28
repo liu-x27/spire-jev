@@ -945,7 +945,13 @@ states, and only a simulator is fast enough for that.
      at its share of the Below 23.5, planTurn2 while burrowed 22-24), ours
      18.7 -> 18.1; the humans 10.9, ours in the game 20.8. With it the
      Bowlbug Rock's Imbalanced stun (a fully blocked attack) in nextTurn:
-     the bout never had it. On act 2 played through: queue67 (47106/47107).
+     the bout never had it. On act 2 played through (queue67, act2-burrow
+     against act2-take, 111 saves): each save's first Tunneler fight from
+     the same state (floor and HP) in both, 41: HP lost 15.8 -> 11.0
+     (-4.9 ± 1.4; better 12, worse 0, the same 29 — over before the
+     burrow; JEV00608 59 -> 31, JEV00651 39 -> 11, JEV00700 24 -> 0). The
+     runs barely part otherwise: the act 2 boss reached 51 -> 54, won 24
+     -> 24 (further +4/-2). Kept: review 6's first fixed-state win.
      The hallway bouts' other scripts are the logs' intents with no effects
      (the Silk's Weak, the Beetle's Strength): ours lose 36.3% to Rock +
      Silk + Beetle in the game, 19.5 in the bout; four Exoskeletons 27.7 /
