@@ -1115,7 +1115,15 @@ states, and only a simulator is fast enough for that.
      Crimson Mantle +3.3, Feel No Pain +2.5, Barricade +1.1, Dark Embrace
      +0.9 a stack; -0.9 an enemy alive; -0.8 a potion drunk; Weak / Vulnerable
      on them +0.8 / +0.5; their Strength -0.6) but 200 points are too few
-     to beat the look ahead. Batch 2 (forks2: 200 more, 69 of act 2) next.
+     to beat the look ahead. Batch 2 (forks2: 200 more, 69 of act 2; the
+     human's turn better / even / the bot's: look-says-human 67 / 34 / 28,
+     bosses 9 / 15 / 6, elites 23 / 11 / 8; the control 36 / 11 / 23). Both
+     batches, 397 points: the one-turn evaluate's sign right 33%, the look
+     ahead's 61%, the ridge value held out 57% (its weights unsteady
+     between batches: Weak on them +0.8 -> -2.4). A linear value of these
+     features does not beat the look ahead on 400 labels; the look ahead is
+     the best predictor of the real outcome there is. Its gaps are what to
+     work on: the hallway pick (lookadapt next) and bosses' horizon.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
