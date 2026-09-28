@@ -1165,7 +1165,16 @@ states, and only a simulator is fast enough for that.
      captured): conf2-c-a10 (C) against conf2-look-a10 (C + halllook1 +
      lookfix), paired by seed. halllook1 is `!bossFight && floor <= 17`:
      act 1's elites are in it too (review 7) — read conf2 as act 1's
-     non-boss fights. 330 pairs detect ~6.5 points at 80% power.
+     non-boss fights. 330 pairs detect ~6.5 points at 80% power. **Done**
+     2026-09-28 15:16 (C stopped at 13:57 for the evening's idle window and
+     its 117 seeds left rerun on 7 sandboxes: conf2-c2a / conf2-c2b, joined
+     with queue73's logs as eval-conf2-cfull-a10.json): act 1's boss
+     beaten 241 -> 260 (73.0 -> 78.8%; +37/-18, p 0.014), act 2's 44 -> 59
+     (13.3 -> 17.9%; +36/-21, p 0.063), act 3's first 2 -> 3, wins 0 / 0,
+     errors 0 / 0. The last step of the method: **the combo + halllook1 +
+     lookfix is the new best** (C2 = pathdp,restbudget,potions2,sleep,
+     spar,spar3,spar5,spar4up,spar4shop,powbonus,spartake,halllook1,
+     lookfix; SPIRE_JEV_POW_BONUS=10).
    - **Direction, review 7** (Astra, 2026-09-28, docs/astra-review-7.md;
      the user asked): review 6 holds.
      Combat decisions and fidelity stay the main line, now aimed at act 2's
