@@ -1223,9 +1223,17 @@ states, and only a simulator is fast enough for that.
      exhaust after the observation). Left: a hand one over in ~6 fights
      with no common relic (Frantic Escape and Relax held; the catalogue
      shows no Retain on either), the Crab's HP off by 2-6 at a turn's start.
-     Next: the bot's own entry states — eval-conf-best-a10's f32 saves reach
-     the Crab 94, the Knowledge Demon 110, the Insatiable 103 — ~30 a boss,
-     the lost fights' first important deviation.
+     The bot's own entry states (p1-boss-c: eval-conf-best-a10's 307 f32
+     captures, the floor 33 fight only, C at 5b1301c): won 99 (32.2%) —
+     the Crab 17/94 (18%), the Knowledge Demon 45/110 (41%), the Insatiable
+     37/103 (36%); the same outcome as the confirmation's own fights (at
+     39fa6c6) in 298 of 307. A stable fixed-state set for act 2's boss:
+     review 7's +10 points is to be shown here. The Crab: 68 of its 77
+     losses end with both claws alive (5.5 turns, 69 HP in; the wins 82 HP
+     in, the Crusher down first in 14 of 17, the damage focused on one claw
+     where the losses spread it — JEV00884 201/167 -> 91/96); its play
+     mismatches are mostly random-target cards (Sword Boomerang, Cascade) on
+     two claws, by design.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
