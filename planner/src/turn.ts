@@ -22,7 +22,7 @@ const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_AT
 /** Powers that lose a stack every round. */
 const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN", "NO_BLOCK"];
 /** Temporary Strength and Dexterity, and what they were added to. */
-const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"], ["REPTILE_TRINKET", "STRENGTH"]];
+const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"], ["REPTILE_TRINKET", "STRENGTH"], ["ANTICIPATE", "DEXTERITY"]];
 /** The part of `stat` (STRENGTH, DEXTERITY) that goes at the turn's end: Setup Strike's, Flex Potion's, Reptile Trinket's. */
 export const temporaryPart = (powers: Record<string, number>, stat: string): number =>
   TEMPORARY.reduce((a, [temp, of]) => (of === stat ? a + (powers[temp] ?? 0) : a), 0);
@@ -426,6 +426,8 @@ function nextRelicVars(s: State, puzzle = false): Readonly<Record<string, Record
   const opener = v["LETTER_OPENER"];
   const watch = s.relics.includes("POCKETWATCH") ? v["POCKETWATCH"] ?? {} : undefined;
   const fork = v["TUNING_FORK"];
+  // Pael's Legion (IL: AfterSideTurnStart): its cooldown a turn shorter.
+  const legion = v["PAELS_LEGION"];
   return {
     ...v,
     ...(nun ? { NUNCHAKU: { ...nun, _attacksPlayed: ((nun["_attacksPlayed"] ?? 0) + (s.attacks ?? 0)) % (nun["Cards"] || 10) } } : {}),
@@ -436,6 +438,7 @@ function nextRelicVars(s: State, puzzle = false): Readonly<Record<string, Record
     ...(puzzle ? { CENTENNIAL_PUZZLE: { ...(v["CENTENNIAL_PUZZLE"] ?? {}), _usedThisCombat: 1 } } : {}),
     ...(nib ? { PEN_NIB: { ...nib, _attacksPlayed: ((nib["_attacksPlayed"] ?? 0) + (s.attacks ?? 0)) % 10 } } : {}),
     ...(fan ? { ORNAMENTAL_FAN: { ...fan, _attacksPlayedThisTurn: 0 } } : {}),
+    ...(legion && (legion["_cooldown"] ?? 0) > 0 ? { PAELS_LEGION: { ...legion, _cooldown: legion["_cooldown"]! - 1 } } : {}),
     ...(club ? { IRON_CLUB: { ...club, _cardsPlayed: (club["_cardsPlayed"] ?? 0) + s.played } } : {}),
   };
 }

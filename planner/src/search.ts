@@ -153,7 +153,9 @@ export function deckPace(s: State): Pace {
   // Feel No Pain blocks for every card exhausted (about one every other turn); Barricade keeps some block over.
   const blockPerTurn = (p["METALLICIZE"] ?? 0) + (p["FEEL_NO_PAIN"] ?? 0) * 0.5 + ((p["BARRICADE"] ?? 0) > 0 ? 3 : 0);
   const plating = Math.max(0, p["PLATING"] ?? 0);
-  const cardBlock = (block / n) * HAND * 0.5 + (p["DEXTERITY"] ?? 0) * (blockers / n) * HAND * 0.5;
+  // Dexterity for the turn only (Anticipate, a Speed Potion) is no block in the turns to come.
+  const dexterity = (p["DEXTERITY"] ?? 0) - temporaryPart(p, "DEXTERITY");
+  const cardBlock = (block / n) * HAND * 0.5 + dexterity * (blockers / n) * HAND * 0.5;
   return { perTurn, perHit, blockPerTurn, blockToCome: (plating * (plating - 1)) / 2, cardBlock: Math.max(0, cardBlock) };
 }
 

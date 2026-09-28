@@ -290,3 +290,39 @@ test("imbalanced: the Bowlbug Rock's attack fully blocked stuns its next turn", 
   const short = { ...state([], [rock()]), player: { hp: 80, maxHp: 80, block: 15, powers: {} } };
   assert.deepEqual(nextTurn(short, seeded(1), () => [{ type: "Attack", damage: 16, hits: 1 }])!.enemies[0]!.intents, [{ type: "Attack", damage: 16, hits: 1 }]);
 });
+
+test("spiral: a Spiral Defend or Strike is played twice", () => {
+  const spiral = (c: Card): Card => ({ ...c, enchantment: "SPIRAL" });
+  assert.equal(at(state([spiral(DEFEND)], [foe("TUNNELER", 60)]), 0).player.block, 10);
+  assert.equal(at(state([spiral(STRIKE)], [foe("TUNNELER", 60)]), 0).enemies[0]!.hp, 48);
+  // The target dead after the first: no second hit, and nothing breaks.
+  assert.equal(at(state([spiral(STRIKE)], [foe("TUNNELER", 5)]), 0).enemies[0]!.alive, false);
+});
+
+test("pael's legion: off cooldown a card's block is doubled, then every other turn", () => {
+  const s0 = { ...state([DEFEND, DEFEND], [foe("TUNNELER", 60)]), relics: ["PAELS_LEGION"], relicVars: { PAELS_LEGION: { Turns: 2, _cooldown: -1 } } };
+  const one = at(s0, 0);
+  assert.equal(one.player.block, 10);
+  assert.equal(at(one, 0).player.block, 15);
+  const quiet = (s: State) => ({ ...s, enemies: s.enemies.map((e) => ({ ...e, intents: [] })) });
+  const t2 = nextTurn(quiet(one), seeded(1), () => [])!;
+  assert.equal(at({ ...t2, hand: [DEFEND], energy: 3 }, 0).player.block, 5);
+  const t3 = nextTurn(quiet({ ...t2, hand: [] }), seeded(1), () => [])!;
+  assert.equal(at({ ...t3, hand: [DEFEND], energy: 3 }, 0).player.block, 10);
+});
+
+test("anticipate: its Dexterity is for the turn", () => {
+  const anticipate = card("ANTICIPATE", "Skill", "Self", { DexterityPower: 2 }, 0);
+  const s = at(state([anticipate, DEFEND], [{ ...foe("TUNNELER", 60), intents: [] }]), 0);
+  assert.equal(at(s, 0).player.block, 7);
+  assert.equal(nextTurn(s, seeded(1), () => [])!.player.powers["DEXTERITY"] ?? 0, 0);
+});
+
+test("the gambit: an attack past its block kills; blocked, it is 50 block", () => {
+  const gambit = card("THE_GAMBIT", "Skill", "Self", { Block: 50 }, 0);
+  const big = { ...foe("TUNNELER", 60), intents: [{ type: "Attack", damage: 60, hits: 1 }] };
+  const s = at(state([gambit], [big], 70), 0);
+  assert.equal(s.player.block, 50);
+  assert.equal(hpLoss(s), 70);
+  assert.equal(hpLoss(at(state([gambit], [{ ...big, intents: [{ type: "Attack", damage: 40, hits: 1 }] }], 70), 0)), 0);
+});

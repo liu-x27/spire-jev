@@ -159,6 +159,8 @@ export interface State {
   /** Vambrace: armed while the fight's first block card resolves, and whether it gained block (resolve only). */
   vambraceArmed?: boolean;
   vambraceHit?: boolean;
+  legionArmed?: boolean;
+  legionHit?: boolean;
   /**
    * Surrounded (Kaiser Crab; IL: SurroundedPower.UpdateDirection): the claw the player faces, the
    * one last targeted by a card or potion; the other is behind and deals ×1.5.
@@ -710,6 +712,14 @@ function gainBlock(s: State, n: number, fromCard = false): void {
     n *= 2;
     s.vambraceHit = true;
   }
+  // Pael's Legion (IL: PaelsLegion.ModifyBlockMultiplicative, AfterCardPlayed): off cooldown, a card's
+  // block is doubled, and the card that had it puts the relic on its Turns' cooldown (2), a turn off
+  // at each turn's start (turn.ts): every other turn. The model had none (Iron Wave, Taunt, Defend
+  // gave twice the block it said, 30 times in act2-take / act2b-take).
+  if (fromCard && s.legionArmed) {
+    n *= 2;
+    s.legionHit = true;
+  }
   // Unmovable: the first block a card gives each turn is doubled.
   if (fromCard && has(s.player, "UNMOVABLE") && !s.unmovableUsed) {
     n *= 2;
@@ -1189,6 +1199,18 @@ const SPECIAL: Record<string, Rule> = {
       gainBlock(s, blockGain(num(c, "Block"), s.player), true);
     }
   },
+  // Dexterity for the turn (IL: AnticipatePower is a TemporaryDexterityPower; turn.ts takes it back).
+  // The model kept it for the fight, and valued a 0-cost card as 2 Dexterity for good.
+  ANTICIPATE: (s, c) => {
+    applyPower(s, s.player, "DEXTERITY", num(c, "DexterityPower"));
+    addPower(s.player, "ANTICIPATE", num(c, "DexterityPower"));
+  },
+  // Its block, and The Gambit's power (IL: TheGambitPower.AfterDamageReceived): for the rest of the
+  // fight an attack's damage past block kills the player (hpLoss). The model saw 50 block, no more.
+  THE_GAMBIT: (s, c) => {
+    gainBlock(s, blockGain(num(c, "Block"), s.player), true);
+    addPower(s.player, "THE_GAMBIT", 1);
+  },
   // Strength for the turn: the strength goes to the player, not the target.
   SETUP_STRIKE: (s, c, t) => {
     strike(s, one(t), dmg(s, c), 1);
@@ -1543,6 +1565,8 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
   if (doubled) s.player.powers["PEN_NIB_DOUBLE"] = 1;
   s.vambraceArmed = s.relics.includes("VAMBRACE") && relicVar(s, "VAMBRACE", "_blockGainedThisCombat", 0) === 0;
   s.vambraceHit = false;
+  s.legionArmed = s.relics.includes("PAELS_LEGION") && relicVar(s, "PAELS_LEGION", "_cooldown", -1) <= 0;
+  s.legionHit = false;
   const special = SPECIAL[card.id];
   if (special) special(s, card, target, x);
   else standard(s, card, target, x);
@@ -1553,6 +1577,18 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
     const again = target && !target.alive ? s.enemies.find((e) => e.alive) : target;
     if (again !== target) s.exact = false;
     if (!needsTarget(card) || again) {
+      if (special) special(s, card, again, x);
+      else standard(s, card, again, x);
+    }
+  }
+  // Spiral (IL: Spiral.EnchantPlayCount: the play count plus its Times; basic Strikes and Defends):
+  // played again, at the same target or none if that one died. A Spiral Defend gave 10 where the
+  // model said 5 (90 of act 2's 196 block mismatches in act2-take / act2b-take).
+  if (card.enchantment === "SPIRAL") {
+    for (let i = 0; i < (card.enchantmentVars?.["Times"] ?? 1); i++) {
+      const again = target && !target.alive ? s.enemies.find((e) => e.alive) : target;
+      if (again !== target) s.exact = false;
+      if (needsTarget(card) && !again) break;
       if (special) special(s, card, again, x);
       else standard(s, card, again, x);
     }
@@ -1581,8 +1617,11 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
     }
   }
   if (s.vambraceHit) setRelicVar(s, "VAMBRACE", "_blockGainedThisCombat", 1);
+  if (s.legionHit) setRelicVar(s, "PAELS_LEGION", "_cooldown", relicVar(s, "PAELS_LEGION", "Turns", 2));
   delete s.vambraceArmed;
   delete s.vambraceHit;
+  delete s.legionArmed;
+  delete s.legionHit;
   s.played++;
   // Iron Club (IL: AfterCardPlayed): every 4th card played this combat draws 1 (its _cardsPlayed at the observation).
   const club = s.relics.includes("IRON_CLUB") ? s.relicVars?.["IRON_CLUB"] : undefined;
@@ -1787,6 +1826,8 @@ export function hpLoss(s0: State): number {
   const mantle = s.player.powers["CRIMSON_MANTLE"] ? s.player.powerVars?.["CRIMSON_MANTLE"]?.["SelfDamage"] ?? 1 : 0;
   const beckons = s.hand.reduce((a, c) => a + (c.id === "BECKON" ? c.vars["HpLoss"] ?? 6 : 0), 0);
   const rod = rodCut(s);
+  // The Gambit: an attack's damage past block is death (the end of the turn's own damage takes block first).
+  if (has(s.player, "THE_GAMBIT") && incomingDamage(s) > Math.max(0, endOfTurnBlock(s) - constrict - statuses - disintegration)) return s.player.hp;
   if (rod <= 0) return Math.max(0, incomingDamage(s) + constrict + statuses + disintegration - endOfTurnBlock(s)) + mantle + beckons;
   // Tungsten Rod takes its amount off every hit that gets past block, so the hits go one at a time:
   // the end of the turn's own damage into block first, then the enemies'.
@@ -1837,6 +1878,6 @@ export function stateKey(s: State): string {
 }
 /** Relic flags and counters a play can change: states that differ in them are not the same. */
 const RELIC_FLAGS: [string, string][] = [
-  ["VAMBRACE", "_blockGainedThisCombat"], ["PERMAFROST", "_activatedThisCombat"], ["CENTENNIAL_PUZZLE", "_usedThisCombat"],
+  ["VAMBRACE", "_blockGainedThisCombat"], ["PAELS_LEGION", "_cooldown"], ["PERMAFROST", "_activatedThisCombat"], ["CENTENNIAL_PUZZLE", "_usedThisCombat"],
   ["RED_SKULL", "_strengthApplied"], ["JOSS_PAPER", "_cardsExhausted"],
 ];
