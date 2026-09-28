@@ -1166,8 +1166,8 @@ states, and only a simulator is fast enough for that.
      lookfix), paired by seed. halllook1 is `!bossFight && floor <= 17`:
      act 1's elites are in it too (review 7) — read conf2 as act 1's
      non-boss fights. 330 pairs detect ~6.5 points at 80% power.
-   - **Direction, review 7** (Astra, 2026-09-28, docs/astra-review-7.md in
-     the card-play session's worktree; the user asked): review 6 holds.
+   - **Direction, review 7** (Astra, 2026-09-28, docs/astra-review-7.md;
+     the user asked): review 6 holds.
      Combat decisions and fidelity stay the main line, now aimed at act 2's
      boss; small causal run-level tests start now; widening or resampling
      the hallway look ahead stops. The funnel (eval-conf-best): act 1 done
