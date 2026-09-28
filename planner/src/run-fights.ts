@@ -300,6 +300,13 @@ function inWindow(id: string, s: ReturnType<typeof fromObservation>, bossTurn: n
 const BOSS_ROLL: Rollouts = { ends: 4, samples: 3, depth: 2, nodes: 800 };
 /** bossroll8's rollouts: 5 ends, 8 samples, 2 turns on, 1500 nodes a turn (3 samples were thin: -0.9 against -1.1 HP% in hallways). */
 const LOOK_ROLL: Rollouts = { ends: 5, samples: 8, depth: 2, nodes: 1500 };
+/**
+ * lookwide: in boss and elite fights the look aheads weigh the one-turn top 20, not 5 (the card-play
+ * session: where the fixed look ahead backs the human's end, the top 5 holds it in 45% of boss turns,
+ * 52% of elite ones; the top 20 in 68%).
+ */
+const WIDE_ENDS = 20;
+const LOOK_ROLL_WIDE: Rollouts = { ...LOOK_ROLL, ends: WIDE_ENDS };
 /** A10's first act 3 boss (floor 48): the second follows on the same HP (pot48, hp48). */
 const firstOfPair = (floor: number, boss: boolean) => boss && ascension >= 10 && floor === 48;
 /** potsave: a fight of act 3 before its two bosses (floors 34-47) keeps its potions for them. */
@@ -465,7 +472,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
           // bosses on the IL scripts, 40 x 3: won 79.2 -> 85.8%, deaths 25 -> 17; planTurn2 + lookfix 79.2,
           // the Waterfall Giant 13 -> 10 of 24 with one turn looked at, 13 with two).
           ? planTurnPowers(s, weights, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 20_000,
-            hasFlag("bossroll8") && bossFight ? (st) => planTurnRoll(st, weights, 20_000, LOOK_ROLL)
+            hasFlag("bossroll8") && bossFight ? (st) => planTurnRoll(st, weights, 20_000, hasFlag("lookwide") ? LOOK_ROLL_WIDE : LOOK_ROLL)
             : hasFlag("bosslook") && bossFight ? (st) => planTurn2(st, weights) : undefined)
         : hasFlag("bossvalue") && bossFight ? planTurnValue(s, weights)
         : hasFlag("bossroll") && bossFight ? planTurnRoll(s, weights, 20_000, BOSS_ROLL)
@@ -473,7 +480,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
         // weighed by the order they die in (search.ts futureDamage, 0.5) — act 2's hallways cost the bot
         // 8-11 points of max HP a fight more than A10 players at every count of block cards and relics
         // (the other session); every ordinary fight was one turn of planTurn.
-        : !bossFight && hasFlag("halllook") ? planTurn2(s, weights)
+        : !bossFight && hasFlag("halllook") ? planTurn2(s, weights, 20_000, hasFlag("lookwide") && s.enemies.some((e) => e.alive && ELITES.test(e.model)) ? WIDE_ENDS : undefined)
         : !bossFight && hasFlag("hallfuture") ? planTurn(s, { ...weights, future: Math.max(weights.future, 0.5) })
         : weights.look > 0 ? planTurn2(s, weights) : planTurn(s, weights);
       log.planMs.push(plan.ms);

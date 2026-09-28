@@ -810,9 +810,9 @@ export function expectedIntents(e: Enemy, turn: number): IntentObs[] {
  * the hand is drawn from the draw pile's contents). A turn that wins or
  * loses the fight keeps its own score.
  */
-export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
+export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000, ends?: number): Plan {
   const t0 = performance.now();
-  const { best, top, extra, nodes, truncated } = explore(start, w, maxNodes, lookFix ? FIX_ENDS : LOOK_ENDS, evaluate, lookFix && lookDiverse);
+  const { best, top, extra, nodes, truncated } = explore(start, w, maxNodes, ends ?? (lookFix ? FIX_ENDS : LOOK_ENDS), evaluate, lookFix && lookDiverse);
   let nodesAll = nodes;
   let chosen = best;
   let chosenValue = -Infinity;
