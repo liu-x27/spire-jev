@@ -1101,8 +1101,9 @@ states, and only a simulator is fast enough for that.
      the HP where both won shrinks, +1.6 -> +0.1 with lookwide). At the 53
      hallway points where it backs the human, the look ahead's own choice
      (halllook + lookfix continuing): 22 / 27 / 4 against C's 40 / 11 / 2
-     — it finds the human's end about half the times it would back it
-     (NORMAL's human end in the one-turn top 5 58%, top 20 89%);
+     — read then as "it finds the human's end about half the times it would
+     back it", which review 7 corrects: the arm changes the continuation
+     too (NORMAL's human end in the one-turn top 5 58%, top 20 89%);
      `--flags hallwide` (26c2528: halllook at K 20) on the same points
      next. Bosses and elites need more than two turns seen: a value from
      real outcomes (the branches), not a wider search. First fit on them
