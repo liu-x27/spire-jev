@@ -362,7 +362,17 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
         : SANDPIT_TURN * Math.max(0, e.hp / pace - sandpit);
     }
   }
+  if (leafBonus) score += leafBonus(s);
   return score;
+}
+
+/**
+ * A term added to evaluate's score of every end that is not won or lost (an experiment's: a value
+ * fitted on the human replays' pairs, review 6's item 2). Off by default.
+ */
+let leafBonus: ((s: State) => number) | undefined;
+export function useLeafBonus(f: ((s: State) => number) | undefined): void {
+  leafBonus = f;
 }
 
 /**

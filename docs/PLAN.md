@@ -1042,10 +1042,26 @@ states, and only a simulator is fast enough for that.
      hallway monsters from the IL, every one of 58,572 monster turns of
      11,701 act 1 fights in our logs fits) — the Effigy wakes to +10 and
      Slashes 25 for good, the Wrigglers grow 2 every other turn,
-     Byrdonis 1 a turn. The first fit of a leaf value on the pairs
-     (pairfeat.ts / pairfit.py): 43 usable pairs of 103 (45 have the
-     planner's end with cards drawn unseen), too few — to rerun on the
-     93 drives' pairs.
+     Byrdonis 1 a turn. A leaf value fitted on the pairs (pairfeat.ts /
+     pairfit.py, scratchpad; the first drives' batch: 978 pairs, 267 kept —
+     exact, lines differing as multisets, no unseen draw on either side —
+     from 30 runs): held out by run, a logistic model on the two ends'
+     feature differences ranks the human's end higher on 68%, the one-turn
+     evaluate on 25% (the planner's end is its argmax), the fixed look
+     ahead on 48%. Its weights read as the humans' style: fewer enemies
+     alive (-0.8 to -1.9 a monster: they finish one), fewer turns left,
+     potions kept (-4.3 a potion), Colossus / Flame Barrier / Feel No Pain
+     up — and HP given up (-0.17 an HP). Added to evaluate
+     (`useLeafBonus`, search.ts, off by default) it made the IL hallway
+     bout worse at every scale (our 658 × 4: 24.1% HP lost -> 30.2 at 2×,
+     36 at 5×, 52 at 10×); fitted with evaluate as a feature it gave
+     evaluate no weight (-0.0006), so no scale ties it to HP (bout 56-58%).
+     Imitation against the planner's own argmax learns what humans do
+     differently, costs included: not a value. Stopped (review 6's rule).
+     Item 2 needs the outcome: from a replay's fight save, the human's
+     plays driven to turn t, then {the human's line, the planner's line},
+     each played on by the bot to the fight's end in the game — the turn's
+     choice priced under the bot's own continuation.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
