@@ -999,8 +999,19 @@ states, and only a simulator is fast enough for that.
      (01d9fc5; 120 act2-take fights × 2 shuffles, paired): planTurn 24.4%
      (the game 22.7), planTurn2 as it was +0.4 ± 0.7, with lookfix -1.9 ±
      0.6, a 2-turn rollout -2.0, the cheat one / three turns known -4.2 /
-     -6.5; deaths 17 -> 11 (the cheat's 11). In the game: queue68's
-     act2-fixlook / act2b-fixlook (halllook + lookfix). A 3-turn rollout
+     -6.5; deaths 17 -> 11 (the cheat's 11). In the game (eval58 at
+     b9a9f9e, s3f's 586-705, act 2 played through): the census's one-turn
+     fixes, act2-burrow -> act2-fix: hallway HP 22.7 -> 22.4%, deaths 19 ->
+     17, the first hallway fight from the same state -0.5 ± 0.5 (better 5,
+     worse 1, the same 73), the runs further +10/-4 (against act2-take,
+     the Tunneler's with them: +12/-3, p 0.035) — kept. halllook + lookfix
+     on them, act2-fix -> act2-fixlook: hallway HP 22.4 -> 20.8% (the
+     bout's -1.6 exactly), deaths 17 -> 15, but the first hallway fight
+     from the same state +0.9 ± 0.7 (better 15, worse 22, of 82) and act 2's
+     boss 25 -> 22 won (+7/-10): the all-fights mean mixes states that
+     have parted; the one clean comparison does not show it. Not promoted;
+     act2b-fix / act2b-fixlook (706-855, 141 more first fights) and the
+     card-play session's forks to decide. A 3-turn rollout
      (8 samples) -2.6 (deaths 14). Bosses (spar's bouts on HEAD, 40 fights
      × 3, powbonus's planner inside): act 1 won 79.2% -> planTurn2 +
      lookfix 79.2 -> a 2-turn rollout + lookfix (5 ends × 8, 1500 nodes)
