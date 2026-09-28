@@ -1067,7 +1067,18 @@ states, and only a simulator is fast enough for that.
      pairs): act 1 338 -> 365 (67/40, p 0.015), act 2 56 -> 65 (p 0.37).
    - **The confirmation** (the user, 2026-09-27; spire-jev-conf at 39fa6c6):
      fresh seeds 856-1515, the spar3 reference against the combo with
-     powbonus and spartake, whole runs, floors 16/32/47 captured.
+     powbonus and spartake, whole runs, floors 16/32/47 captured. Done
+     2026-09-28 01:20 (660 paired, 3 errors each): act 1's boss beaten 485
+     -> 528 (73.5 -> 80.0%; +96/-53, p 0.001), act 2's 86 -> 102 (13.0 ->
+     15.5%; +67/-51, p 0.17), act 3's first 3 -> 6, wins 0 / 0. Act 2's
+     boss is the wall: reached by 41.7 -> 46.7% of the runs (at 82 / 83%
+     HP), beaten by 31.4 -> 33.2% of those — the Kaiser Crab 13/86 ->
+     17/94, the Knowledge Demon 34/97 -> 46/110, the Insatiable 39/91 ->
+     39/103. Act 1's bosses (reached): 77.7 -> 85.9% (the Waterfall Giant
+     69/108 -> 85/107, Vantom 66/94 -> 74/94). The combo's act 1 gain holds
+     on fresh seeds; its act 2 gain is +2.5 points, not shown (review 6's
+     "not yet cashed, not shown to be zero"). Libraries for the benches:
+     saves-conf-ref-a10 / saves-conf-best-a10 (f16 / f32 / f47).
 3. **Whole runs against the real game** in fast mode; README, GIF.
 
 ## Constraints
