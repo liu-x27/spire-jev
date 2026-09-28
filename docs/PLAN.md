@@ -1152,9 +1152,12 @@ states, and only a simulator is fast enough for that.
      the census's fixes on 706-855: act2b-take -> act2b-fix, the boss 23 ->
      28 (+7/-2), the runs further +16/-9. So the hallway look ahead is
      shown in act 1 and not in act 2: `--flags halllook1` (halllook on
-     floors 1-17 only). Next by the method: fresh seeds, the combo against
-     the combo + halllook1 + lookfix (+ looktie if htie holds) — act 1's
-     hallway HP carries into act 1's boss and the act 2 entry.
+     floors 1-17 only). looktie on the 414 saves: htie - hlook -0.01 ± 0.18
+     (the Bowlbugs -4.6 on 4, the Slimes +1.0 on 38): neutral, left out.
+     **The second confirmation** (2026-09-28, spire-jev-conf2 at eeeec65;
+     fresh seeds 1516-1845, 330, whole runs at A10, floors 16/32/47
+     captured): conf2-c-a10 (C) against conf2-look-a10 (C + halllook1 +
+     lookfix), paired by seed.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
