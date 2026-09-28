@@ -33,7 +33,7 @@ import { type ChoiceState, restoreChoiceState, saveChoiceState } from "./choices
 import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, chooseEvent, chooseMap, chooseMapByPath, chooseRest, chooseSelect, chooseShop, chooseUpgrade, hasFlag, noteCombatStart, setActBoss, setFlags, useRules2, wantsPotion } from "./choices.ts";
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
-import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, TURN_WEIGHTS, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, useLookFix, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
+import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, TURN_WEIGHTS, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, useLookDiverse, useLookFix, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
 import { learnCard, useBoutPlanner } from "./spar.ts";
 import { loadValueNet } from "./value.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -867,14 +867,28 @@ async function main(): Promise<void> {
   stopFloor = Number(values["stop-floor"]);
   if (values.explore !== undefined) startExploring(Number(values.explore) * 7919 + 17);
   const policy = values.policy as Policy;
-  weights = { ...DEFAULT_WEIGHTS, ...(JSON.parse(values.weights) as Partial<Weights>) };
-  useRules = values.choices === "rules" || values.choices === "rules2";
-  useRules2(values.choices === "rules2");
-  setFlags(values.flags.split(","));
+  configure(values.flags.split(","), values.choices, Number(values.ascension), JSON.parse(values.weights) as Partial<Weights>);
+  if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
+  const repo = path.resolve(import.meta.dirname, "..", "..");
+  const sandbox = path.join(repo, "sandbox", `p${values.port}`);
+  const logs: FightLog[] = [];
+  await runAll(values, policy, repo, sandbox, logs);
+}
+
+/**
+ * The runner's setup as main has it (the rules, flags, weights and ascension a fight() plays by), for a
+ * caller that plays fights itself: replay-drive.ts's forks hand a fight to the bot mid-way.
+ */
+export function configure(flags: readonly string[], choices = "rules2", asc = 10, weightsOver: Partial<Weights> = {}): void {
+  weights = { ...DEFAULT_WEIGHTS, ...weightsOver };
+  useRules = choices === "rules" || choices === "rules2";
+  useRules2(choices === "rules2");
+  setFlags([...flags]);
   useGiantRules(hasFlag("wgpot"), hasFlag("wghp"), hasFlag("wgblow"));
   useBossRules({ sleep: hasFlag("sleep") });
   // lookfix: planTurn2's and planTurnRoll's leaves in HP, every line on the same draws (search.ts).
   useLookFix(hasFlag("lookfix"));
+  useLookDiverse(hasFlag("lookdiverse"));
   // sparpow: spar's bouts played with powbonus's planner, so a reward's engine is played in the bout
   // that weighs it (the planner left powers in hand, and spar scored engines below attacks).
   if (hasFlag("sparpow")) useBoutPlanner((st) => planTurnPowers(st, TURN_WEIGHTS, Number(process.env["SPIRE_JEV_POW_BONUS"] ?? 10), 3000));
@@ -885,14 +899,12 @@ async function main(): Promise<void> {
     if (!net) throw new Error("--flags bossvalue needs data/value-net.json");
     useValueNet(net, Number(process.env["SPIRE_JEV_VALUE_MIX"] ?? 1));
   }
-  ascension = Number(values.ascension);
+  ascension = asc;
   setIntentAscension(ascension);
   usePotions = useRules;
-  if (policy !== "planner" && policy !== "naive") throw new Error(`unknown policy ${policy}`);
-  const repo = path.resolve(import.meta.dirname, "..", "..");
-  const sandbox = path.join(repo, "sandbox", `p${values.port}`);
-  const logs: FightLog[] = [];
+}
 
+async function runAll(values: Record<string, string | undefined>, policy: Policy, repo: string, sandbox: string, logs: FightLog[]): Promise<void> {
   for (let r = 0; r < Number(values.runs); r++) {
     const seed = `JEV${String(Number(values.seed) + r).padStart(5, "0")}`;
     console.log(`${policy} ${seed}`);

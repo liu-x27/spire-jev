@@ -624,17 +624,37 @@ interface Line {
 }
 
 /** Every play order from `start`, equal states merged; the best line, and the best `keep` distinct ends. */
-export function explore(start: State, w: Weights, maxNodes: number, keep: number, score: (s: State, w: Weights) => number = evaluate): { best: Line; top: Line[]; nodes: number; truncated: boolean } {
+export function explore(start: State, w: Weights, maxNodes: number, keep: number, score: (s: State, w: Weights) => number = evaluate, diverse = false): { best: Line; top: Line[]; extra: Line[]; nodes: number; truncated: boolean } {
   let nodes = 0;
   let truncated = false;
   let best: Line = { score: -Infinity, actions: [{ kind: "end" }], exact: true, state: start };
   const top: Line[] = [];
   const seen = new Set<string>([stateKey(start)]);
+  // diverse (lookdiverse): besides the best `keep` by the one-turn score, the best end of each kind
+  // the look ahead should see — one that plays a Power, one that drinks nothing, the most block, the
+  // least enemy HP (the card-play session: the human's end, where the look ahead backs it, is outside
+  // the one-turn top 5 in 41% of turns, 55% of boss turns).
+  const kinds: Record<string, { line: Line; key: number }> = {};
+  const offer = (kind: string, key: number, line: () => Line) => {
+    const k = kinds[kind];
+    if (!k || key > k.key) kinds[kind] = { line: line(), key };
+  };
+  const enemyLeft = (s: State) => s.enemies.reduce((a, e) => a + (e.alive ? e.hp + e.block : 0), 0);
+  // A Power played leaves every pile (sim.ts play): fewer of them in the fight's cards than at the start.
+  const powers = (s: State) => [...s.hand, ...s.draw, ...s.discard, ...s.exhaust].filter((c) => c.type === "Power").length;
+  const powersAtStart = diverse ? powers(start) : 0;
 
   const visit = (s: State, path: Action[]): void => {
     nodes++;
     const here = score(s, w);
     if (here > best.score) best = { score: here, actions: [...path, { kind: "end" }], exact: s.exact, state: s };
+    if (diverse && path.length > 0 && here > -WIN) {
+      const line = () => ({ score: here, actions: [...path, { kind: "end" as const }], exact: s.exact, state: s });
+      if (powers(s) < powersAtStart) offer("power", here, line);
+      if (s.potionsUsed === start.potionsUsed) offer("noPotion", here, line);
+      offer("block", endOfTurnBlock(s) * 1000 + here / 1000, line);
+      offer("damage", -enemyLeft(s) * 1000 + here / 1000, line);
+    }
     if (keep > 0 && (top.length < keep || here > top[top.length - 1]!.score)) {
       top.push({ score: here, actions: [...path, { kind: "end" }], exact: s.exact, state: s });
       top.sort((a, b) => b.score - a.score);
@@ -659,7 +679,9 @@ export function explore(start: State, w: Weights, maxNodes: number, keep: number
     }
   };
   visit(start, []);
-  return { best, top, nodes, truncated };
+  const inTop = new Set(top.map((l) => stateKey(l.state)));
+  const extra = Object.values(kinds).map((k) => k.line).filter((l) => !inTop.has(stateKey(l.state)) && (inTop.add(stateKey(l.state)), true));
+  return { best, top, extra, nodes, truncated };
 }
 
 /**
@@ -727,6 +749,11 @@ let lookFix = false;
 export function useLookFix(on: boolean): void {
   lookFix = on;
 }
+/** --flags lookdiverse (with lookfix): the look aheads also weigh explore's best end of each kind (explore's `diverse`). */
+let lookDiverse = false;
+export function useLookDiverse(on: boolean): void {
+  lookDiverse = on;
+}
 /** lookfix's samples and nodes: 5 ends, 16 hands (planTurn2), as measured. */
 const FIX_ENDS = 5;
 const FIX_DRAWS = 16;
@@ -785,13 +812,13 @@ export function expectedIntents(e: Enemy, turn: number): IntentObs[] {
  */
 export function planTurn2(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000): Plan {
   const t0 = performance.now();
-  const { best, top, nodes, truncated } = explore(start, w, maxNodes, lookFix ? FIX_ENDS : LOOK_ENDS);
+  const { best, top, extra, nodes, truncated } = explore(start, w, maxNodes, lookFix ? FIX_ENDS : LOOK_ENDS, evaluate, lookFix && lookDiverse);
   let nodesAll = nodes;
   let chosen = best;
   let chosenValue = -Infinity;
   const draws = lookFix ? FIX_DRAWS : LOOK_DRAWS;
   const shared = hash(stateKey(start));
-  for (const line of top) {
+  for (const line of [...top, ...extra]) {
     let value: number;
     if (settled(line.score)) value = lookFix ? leafValue(line.score, line.state) : line.score;
     else {
@@ -834,13 +861,13 @@ export interface Rollouts {
 export const ROLL: Rollouts = { ends: 5, samples: 4, depth: 3, nodes: 1500 };
 export function planTurnRoll(start: State, w: Weights = DEFAULT_WEIGHTS, maxNodes = 20_000, r: Rollouts = ROLL): Plan {
   const t0 = performance.now();
-  const { best, top, nodes, truncated } = explore(start, w, maxNodes, r.ends);
+  const { best, top, extra, nodes, truncated } = explore(start, w, maxNodes, r.ends, evaluate, lookFix && lookDiverse);
   let nodesAll = nodes;
   let chosen = best;
   let chosenValue = -Infinity;
   const left = (st: State) => st.enemies.reduce((a, e) => a + (e.alive ? e.hp : 0) + formsToCome(e), 0);
   const shared = hash(stateKey(start));
-  for (const line of top) {
+  for (const line of [...top, ...extra]) {
     let value: number;
     if (settled(line.score)) value = lookFix ? leafValue(line.score, line.state) : line.score;
     else {
