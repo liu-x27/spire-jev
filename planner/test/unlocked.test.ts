@@ -382,3 +382,10 @@ test("act 1's scripts: Wrigglers come stunned, a slug stunned by Ravenous comes 
   assert.equal(shrieked.enemies[0]!.move, "STUNNED");
   assert.equal(nextTurn(shrieked, seeded(1), () => [])!.enemies[0]!.move, "TERROR_MOVE");
 });
+
+test("ripple basin: no block at the turn's end once an attack of the turn was played, before the observation too", () => {
+  const s0 = { ...state([DEFEND], [{ ...foe("TUNNELER", 60), intents: [] }]), relics: ["RIPPLE_BASIN"], relicVars: { RIPPLE_BASIN: { Block: 4 } } };
+  assert.equal(endOfTurn(s0).player.block, 4);
+  const attacked = { ...s0, relicVars: { RIPPLE_BASIN: { Block: 4, _attacksPlayedThisTurn: 1 } } };
+  assert.equal(endOfTurn(attacked).player.block, 0);
+});

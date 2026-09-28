@@ -443,10 +443,22 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
   let foreseen: { turn: number; state: State } | undefined;
   log.transitionChecks = 0;
   log.transitions = [];
+  let attacksTurn = -1;
+  let attacksThisTurn = 0;
   while (cur.observation.phase === "combat" && cur.observation.combat) {
     const obs = cur.observation;
     collect(obs);
     const s = fromObservation(obs);
+    // Ripple Basin (IL: RippleBasin, its Status off after an attack of the turn): the observation does not
+    // carry it, and a state rebuilt mid-turn counted no attacks — 4 block too many at every end of turn
+    // after an attack (6 of 97 act 2 boss fights: HP 4 over the prediction a turn). The runner counts.
+    if (obs.combat!.turn !== attacksTurn) {
+      attacksTurn = obs.combat!.turn;
+      attacksThisTurn = 0;
+    }
+    if (s.relics.includes("RIPPLE_BASIN")) {
+      s.relicVars = { ...(s.relicVars ?? {}), RIPPLE_BASIN: { ...(s.relicVars?.["RIPPLE_BASIN"] ?? {}), _attacksPlayedThisTurn: attacksThisTurn } };
+    }
     if (foreseen && obs.combat!.turn === foreseen.turn + 1) {
       log.transitionChecks++;
       for (const d of compareTurnStart(foreseen.state, s)) log.transitions.push({ turn: obs.combat!.turn, ...d });
@@ -525,6 +537,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       const predicted = nextTurn(s, seeded(0), expectedIntents);
       if (predicted) foreseen = { turn: obs.combat!.turn, state: predicted };
     }
+    if (a.kind === "play" && s.hand[a.hand]?.type === "Attack") attacksThisTurn++;
     let next = await game.step(id);
     // A card that asks for a selection stops the step there; answer it and read the play's outcome after.
     for (let guard = 0; next.observation.phase === "card_select" && guard < 10; guard++) {

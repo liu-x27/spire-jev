@@ -1781,7 +1781,7 @@ export function endOfTurn(s0: State): State {
   // Ripple Basin: no attack played this turn, 4 block. Attacks before the observation are known only
   // where a relic counts them (Ornamental Fan, Kusarigama).
   if (s.relics.includes("RIPPLE_BASIN")) {
-    const before = relicVar(s, "ORNAMENTAL_FAN", "_attacksPlayedThisTurn", relicVar(s, "KUSARIGAMA", "_attacksPlayedThisTurn", 0));
+    const before = relicVar(s, "RIPPLE_BASIN", "_attacksPlayedThisTurn", relicVar(s, "ORNAMENTAL_FAN", "_attacksPlayedThisTurn", relicVar(s, "KUSARIGAMA", "_attacksPlayedThisTurn", 0)));
     if (before + (s.attacks ?? 0) === 0) gainBlock(s, relicVar(s, "RIPPLE_BASIN", "Block", 4));
   }
   // Parrying Shield (IL: AfterTurnEnd): 10 block or more at the turn's end, 6 to a random enemy.
