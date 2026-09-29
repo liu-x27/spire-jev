@@ -1289,6 +1289,33 @@ states, and only a simulator is fast enough for that.
      resets none of the choices' state, the cards learnt or spar's caches
      (their keys hold neither the opening nor which relics) between them:
      a seed's first choices can hang on the seed before.
+     The analysis session's candidates, both arms from the saves, the dev
+     half (odd seeds) of the saves each can change, pre-registered, a check
+     half only on ~2 SE:
+     - `smith2` (the winners' rest thresholds): 60 f16 saves to the act 2
+       boss, the boss 12 vs 22 (+3/-13), HP there -22.9 ± 1.9 points, for
+       1.25 more upgrades; 42 f32 saves (floor 32's smith or heal alone), the
+       boss 17 vs 21, HP -22.1 ± 1.9, act 3's boss reached 6 vs 12. Dropped.
+     - `smithhuman` (upgrade what A10 players upgrade; which card, not
+       whether): 60 f16 saves, the boss 18 vs 18 (5 / 5), HP +3.3 ± 2.1,
+       the Skills and Powers upgraded by 33 +0.08 ± 0.11. Neutral.
+     - `shoprm` (the shop's removal back): 60 f16 saves with an act 2
+       shop, 0.48 fewer basic cards, the boss 11 vs 17 (+2/-8), HP -0.15 ±
+       1.30. Dropped; its curses-only form (SPIRE_JEV_RM_KEEP=99) waits.
+     - `engval` (a Power's worth measured: the next turn planned with and
+       without it over 8 shared draws, times the turns left): on P1's
+       states (the boss alone; A = p1-boss-c, this commit's C2 play for
+       play) the pack +Feel No Pain, Burning Pact, True Grit -3 Strikes
+       under C2 16 vs 15 won (46), engval on it 17 vs 16, HP left +0.88 ±
+       0.59, on the bot's own decks 19 vs 19, -0.27 ± 0.27 (60): C2 already
+       plays Feel No Pain in 35 of those 46. On the replays' exact hallway
+       and elite saves (554, acts 1-2): HP lost -0.38 ± 0.26 (better 36,
+       worse 24, deaths 20 / 20, Powers a fight 0.32 -> 0.42; plays changed
+       in 66), elites -0.81 ± 0.84 (143). Right-signed, not shown; spar's
+       bouts do not see it, so the decks it would pay in are not built.
+     events2's and smithhuman's changes are mostly act 1's, which f16 saves
+     have settled: their "neutral" is acts 2-3's. The next whole-run batch
+     captures 4, 8, 12, 16, 32, 47 (with sidecars) for act 1's.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
