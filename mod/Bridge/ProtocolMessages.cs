@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Sts2.NativeSim.FullAppBridge;
 
@@ -97,6 +97,10 @@ public sealed class ObservationDto
 
     [JsonPropertyName("player_energy")]
     public int PlayerEnergy { get; set; }
+
+    // spire-jev: the Regent's second resource, spent by cards with a star cost.
+    [JsonPropertyName("player_stars")]
+    public int PlayerStars { get; set; }
 
     [JsonPropertyName("player_powers")]
     public Dictionary<string, int> PlayerPowers { get; set; } = new();
@@ -199,6 +203,18 @@ public sealed class CardObservationDto
 
     [JsonPropertyName("costs_x")]
     public bool CostsX { get; set; }
+
+    // spire-jev: the Regent's star cost, -1 for a card without one: the card's own
+    // (upgrades included), and the cost this turn with every modifier (for an X
+    // star cost, the stars there are).
+    [JsonPropertyName("star_cost")]
+    public int StarCost { get; set; } = -1;
+
+    [JsonPropertyName("current_star_cost")]
+    public int CurrentStarCost { get; set; } = -1;
+
+    [JsonPropertyName("star_cost_x")]
+    public bool StarCostX { get; set; }
 
     [JsonPropertyName("keywords")]
     public List<string> Keywords { get; set; } = new();

@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -154,6 +154,13 @@ public static class FullAppStateTracker
             CardType = card.Type.ToString(),
         };
         try { dto.CurrentCost = card.EnergyCost.GetResolved(); } catch { dto.CurrentCost = dto.Cost; }
+        try
+        {
+            dto.StarCost = card.BaseStarCost;
+            dto.StarCostX = card.HasStarCostX;
+            dto.CurrentStarCost = card.GetStarCostWithModifiers();
+        }
+        catch { dto.CurrentStarCost = dto.StarCost; }
         try { dto.Rarity = card.Rarity.ToString(); } catch { }
         try
         {
@@ -247,6 +254,7 @@ public static class FullAppStateTracker
             PlayerMaxHp = player?.Creature.MaxHp ?? 0,
             PlayerBlock = player?.Creature.Block ?? 0,
             PlayerEnergy = player?.PlayerCombatState?.Energy ?? 0,
+            PlayerStars = player?.PlayerCombatState?.Stars ?? 0,
         };
 
         if (player is not null)
