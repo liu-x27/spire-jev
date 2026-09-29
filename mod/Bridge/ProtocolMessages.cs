@@ -130,6 +130,12 @@ public sealed class ObservationDto
     [JsonPropertyName("potion_details")]
     public List<Dictionary<string, object?>> PotionDetails { get; set; } = new();
 
+    // spire-jev: the creatures on the player's side other than the player — the Necrobinder's Osty,
+    // an event's pet. Left out when there are none, so other characters' observations are unchanged.
+    [JsonPropertyName("player_allies")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<AllyObservationDto>? PlayerAllies { get; set; }
+
     [JsonPropertyName("combat")]
     public CombatObservationDto? Combat { get; set; }
 
@@ -301,6 +307,37 @@ public sealed class EnemyObservationDto
     // per hit against the player, with strength, weak and vulnerable applied.
     [JsonPropertyName("intents")]
     public List<IntentObservationDto> Intents { get; set; } = new();
+}
+
+public sealed class AllyObservationDto
+{
+    [JsonPropertyName("combat_id")]
+    public ulong CombatId { get; set; }
+
+    [JsonPropertyName("model_id")]
+    public string ModelId { get; set; } = "";
+
+    /// <summary>The player's Osty (`Player.Osty`), as against any other pet.</summary>
+    [JsonPropertyName("is_osty")]
+    public bool IsOsty { get; set; }
+
+    [JsonPropertyName("hp")]
+    public int Hp { get; set; }
+
+    [JsonPropertyName("max_hp")]
+    public int MaxHp { get; set; }
+
+    [JsonPropertyName("block")]
+    public int Block { get; set; }
+
+    [JsonPropertyName("is_alive")]
+    public bool IsAlive { get; set; }
+
+    [JsonPropertyName("powers")]
+    public Dictionary<string, int> Powers { get; set; } = new();
+
+    [JsonPropertyName("power_vars")]
+    public Dictionary<string, Dictionary<string, double>> PowerVars { get; set; } = new();
 }
 
 public sealed class IntentObservationDto

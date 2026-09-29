@@ -302,6 +302,36 @@ public static class FullAppStateTracker
                     obs.PotionDetails.Add(d);
                 }
             }
+
+            // spire-jev: the player's side beside the player — the Necrobinder's Osty soaks up the
+            // unblocked attack damage and deals the Osty attacks, so the planner has to see him.
+            var pets = player.PlayerCombatState?.Pets;
+            if (pets is not null && pets.Count > 0)
+            {
+                Creature? osty = null;
+                try { osty = player.Osty; } catch { }
+                obs.PlayerAllies = new List<AllyObservationDto>();
+                foreach (var pet in pets)
+                {
+                    var ally = new AllyObservationDto
+                    {
+                        CombatId = pet.CombatId ?? 0,
+                        ModelId = pet.ModelId.Entry,
+                        IsOsty = ReferenceEquals(pet, osty),
+                        Hp = pet.CurrentHp,
+                        MaxHp = pet.MaxHp,
+                        Block = pet.Block,
+                        IsAlive = pet.IsAlive,
+                    };
+                    foreach (var p in pet.Powers)
+                    {
+                        ally.Powers[p.Id.Entry] = p.Amount;
+                        var vars = DescribePowerVars(p);
+                        if (vars.Count > 0) ally.PowerVars[p.Id.Entry] = vars;
+                    }
+                    obs.PlayerAllies.Add(ally);
+                }
+            }
         }
 
         var legalActions = new List<LegalActionDto>();
