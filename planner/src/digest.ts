@@ -12,6 +12,7 @@
 import fs from "node:fs";
 import { parseArgs } from "node:util";
 import type { FightLog, RoomLog } from "./run-fights.ts";
+import { isBasic, isBasicDefend, isBasicStrike, starterExtras } from "./character.ts";
 
 const { values, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: "string" }, fights: { type: "string", default: "12" } } });
 const file = positionals[0];
@@ -26,7 +27,7 @@ const BOSSES = /^(VANTOM|THE_INSATIABLE|QUEEN|TEST_SUBJECT|AEONGLASS|THE_KIN|WAT
 const bySeed = new Map<string, FightLog[]>();
 for (const f of fights) bySeed.set(f.seed, [...(bySeed.get(f.seed) ?? []), f]);
 const ends = [...bySeed].map(([seed, fs_]) => ({ seed, fights: fs_, last: fs_[fs_.length - 1]! }));
-const starters = new Set(["STRIKE_IRONCLAD", "DEFEND_IRONCLAD", "BASH"]);
+const starters = { has: (c: string) => isBasic(c) && !c.endsWith("+") || starterExtras().includes(c) };
 const lastRoom = (seed: string, floor: number) => [...rooms].reverse().find((r) => r.seed === seed && r.floor <= floor);
 const shortBrief = (b: string) => b.replace(/_POWER/g, "").replace(/\{"DamageIncrease":1\.5\}/g, "").replace(/\{"DamageDecrease":0\.75\}/g, "").replace(/\{"Decrement":1\}/g, "");
 
@@ -92,8 +93,8 @@ for (const e of ends.sort((a, b) => a.seed.localeCompare(b.seed))) {
   const counts: Record<string, number> = {};
   for (const c of own) counts[c] = (counts[c] ?? 0) + 1;
   const ownText = Object.entries(counts).map(([c, n]) => (n > 1 ? `${c}×${n}` : c)).join(" ");
-  const strikes = deck.filter((c) => c === "STRIKE_IRONCLAD").length;
-  const defends = deck.filter((c) => c === "DEFEND_IRONCLAD").length;
+  const strikes = deck.filter((c) => isBasicStrike(c) && !c.endsWith("+")).length;
+  const defends = deck.filter((c) => isBasicDefend(c) && !c.endsWith("+")).length;
   say(`${e.seed.slice(-2)} | ${e.last.floor} | ${e.last.won ? "(stopped)" : e.last.enemies.join("+")} | ${e.last.hpStart}/${e.last.maxHp} | ${ownText} + ${strikes}S ${defends}D (${deck.length}) | ${e.last.relics.join(" ")} | ${e.last.potions.join(" ") || "-"}`);
 }
 say();

@@ -9,17 +9,20 @@
  */
 
 import fs from "node:fs";
-import path from "node:path";
+import { character, dataFile } from "./character.ts";
 
-const FILE = path.resolve(import.meta.dirname, "..", "data", "take-rates-a10.json");
+/** The character's own (character.ts dataFile): data/take-rates-a10.json is the Ironclad's. */
+const FILE = () => dataFile("take-rates-a10.json");
 
 type Counts = Record<string, [number, number]>;
 let rates: Record<string, Counts> | undefined;
+let ratesOf: string | undefined;
 
 function load(): Record<string, Counts> {
-  if (rates) return rates;
+  if (rates && ratesOf === character()) return rates;
+  ratesOf = character();
   try {
-    rates = JSON.parse(fs.readFileSync(FILE, "utf8")) as Record<string, Counts>;
+    rates = JSON.parse(fs.readFileSync(FILE(), "utf8")) as Record<string, Counts>;
   } catch {
     rates = {};
   }
@@ -46,14 +49,16 @@ export function humanSkip(act: number): number | undefined {
  * and _se by card), shrunk toward 0 by the offers seen (n / (n + 40)). Unlike take rates, what a card
  * was offered beside is accounted for.
  */
-const SCORES = path.resolve(import.meta.dirname, "..", "data", "pick-scores-a10.json");
+const SCORES = () => dataFile("pick-scores-a10.json");
 type Scores = Record<string, Record<string, number> | Record<string, Record<string, number>>>;
 let scores: Scores | undefined;
+let scoresOf: string | undefined;
 const SHRINK_N = 40;
 function loadScores(): Scores {
-  if (!scores) {
+  if (!scores || scoresOf !== character()) {
+    scoresOf = character();
     try {
-      scores = JSON.parse(fs.readFileSync(SCORES, "utf8")) as Scores;
+      scores = JSON.parse(fs.readFileSync(SCORES(), "utf8")) as Scores;
     } catch {
       scores = {};
     }

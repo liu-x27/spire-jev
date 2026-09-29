@@ -35,11 +35,16 @@ win = [{'character': 'CHARACTER.IRONCLAD', 'losses': 0, 'wins': 1}]
 d['discovered_acts'] = acts
 d['encounter_stats'] = [{'encounter_id': e, 'fight_stats': win} for e in encounters]
 # One win and one loss: NumberOfRuns 2, past every first-run rule; A10 open in the lobby as well.
+# The other characters (2026-09-29): A10 open too (Player.ctor reads the character's own MaxAscension
+# into MaxAscensionWhenRunStarted), and no runs, so NumberOfRuns (the total over every character, all
+# the first-run rules and Lasting Candy read) stays 2 and the Ironclad's runs are drawn as before.
 stats = {c['id']: c for c in d.get('character_stats', [])}
-stats['CHARACTER.IRONCLAD'] = {
-    'badges': [], 'best_win_streak': 1, 'current_streak': 0, 'fastest_win_time': -1, 'id': 'CHARACTER.IRONCLAD',
-    'max_ascension': 10, 'playtime': 0, 'preferred_ascension': 10, 'total_losses': 1, 'total_wins': 1,
-}
+for character in ['IRONCLAD', 'SILENT', 'DEFECT', 'NECROBINDER', 'REGENT']:
+    runs = 1 if character == 'IRONCLAD' else 0
+    stats[f'CHARACTER.{character}'] = {
+        'badges': [], 'best_win_streak': runs, 'current_streak': 0, 'fastest_win_time': -1, 'id': f'CHARACTER.{character}',
+        'max_ascension': 10, 'playtime': 0, 'preferred_ascension': 10, 'total_losses': runs, 'total_wins': runs,
+    }
 d['character_stats'] = list(stats.values())
 json.dump(d, open(out, 'w', encoding='utf8', newline='\n'), indent=2, ensure_ascii=False)
-print(f'{out}: {len(d["epochs"])} epochs, {len(acts)} acts, {len(encounters)} encounters seen, Ironclad 1 win 1 loss')
+print(f'{out}: {len(d["epochs"])} epochs, {len(acts)} acts, {len(encounters)} encounters seen, Ironclad 1 win 1 loss, A10 open for all five')

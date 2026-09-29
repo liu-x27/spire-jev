@@ -15,7 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { setIntentAscension } from "./intents.ts";
-import { BARE, BOSSES, type Boss, bout, cardFromId, continueBout, outcomeScore, type Player, SPAR5_TURNS, useBoutPlanner } from "./spar.ts";
+import { bare, BOSSES, type Boss, bout, cardFromId, continueBout, outcomeScore, type Player, SPAR5_TURNS, useBoutPlanner } from "./spar.ts";
 import { planTurn, planTurnValue, topEnds, TURN_WEIGHTS, useBossRules, useValueNet } from "./search.ts";
 import { actions, type Card, type State, stateKey } from "./sim.ts";
 import { seeded } from "./turn.ts";
@@ -122,7 +122,7 @@ for (const [di, d] of decks.entries()) {
     if (!boss) continue;
     // A varied HP: half of max to all of it (what a boss fight starts with, rests before it).
     const hp = Math.max(1, Math.round(d.maxHp * (0.5 + 0.5 * rng())));
-    const me: Player = { ...BARE, hp, maxHp: d.maxHp, relics: d.relics, ...(d.relicVars ? { relicVars: d.relicVars } : {}) };
+    const me: Player = { ...bare(), hp, maxHp: d.maxHp, relics: d.relics, ...(d.relicVars ? { relicVars: d.relicVars } : {}) };
     const states: number[][] = [];
     const turnsOf: number[] = [];
     // The leaves the planner turned down (the other session's review: the net scores many a leaf it

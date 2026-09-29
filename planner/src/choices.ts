@@ -16,7 +16,9 @@ import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { humanScore, humanSkipScore, humanTake } from "./takerates.ts";
 import { relicSurplus } from "./relics.ts";
-import { BARE, type Boss, bossFor, cardFromId, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
+import { isBasic, isBasicDefend, isBasicStrike, starterExtras } from "./character.ts";
+import { rules as characterRules } from "./characters/index.ts";
+import { bare, type Boss, bossFor, cardFromId, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
 const TIER: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 };
@@ -141,6 +143,13 @@ const AOE = new Set(["CONFLAGRATION", "BREAKTHROUGH", "WHIRLWIND", "HOWL_FROM_BE
 /** §10.1.4: what strips Slippery. */
 const MULTI_HIT = new Set(["TWIN_STRIKE", "SWORD_BOOMERANG", "PECK", "CONFLAGRATION", "THRASH", "WHIRLWIND", "FIGHT_ME", "ANGER", "INFERNO"]);
 const DAMAGE = new Set(["THRASH", "CONFLAGRATION", "DISMANTLE", "BLUDGEON", "POMMEL_STRIKE", "TWIN_STRIKE", "ANGER", "PERFECTED_STRIKE", "HEMOKINESIS", "UNRELENTING"]);
+/** The tables above with the other characters' own (characters/index.ts): a card is in one or the other. */
+const cardRow = (c: string) => CARDS[c] ?? characterRules().cards[c];
+const isAlways = (c: string) => ALWAYS.has(c) || characterRules().always.has(c);
+const isNever = (c: string) => NEVER.has(c) || characterRules().never.has(c);
+const isAoe = (c: string) => AOE.has(c) || characterRules().aoe.has(c);
+const isMultiHit = (c: string) => MULTI_HIT.has(c) || characterRules().multiHit.has(c);
+const isDamage = (c: string) => DAMAGE.has(c) || characterRules().damage.has(c);
 
 /** Act 1, 2 or 3 from the observation (the bridge counts from 0 or 1; either works here). */
 function actOf(o: Observation): 0 | 1 | 2 {
@@ -149,7 +158,7 @@ function actOf(o: Observation): 0 | 1 | 2 {
 }
 
 const base = (id: string) => id.replace(/\+$/, "");
-const count = (deck: readonly string[], ids: Set<string>) => deck.filter((c) => ids.has(base(c))).length;
+const count = (deck: readonly string[], of: (c: string) => boolean) => deck.filter((c) => of(base(c))).length;
 
 type Act = 0 | 1 | 2;
 
@@ -171,8 +180,8 @@ export function plainCardValue(id: string, act: Act, deck: readonly string[]): n
 
 export function cardValue(id: string, act: Act, deck: readonly string[]): number {
   const card = base(id);
-  if (NEVER.has(card)) return -1;
-  const row = CARDS[card] ?? (rules2 ? EXTRA_CARDS[card] : undefined);
+  if (isNever(card)) return -1;
+  const row = cardRow(card) ?? (rules2 ? EXTRA_CARDS[card] : undefined);
   // elo: strong A10 players' own verdict (cardstats.ts), 0.5 = as good as skipping; the tier table
   // for cards the data lacks. (They rate Anger -302 and Body Slam -197 against skipping, Offering +314.)
   // elo2: only from act 2 — elo alone skipped so much in act 1 that decks met Vantom at 14.8 cards
@@ -182,7 +191,7 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   // what a public build without third-party run data would have.
   const tier = row ? [...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5) : 0;
   let v = fromElo ?? (row ? (flags.has("nopickrates") ? tier : 0.5 * tier + 0.5 * (row.pick[act] / 100)) : 0.3);
-  if (ALWAYS.has(card) && fromElo === undefined) v = Math.max(v, 0.9);
+  if (isAlways(card) && fromElo === undefined) v = Math.max(v, 0.9);
   // §10.1.10, §3.5: the first Battle Trance, not the second; two Trembles at most.
   const copies = deck.filter((c) => base(c) === card).length;
   if (card === "BATTLE_TRANCE" && copies >= 1) v *= 0.5;
@@ -194,12 +203,12 @@ export function cardValue(id: string, act: Act, deck: readonly string[]): number
   if (card !== "BATTLE_TRANCE" && card !== "TREMBLE" && !flags.has("nodup")) v *= Math.pow(0.8, copies);
   if (act === 0) {
     // §10.1.3: an AoE card when the deck has none.
-    if (AOE.has(card) && count(deck, AOE) === 0) v += 0.15;
+    if (isAoe(card) && count(deck, isAoe) === 0) v += 0.15;
     // §10.1.4: three multi-hit sources before Vantom, the act 1 boss we keep meeting (rules2: Dismantle too).
-    if ((MULTI_HIT.has(card) || (rules2 && card === "DISMANTLE")) && count(deck, MULTI_HIT) < 3 && (actBoss === "" || actBoss === "VANTOM_BOSS")) v += 0.1;
+    if ((isMultiHit(card) || (rules2 && card === "DISMANTLE")) && count(deck, isMultiHit) < 3 && (actBoss === "" || actBoss === "VANTOM_BOSS")) v += 0.1;
     // §10.1.1: damage first until the deck has two damage cards of its own. rules2: enough to beat a
     // support card's rating (A10 seed 7 took Taunt, Colossus and Taunt over Anger and Sword Boomerang).
-    if (DAMAGE.has(card) && count(deck, DAMAGE) < 2) v += rules2 ? 0.25 : 0.1;
+    if (isDamage(card) && count(deck, isDamage) < 2) v += rules2 ? 0.25 : 0.1;
   }
   // packages: what the card adds to this deck as part of an archetype, and what the deck still lacks.
   if (flags.has("packages") || flags.has("packages2")) v += packageBonus(card, act, deck);
@@ -232,7 +241,7 @@ const sparBase = new Map<string, number>();
 const sparDone = new Map<string, number>();
 function sparGain(deck: readonly string[], act: Act, floor: number, change: (d: string[]) => string[], at?: Sparring, more = 0, quick = 0): number {
   const bosses = sparBosses(act, at);
-  const me = at?.me ?? BARE;
+  const me = at?.me ?? bare();
   // spar3's closer look: `more` shuffles after the first 32, on their own draws; `quick`, the first
   // few alone, to shortlist many candidates (QUICK_SAMPLES).
   const first = more > 0 ? SPAR_SAMPLES : 0;
@@ -365,14 +374,14 @@ export function noteCombatStart(o: Observation): void {
   }
 }
 function sparring(o: Observation, act: Act): Sparring | undefined {
-  if (!flags.has("spar3")) return { boss: bossFor(actBoss, act), me: BARE };
+  if (!flags.has("spar3")) return { boss: bossFor(actBoss, act), me: bare() };
   const boss = actBoss ? modelledBoss(actBoss) : bossFor("", act);
   if (!boss) return undefined;
-  const maxHp = o.player_max_hp > 0 ? o.player_max_hp : BARE.maxHp;
+  const maxHp = o.player_max_hp > 0 ? o.player_max_hp : bare().maxHp;
   return {
     boss,
     me: {
-      ...BARE, ...(opening ? { ...opening, opened: true } : {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}),
+      ...bare(), ...(opening ? { ...opening, opened: true } : {}), hp: maxHp, maxHp, relics: o.relics, ...(o.relic_vars ? { relicVars: o.relic_vars } : {}),
       // --flags sparpots: the belt the run holds, drunk in the bout as the planner would (a boss fight's).
       ...(flags.has("sparpots") ? {
         potions: (o.potion_details ?? []).map((p) => ({ slot: p.slot, id: p.id, target: p.target ?? "None", usage: p.usage ?? "", vars: p.vars ?? {} })),
@@ -699,7 +708,7 @@ export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
       const unsupported = ((id === "BODY_SLAM" || id === "BARRICADE" || id === "JUGGERNAUT") && p.block < 4) || (id === "RUPTURE" && p.selfDamage < 2);
       const i = SMITH_ORDER2.indexOf(id);
       if (i >= 0 && !unsupported) return 200 - i;
-      if (SMITH_LAST2.has(id)) return -10;
+      if (SMITH_LAST2.has(id) || isBasic(id)) return -10;
       return 20 + cardValue(id, actOf(o), o.deck_cards) * 10 - (unsupported ? 15 : 0);
     }
     // upgrade2: a payoff's upgrade only with its support (Body Slam was upgraded first regardless).
@@ -711,9 +720,11 @@ export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
     }
     const i = SMITH_ORDER.indexOf(id);
     if (i >= 0) return 100 - i;
+    const j = characterRules().smithFirst.indexOf(id);
+    if (j >= 0) return 100 - j;
     // Bash only in act 1, and only with no other Vulnerable source (§3.8).
     if (id === "BASH") return actOf(o) === 0 ? 10 : 0;
-    if (SMITH_LAST.has(id)) return -10;
+    if (SMITH_LAST.has(id) || isBasic(id) || characterRules().smithLast.has(id)) return -10;
     return 20 + cardValue(id, actOf(o), o.deck_cards) * 10;
   };
   const best = [...offers].sort((a, b) => rank(b) - rank(a))[0];
@@ -736,10 +747,10 @@ const JUNK = new Set(["INJURY", "CLUMSY", "SPORE_MIND", "NORMALITY", "DECAY", "G
  */
 function keepValue(id: string): number {
   const card = base(id);
-  const row = CARDS[card];
+  const row = cardRow(card);
   const tier = row ? [...row.tiers].reduce((a, t) => a + (TIER[t] ?? 2), 0) / (row.tiers.length * 5) : 0;
   let v = row ? (flags.has("nopickrates") ? tier : 0.5 * tier + 0.5 * ((row.pick[0] + row.pick[1] + row.pick[2]) / 300)) : 0.3;
-  if (ALWAYS.has(card)) v = Math.max(v, 0.9);
+  if (isAlways(card)) v = Math.max(v, 0.9);
   return v;
 }
 
@@ -749,9 +760,10 @@ export function worstCard(ids: readonly string[], deck: readonly string[], types
     const c = base(id);
     const type = types?.[i];
     if (type === "Curse" || type === "Status" || JUNK.has(c)) return 0;
-    if (c === "DEFEND_IRONCLAD") return blockCards >= 3 ? 1 : 2;
-    if (c === "STRIKE_IRONCLAD") return blockCards >= 3 ? 2 : 1;
-    if (c === "BASH") return 50;
+    if (isBasicDefend(c)) return blockCards >= 3 ? 1 : 2;
+    if (isBasicStrike(c)) return blockCards >= 3 ? 2 : 1;
+    // The starting deck's own card: Bash; Neutralize and Survivor.
+    if (starterExtras().includes(c)) return 50;
     return 10 + keepValue(c) * 30;
   };
   let best = 0;
@@ -769,7 +781,8 @@ export function chooseCardSelect(o: Observation, legal: LegalAction[]): string {
 }
 
 // (Ascender's Bane, A5, cannot be removed: not a reason to buy a removal.)
-const REMOVABLE = /STRIKE_IRONCLAD|DEFEND_IRONCLAD|CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK/;
+const REMOVABLE_JUNK = /CURSE|INJURY|CLUMSY|SPORE_MIND|NORMALITY|DECAY|GUILTY|POOR_SLEEP|GREED|BAD_LUCK/;
+const REMOVABLE = { test: (c: string) => isBasic(c) || REMOVABLE_JUNK.test(c) };
 
 /**
  * §5, §10.3: removal first while there is a Strike, Defend or curse to take
@@ -863,8 +876,8 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   }
   // keepbasics: winners keep 7-8 basics and out-grow them (docs/a10-decks-research.md §3.2); a
   // removal only for a curse or while more than 7 Strikes and Defends are left, after a good card.
-  const basics = o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length;
-  const curse = o.deck_cards.some((c) => REMOVABLE.test(c) && !/^(STRIKE|DEFEND)_IRONCLAD/.test(c));
+  const basics = o.deck_cards.filter(isBasic).length;
+  const curse = o.deck_cards.some((c) => REMOVABLE.test(c) && !isBasic(c));
   const keep = flags.has("keepbasics") && !curse;
   if (keep && topCard && topCard.v >= 0.55 && rulesBuy) return topCard.a.action_id;
   if (removal && rulesBuy && (!keep || basics > 7) && o.deck_cards.some((c) => REMOVABLE.test(c))) {
@@ -961,14 +974,14 @@ const EVENTS: Record<string, (o: Observation, keys: readonly string[]) => string
   },
   // §10.9. Nutritious Soup only with four Strikes left to enchant.
   TEZCATARA: (o, keys) => {
-    const strikes = o.deck_cards.filter((c) => base(c) === "STRIKE_IRONCLAD").length;
+    const strikes = o.deck_cards.filter((c) => isBasicStrike(base(c))).length;
     const order = ["TOASTY_MITTENS", "STORYBOOK", "SEAL_OF_GOLD", "VERY_HOT_COCOA", ...(strikes >= 4 ? ["NUTRITIOUS_SOUP"] : []),
       "PUMPKIN_CANDLE", "BIIIG_HUG", "YUMMY_COOKIE", "NUTRITIOUS_SOUP", "GOLDEN_COMPASS", "TOY_BOX"];
     return order.find((k) => keys.includes(k));
   },
   // §10.9 (disputed: Jorbs prefers Claw and Growth; the population data and two guides put Blood and Legion first).
   PAEL: (o, keys) => {
-    const defends = o.deck_cards.filter((c) => base(c) === "DEFEND_IRONCLAD").length;
+    const defends = o.deck_cards.filter((c) => isBasicDefend(base(c))).length;
     const claw = defends >= 3 && o.deck_cards.some((c) => ["FEEL_NO_PAIN", "EVIL_EYE", "ASHEN_STRIKE", "DARK_EMBRACE"].includes(base(c)));
     const order = ["PAELS_BLOOD", ...(claw ? ["PAELS_CLAW"] : []), "PAELS_LEGION", "PAELS_GROWTH", "PAELS_FLESH", "PAELS_TEARS", "PAELS_HORN", "PAELS_CLAW", "PAELS_TOOTH"];
     return order.find((k) => keys.includes(k));
@@ -1002,7 +1015,7 @@ const ANCIENTS: Record<string, { order: [string, (o: Observation) => boolean][];
   DARV: {
     order: [
       ["RUNIC_PYRAMID", () => true],
-      ["PANDORAS_BOX", (o) => o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length >= 5],
+      ["PANDORAS_BOX", (o) => o.deck_cards.filter(isBasic).length >= 5],
       ["ASTROLABE", () => true],
     ],
   },
@@ -1014,10 +1027,10 @@ const ANCIENTS: Record<string, { order: [string, (o: Observation) => boolean][];
   },
   TEZCATARA: {
     order: [
-      ["TOASTY_MITTENS", (o) => o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length >= 4],
+      ["TOASTY_MITTENS", (o) => o.deck_cards.filter(isBasic).length >= 4],
       ["STORYBOOK", (o) => o.player_max_hp >= 55], ["SEAL_OF_GOLD", (o) => o.gold >= 175], ["VERY_HOT_COCOA", () => true],
-      ["NUTRITIOUS_SOUP", (o) => o.deck_cards.filter((c) => /^STRIKE_IRONCLAD/.test(c)).length >= 4], ["PUMPKIN_CANDLE", () => true],
-      ["BIIIG_HUG", (o) => o.deck_cards.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD|^BASH/.test(c)).length >= 6], ["YUMMY_COOKIE", () => true],
+      ["NUTRITIOUS_SOUP", (o) => o.deck_cards.filter(isBasicStrike).length >= 4], ["PUMPKIN_CANDLE", () => true],
+      ["BIIIG_HUG", (o) => o.deck_cards.filter((c) => isBasic(c) || starterExtras().includes(base(c))).length >= 6], ["YUMMY_COOKIE", () => true],
       ["GOLDEN_COMPASS", () => true], ["TOY_BOX", () => true],
     ],
   },
@@ -1147,7 +1160,7 @@ export function chooseMapByPath(o: Observation, legal: LegalAction[], points: re
   const at = offers.map((a) => ({ col: Number(a.metadata?.["col"]), row: Number(a.metadata?.["row"]) }));
   if (offers.length === 0 || points.length === 0 || at.some((p) => !Number.isFinite(p.col) || !Number.isFinite(p.row))) return chooseMap(o, legal);
   // upgrade2 (astra-review-2 #4): the path sees the deck — an elite costs more before it has three attacks of its own.
-  const attacks = o.deck_cards.filter((c) => DAMAGE.has(base(c)) || MULTI_HIT.has(base(c))).length;
+  const attacks = o.deck_cards.filter((c) => isDamage(base(c)) || isMultiHit(base(c))).length;
   const eliteScale = flags.has("upgrade2") && attacks < 3 ? 1.4 : 1;
   const plan = planPath(points, at, { hp: o.player_hp, maxHp: o.player_max_hp, act: actOf(o), ascension: o.ascension ?? 0, gold: o.gold, eliteScale, eliteDeath: flags.has("elitedeath") });
   if (!Number.isFinite(plan.values[plan.best]!)) return chooseMap(o, legal);
@@ -1166,7 +1179,7 @@ export function chooseMap(o: Observation, legal: LegalAction[]): string {
     if (/Elite/i.test(type)) {
       if ((o.ascension ?? 0) >= 1) {
         // rules2: and only with three attacks of the deck's own (review §4: HP alone is no readiness test).
-        if (rules2 && o.deck_cards.filter((c) => DAMAGE.has(base(c)) || MULTI_HIT.has(base(c))).length < 3) return 0;
+        if (rules2 && o.deck_cards.filter((c) => isDamage(base(c)) || isMultiHit(base(c))).length < 3) return 0;
         return share >= 0.9 ? 3 : share >= 0.75 ? 1.5 : 0;
       }
       return share >= 0.75 && o.floor >= 5 ? 4 : share >= 0.6 ? 2 : 0;

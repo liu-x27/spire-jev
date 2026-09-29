@@ -12,6 +12,7 @@
  */
 
 import { type Beast, loadBestiary } from "./bestiary.ts";
+import { rules } from "./characters/index.ts";
 import { type Action, actions, type Card, drink, endOfTurn, endOfTurnBlock, type Enemy, endOfTurnRevival, formsToCome, hpLoss, incomingDamage, play, type State, stateKey, WRIGGLER_HP } from "./sim.ts";
 import { likelyIntent } from "./intents.ts";
 import type { IntentObs } from "./obs.ts";
@@ -362,6 +363,8 @@ export function evaluate(s0: State, w: Weights = DEFAULT_WEIGHTS): number {
         : SANDPIT_TURN * Math.max(0, e.hp / pace - sandpit);
     }
   }
+  // The characters' own terms (characters/index.ts evaluate): the Regent's stars kept, say.
+  for (const f of rules().evaluate) score += f(s, w);
   if (leafBonus) score += leafBonus(s);
   return score;
 }

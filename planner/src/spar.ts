@@ -21,6 +21,7 @@ import path from "node:path";
 import { setIntentAscension } from "./intents.ts";
 import { expectedIntents, type Plan, planTurn, TURN_WEIGHTS } from "./search.ts";
 import type { CardObs } from "./obs.ts";
+import { CHARACTERS, character, characterInfo, dataFile } from "./character.ts";
 import { moveIntents, SCRIPTS } from "./scripts.ts";
 import { type Card, cardOf, drink, type Enemy, formsToCome, play, type Potion, redSkull, relicDamage, setKnownDraws, type State, useUpgrades } from "./sim.ts";
 import { nextTurn, seeded } from "./turn.ts";
@@ -28,13 +29,23 @@ import { nextTurn, seeded } from "./turn.ts";
 // SPIRE_JEV_CATALOG: another catalogue (an older one, to replay the choices it made).
 const CATALOG_FILE = process.env["SPIRE_JEV_CATALOG"] ?? path.resolve(import.meta.dirname, "..", "data", "card-catalog.json");
 
+/** The other characters' cards, each in its own data/<character>/card-catalog.json (what `build` writes for them). */
+const CHARACTER_CATALOGS = Object.keys(CHARACTERS).filter((c) => c !== "IRONCLAD")
+  .map((c) => path.resolve(import.meta.dirname, "..", "data", c.toLowerCase(), "card-catalog.json"));
+
 let catalog: Record<string, Omit<CardObs, "index" | "can_play">> | undefined;
 function cards(): Record<string, Omit<CardObs, "index" | "can_play">> {
   if (!catalog) {
-    try {
-      catalog = JSON.parse(fs.readFileSync(CATALOG_FILE, "utf8")) as Record<string, Omit<CardObs, "index" | "can_play">>;
-    } catch {
-      catalog = {};
+    const read = (file: string) => {
+      try {
+        return JSON.parse(fs.readFileSync(file, "utf8")) as Record<string, Omit<CardObs, "index" | "can_play">>;
+      } catch {
+        return {};
+      }
+    };
+    catalog = read(CATALOG_FILE);
+    if (process.env["SPIRE_JEV_CATALOG"] === undefined) {
+      for (const f of CHARACTER_CATALOGS) for (const [k, v] of Object.entries(read(f))) catalog[k] ??= v;
     }
   }
   return catalog;
@@ -160,6 +171,8 @@ export interface Player {
   potionSlots?: number;
 }
 export const BARE: Player = { hp: 80, maxHp: 80, energy: 3, maxEnergy: 3, hand: 5, block: 0, powers: {}, relics: [] };
+/** BARE at the character's own starting HP (the Silent's 70): what a bout plays as without spar3's real player. */
+export const bare = (): Player => (characterInfo().hp === BARE.hp ? BARE : { ...BARE, hp: characterInfo().hp, maxHp: characterInfo().hp });
 
 /** The planner a bout plays with (planTurn at 3000 nodes; an experiment can put another: planTurn2, planTurnRoll). */
 let boutPlanner: (s: State) => Plan = (s) => planTurn(s, TURN_WEIGHTS, 3000);
@@ -217,7 +230,7 @@ export function relicOpening(me: Player): Player {
  */
 /** value.ts's training data: an end of turn, the fight's HP at its start, and the state the turn began from. */
 export type BoutRecord = (end: State, full: number, turnStart: State) => void;
-export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, player: Player = BARE, record?: BoutRecord): Bout {
+export function bout(deck: readonly Card[], boss: Boss, rng: () => number, turns = 8, player: Player = bare(), record?: BoutRecord): Bout {
   const me = relicOpening(player);
   const hp = player.hp;
   const pile = [...deck];
@@ -332,7 +345,7 @@ export function useBossTurns(on: boolean): void {
  * HP (heal or smith), the HP lost measures nothing (the healed one, losing as well, loses more):
  * 0 there, the damage dealt and the win alone.
  */
-export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1, me: Player = BARE, first = 0, hpWeight = 0.7, turns?: number): number {
+export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed = 1, me: Player = bare(), first = 0, hpWeight = 0.7, turns?: number): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   let total = 0;
   for (let i = first; i < first + samples; i++) {
@@ -351,7 +364,7 @@ export function sparScore(ids: readonly string[], boss: Boss, samples = 8, seed 
  * 377, 407, 533: not a pick changed).
  */
 const PAIR_TURNS = 20;
-export function pairScore(ids: readonly string[], first: Boss, second: Boss, samples = 8, seed = 1, me: Player = BARE, from = 0, hpWeight = 0.7): number {
+export function pairScore(ids: readonly string[], first: Boss, second: Boss, samples = 8, seed = 1, me: Player = bare(), from = 0, hpWeight = 0.7): number {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   // The heals for winning, and Pantograph's 25 as the second boss fight starts.
   const heal = (["BURNING_BLOOD", "BLACK_BLOOD"] as const).reduce((a, id) => a + (me.relics.includes(id) ? me.relicVars?.[id]?.["Heal"] ?? 6 : 0), 0)
@@ -445,7 +458,7 @@ export function hallOutcomes(ids: readonly string[], hall: Boss, samples: number
   return out;
 }
 
-export function sparOutcomes(ids: readonly string[], boss: Boss, samples: number, seed: number, me: Player = BARE, first = 0): number[] {
+export function sparOutcomes(ids: readonly string[], boss: Boss, samples: number, seed: number, me: Player = bare(), first = 0): number[] {
   const deck = ids.map(cardFromId).filter((c): c is Card => c !== undefined);
   const out: number[] = [];
   for (let i = first; i < first + samples; i++) out.push(outcomeScore(bout(deck, boss, seeded(seed * 1000 + i), SPAR5_TURNS, me), me));
@@ -476,9 +489,15 @@ if (import.meta.main) {
         // not a run file
       }
     }
-    fs.mkdirSync(path.dirname(CATALOG_FILE), { recursive: true });
-    fs.writeFileSync(CATALOG_FILE, `${JSON.stringify(out, null, 1)}\n`);
-    console.log(`${Object.keys(out).length} cards → ${CATALOG_FILE}`);
+    // Another character's: only the cards the Ironclad's catalogue lacks, into its own file.
+    const file = character() === "IRONCLAD" ? CATALOG_FILE : dataFile("card-catalog.json");
+    if (file !== CATALOG_FILE) {
+      const main = fs.existsSync(CATALOG_FILE) ? JSON.parse(fs.readFileSync(CATALOG_FILE, "utf8")) as Record<string, unknown> : {};
+      for (const k of Object.keys(out)) if (k in main) delete out[k];
+    }
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${JSON.stringify(out, null, 1)}\n`);
+    console.log(`${Object.keys(out).length} cards → ${file}`);
   } else if (arg) {
     setIntentAscension(10);
     const t0 = performance.now();

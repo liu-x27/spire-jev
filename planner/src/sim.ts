@@ -14,6 +14,8 @@
  */
 
 import type { CardObs, IntentObs, Observation } from "./obs.ts";
+import { isBasicDefend, isBasicStrike } from "./character.ts";
+import { rules } from "./characters/index.ts";
 
 export interface Card {
   id: string;
@@ -174,6 +176,11 @@ export interface State {
    * one last targeted by a card or potion; the other is behind and deals ×1.5.
    */
   facing?: number;
+  /**
+   * A character's own state (characters/index.ts): the Regent's stars, the Necrobinder's Osty. Copied by
+   * its cloneExt hook, shallow by default: replace a value, do not change it in place.
+   */
+  ext?: Record<string, unknown>;
 }
 
 export type Action = { kind: "play"; hand: number; target?: number } | { kind: "potion"; slot: number; target?: number } | { kind: "end" };
@@ -224,6 +231,12 @@ export function cardOf(c: CardObs, energy?: number): Card {
 }
 
 export function fromObservation(obs: Observation): State {
+  const s = stateOf(obs);
+  for (const f of rules().fromObservation) f(obs, s);
+  return s;
+}
+
+function stateOf(obs: Observation): State {
   const c = obs.combat;
   if (!c) throw new Error("not in combat");
   const powerVars = powersOf(obs.player_power_vars ?? {});
@@ -339,7 +352,17 @@ function clone(s: State): State {
     ...(s.onTop ? { onTop: s.onTop } : {}),
     ...(s.bombs ? { bombs: s.bombs.map((b) => ({ ...b })) } : {}),
     ...(s.ended ? { ended: true } : {}),
+    ...(s.ext ? { ext: cloneExt(s.ext) } : {}),
   };
+}
+
+/** A character's state copied for a successor (characters/index.ts cloneExt; shallow by default). */
+export function cloneExt(ext: Record<string, unknown>): Record<string, unknown> {
+  const hooks = rules().cloneExt;
+  if (hooks.length === 0) return { ...ext };
+  let out = ext;
+  for (const f of hooks) out = f(out);
+  return out === ext ? { ...ext } : out;
 }
 
 /** The Test Subject's forms by max HP (A8+: 111, 212, 313; below: 100, 200, 300): the one after each. */
@@ -358,15 +381,15 @@ export function formsToCome(e: Enemy): number {
   return total;
 }
 
-const has = (u: Unit, p: string) => (u.powers[p] ?? 0) > 0;
+export const has = (u: Unit, p: string) => (u.powers[p] ?? 0) > 0;
 /** A Kaiser Crab claw: Surrounded's back attack is its. */
 export const isClaw = (e: Enemy) => has(e, "BACK_ATTACK_LEFT") || has(e, "BACK_ATTACK_RIGHT");
 /** Surrounded: this claw is behind the player now, and deals ×1.5 (with two claws up). */
 const behind = (s: State, e: Enemy) => s.facing !== undefined && e.id !== s.facing && e.alive && isClaw(e);
 /** Shrink shows an amount of -1: it is on for as long as it is there at all. */
-const present = (u: Unit, p: string) => (u.powers[p] ?? 0) !== 0;
-const powerVar = (u: Unit, p: string, name: string, fallback: number) => u.powerVars?.[p]?.[name] ?? fallback;
-const addPower = (u: Unit, p: string, n: number) => {
+export const present = (u: Unit, p: string) => (u.powers[p] ?? 0) !== 0;
+export const powerVar = (u: Unit, p: string, name: string, fallback: number) => u.powerVars?.[p]?.[name] ?? fallback;
+export const addPower = (u: Unit, p: string, n: number) => {
   u.powers[p] = (u.powers[p] ?? 0) + n;
 };
 
@@ -399,7 +422,7 @@ export function blockGain(base: number, u: Unit): number {
   return Math.max(0, Math.floor(b));
 }
 
-function hit(target: Enemy, damage: number): number {
+export function hit(target: Enemy, damage: number): number {
   // Intangible (Soul Fysh's Fade, the Test Subject's Nemesis; IL: IntangiblePower.ModifyDamageCap):
   // every damage instance is 1, after the other modifiers and before block.
   if (has(target, "INTANGIBLE")) damage = Math.min(damage, 1);
@@ -488,7 +511,7 @@ function hit(target: Enemy, damage: number): number {
 }
 
 /** The most cards a hand holds; a draw past it does not happen. */
-const HAND_LIMIT = 10;
+export const HAND_LIMIT = 10;
 
 /**
  * A Wither as Aeonglass's Withering Presence makes it: unplayable, and all the player's Withers share
@@ -530,7 +553,7 @@ export function draw(s: State, k: number): void {
 }
 
 /** Some card off the draw pile, shuffling the discard pile in when it is empty. */
-function takeFromDraw(s: State): Card | undefined {
+export function takeFromDraw(s: State): Card | undefined {
   if (s.draw.length === 0) {
     if (s.discard.length === 0) return undefined;
     s.draw = s.discard;
@@ -558,11 +581,13 @@ export function playable(s: State, card: Card): boolean {
   if (has(s.player, "SLOTH") && s.played + powerVar(s.player, "SLOTH", "_cardsPlayedThisTurn", 0) >= s.player.powers["SLOTH"]!) return false;
   // A status without Unplayable can be played (Slimed); a curse cannot.
   if (card.type === "Curse") return false;
-  return card.costsX || costOf(s, card) <= s.energy;
+  if (!(card.costsX || costOf(s, card) <= s.energy)) return false;
+  for (const f of rules().playable) if (!f(s, card)) return false;
+  return true;
 }
 
 /** What playing it costs now: Free Attack (Unrelenting) makes the next attack free. */
-function costOf(s: State, card: Card): number {
+export function costOf(s: State, card: Card): number {
   return card.type === "Attack" && has(s.player, "FREE_ATTACK") ? 0 : card.cost;
 }
 
@@ -570,7 +595,7 @@ export function needsTarget(card: Card): boolean {
   return card.target === "AnyEnemy";
 }
 
-const targetable = (e: Enemy) => e.alive || (e.deathBlow ?? 0) > 0;
+export const targetable = (e: Enemy) => e.alive || (e.deathBlow ?? 0) > 0;
 
 /** Every legal play from `s`, and ending the turn. */
 export function actions(s: State): Action[] {
@@ -701,7 +726,7 @@ const DEBUFFS = new Set(["VULNERABLE", "WEAK", "FRAIL"]);
  * Bash's Vulnerable used up the stack and did not land). Applying Vulnerable
  * while the player has Vicious draws that many cards.
  */
-function applyPower(s: State, u: Unit, key: string, n: number): boolean {
+export function applyPower(s: State, u: Unit, key: string, n: number): boolean {
   const debuff = DEBUFFS.has(key) || (key === "STRENGTH" && n < 0);
   if (debuff && has(u, "ARTIFACT")) {
     addPower(u, "ARTIFACT", -1);
@@ -716,7 +741,7 @@ function applyPower(s: State, u: Unit, key: string, n: number): boolean {
  * Block for the player. Juggernaut answers every gain with its damage to a
  * random enemy — which one is only known when there is one left.
  */
-function gainBlock(s: State, n: number, fromCard = false): void {
+export function gainBlock(s: State, n: number, fromCard = false): void {
   if (n <= 0) return;
   // No Block (Panic Button; IL: NoBlockPower): no block from cards while it lasts.
   if (fromCard && has(s.player, "NO_BLOCK")) return;
@@ -752,9 +777,9 @@ function gainBlock(s: State, n: number, fromCard = false): void {
 }
 
 /** A relic's number, or `fallback` where the bridge (or a spar bout) did not say. */
-const relicVar = (s: State, id: string, name: string, fallback: number) => s.relicVars?.[id]?.[name] ?? fallback;
+export const relicVar = (s: State, id: string, name: string, fallback: number) => s.relicVars?.[id]?.[name] ?? fallback;
 /** A relic's counter or flag set for the rest of the fight: a new object, since states share relicVars. */
-function setRelicVar(s: State, id: string, name: string, n: number): void {
+export function setRelicVar(s: State, id: string, name: string, n: number): void {
   s.relicVars = { ...(s.relicVars ?? {}), [id]: { ...(s.relicVars?.[id] ?? {}), [name]: n } };
 }
 /** Damage no Strength or Vulnerable changes (a relic's), through block: every living enemy, or a random one. */
@@ -780,7 +805,7 @@ export function redSkull(s: State): void {
 }
 
 /** Into the exhaust pile. Feel No Pain blocks for every card exhausted, not changed by Dexterity or Frail. */
-function exhaustCard(s: State, card: Card): void {
+export function exhaustCard(s: State, card: Card): void {
   s.exhaust.push(card);
   s.exhaustedThisTurn = true;
   gainBlock(s, s.player.powers["FEEL_NO_PAIN"] ?? 0);
@@ -798,7 +823,7 @@ function exhaustCard(s: State, card: Card): void {
 }
 
 /** HP a card costs the player (Offering, Hemokinesis, Brand): Rupture turns it into Strength. */
-function cardHpLoss(s: State, n: number): void {
+export function cardHpLoss(s: State, n: number): void {
   if (n <= 0 || loseHp(s, n) <= 0) return;
   if (has(s.player, "RUPTURE")) addPower(s.player, "STRENGTH", s.player.powers["RUPTURE"] ?? 1);
   // Inferno (IL: InfernoPower.AfterDamageReceived): HP lost on the player's own turn hits every
@@ -820,7 +845,7 @@ function thorns(s: State, e: Enemy): void {
  * The player loses HP during the turn. A death is undone by a second life
  * if there is one (the game's ShouldDie hooks): the fight goes on at what it leaves.
  */
-function loseHp(s: State, n0: number): number {
+export function loseHp(s: State, n0: number): number {
   const n = n0 - rodCut(s);
   if (n <= 0) return 0;
   s.player.hp -= n;
@@ -881,7 +906,7 @@ const APPLIED_BY: Record<string, string> = { SHRINK: "SHRINKER_BEETLE", CONSTRIC
 /** A Wriggler's HP as it comes out of a Phrog Parasite: 18-22 at A8+ (17-21 below; IL: Wriggler.MinInitialHp). */
 export const WRIGGLER_HP = 20;
 
-function died(s: State, e: Enemy): void {
+export function died(s: State, e: Enemy): void {
   // Infested (Phrog Parasite; IL: InfestedPower.AfterDeath): its death lets out that many Wrigglers,
   // stunned for the turn. The fight is not won: the planner treated the kill as the win, as it did the
   // Waterfall Giant's, and the Parasite won 18 of 42 fights on the veteran profile.
@@ -942,7 +967,7 @@ function died(s: State, e: Enemy): void {
 }
 
 /** Each living victim, `times` times over. */
-function strike(s: State, victims: readonly Enemy[], base: number, times: number): void {
+export function strike(s: State, victims: readonly Enemy[], base: number, times: number): void {
   const curling = new Map<Enemy, number>();
   const skittish = new Set<Enemy>();
   for (let r = 0; r < times; r++) {
@@ -1005,8 +1030,8 @@ export function junkIndex(cards: readonly { id: string; type: string }[]): numbe
   const junk = cards.findIndex((c) => (c.type === "Status" || c.type === "Curse") && !KEEP_STATUS.has(c.id));
   if (junk >= 0) return junk;
   if (smartExhaust) {
-    for (const basic of ["STRIKE_IRONCLAD", "DEFEND_IRONCLAD"]) {
-      const i = cards.findIndex((c) => c.id === basic);
+    for (const basic of [isBasicStrike, isBasicDefend]) {
+      const i = cards.findIndex((c) => basic(c.id));
       if (i >= 0) return i;
     }
   }
@@ -1025,14 +1050,14 @@ export function useUpgrades(f: (c: Card) => Card | undefined): void {
   upgradedOf = f;
 }
 /** `c` upgraded for the rest of the fight: the catalogue's numbers, its cost never above what it was. */
-function upgradeCard(c: Card): Card {
+export function upgradeCard(c: Card): Card {
   if (c.upgrades > 0 || c.type === "Status" || c.type === "Curse") return c;
   const up = upgradedOf(c);
   if (!up || up.upgrades === 0) return c;
   return { ...c, vars: { ...up.vars }, keywords: up.keywords, upgrades: c.upgrades + 1, cost: c.cost >= 0 && up.cost >= 0 ? Math.min(c.cost, up.cost) : c.cost };
 }
 
-function exhaustOne(s: State): void {
+export function exhaustOne(s: State): void {
   if (s.hand.length === 0) return;
   s.exact = false;
   const i = junkIndex(s.hand);
@@ -1040,7 +1065,7 @@ function exhaustOne(s: State): void {
 }
 
 /** How many a calculated card counted at the observation, from the game's number then (0 without one). */
-const counted = (c: Card) => {
+export const counted = (c: Card) => {
   const extra = c.vars["ExtraDamage"] ?? 0;
   const shown = c.calc?.["CalculatedDamage"];
   return shown === undefined || extra <= 0 ? 0 : Math.max(0, Math.round((shown - (c.vars["CalculationBase"] ?? 0)) / extra));
@@ -1069,10 +1094,10 @@ const COUNTS: Record<string, (s: State, c: Card, t: Enemy | undefined) => number
 };
 
 /** A card's attack damage before modifiers: its Damage, or its calculated damage. */
-function damageOf(s: State, card: Card, target?: Enemy): number | undefined {
+export function damageOf(s: State, card: Card, target?: Enemy): number | undefined {
   const v = card.vars;
   let damage: number | undefined;
-  const count = COUNTS[card.id]?.(s, card, target);
+  const count = (COUNTS[card.id] ?? rules().counts[card.id])?.(s, card, target);
   if (v["CalculatedDamage"] === undefined) damage = v["Damage"];
   else if (count !== undefined) damage = (v["CalculationBase"] ?? 0) + (v["ExtraDamage"] ?? 0) * count;
   else damage = card.calc?.["CalculatedDamage"] ?? v["CalculationBase"];
@@ -1087,10 +1112,10 @@ function damageOf(s: State, card: Card, target?: Enemy): number | undefined {
   return damage;
 }
 
-const one = (t: Enemy | undefined): Enemy[] => (t ? [t] : []);
-const num = (c: Card, name: string) => c.vars[name] ?? 0;
+export const one = (t: Enemy | undefined): Enemy[] => (t ? [t] : []);
+export const num = (c: Card, name: string) => c.vars[name] ?? 0;
 /** A card's damage as damageOf gives it: relics like Strike Dummy count for special cards too. */
-const dmg = (s: State, c: Card, t?: Enemy) => damageOf(s, c, t) ?? 0;
+export const dmg = (s: State, c: Card, t?: Enemy) => damageOf(s, c, t) ?? 0;
 
 /** x: an X card's X (the energy it was played with, Chemical X's more). */
 type Rule = (s: State, card: Card, target: Enemy | undefined, x: number) => void;
@@ -1496,13 +1521,14 @@ export function startOfTurn(s: State): void {
       autoPlay(s, c);
     }
   }
+  for (const f of rules().startOfTurn) f(s);
 }
 
 /** The X of an X card played by another's effect: the energy there is, and Chemical X's more. */
-const energyX = (s: State) => s.energy + (s.relics.includes("CHEMICAL_X") ? s.relicVars?.["CHEMICAL_X"]?.["Increase"] ?? 2 : 0);
+export const energyX = (s: State) => s.energy + (s.relics.includes("CHEMICAL_X") ? s.relicVars?.["CHEMICAL_X"]?.["Increase"] ?? 2 : 0);
 
 /** What a card does from its numbers alone. */
-function standard(s: State, card: Card, target: Enemy | undefined, x: number): void {
+export function standard(s: State, card: Card, target: Enemy | undefined, x: number): void {
   const v = card.vars;
   if (card.costsX) s.exact = false;
   const repeat = (v["Repeat"] ?? 1) * (card.costsX ? x : 1);
@@ -1568,6 +1594,7 @@ export function play(s0: State, a: Action & { kind: "play" }): State {
   // past Dexterity, Frail and No Block.
   const helmet = s.relics.includes("INTIMIDATING_HELMET") ? s.relicVars?.["INTIMIDATING_HELMET"] : undefined;
   if (helmet && paid >= (helmet["Energy"] ?? 2)) gainBlock(s, helmet["Block"] ?? 4);
+  for (const f of rules().beforePlay) f(s, card, target);
   resolve(s, card, target, x);
   // A heal of the card's (Feed, Not Yet) crosses Red Skull's line too.
   redSkull(s);
@@ -1614,7 +1641,7 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
   s.vambraceHit = false;
   s.legionArmed = s.relics.includes("PAELS_LEGION") && relicVar(s, "PAELS_LEGION", "_cooldown", -1) <= 0;
   s.legionHit = false;
-  const special = SPECIAL[card.id];
+  const special = SPECIAL[card.id] ?? rules().special[card.id];
   if (special) special(s, card, target, x);
   else standard(s, card, target, x);
   // One-Two Punch (IL: OneTwoPunchPower.ModifyCardPlayCount): an attack played under it is played
@@ -1721,6 +1748,7 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
     addPower(s.player, "STRENGTH", -tender);
     addPower(s.player, "DEXTERITY", -tender);
   }
+  for (const f of rules().afterPlay) f(s, card, target);
 
   // Rampage (IL: Rampage.OnPlay): each play adds its Increase to its own Damage, for the combat.
   const after = card.id === "RAMPAGE" ? { ...card, vars: { ...card.vars, Damage: (card.vars["Damage"] ?? 0) + (card.vars["Increase"] ?? 0) } }
@@ -1753,7 +1781,8 @@ export function endOfTurn(s0: State): State {
   const stampede = s0.player.powers["STAMPEDE"] ?? 0;
   const howls = s0.exhaust.some((c) => c.id === "HOWL_FROM_BEYOND");
   const blockRelics = ["ORICHALCUM", "RIPPLE_BASIN", "PARRYING_SHIELD"].some((r) => s0.relics.includes(r));
-  if (stampede <= 0 && !howls && !blockRelics && !(s0.bombs ?? []).some((b) => b.turns <= 1)) return s0;
+  const ends = rules().endOfTurn.filter((h) => h.needed(s0));
+  if (stampede <= 0 && !howls && !blockRelics && !(s0.bombs ?? []).some((b) => b.turns <= 1) && ends.length === 0) return s0;
   const s = clone(s0);
   s.ended = true;
   // Howl from Beyond in the exhaust pile plays itself, and so leaves it for the discard pile
@@ -1783,6 +1812,7 @@ export function endOfTurn(s0: State): State {
     }
   }
   if (s.bombs) s.bombs = s.bombs.filter((b) => b.turns > 1);
+  for (const h of ends) h.run(s);
   // Orichalcum (IL: BeforeTurnEnd): no block at the turn's end, 6.
   if (s.relics.includes("ORICHALCUM") && s.player.block === 0) gainBlock(s, relicVar(s, "ORICHALCUM", "Block", 6));
   // Ripple Basin: no attack played this turn, 4 block. Attacks before the observation are known only
@@ -1925,7 +1955,12 @@ export function stateKey(s: State): string {
   const pw = (p: Record<string, number>) => Object.keys(p).sort().map((k) => `${k}${p[k]}`).join("");
   const enemies = s.enemies.map((e) => `${e.alive ? e.hp : "x"}/${e.block}/${pw(e.powers)}`).join(";");
   const potions = s.potions.map((p) => p.slot).join(",");
-  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}|${s.dazedAdded ?? 0}|${s.hurt ?? 0}/${s.attacks ?? 0}/${s.onTop ?? 0}|${(s.bombs ?? []).map((b) => `${b.turns}:${b.damage}`).join(",")}|${RELIC_FLAGS.map(([r, k]) => s.relicVars?.[r]?.[k] ?? "").join(",")}`;
+  return `${s.energy}|${s.player.hp}/${s.player.block}/${pw(s.player.powers)}|${hand}|${enemies}|${s.drawn}|${s.lostHp ? 1 : 0}${s.exhaustedThisTurn ? 1 : 0}|${s.played}/${s.skills}|${potions}|${s.boundPlayed ? 1 : 0}${s.revivals ?? 0}|${s.facing ?? ""}|${s.dazedAdded ?? 0}|${s.hurt ?? 0}/${s.attacks ?? 0}/${s.onTop ?? 0}|${(s.bombs ?? []).map((b) => `${b.turns}:${b.damage}`).join(",")}|${RELIC_FLAGS.map(([r, k]) => s.relicVars?.[r]?.[k] ?? "").join(",")}${extKey(s)}`;
+}
+/** The characters' state in the key (characters/index.ts keyExt); nothing without one. */
+function extKey(s: State): string {
+  const hooks = rules().keyExt;
+  return hooks.length === 0 ? "" : `|${hooks.map((f) => f(s)).join(",")}`;
 }
 /** Relic flags and counters a play can change: states that differ in them are not the same. */
 const RELIC_FLAGS: [string, string][] = [

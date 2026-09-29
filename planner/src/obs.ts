@@ -29,6 +29,10 @@ export interface CardObs {
   /** An affliction for this combat: "BOUND" (the Queen's Chains of Binding), and its amount. */
   affliction?: string;
   affliction_amount?: number;
+  /** The Regent's cards: the star cost printed and with its modifiers now (-1: none), and an X star cost. */
+  star_cost?: number;
+  current_star_cost?: number;
+  star_cost_x?: boolean;
 }
 
 export interface IntentObs {
@@ -51,6 +55,19 @@ export interface EnemyObs {
   power_vars?: Record<string, Record<string, number>>;
 }
 
+export interface AllyObs {
+  combat_id: number;
+  model_id: string;
+  /** The Necrobinder's Osty (the pet the player's Osty is). */
+  is_osty?: boolean;
+  hp: number;
+  max_hp: number;
+  block: number;
+  is_alive: boolean;
+  powers: Record<string, number>;
+  power_vars?: Record<string, Record<string, number>>;
+}
+
 export interface CombatObs {
   turn: number;
   hand: CardObs[];
@@ -69,6 +86,8 @@ export interface Observation {
   is_terminal: boolean;
   is_victory: boolean;
   seed: string;
+  /** The character the run plays: "IRONCLAD", "SILENT" (character.ts characterOf reads either form). */
+  character?: string;
   act: number;
   /** The act's boss encounter ("WATERFALL_GIANT_BOSS"), and act 3's second at A10; "" from older bridges. */
   act_boss?: string;
@@ -93,6 +112,10 @@ export interface Observation {
   ascension?: number;
   potion_details?: { slot: number; id: string; rarity?: string; target?: string; usage?: string; vars?: Record<string, number> }[];
   combat: CombatObs | null;
+  /** The Regent's stars (combat only). */
+  player_stars?: number;
+  /** The creatures on the player's side besides the player (the Necrobinder's Osty); absent with none. */
+  player_allies?: AllyObs[];
   room: { room_type: string; options: string[]; details: Record<string, unknown> } | null;
 }
 

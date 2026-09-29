@@ -26,6 +26,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { character, characterOf, defaultLibrary, setCharacter } from "./character.ts";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
@@ -688,6 +689,12 @@ let roomSaveFloor = -1;
 
 async function playRun(game: Game, seed: string, policy: Policy, maxFights: number, takeCards: boolean, logs: FightLog[], resume = false, sandbox = ""): Promise<void> {
   let cur = await game.startRun(seed, ascension, resume);
+  // The character the game plays (a resumed save's own, whatever was asked): the rules and data follow it.
+  const played = characterOf(cur.observation.character ?? "");
+  if (played && played !== character()) {
+    if (!resume) console.warn(`asked for ${character()}, the game plays ${played}`);
+    setCharacter(played);
+  }
   const captured = new Set<number>();
   let fights = 0;
   if (resumeAfter !== undefined) {
@@ -748,8 +755,9 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
       captured.add(o.floor);
       const from = path.join(savesDir(sandbox), "current_run.save");
       if (fs.existsSync(from)) {
-        // SPIRE_JEV_LIBRARY: another save library (runs/saves-unl for the unlocked timeline).
-        const dir = path.resolve(import.meta.dirname, "..", "runs", process.env["SPIRE_JEV_LIBRARY"] ?? "saves");
+        // SPIRE_JEV_LIBRARY: another save library (runs/saves-unl for the unlocked timeline); another
+        // character's go to its own (runs/saves-silent).
+        const dir = path.resolve(import.meta.dirname, "..", "runs", process.env["SPIRE_JEV_LIBRARY"] ?? defaultLibrary());
         fs.mkdirSync(dir, { recursive: true });
         // The port tells apart two evaluations of the same seeds running at once.
         const file = path.join(dir, `${seed}-a${ascension}-f${o.floor}-p${path.basename(sandbox).replace(/^p/, "")}.save`);
@@ -905,8 +913,11 @@ async function main(): Promise<void> {
       resume: { type: "string" },
       // Explore (bench.ts --explore): now and then a close second-best line, from this seed.
       explore: { type: "string" },
+      // The character (character.ts; SPIRE_JEV_CHARACTER, the Ironclad by default). A resumed save plays its own.
+      character: { type: "string" },
     },
   });
+  if (values.character) setCharacter(values.character);
   capture = new Set(values.capture.split(",").filter(Boolean).map(Number));
   stopFloor = Number(values["stop-floor"]);
   if (values.explore !== undefined) startExploring(Number(values.explore) * 7919 + 17);

@@ -16,6 +16,8 @@
  * The sizes are ours, to be measured.
  */
 
+import { isBasicDefend } from "./character.ts";
+
 const set = (...ids: string[]) => new Set(ids);
 
 /** §2.2. */
@@ -69,7 +71,7 @@ export function profile(deck: readonly string[]): DeckProfile {
     vulnerablePayoffs: n(VULNERABLE_PAYOFFS),
     selfDamage: n(SELF_DAMAGE),
     selfDamagePayoffs: n(SELF_DAMAGE_PAYOFFS),
-    block: n(BLOCK) + 0.5 * ids.filter((c) => c === "DEFEND_IRONCLAD").length,
+    block: n(BLOCK) + 0.5 * ids.filter(isBasicDefend).length,
     blockPayoffs: n(BLOCK_PAYOFFS),
     strength: n(STRENGTH),
     multiHits: n(MULTI_HITS),

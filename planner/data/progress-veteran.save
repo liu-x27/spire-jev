@@ -14,6 +14,54 @@
       "preferred_ascension": 10,
       "total_losses": 1,
       "total_wins": 1
+    },
+    {
+      "badges": [],
+      "best_win_streak": 0,
+      "current_streak": 0,
+      "fastest_win_time": -1,
+      "id": "CHARACTER.SILENT",
+      "max_ascension": 10,
+      "playtime": 0,
+      "preferred_ascension": 10,
+      "total_losses": 0,
+      "total_wins": 0
+    },
+    {
+      "badges": [],
+      "best_win_streak": 0,
+      "current_streak": 0,
+      "fastest_win_time": -1,
+      "id": "CHARACTER.DEFECT",
+      "max_ascension": 10,
+      "playtime": 0,
+      "preferred_ascension": 10,
+      "total_losses": 0,
+      "total_wins": 0
+    },
+    {
+      "badges": [],
+      "best_win_streak": 0,
+      "current_streak": 0,
+      "fastest_win_time": -1,
+      "id": "CHARACTER.NECROBINDER",
+      "max_ascension": 10,
+      "playtime": 0,
+      "preferred_ascension": 10,
+      "total_losses": 0,
+      "total_wins": 0
+    },
+    {
+      "badges": [],
+      "best_win_streak": 0,
+      "current_streak": 0,
+      "fastest_win_time": -1,
+      "id": "CHARACTER.REGENT",
+      "max_ascension": 10,
+      "playtime": 0,
+      "preferred_ascension": 10,
+      "total_losses": 0,
+      "total_wins": 0
     }
   ],
   "current_score": 0,

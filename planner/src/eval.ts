@@ -15,6 +15,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { setCharacter } from "./character.ts";
 import { type FightLog, summarise } from "./run-fights.ts";
 
 const { values } = parseArgs({
@@ -30,9 +31,12 @@ const { values } = parseArgs({
     flags: { type: "string", default: "" },
     capture: { type: "string", default: "" },
     port: { type: "string", default: "47100" },
+    // The character (character.ts): into the environment, so every run-fights plays it.
+    character: { type: "string" },
   },
 });
 if (!values.tag) throw new Error("--tag is required");
+if (values.character) setCharacter(values.character);
 const [from, to] = values.seeds.split("-").map(Number) as [number, number];
 const seeds = Array.from({ length: to - from + 1 }, (_, i) => from + i);
 const n = Math.min(Number(values.sandboxes), seeds.length);

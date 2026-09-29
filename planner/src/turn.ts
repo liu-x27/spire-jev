@@ -13,7 +13,8 @@
 
 import type { IntentObs } from "./obs.ts";
 import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
-import { type Card, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, incomingHitsBy, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
+import { rules } from "./characters/index.ts";
+import { type Card, cloneExt, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, incomingHitsBy, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
 // Ringing (the Ceremonial Beast's Beast Cry) is one turn's: the game's fights have it the turn after
@@ -410,7 +411,9 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     ...(s.revivals ? { revivals: s.revivals } : {}),
     ...(hurt ? { hurt } : {}),
     ...(bombs.length ? { bombs } : {}),
+    ...(s.ext ? { ext: cloneExt(s.ext) } : {}),
   };
+  for (const f of rules().nextTurn) f(s, next);
   if (after.revived) spendRevival(next, after.revived);
   redSkull(next);
   // After the draw: Inferno's cost and hit, Mayhem's and Hellraiser's free plays.

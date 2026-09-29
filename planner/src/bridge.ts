@@ -14,6 +14,7 @@ import net from "node:net";
 import path from "node:path";
 import readline from "node:readline";
 import type { LegalAction, Observation } from "./obs.ts";
+import { character } from "./character.ts";
 
 export const GAME = process.env["STS2_GAME_ROOT"] ?? "D:\\SteamLibrary\\steamapps\\common\\Slay the Spire 2";
 const REPO = path.resolve(import.meta.dirname, "..", "..");
@@ -160,7 +161,7 @@ export class Game {
           LOCALAPPDATA: path.join(sandbox, "local_userdata"),
           STS2_FULL_APP_BRIDGE_PORT: String(port),
           STS2_FULL_APP_BRIDGE_PORT_FILE: portFile,
-          STS2_FORCE_CHARACTER: "IRONCLAD",
+          STS2_FORCE_CHARACTER: character(),
         },
       },
     );
@@ -217,7 +218,7 @@ export class Game {
   }
 
   startRun(seed: string, ascension = 0, resume = false) {
-    return this.call<StepResult>("start_run", { seed, character: "IRONCLAD", ascension, ...(resume ? { continue: true } : {}) });
+    return this.call<StepResult>("start_run", { seed, character: character(), ascension, ...(resume ? { continue: true } : {}) });
   }
   observe() {
     return this.call<Observation>("observe");

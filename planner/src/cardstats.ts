@@ -7,9 +7,10 @@
  */
 
 import fs from "node:fs";
-import path from "node:path";
+import { character, dataFile } from "./character.ts";
 
-const FILE = path.resolve(import.meta.dirname, "..", "data", "card-stats-a10.json");
+/** The character's own (character.ts dataFile): data/card-stats-a10.json is the Ironclad's. */
+const FILE = () => dataFile("card-stats-a10.json");
 
 interface CardStat {
   pick?: (number | null)[];
@@ -19,17 +20,21 @@ interface CardStat {
 
 function load(): Record<string, CardStat> {
   try {
-    return (JSON.parse(fs.readFileSync(FILE, "utf8")) as { cards?: Record<string, CardStat> }).cards ?? {};
+    return (JSON.parse(fs.readFileSync(FILE(), "utf8")) as { cards?: Record<string, CardStat> }).cards ?? {};
   } catch {
     return {};
   }
 }
 
-const STATS = load();
+const loaded = new Map<string, Record<string, CardStat>>();
+const stats = (): Record<string, CardStat> => {
+  if (!loaded.has(character())) loaded.set(character(), load());
+  return loaded.get(character())!;
+};
 
 /** Elo over skipping among strong A10 players, or undefined for a card the data lacks (or too rarely seen). */
 export function eloVsSkip(card: string): number | undefined {
-  const s = STATS[card]?.wr50;
+  const s = stats()[card]?.wr50;
   if (!s || typeof s.eloVsSkip !== "number" || (s.n ?? 0) < 100) return undefined;
   return s.eloVsSkip;
 }

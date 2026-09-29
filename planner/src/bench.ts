@@ -16,6 +16,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { defaultLibrary, setCharacter } from "./character.ts";
 import type { FightLog } from "./run-fights.ts";
 
 const { values } = parseArgs({
@@ -34,14 +35,18 @@ const { values } = parseArgs({
     // Also replay each save under these exploration seeds (1..N), as save-and-load would.
     explore: { type: "string", default: "0" },
     // The library: runs/saves (seeds 46-135, the confirmation set) or runs/saves-dev (136-315, for tuning).
-    library: { type: "string", default: "saves" },
+    // Another character's default is its own, runs/saves-<character> (character.ts).
+    library: { type: "string" },
     // The saves' seeds, a-b: an explicit manifest (the library also holds saves from other seed sets).
     seeds: { type: "string" },
+    // The character (character.ts): into the environment, so every run-fights plays it.
+    character: { type: "string" },
   },
 });
 if (!values.tag) throw new Error("--tag is required");
+if (values.character) setCharacter(values.character);
 const here = path.resolve(import.meta.dirname, "..");
-const dir = path.join(here, "runs", values.library);
+const dir = path.join(here, "runs", values.library ?? defaultLibrary());
 const seedOf = (f: string) => Number(f.match(/JEV0*(\d+)/)?.[1] ?? -1);
 const [lo, hi] = (values.seeds ?? "0-999999").split("-").map(Number) as [number, number];
 const saves = fs.readdirSync(dir).filter((f) => f.endsWith(".save") && f.includes(values.saves) && seedOf(f) >= lo && seedOf(f) <= hi).sort();

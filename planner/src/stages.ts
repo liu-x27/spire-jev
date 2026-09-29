@@ -18,6 +18,7 @@
 
 import fs from "node:fs";
 import { profile } from "./packages.ts";
+import { isBasic } from "./character.ts";
 import type { FightLog, RoomLog } from "./run-fights.ts";
 
 const BOSS_FLOORS = [17, 33, 48, 49];
@@ -79,7 +80,7 @@ for (const file of process.argv.slice(2)) {
     const without = decks.filter(({ deck }) => profile(deck).scaling === 0);
     const p = decks.map(({ deck }) => profile(deck));
     console.log(
-      `     deck: ${mean(decks.map((x) => x.deck.length)).toFixed(1)} cards, Strike/Defend left ${mean(decks.map((x) => x.deck.filter((c) => /^(STRIKE|DEFEND)_IRONCLAD/.test(c)).length)).toFixed(1)};` +
+      `     deck: ${mean(decks.map((x) => x.deck.length)).toFixed(1)} cards, Strike/Defend left ${mean(decks.map((x) => x.deck.filter(isBasic).length)).toFixed(1)};` +
         ` scaling ${pct(withScaling.length, decks.length)}, draw>=2 ${pct(p.filter((x) => x.draw >= 2).length, p.length)},` +
         ` AoE ${pct(decks.filter(({ deck }) => deck.some((c) => AOE.has(base(c)))).length, decks.length)}, big-hit answer ${pct(p.filter((x) => x.bigHitAnswers > 0).length, p.length)}` +
         ` | won with scaling ${withScaling.filter((x) => x.f.won).length}/${withScaling.length}, without ${without.filter((x) => x.f.won).length}/${without.length}`,
