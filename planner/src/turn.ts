@@ -14,7 +14,7 @@
 import type { IntentObs } from "./obs.ts";
 import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
 import { rules } from "./characters/index.ts";
-import { type Card, cloneExt, type Enemy, endOfTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, incomingHitsBy, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
+import { type Card, cloneExt, type Enemy, endOfTurn, enemyTurnStart, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, incomingHitsBy, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
 // Ringing (the Ceremonial Beast's Beast Cry) is one turn's: the game's fights have it the turn after
@@ -192,6 +192,10 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     }
     if (!e.alive) return { ...e, powers: { ...e.powers } };
     const ep = { ...e.powers };
+    // What its turn's start takes before it acts (characters/index.ts enemyTurnStart: Poison); dead of
+    // it, it does not act.
+    const ticked = enemyTurnStart(s, e, ep);
+    if (e.hp - ticked <= 0) return { ...e, hp: 0, alive: false, powers: ep, intents: [] };
     // Strength taken for the turn (Mangle, Dark Shackles) comes back at the end of the enemy's turn.
     for (const k of ["MANGLE", "DARK_SHACKLES"]) {
       if ((ep[k] ?? 0) <= 0) continue;
@@ -249,7 +253,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     const calendar = (s.turn ?? 1) === 7 ? relic("STONE_CALENDAR", "Damage", 52) : 0;
     // Demise (IL: DemisePower.AfterSideTurnEnd): its amount off the enemy at its turn's end, past block.
     const demise = Math.max(0, ep["DEMISE"] ?? 0);
-    const hp = Math.min(e.maxHp, e.hp + heal) - calendar - demise;
+    const hp = Math.min(e.maxHp, e.hp - ticked + heal) - calendar - demise;
     const { asleep: _asleep, behindAtStart: _behind, move: _move, ...rest } = e;
     const sleeping = (ep["ASLEEP"] ?? 0) > 0;
     // Its next move's intents as the game will show them: Strength, the player's Vulnerable, its own

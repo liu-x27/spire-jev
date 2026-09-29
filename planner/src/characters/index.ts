@@ -56,6 +56,12 @@ export interface CharacterRules {
   endOfTurn?: { needed(s: State): boolean; run(s: State): void };
   /** The next turn's state is built (turn.ts nextTurn), before its start-of-turn effects: `ext` carries over as it was. */
   nextTurn?(prev: State, next: State): void;
+  /**
+   * An enemy's turn starts, before it acts: the HP it loses then (the Silent's Poison). turn.ts nextTurn
+   * passes the enemy's powers for the next turn, to change as the tick leaves them; sim.ts
+   * incomingHitsBy asks without them, to know whether it lives to act.
+   */
+  enemyTurnStart?(s: State, e: Enemy, powers?: Record<string, number>): number;
   /** A term added to search.ts evaluate's score of a state that is neither won nor lost. */
   evaluate?(s: State, w: Weights): number;
   /** A copy of `ext` a play may change (sim.ts clone); by default a shallow copy, so replace values, do not mutate them. */
@@ -88,6 +94,7 @@ export interface Merged {
   startOfTurn: NonNullable<CharacterRules["startOfTurn"]>[];
   endOfTurn: NonNullable<CharacterRules["endOfTurn"]>[];
   nextTurn: NonNullable<CharacterRules["nextTurn"]>[];
+  enemyTurnStart: NonNullable<CharacterRules["enemyTurnStart"]>[];
   evaluate: NonNullable<CharacterRules["evaluate"]>[];
   cloneExt: NonNullable<CharacterRules["cloneExt"]>[];
   keyExt: NonNullable<CharacterRules["keyExt"]>[];
@@ -108,7 +115,7 @@ export function rules(): Merged {
   if (merged) return merged;
   const m: Merged = {
     special: {}, counts: {}, fromObservation: [], playable: [], beforePlay: [], afterPlay: [], startOfTurn: [],
-    endOfTurn: [], nextTurn: [], evaluate: [], cloneExt: [], keyExt: [],
+    endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], cloneExt: [], keyExt: [],
     cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(),
   };
   for (const r of ALL) {
@@ -118,7 +125,7 @@ export function rules(): Merged {
     }
     Object.assign(m.counts, r.counts ?? {});
     Object.assign(m.cards, r.cards ?? {});
-    for (const k of ["fromObservation", "playable", "beforePlay", "afterPlay", "startOfTurn", "endOfTurn", "nextTurn", "evaluate", "cloneExt", "keyExt"] as const) {
+    for (const k of ["fromObservation", "playable", "beforePlay", "afterPlay", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "cloneExt", "keyExt"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
     }

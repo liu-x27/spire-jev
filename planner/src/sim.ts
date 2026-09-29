@@ -1838,6 +1838,16 @@ export function incomingHits(s: State): number[] {
   return incomingHitsBy(s).flat();
 }
 
+/**
+ * The HP an enemy loses as its turn starts, before it acts (characters/index.ts enemyTurnStart: the
+ * Silent's Poison); `powers`, its copy for the next turn, is left as the tick leaves it. 0 without one.
+ */
+export function enemyTurnStart(s: State, e: Enemy, powers?: Record<string, number>): number {
+  let lost = 0;
+  for (const f of rules().enemyTurnStart) lost += f(s, e, powers);
+  return lost;
+}
+
 /** The hits of each enemy (s.enemies' order) at the end of this turn. */
 export function incomingHitsBy(s: State): number[][] {
   const by: number[][] = [];
@@ -1858,6 +1868,8 @@ export function incomingHitsBy(s: State): number[][] {
       if (e.blowNow && (e.deathBlow ?? 0) > 0) hits.push(cut(e.deathBlow!));
       continue;
     }
+    // Dead of what its turn's start takes (Poison) before it acts.
+    if (e.hp - enemyTurnStart(s, e) <= 0) continue;
     const strength = (e.powers["STRENGTH"] ?? 0) - e.startStrength;
     // Surrounded (Kaiser Crab): the claw behind the player deals ×1.5; the shown damage has it if the
     // claw was behind at the observation. The player turned since: put it on, or take it off.
