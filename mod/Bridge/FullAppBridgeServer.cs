@@ -165,6 +165,10 @@ public static class FullAppBridgeServer
             case "map":
                 return GameCatalog.Map();
 
+            // spire-jev: every card's numbers, canonical and upgraded (GameCatalog.Cards).
+            case "cards":
+                return GameCatalog.Cards();
+
             case "legal_actions":
                 return CurrentLegalActions;
 

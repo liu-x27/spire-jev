@@ -13,6 +13,40 @@ public static class GameCatalog
 {
     private const BindingFlags Declared = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
 
+    // spire-jev: every card the game has, as a hand card is described (cost, star cost, vars,
+    // keywords), canonical and upgraded once, keyed "ID" and "ID+", with the pool it belongs to: the
+    // numbers a deck is simulated with before its cards were ever seen in a fight.
+    public static Dictionary<string, object?> Cards()
+    {
+        var cards = new Dictionary<string, object?>();
+        var errors = new List<string>();
+        var pools = new Dictionary<string, string>();
+        foreach (var pool in ModelDb.All.OfType<CardPoolModel>())
+        {
+            try { foreach (var c in pool.AllCards) pools[c.Id.Entry] = pool.Id.Entry; } catch (Exception ex) { errors.Add($"{pool.Id.Entry}: {ex.Message}"); }
+        }
+        foreach (var card in ModelDb.All.OfType<CardModel>())
+        {
+            string id = card.Id.Entry;
+            try
+            {
+                var d = FullAppStateTracker.DescribeCard(card, 0, false);
+                cards[id] = new Dictionary<string, object?> { ["pool"] = pools.GetValueOrDefault(id, ""), ["card"] = d };
+            }
+            catch (Exception ex) { errors.Add($"{id}: {ex.Message}"); continue; }
+            try
+            {
+                if (!card.IsUpgradable) continue;
+                var up = card.ToMutable();
+                up.UpgradeInternal();
+                up.FinalizeUpgradeInternal();
+                cards[id + "+"] = new Dictionary<string, object?> { ["pool"] = pools.GetValueOrDefault(id, ""), ["card"] = FullAppStateTracker.DescribeCard(up, 0, false) };
+            }
+            catch (Exception ex) { errors.Add($"{id}+: {ex.Message}"); }
+        }
+        return new Dictionary<string, object?> { ["cards"] = cards, ["errors"] = errors };
+    }
+
     public static Dictionary<string, object?> Catalog()
     {
         var acts = new List<Dictionary<string, object?>>();

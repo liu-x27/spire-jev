@@ -140,7 +140,7 @@ public static class FullAppStateTracker
         return d;
     }
 
-    private static CardObservationDto DescribeCard(CardModel card, int index, bool canPlay, bool inHand = false)
+    internal static CardObservationDto DescribeCard(CardModel card, int index, bool canPlay, bool inHand = false)
     {
         var dto = new CardObservationDto
         {
