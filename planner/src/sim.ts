@@ -47,6 +47,10 @@ export interface Card {
   fullCost?: number;
   /** Played this turn and back in the hand before the next draw (Bolas, Thrumming Hatchet). */
   returns?: boolean;
+  /** The Regent's star cost now (the bridge's current_star_cost); absent for a card without one. */
+  starCost?: number;
+  /** An X star cost (Stardust): every star there is. */
+  starX?: boolean;
 }
 
 export interface Unit {
@@ -232,6 +236,7 @@ export function cardOf(c: CardObs, energy?: number): Card {
     ...(c.enchantment_vars && Object.keys(c.enchantment_vars).length > 0 ? { enchantmentVars: c.enchantment_vars } : {}),
     ...(c.fields && Object.keys(c.fields).length > 0 ? { fields: c.fields } : {}),
     ...(c.affliction === "BOUND" ? { bound: true } : {}),
+    ...(c.star_cost_x ? { starX: true } : (c.current_star_cost ?? c.star_cost ?? -1) >= 0 ? { starCost: c.current_star_cost ?? c.star_cost } : {}),
   };
 }
 
