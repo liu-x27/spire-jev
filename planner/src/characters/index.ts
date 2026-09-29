@@ -57,6 +57,11 @@ export interface CharacterRules {
   onDraw?(s: State, n: number): void;
   /** A hit of the player's attack landed on `e` and took `lost` HP (sim.ts strike): the Silent's Envenom. */
   afterHit?(s: State, e: Enemy, lost: number): void;
+  /**
+   * Where a played card goes instead of the discard pile (IL: GetResultLocationForCardPlay): "hand"
+   * (Particle Wall), "top" of the draw pile (Shining Strike); undefined for the discard pile.
+   */
+  resultPile?(s: State, card: Card): "hand" | "top" | undefined;
   /** The player's turn started, after the draw (sim.ts startOfTurn). */
   startOfTurn?(s: State): void;
   /**
@@ -113,6 +118,7 @@ export interface Merged {
   afterPlay: NonNullable<CharacterRules["afterPlay"]>[];
   extraPlays: NonNullable<CharacterRules["extraPlays"]>[];
   afterCard: NonNullable<CharacterRules["afterCard"]>[];
+  resultPile: NonNullable<CharacterRules["resultPile"]>[];
   startOfTurn: NonNullable<CharacterRules["startOfTurn"]>[];
   endOfTurn: NonNullable<CharacterRules["endOfTurn"]>[];
   nextTurn: NonNullable<CharacterRules["nextTurn"]>[];
@@ -136,7 +142,7 @@ let merged: Merged | undefined;
 export function rules(): Merged {
   if (merged) return merged;
   const m: Merged = {
-    special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
+    special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], resultPile: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
     endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], cloneExt: [], keyExt: [],
     cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(),
   };
@@ -147,7 +153,7 @@ export function rules(): Merged {
     }
     Object.assign(m.counts, r.counts ?? {});
     Object.assign(m.cards, r.cards ?? {});
-    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "cloneExt", "keyExt", "combatSelect"] as const) {
+    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "resultPile", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "cloneExt", "keyExt", "combatSelect"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
     }
