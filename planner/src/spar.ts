@@ -51,7 +51,11 @@ export function learnCard(id: string, c: Omit<CardObs, "index" | "can_play">): v
   if (all[id]) return;
   const { affliction: _a, affliction_amount: _b, ...rest } = c as CardObs;
   all[id] = rest;
+  learnt[id] = rest;
 }
+/** The cards this process learnt beyond the catalogue's file: a capture keeps them beside its save. */
+const learnt: Record<string, Omit<CardObs, "index" | "can_play">> = {};
+export const learntCards = () => ({ ...learnt });
 
 /** A deck id ("POMMEL_STRIKE+") as the simulator's card, from the catalogue (the unupgraded one if the upgrade was never seen). */
 export function cardFromId(id: string): Card | undefined {

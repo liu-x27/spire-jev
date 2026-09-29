@@ -34,7 +34,7 @@ import { cardValue, plainCardValue, chooseCardReward, chooseCardSelectFor, choos
 import type { MapPoint } from "./path.ts";
 import { setIntentAscension } from "./intents.ts";
 import { actionId, DEFAULT_WEIGHTS, expectedIntents, planTurn, planTurn2, planTurnExplore, planTurnPowers, planTurnRoll, planTurnValue, type Rollouts, TURN_WEIGHTS, safetyMargin, useValueNet, useBossRules, useGiantRules, useHpNeed, useHpScale, useLookAdapt, useLookTie, useLookDiverse, useLookFix, usePotionSaving, useTorchFirst, type Weights } from "./search.ts";
-import { learnCard, useBoutPlanner } from "./spar.ts";
+import { learnCard, learntCards, useBoutPlanner } from "./spar.ts";
 import { loadValueNet } from "./value.ts";
 import { nextTurn, seeded } from "./turn.ts";
 import { type Action, actions, type Card, drink, drinkable, type Enemy, fromObservation, hpAfterTurn, junkIndex, play, type State } from "./sim.ts";
@@ -752,7 +752,13 @@ async function playRun(game: Game, seed: string, policy: Policy, maxFights: numb
         const dir = path.resolve(import.meta.dirname, "..", "runs", process.env["SPIRE_JEV_LIBRARY"] ?? "saves");
         fs.mkdirSync(dir, { recursive: true });
         // The port tells apart two evaluations of the same seeds running at once.
-        fs.copyFileSync(from, path.join(dir, `${seed}-a${ascension}-f${o.floor}-p${path.basename(sandbox).replace(/^p/, "")}.save`));
+        const file = path.join(dir, `${seed}-a${ascension}-f${o.floor}-p${path.basename(sandbox).replace(/^p/, "")}.save`);
+        fs.copyFileSync(from, file);
+        // The save starts again at this floor's room, and the choices carried into it (spar3's opening,
+        // an upgrade planned, the cards learnt) are not in it: without them a bench from the save chose
+        // unlike the run before its first fight (2 of 25 f32 saves, 2026-09-28). --resume reads them back.
+        const cp = [...checkpoints.values()].filter((c) => c.floor === o.floor).sort((a, b) => a.logs - b.logs || a.rooms - b.rooms)[0];
+        if (cp) fs.writeFileSync(`${file}.choices.json`, JSON.stringify({ choices: cp.choices, skippedCardsOn: cp.skippedCardsOn, cards: learntCards() }));
       }
     }
     let chosen: string;
@@ -957,6 +963,15 @@ async function runAll(values: Record<string, string | undefined>, policy: Policy
     roomSave = undefined;
     roomSaveFloor = -1;
     let resumeFrom = values.resume;
+    // A capture's sidecar: what the choices carried as the saved room began (older captures have none).
+    const side = resumeFrom !== undefined && fs.existsSync(`${resumeFrom}.choices.json`)
+      ? (JSON.parse(fs.readFileSync(`${resumeFrom}.choices.json`, "utf8")) as { choices: ChoiceState; skippedCardsOn: number; cards?: Record<string, Omit<CardObs, "index" | "can_play">> })
+      : undefined;
+    if (side) {
+      restoreChoiceState(side.choices);
+      skippedCardsOn = side.skippedCardsOn;
+      for (const [id, c] of Object.entries(side.cards ?? {})) learnCard(id, c);
+    }
     for (let attempt = 0; ; attempt++) {
       let game: Game | undefined;
       let again = false;

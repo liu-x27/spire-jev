@@ -1257,6 +1257,38 @@ states, and only a simulator is fast enough for that.
      on all 94: the set is deterministic. Leads: which claw and when to
      turn (the bot kills the Crusher first 19 of 26, the humans 23 / 26
      either way; Surrounded's back attacks), and the damage itself.
+     How near the 208 losses of the 307 came: the enemy HP left at the
+     last turn, median 201 of the Crab's 428, 128 of the Knowledge Demon's
+     399, 90 of the Insatiable's 341 (31 of its 66 losses within 80): the
+     Crab is the deck's test, not the play's. Potions: 392 of the 397 go on
+     turn 1 (potions2 by design; heals and block kept), every near loss had
+     drunk them all, and only 28 losses end within 40 HP: timing's ceiling
+     is 2-3 points. Neither gets a slot.
+   - **The step-by-step rhythm** (the user, 2026-09-28: an idea goes through
+     the offline replay, then only the saves it can change, then tens of
+     pairs, and a batch confirmation now and then). events2 (the analysis
+     session's branch, events by A10 players' choices) on the saves its
+     decisions reach (src/affected.ts on eval-conf2-look-a10): 27 f16 saves
+     to the act 2 boss, floor +0.04 ± 0.17, the boss 8 vs 9, HP there +3.7
+     ± 2.6; 25 f32 saves to the end, floor +0.32 ± 0.50, act 3's boss
+     reached 15 vs 13, beaten 1 vs 1. Neutral; its act 1 part waits for a
+     batch confirmation. **A bench from a capture is not the run's own
+     continuation**: C2 from those 25 f32 saves, the same code, matched the
+     run to the end in 15. Three chose otherwise on the capture floor itself
+     (1639 took a card the run skipped and lost the boss the run beat): the
+     resume came back without the choices' state (spar3's opening, the
+     upgrade or removal planned; restoreChoiceState ran only for a crash's
+     own checkpoints). Now a capture writes `<save>.choices.json`, that
+     floor's first checkpoint and the cards learnt, and --resume reads it:
+     on 4 fresh f32 captures every floor 32 choice and boss fight is the
+     run's own with it, 1639 and 1830 not without. The rest parted later
+     with the same choices and different rewards (1807's potions, 1770's
+     card offer): the game's own draws after a resume, beyond a sidecar. So
+     both arms play from the saves, always; a save played twice is the
+     same play (94 of 94). An eval's process plays a chunk of seeds and
+     resets none of the choices' state, the cards learnt or spar's caches
+     (their keys hold neither the opening nor which relics) between them:
+     a seed's first choices can hang on the seed before.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
