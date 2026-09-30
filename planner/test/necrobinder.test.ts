@@ -215,3 +215,16 @@ test("the observation: Osty from player_allies, and his state in the key", () =>
   const t = fromObservation({ ...obs, player_allies: [{ ...obs.player_allies![0]!, hp: 3 }] } as Observation);
   assert.notEqual(stateKey(s), stateKey(t));
 });
+
+test("banshee's cry and melancholy: their Energy is a cost cut, not energy; pull from below: a hit per Ethereal play", () => {
+  const cry = card("BANSHEES_CRY", "Attack", "AllEnemies", { Damage: 33, Energy: 2 }, 3);
+  const s = at(state([cry], 1, { energy: 3 }, [foe(40), foe(40, 2)]), 0);
+  assert.deepEqual([s.energy, hp(s, 0), hp(s, 1)], [0, 7, 7]);
+  const mel = card("MELANCHOLY", "Skill", "Self", { Block: 13, Energy: 1 }, 3);
+  const m = at(state([mel], 1), 0);
+  assert.deepEqual([m.energy, m.player.block], [0, 13]);
+  const pfb = card("PULL_FROM_BELOW", "Attack", "AnyEnemy", { Damage: 5, CalculationBase: 0, CalculationExtra: 1, CalculatedHits: 0 }, 1, { calc: { CalculatedHits: 2 } });
+  const fear = card("FEAR", "Attack", "AnyEnemy", { Damage: 7, VulnerablePower: 1 }, 1, { keywords: ["Ethereal"] });
+  const f = at(state([fear, pfb], 1), 0, 1);
+  assert.equal(hp(at(f, 0, 1)), 80 - 7 - Math.floor(5 * 1.5) * 3);
+});

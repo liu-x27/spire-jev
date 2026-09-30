@@ -545,7 +545,16 @@ const SPECIAL: Record<string, Rule> = {
   TRANSFIGURE: (s) => {
     s.exact = false;
   },
-  // Time's Up, Soul Storm: counts (below); Eradicate, Banshee's Cry, The Scythe: the core's own.
+  // Banshee's Cry, Melancholy: their Energy is what a play or a death takes off their cost, not energy.
+  BANSHEES_CRY: (s, c) => strike(s, alive(s), dmg(s, c), 1),
+  MELANCHOLY: (s, c) => gainBlock(s, blockGain(v(c, "Block"), s.player), true),
+  // Pull From Below: a hit for every Ethereal card played this fight (the card showed its count, and since).
+  PULL_FROM_BELOW: (s, c, t) => {
+    const x = necro(s);
+    const hits = (c.calc?.["CalculatedHits"] ?? x?.etherealBefore ?? 0) + (x?.ethereal ?? 0);
+    if (hits > 0) playerHit(s, t, dmg(s, c, t), hits);
+  },
+  // Time's Up, Soul Storm: counts (below); Eradicate, The Scythe: the core's own.
 };
 
 /**
