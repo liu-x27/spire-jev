@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { planTurn, planTurn2, TURN_WEIGHTS } from "../src/search.ts";
-import { type Card, type Enemy, play, type State } from "../src/sim.ts";
+import { type Card, type Enemy, hpLoss, play, type State } from "../src/sim.ts";
 import { nextTurn, seeded } from "../src/turn.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1, keywords: string[] = []): Card => ({
@@ -111,4 +111,21 @@ test("energy relics: Seal of Gold every turn, Pael's Flesh on turn 3, Art of War
   assert.equal(at(["PAELS_FLESH"], 2), 4);
   assert.equal(at(["ART_OF_WAR"], 1, 1), 3);
   assert.equal(at(["ART_OF_WAR"], 1, 0), 4);
+});
+
+test("ambergris: the enemies' turn does not happen — no hits, no Poison, their intents kept; a stack spent", () => {
+  const s: State = {
+    player: { hp: 30, maxHp: 80, block: 0, powers: { AMBERGRIS: 1 } },
+    energy: 0, hand: [], draw: [], discard: [], exhaust: [], drawn: 0, exact: true, lostHp: false, exhaustedThisTurn: false,
+    relics: [], played: 0, skills: 0, unmovableUsed: false, potions: [], potionSlots: 3, potionsUsed: 0, turn: 3,
+    enemies: [{ id: 1, model: "DUMMY", hp: 20, maxHp: 20, block: 5, alive: true, powers: { POISON: 3 }, weakAtStart: false, startStrength: 0, intents: [{ type: "Attack", damage: 16, hits: 1 }] }],
+  };
+  assert.equal(hpLoss(s), 0);
+  const n = nextTurn(s, seeded(1), () => [{ type: "Buff", damage: 0, hits: 0 }])!;
+  assert.equal(n.player.hp, 30);
+  assert.equal(n.player.powers["AMBERGRIS"] ?? 0, 0);
+  assert.equal(n.enemies[0]!.hp, 20);
+  assert.equal(n.enemies[0]!.block, 5);
+  assert.equal(n.enemies[0]!.powers["POISON"], 3);
+  assert.deepEqual(n.enemies[0]!.intents, [{ type: "Attack", damage: 16, hits: 1 }]);
 });

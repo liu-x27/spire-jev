@@ -160,6 +160,11 @@ export interface State {
    * after a mid-turn rebuild — 4 block and an energy too many after an attack).
    */
   attacksBefore?: number;
+  /**
+   * Every card played this turn before the observation, in order (the runner's own plays; cards a
+   * card played for free are not in it): the Silent's first Shiv of the turn (Phantom Blades).
+   */
+  playedBefore?: readonly { id: string; type: string }[];
   /** Attacks and skills Nostalgia has put on top of the draw pile this turn; that many top cards are known. */
   onTop?: number;
   /** The Bombs ticking on the player: turns to go (it goes off at the end of the turn it reaches 1) and damage. */
@@ -349,6 +354,7 @@ function clone(s: State): State {
     ...(s.hurt ? { hurt: s.hurt } : {}),
     ...(s.attacks ? { attacks: s.attacks } : {}),
     ...(s.attacksBefore ? { attacksBefore: s.attacksBefore } : {}),
+    ...(s.playedBefore ? { playedBefore: s.playedBefore } : {}),
     ...(s.onTop ? { onTop: s.onTop } : {}),
     ...(s.bombs ? { bombs: s.bombs.map((b) => ({ ...b })) } : {}),
     ...(s.ended ? { ended: true } : {}),
@@ -411,6 +417,10 @@ export function attackDamage(base: number, attacker: Unit, target: Unit, extra =
   if (has(target, "VULNERABLE")) {
     d *= powerVar(target, "VULNERABLE", "DamageIncrease", 1.5) + Math.max(0, attacker.powers["CRUELTY"] ?? 0) / 100 + (has(attacker, "PAPER_PHROG") ? 0.25 : 0);
   }
+  // Double Damage (the Silent's Shadow Step, the turn after; IL: DoubleDamagePower.ModifyDamageMultiplicative):
+  // an attack card's damage twice over. Tracking (IL: TrackingPower): ×(1 + amount/100) on a Weak target.
+  if (has(attacker, "DOUBLE_DAMAGE")) d *= 2;
+  if (has(attacker, "TRACKING") && has(target, "WEAK")) d *= 1 + (attacker.powers["TRACKING"] ?? 0) / 100;
   // Flutter (Thieving Hopper): attacks on it deal DamageDecrease percent less.
   if (has(target, "FLUTTER")) d *= 1 - powerVar(target, "FLUTTER", "DamageDecrease", 50) / 100;
   return Math.max(0, Math.floor(d));
@@ -544,12 +554,15 @@ export function setKnownDraws(on: boolean): void {
 
 export function draw(s: State, k: number): void {
   if (has(s.player, "NO_DRAW")) return;
+  let drawn = 0;
   for (let n = Math.min(k, HAND_LIMIT - s.hand.length - s.drawn); n > 0; n--) {
     const card = takeFromDraw(s);
-    if (!card) return;
+    if (!card) break;
     if (knownDraws) s.hand.push({ ...card, locked: false });
     else s.drawn++;
+    drawn++;
   }
+  if (drawn > 0) for (const f of rules().onDraw) f(s, drawn);
 }
 
 /** Some card off the draw pile, shuffling the discard pile in when it is empty. */
@@ -588,7 +601,9 @@ export function playable(s: State, card: Card): boolean {
 
 /** What playing it costs now: Free Attack (Unrelenting) makes the next attack free. */
 export function costOf(s: State, card: Card): number {
-  return card.type === "Attack" && has(s.player, "FREE_ATTACK") ? 0 : card.cost;
+  let cost = card.type === "Attack" && has(s.player, "FREE_ATTACK") ? 0 : card.cost;
+  for (const f of rules().cost) cost = f(s, card, cost);
+  return cost;
 }
 
 export function needsTarget(card: Card): boolean {
@@ -719,7 +734,8 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
 }
 
 /** Debuffs Artifact blocks, a stack each. */
-const DEBUFFS = new Set(["VULNERABLE", "WEAK", "FRAIL"]);
+/** Debuffs Artifact takes (IL: GetTypeForAmount Debuff): the Silent's Poison, Piercing Wail and Strangle too. */
+const DEBUFFS = new Set(["VULNERABLE", "WEAK", "FRAIL", "POISON", "PIERCING_WAIL", "STRANGLE"]);
 
 /**
  * Put `n` of `key` on `u`; false if Artifact blocked it (Cubex Construct:
@@ -727,6 +743,8 @@ const DEBUFFS = new Set(["VULNERABLE", "WEAK", "FRAIL"]);
  * while the player has Vicious draws that many cards.
  */
 export function applyPower(s: State, u: Unit, key: string, n: number): boolean {
+  // Snecko Skull (IL: ModifyPowerAmountGivenAdditive, before Artifact): every Poison the player gives, 1 more.
+  if (key === "POISON" && u !== s.player && s.relics.includes("SNECKO_SKULL")) n += relicVar(s, "SNECKO_SKULL", "PoisonPower", 1);
   const debuff = DEBUFFS.has(key) || (key === "STRENGTH" && n < 0);
   if (debuff && has(u, "ARTIFACT")) {
     addPower(u, "ARTIFACT", -1);
@@ -976,6 +994,7 @@ export function strike(s: State, victims: readonly Enemy[], base: number, times:
       // Slow (Bygone Effigy): 10% more for every card played this turn, this one not yet counted.
       const slow = has(e, "SLOW") ? 1 + (powerVar(e, "SLOW", "SlowAmount", 0) + s.played) / 10 : 1;
       const lost = hit(e, attackDamage(base, s.player, e, slow));
+      for (const f of rules().afterHit) f(s, e, lost);
       // Personal Hive (Entomancer; IL: PersonalHivePower.AfterDamageReceived): every hit of the
       // player's attacks on it puts its amount of Dazed into the draw pile, blocked or not.
       if (has(e, "PERSONAL_HIVE")) s.dazedAdded = (s.dazedAdded ?? 0) + (e.powers["PERSONAL_HIVE"] ?? 0);
@@ -1620,8 +1639,8 @@ export function autoPlay(s: State, card: Card): void {
   resolve(s, card, needsTarget(card) ? alive[0] : undefined, card.costsX ? energyX(s) : 0);
 }
 
-/** What a card does once it is paid for, and where it goes after. */
-function resolve(s: State, card: Card, target: Enemy | undefined, x: number): void {
+/** What a card does once it is paid for, and where it goes after (a card played for free: Knife Trap's Shivs). */
+export function resolve(s: State, card: Card, target: Enemy | undefined, x: number): void {
   // Juggling (IL: JugglingPower.BeforeCardPlayed): the turn's third attack goes into the hand again,
   // a copy for every stack; the bridge reports the attacks before the observation.
   if (card.type === "Attack") {
@@ -1670,6 +1689,17 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
       if (special) special(s, card, again, x);
       else standard(s, card, again, x);
     }
+  }
+  // A character's replays (characters/index.ts extraPlays: the Silent's Burst doubles a skill): at the
+  // same target, or none if that one died.
+  let extra = 0;
+  for (const f of rules().extraPlays) extra += f(s, card);
+  for (let i = 0; i < extra; i++) {
+    const again = target && !target.alive ? s.enemies.find((e) => e.alive) : target;
+    if (again !== target) s.exact = false;
+    if (needsTarget(card) && !again) break;
+    if (special) special(s, card, again, x);
+    else standard(s, card, again, x);
   }
   if (doubled) delete s.player.powers["PEN_NIB_DOUBLE"];
   // Rage: block for every attack played this turn, not changed by Dexterity or Frail.
@@ -1754,11 +1784,12 @@ function resolve(s: State, card: Card, target: Enemy | undefined, x: number): vo
   for (const f of rules().afterPlay) f(s, card, target);
 
   // Rampage (IL: Rampage.OnPlay): each play adds its Increase to its own Damage, for the combat.
-  const after = card.id === "RAMPAGE" ? { ...card, vars: { ...card.vars, Damage: (card.vars["Damage"] ?? 0) + (card.vars["Increase"] ?? 0) } }
+  let after = card.id === "RAMPAGE" ? { ...card, vars: { ...card.vars, Damage: (card.vars["Damage"] ?? 0) + (card.vars["Increase"] ?? 0) } }
     // Frantic Escape (IL: OnPlay, EnergyCost.AddThisCombat): each play costs it 1 more, for the combat.
     : card.id === "FRANTIC_ESCAPE" ? { ...card, cost: card.cost + 1 }
     // Bolas, Thrumming Hatchet (IL: BeforeHandDraw): played this turn, back in the hand before the next draw.
     : RETURNING.has(card.id) ? { ...card, returns: true } : card;
+  for (const f of rules().afterCard) after = f(s, after);
   if (card.type === "Power") {
     // In play for the rest of the combat; not in any pile.
   } else if (card.keywords.includes("Exhaust")) {
@@ -1851,8 +1882,16 @@ export function enemyTurnStart(s: State, e: Enemy, powers?: Record<string, numbe
   return lost;
 }
 
+/**
+ * Ambergris (IL: AmbergrisPower.ShouldTakeExtraTurn; CombatManager.SwitchFromPlayerToEnemySide,
+ * StartTurn): the player takes the next turn too, and the enemies' turn does not happen — no attack,
+ * no turn start (Poison, Sandpit), their block and intents as they are.
+ */
+export const extraTurn = (s: State): boolean => has(s.player, "AMBERGRIS");
+
 /** The hits of each enemy (s.enemies' order) at the end of this turn. */
 export function incomingHitsBy(s: State): number[][] {
+  if (extraTurn(s)) return s.enemies.map(() => []);
   const by: number[][] = [];
   for (const e of s.enemies) {
     const hits: number[] = [];
@@ -1865,7 +1904,9 @@ export function incomingHitsBy(s: State): number[][] {
     const weakened = !e.weakAtStart && has(e, "WEAK");
     const colossus = has(s.player, "COLOSSUS") && has(e, "VULNERABLE") && !(s.colossusAtStart && e.vulnerableAtStart)
       ? powerVar(s.player, "COLOSSUS", "DamageDecrease", 0.5) : 1;
-    const cut = (per: number) => Math.floor(Math.floor(weakened ? per * 0.75 : per) * colossus);
+    // Paper Krane (IL: ModifyWeakMultiplier): a Weak enemy's attacks on the player 0.60, not 0.75.
+    const weak = s.relics.includes("PAPER_KRANE") ? 0.6 : 0.75;
+    const cut = (per: number) => Math.floor(Math.floor(weakened ? per * weak : per) * colossus);
     if (!e.alive) {
       // A killed Waterfall Giant's DeathBlow, at the end of the turn after its stun.
       if (e.blowNow && (e.deathBlow ?? 0) > 0) hits.push(cut(e.deathBlow!));
@@ -1909,7 +1950,7 @@ export function endOfTurnBlock(s: State): number {
 export function hpLoss(s0: State): number {
   const s = endOfTurn(s0);
   // Sandpit (The Insatiable) devours the player when it runs out.
-  if (s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
+  if (!extraTurn(s) && s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
   const constrict = Math.max(0, s.player.powers["CONSTRICT"] ?? 0);
   // A status card left in hand that deals damage does it at the end of the turn, into block
   // (Infection, Burn, Aeonglass's Wither).
@@ -1957,7 +1998,7 @@ export function hpAfterTurn(s: State): { hp: number; revived?: Reviver } {
 }
 
 /** The Insatiable's Sandpit runs out this turn: it devours the player, and no relic or potion undoes that. */
-export const sandpitDevours = (s: State) => s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1);
+export const sandpitDevours = (s: State) => !extraTurn(s) && s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1);
 
 /** The second life a death at the end of this turn would use: none against Sandpit (research §2.1). */
 export function endOfTurnRevival(s: State): { by: Reviver; hp: number } | undefined {

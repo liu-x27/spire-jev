@@ -27,6 +27,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { character, characterOf, defaultLibrary, setCharacter } from "./character.ts";
+import { rules as characterRules } from "./characters/index.ts";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
@@ -238,7 +239,7 @@ function routine(obs: Observation, legal: LegalAction[], takeCards: boolean): st
  * from the hand, else its last card; the discard pile's first card; the best
  * card to upgrade.
  */
-function combatSelect(obs: Observation, legal: LegalAction[]): string {
+function combatSelect(obs: Observation, legal: LegalAction[], source?: string): string {
   const details = (obs.room?.details ?? {}) as { purpose?: string; cards?: CardObs[] };
   const cards = details.cards ?? [];
   const offers = legal.filter((a) => a.action_id.startsWith("choose_card_select:"));
@@ -251,7 +252,11 @@ function combatSelect(obs: Observation, legal: LegalAction[]): string {
   // first); Disintegration over Mind Rot (a card a turn) and over Waste Away (an energy a turn).
   const sloth = cards.findIndex((c) => c.card_id === "SLOTH");
   if (hasFlag("curse") && sloth >= 0 && cards.some((c) => c.card_id === "DISINTEGRATION")) return offers[Math.min(sloth, offers.length - 1)]!.action_id;
-  if (/^FromHand(ForDiscard)?$/.test(purpose)) {
+  // A character's own choice first (characters/index.ts combatSelect: the Silent's discards).
+  const own = characterRules().combatSelect.map((f) => f(source, purpose, cards.map((c) => ({ id: c.card_id, type: c.card_type, keywords: c.keywords ?? [] })))).find((x) => x !== undefined);
+  if (own !== undefined) {
+    i = own;
+  } else if (/^FromHand(ForDiscard)?$/.test(purpose)) {
     i = cards.length ? junkIndex(cards.map((c) => ({ id: c.card_id, type: c.card_type }))) : offers.length - 1;
   } else if (/Upgrade|ChooseACard|SimpleGrid|Bundle/.test(purpose)) {
     let best = -Infinity;
@@ -458,6 +463,7 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
   log.transitions = [];
   let attacksTurn = -1;
   let attacksThisTurn = 0;
+  let playedThisTurn: { id: string; type: string }[] = [];
   while (cur.observation.phase === "combat" && cur.observation.combat) {
     const obs = cur.observation;
     collect(obs);
@@ -468,8 +474,10 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
     if (obs.combat!.turn !== attacksTurn) {
       attacksTurn = obs.combat!.turn;
       attacksThisTurn = 0;
+      playedThisTurn = [];
     }
     s.attacksBefore = attacksThisTurn;
+    if (playedThisTurn.length > 0) s.playedBefore = playedThisTurn.slice();
     if (foreseen && obs.combat!.turn === foreseen.turn + 1) {
       log.transitionChecks++;
       for (const d of compareTurnStart(foreseen.state, s)) log.transitions.push({ turn: obs.combat!.turn, ...d });
@@ -549,10 +557,11 @@ export async function fight(game: Pick<Game, "step">, start: StepResult, policy:
       if (predicted) foreseen = { turn: obs.combat!.turn, state: predicted };
     }
     if (a.kind === "play" && s.hand[a.hand]?.type === "Attack") attacksThisTurn++;
+    if (a.kind === "play" && s.hand[a.hand]) playedThisTurn.push({ id: s.hand[a.hand]!.id, type: s.hand[a.hand]!.type });
     let next = await game.step(id);
     // A card that asks for a selection stops the step there; answer it and read the play's outcome after.
     for (let guard = 0; next.observation.phase === "card_select" && guard < 10; guard++) {
-      next = await game.step(combatSelect(next.observation, next.legal_actions));
+      next = await game.step(combatSelect(next.observation, next.legal_actions, a.kind === "play" ? s.hand[a.hand]?.id : undefined));
     }
     const after = next.observation;
     const inCombat = after.phase === "combat" && after.combat !== null;
