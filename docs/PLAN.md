@@ -1295,19 +1295,26 @@ states, and only a simulator is fast enough for that.
      - `smith2` (the winners' rest thresholds): 60 f16 saves to the act 2
        boss, the boss 12 vs 22 (+3/-13), HP there -22.9 ± 1.9 points, for
        1.25 more upgrades; 42 f32 saves (floor 32's smith or heal alone), the
-       boss 17 vs 21, HP -22.1 ± 1.9, act 3's boss reached 6 vs 12. Dropped.
+       boss 17 vs 21, HP -22.1 ± 1.9, act 3's boss reached 6 vs 12. Harmful.
      - `smithhuman` (upgrade what A10 players upgrade; which card, not
        whether): 60 f16 saves, the boss 18 vs 18 (5 / 5), HP +3.3 ± 2.1,
        the Skills and Powers upgraded by 33 +0.08 ± 0.11. Neutral.
      - `shoprm` (the shop's removal back): 60 f16 saves with an act 2
        shop, 0.48 fewer basic cards, the boss 11 vs 17 (+2/-8), HP -0.15 ±
-       1.30. Dropped; its curses-only form (SPIRE_JEV_RM_KEEP=99) waits.
+       1.30. Its curses-only form (SPIRE_JEV_RM_KEEP=99, set in queue88.sh;
+       the bench log records only shoprm): 38 of the 77 f16 saves it can
+       change against bench-c2full-f16, 0.87 fewer curses, the boss 5 vs 10
+       (+1/-6; act 2 finished -13.2 ± 6.7 points), 0.84 fewer other buys a
+       save: a removal takes the gold the buys had. The two together 3 vs
+       14 flips (p ~0.01): harmful.
      - `engval` (a Power's worth measured: the next turn planned with and
        without it over 8 shared draws, times the turns left): on P1's
        states (the boss alone; A = p1-boss-c, this commit's C2 play for
        play) the pack +Feel No Pain, Burning Pact, True Grit -3 Strikes
-       under C2 16 vs 15 won (46), engval on it 17 vs 16, HP left +0.88 ±
-       0.59, on the bot's own decks 19 vs 19, -0.27 ± 0.27 (60): C2 already
+       under C2 16 vs 15 won (46), engval on it 17 vs 16, HP at the end
+       (hpEnd, 0 dead) +0.97 ± 0.73 (review 8; the +0.88 first written took
+       the start less the HP lost), on the bot's own decks 19 vs 19, -0.27 ±
+       0.27 (60): C2 already
        plays Feel No Pain in 35 of those 46. On the replays' exact hallway
        and elite saves (554, acts 1-2): HP lost -0.38 ± 0.26 (better 36,
        worse 24, deaths 20 / 20, Powers a fight 0.32 -> 0.42; plays changed
@@ -1319,11 +1326,15 @@ states, and only a simulator is fast enough for that.
      That batch (c2early, seeds 1846-2045, 6a0a9e8, 200 runs, no errors):
      act 1's boss 159 / 193, act 2's 37 / 101, act 3's first 1 / 18, wins 0
      (the second confirmation's 78.8% / 17.9% again). Act 1 from its f4
-     saves against a bench of all of them (bench-c2full-f4): events2 dev
-     +3.91 ± 2.71 HP at the boss (20), check -2.35 ± 3.43, pooled +0.95 ±
-     2.19 (40, the boss 33 vs 31); smithhuman dev +1.93 ± 1.63 (26), check
-     -1.06 ± 1.22, pooled +0.49 ± 1.04 (50, 42 vs 41; the Skills and Powers
-     upgraded +0.46 ± 0.13). Both dropped, in every act. **99 of the 200 f4
+     saves against a bench of all of them (bench-c2full-f4), HP% at the
+     boss, 0 if not reached: events2 dev +3.91 ± 2.71 (20), check +7.08 ±
+     7.20 (20), pooled +5.50 ± 3.80 (40, the boss 33 vs 31): same-signed,
+     1.4 SE, undecided and stopped on budget (the -2.35 ± 3.43 first
+     written counted only the 18 pairs both at the boss, not JEV01906 and
+     JEV01916, which only the candidate brought there; review 8);
+     smithhuman dev +1.93 ± 1.63 (26), check -1.06 ± 1.22, pooled +0.49 ±
+     1.04 (50, 42 vs 41; the Skills and Powers upgraded +0.46 ± 0.13):
+     neutral. **99 of the 200 f4
      saves never resumed** (ECONNRESET on Staging11): each had a fight on
      floor 4, and a capture resumes at its floor's room, so into the fight;
      events, shops and rests resume. Capture act 1 at floor 1 (Neow), or
@@ -1347,17 +1358,39 @@ states, and only a simulator is fast enough for that.
      only src/replay-rewards.ts from it, b3981ea): spar's bouts planned with
      engval too, so a deck's Powers are worth what they do in the turns to
      come. Offline (replay-rewards on c2early, acts 1-2, 1 reward in 10:
-     200; C2 replayed as chosen 95%): 18 picks changed, Powers 9 to 1,
-     skips 4 to 1; spar5's score of a Power +2.21 ± 0.73 (73); 1.35 times the
+     200; C2 replayed as chosen 95%): 18 picks changed, a Power taken in 9
+     of them against 1 given up, a skip in 4 against 1 (Powers picked 20 ->
+     28 of 200); spar5's score of a Power +2.21 ± 0.73 (73); 1.35 times the
      CPU where it costs most (the Crab, the Insatiable). In the game, C2 +
      engval + sparengval from the 157 odd f16 saves to the act 2 boss, A =
      bench-c2full-f16 (3 of them replayed as A, play for play): HP% at the
      boss (0 if not reached) -0.01 ± 1.54; the boss reached 83 vs 81, beaten
      26 vs 30 (+9/-13); act 1's boss HP lost -0.12 ± 0.31. The mechanism is
-     all there: Powers in the deck at 33 +0.20 ± 0.05, played a hallway
-     fight 0.44 -> 0.70, rewards skipped 0.92 -> 0.83; no timeout (one
-     connection reset at a shop, resumed). Dropped, no check half: the
-     engine line (engval, then the deck) stops here.
+     all there: Powers in the deck at 33 +0.27 ± 0.08 on the 77 pairs both
+     at the boss (+0.20 on all 157, the early deaths' decks with them),
+     played a hallway fight 0.44 -> 0.70, rewards skipped 0.92 -> 0.83; no
+     timeout (one connection reset at a shop, resumed). Stopped on budget,
+     no check half (act 2 finished: a one-sided bound of about +2.4
+     points): the engine line (engval, then the deck) stops here.
+   - **Review 8** (Astra, 2026-09-30, the analysis session ran it; into
+     docs/ when the user says): the nine did not show the engine, the deck
+     or the driving worthless, only that small nudges read on distant,
+     noisy measures stay under the bar. Three labels, not "zero": undecided
+     (events2's act 1), stopped on budget (sparengval), harmful (smith2,
+     shoprm). Measures: a long continuation's primary is act 2 finished
+     over all starts (HP at the boss, 0 if not reached, missed 10 of the 22
+     boss flips), HP at the boss beside it; a bench's --stop-floor stops at
+     the first fight after one on or past that floor (run-fights: the last
+     logged fight's floor), so stop 34 plays act 3's first fight and
+     bench.ts's "reached floor 34" can read 0 when the boss was beaten:
+     take f17 / f33 from the fights themselves. Its next steps (the user's
+     to choose): fixed-state real forks at 60-90 of the bot's costliest act
+     2 boss and elite decisions, two structurally different candidates
+     each, the driving after fixed (no good candidate, or a good one not
+     chosen?); one more act 1 elite from f1 saves, both arms to act 2's end
+     (act 2 finished over all f1 starts); act 2 hallway potions (search.ts:
+     a 0.3 price whenever any enemy has 100+ max HP, so they go early),
+     f16 to act 2's end, 120-150 pairs, 0.3-0.5 more potions into the boss.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
