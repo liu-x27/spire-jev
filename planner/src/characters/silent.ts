@@ -169,23 +169,25 @@ function discarded(s: State, card: Card | undefined): void {
 /**
  * Discard `n` cards of the hand, as discardIndex picks them. With cards drawn this turn the model
  * does not know, one of those goes when the known hand has nothing it would rather lose (the real
- * choice is made seeing them). The Sly cards are returned, to be played once the effect is done.
+ * choice is made seeing them; the runner's discardIndex falls back on the hand's last card, which is
+ * the one just drawn); `unseen` is what the draw took off the pile, so the discard pile gets one of
+ * them. The Sly cards are returned, to be played once the effect is done.
  */
-function discardCards(s: State, n: number): Card[] {
+function discardCards(s: State, n: number, unseen: Card[] = []): Card[] {
   const sly: Card[] = [];
   for (let k = 0; k < n; k++) {
     if (s.hand.length === 0) {
       if (s.drawn <= 0) break;
       s.drawn--;
       s.exact = false;
-      discarded(s, undefined);
+      discarded(s, unseen.pop());
       continue;
     }
     const pick = s.hand[discardIndex(s.hand)]!;
     if (s.drawn > 0 && !isSly(pick) && !isJunk(pick)) {
       s.drawn--;
       s.exact = false;
-      discarded(s, undefined);
+      discarded(s, unseen.pop());
       continue;
     }
     s.hand.splice(s.hand.indexOf(pick), 1);
@@ -201,7 +203,15 @@ function playSly(s: State, sly: readonly Card[]): void {
 }
 
 /** Discard `n`, then play the Sly ones: a card's discard with nothing after it. */
-const discardThenSly = (s: State, n: number) => playSly(s, discardCards(s, n));
+const discardThenSly = (s: State, n: number, unseen: Card[] = []) => playSly(s, discardCards(s, n, unseen));
+
+/** Draw `n` as sim.ts draw does, and the cards it took off the pile unseen (the top ones, unless it reshuffled). */
+function drawUnseen(s: State, n: number): Card[] {
+  const top = s.draw.slice(-n).reverse();
+  const drawn = s.drawn;
+  draw(s, n);
+  return top.slice(0, s.drawn - drawn).reverse();
+}
 
 /** The whole hand, the cards not known yet with it. */
 const handSize = (s: State) => s.hand.length + s.drawn;
@@ -234,20 +244,13 @@ const special: Record<string, Rule> = {
     discardThenSly(s, 1);
   },
   // Draw, then one discarded.
-  ACROBATICS: (s, c) => {
-    draw(s, num(c, "Cards"));
-    discardThenSly(s, 1);
-  },
+  ACROBATICS: (s, c) => discardThenSly(s, 1, drawUnseen(s, num(c, "Cards"))),
   // Draw Cards, then as many discarded.
-  PREPARED: (s, c) => {
-    draw(s, num(c, "Cards"));
-    discardThenSly(s, num(c, "Cards"));
-  },
+  PREPARED: (s, c) => discardThenSly(s, num(c, "Cards"), drawUnseen(s, num(c, "Cards"))),
   // A hit, a draw, a discard.
   DAGGER_THROW: (s, c, t) => {
     strike(s, one(t), dmg(s, c, t), 1);
-    draw(s, 1);
-    discardThenSly(s, 1);
+    discardThenSly(s, 1, drawUnseen(s, 1));
   },
   // The whole hand discarded, then as many drawn, then its Sly cards played (IL: DiscardAndDraw).
   CALCULATED_GAMBLE: (s) => {

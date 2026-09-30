@@ -139,6 +139,14 @@ test("survivor with no Sly card: the card junkIndex gives up (a status first)", 
   for (const hand of [[STRIKE, DEFEND], [STRIKE, SLIMED], [DEFEND, STRIKE, DEFEND]]) assert.equal(discardIndex(hand), junkIndex(hand));
 });
 
+test("prepared: the card drawn unseen, discarded, goes to the discard pile with Prepared", () => {
+  const prepared = card("PREPARED", "Skill", "Self", { Cards: 1 }, 0);
+  const s = at(state([prepared, STRIKE, DEFEND], [foe(50)], { draw: [SLIMED, STRIKE] }), 0);
+  assert.equal(s.hand.length, 2);
+  assert.equal(s.drawn, 0);
+  assert.equal(s.discard.length, 2);
+});
+
 test("tingsha and tough bandages answer each card an effect discards", () => {
   const s = at(state([SURVIVOR, STRIKE], [foe(50)], { relics: ["TINGSHA", "TOUGH_BANDAGES"] }), 0);
   assert.equal(s.enemies[0]!.hp, 47);
