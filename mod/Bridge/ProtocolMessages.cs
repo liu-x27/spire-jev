@@ -136,6 +136,16 @@ public sealed class ObservationDto
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<AllyObservationDto>? PlayerAllies { get; set; }
 
+    // spire-jev: the Defect's orbs, front (the next evoked) first, and how many slots there are. Left
+    // out for a player with no slots and no orbs, so other characters' observations are unchanged.
+    [JsonPropertyName("player_orbs")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<OrbObservationDto>? PlayerOrbs { get; set; }
+
+    [JsonPropertyName("orb_slots")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? OrbSlots { get; set; }
+
     [JsonPropertyName("combat")]
     public CombatObservationDto? Combat { get; set; }
 
@@ -338,6 +348,23 @@ public sealed class AllyObservationDto
 
     [JsonPropertyName("power_vars")]
     public Dictionary<string, Dictionary<string, double>> PowerVars { get; set; } = new();
+}
+
+public sealed class OrbObservationDto
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = "";
+
+    /// <summary>PassiveVal and EvokeVal as the game has them now (Focus in).</summary>
+    [JsonPropertyName("passive")]
+    public double Passive { get; set; }
+
+    [JsonPropertyName("evoke")]
+    public double Evoke { get; set; }
+
+    /// <summary>The numbers the orb's own class keeps: a Dark orb's _evokeVal, a Glass orb's _passiveVal.</summary>
+    [JsonPropertyName("fields")]
+    public Dictionary<string, double> Fields { get; set; } = new();
 }
 
 public sealed class IntentObservationDto

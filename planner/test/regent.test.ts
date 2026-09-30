@@ -281,7 +281,9 @@ test("the Regent's potions: Star Potion's stars, King's Courage's Forge", () => 
 test("another character's fields on State.ext: the Regent's rules keep them and score as without them", () => {
   const plain = state([FALLING_STAR, STRIKE], 3);
   const shared = { ...plain, ext: { ...plain.ext, discards: 2, ostyHp: 5 } };
-  assert.equal(evaluate(shared), evaluate(plain));
+  // The others' own terms (the Necrobinder's Osty) move the score by what they move it without the Regent's stars.
+  const others = (s: State): State => ({ ...noExt(s), ext: { discards: 2, ostyHp: 5 } });
+  assert.equal(evaluate(shared) - evaluate(plain), evaluate(others(plain)) - evaluate(noExt(plain)));
   const a = at(shared, 0, 1);
   assert.equal(starsOf(a), 1);
   assert.equal((a.ext as Record<string, unknown>)["ostyHp"], 5);
