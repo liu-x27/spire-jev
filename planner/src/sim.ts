@@ -1663,6 +1663,10 @@ export function resolve(s: State, card: Card, target: Enemy | undefined, x: numb
   const special = SPECIAL[card.id] ?? rules().special[card.id];
   if (special) special(s, card, target, x);
   else standard(s, card, target, x);
+  // Vigor (IL: VigorPower.BeforeAttack marks the first attack command, AfterAttack spends it): the
+  // first play takes it, so One-Two Punch's and Spiral's replays below do not (the Regent session's
+  // check: a Spiral Strike at -2 Strength and 2 Vigor, 12 modelled, 10 in the game).
+  if (card.type === "Attack") delete s.player.powers["VIGOR"];
   // One-Two Punch (IL: OneTwoPunchPower.ModifyCardPlayCount): an attack played under it is played
   // again, a stack taken each time; at the same target, or none if that one died.
   if (card.type === "Attack" && (s.player.powers["ONE_TWO_PUNCH"] ?? 0) > 0) {
@@ -1704,7 +1708,6 @@ export function resolve(s: State, card: Card, target: Enemy | undefined, x: numb
   if (card.type === "Attack" && s.relics.includes("DAUGHTER_OF_THE_WIND")) gainBlock(s, s.relicVars?.["DAUGHTER_OF_THE_WIND"]?.["Block"] ?? 1);
   // Corrupted: the enchantment hurts whoever plays the card, through block.
   if (card.enchantment === "CORRUPTED") loseHp(s, card.enchantmentVars?.["_damageAmount"] ?? 2);
-  if (card.type === "Attack") delete s.player.powers["VIGOR"];
   // Vital Spark (Infested Prism): every skill played taints the player. Enrage (Test Subject): every
   // skill played gives it its amount in Strength (A10: 3; the replays, a Defend at a time).
   if (card.type === "Skill") {

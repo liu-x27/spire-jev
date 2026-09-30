@@ -1316,6 +1316,48 @@ states, and only a simulator is fast enough for that.
      events2's and smithhuman's changes are mostly act 1's, which f16 saves
      have settled: their "neutral" is acts 2-3's. The next whole-run batch
      captures 4, 8, 12, 16, 32, 47 (with sidecars) for act 1's.
+     That batch (c2early, seeds 1846-2045, 6a0a9e8, 200 runs, no errors):
+     act 1's boss 159 / 193, act 2's 37 / 101, act 3's first 1 / 18, wins 0
+     (the second confirmation's 78.8% / 17.9% again). Act 1 from its f4
+     saves against a bench of all of them (bench-c2full-f4): events2 dev
+     +3.91 ± 2.71 HP at the boss (20), check -2.35 ± 3.43, pooled +0.95 ±
+     2.19 (40, the boss 33 vs 31); smithhuman dev +1.93 ± 1.63 (26), check
+     -1.06 ± 1.22, pooled +0.49 ± 1.04 (50, 42 vs 41; the Skills and Powers
+     upgraded +0.46 ± 0.13). Both dropped, in every act. **99 of the 200 f4
+     saves never resumed** (ECONNRESET on Staging11): each had a fight on
+     floor 4, and a capture resumes at its floor's room, so into the fight;
+     events, shops and rests resume. Capture act 1 at floor 1 (Neow), or
+     resume fights on the replays' bridge (Replay2).
+   - **The character adaptations' plumbing** (char-plumbing, the Regent,
+     Silent and Necrobinder sessions' shared branch; 31 files, the veteran
+     profile with the other four at A10): e94aeb7 played the Ironclad's
+     C2 fight for fight as main on 18 saves (6 f4, 12 f16; 100 fights;
+     the profile's maps checked by the Silent session), merged. Then the
+     Regent session's find: Vigor was added to Spiral's and One-Two
+     Punch's replays too (VigorPower.AfterAttack spends it on the first
+     play; a Spiral Strike at -2 Strength and 2 Vigor, 12 modelled, 10 in
+     the game), now spent after the first play. Then 221fa1b (hooks),
+     b0edc12 (Ambergris: an extra turn, AmbergrisPower.ShouldTakeExtraTurn;
+     held in 76 of the baselines' 4,330 fights, drunk 28 times, always on
+     act 1's boss by potions2) and 7fac83f (the Silent's core), merged
+     (b4e8f8f) after 17 saves without Ambergris played fight for fight as
+     main; of 6 whose base drank it, 3 part at that fight (its turn's loss
+     now predicted 0, not 5) and 3 play alike.
+   - **sparengval** (the engval branch, 208769e; not in main: the user took
+     only src/replay-rewards.ts from it, b3981ea): spar's bouts planned with
+     engval too, so a deck's Powers are worth what they do in the turns to
+     come. Offline (replay-rewards on c2early, acts 1-2, 1 reward in 10:
+     200; C2 replayed as chosen 95%): 18 picks changed, Powers 9 to 1,
+     skips 4 to 1; spar5's score of a Power +2.21 ± 0.73 (73); 1.35 times the
+     CPU where it costs most (the Crab, the Insatiable). In the game, C2 +
+     engval + sparengval from the 157 odd f16 saves to the act 2 boss, A =
+     bench-c2full-f16 (3 of them replayed as A, play for play): HP% at the
+     boss (0 if not reached) -0.01 ± 1.54; the boss reached 83 vs 81, beaten
+     26 vs 30 (+9/-13); act 1's boss HP lost -0.12 ± 0.31. The mechanism is
+     all there: Powers in the deck at 33 +0.20 ± 0.05, played a hallway
+     fight 0.44 -> 0.70, rewards skipped 0.92 -> 0.83; no timeout (one
+     connection reset at a shop, resumed). Dropped, no check half: the
+     engine line (engval, then the deck) stops here.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
