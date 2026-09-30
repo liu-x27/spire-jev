@@ -667,6 +667,7 @@ interface Before {
 const beforePlays = new WeakMap<Card, Before>();
 
 export const NECROBINDER: CharacterRules = {
+  character: "NECROBINDER",
   special: SPECIAL,
   cards: CARDS,
   aoe: ["SOW", "NEGATIVE_PULSE", "DEATHBRINGER", "HIGH_FIVE", "BONE_SHARDS", "END_OF_DAYS", "BANSHEES_CRY"],

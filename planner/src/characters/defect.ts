@@ -1067,6 +1067,7 @@ const CARDS: Record<string, CardRow> = {
 
 export const DEFECT: CharacterRules = {
   ...DEFECT_RULES,
+  character: "DEFECT",
   cards: CARDS,
   aoe: ["SWEEPING_BEAM", "HYPERBEAM", "SHATTER"],
   multiHit: ["BARRAGE", "GUNK_UP", "REFRACT", "UPROAR", "FLAK_CANNON", "HELIX_DRILL"],

@@ -578,6 +578,7 @@ const SILENT_RULES: CharacterRules = {
  */
 export const SILENT: CharacterRules = {
   ...SILENT_RULES,
+  character: "SILENT",
   cards: {
     ABRASIVE: { tiers: "AAAA", pick: [54, 44, 50] }, // Elo +149, offered 213/124/18
     ACCELERANT: { tiers: "BBBB", pick: [34, 33, 26] }, // Elo +45, offered 456/266/165

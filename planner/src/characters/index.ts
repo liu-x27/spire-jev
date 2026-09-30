@@ -101,6 +101,10 @@ export interface CharacterRules {
    */
   combatSelect?(source: string | undefined, purpose: string, cards: readonly { id: string; type: string; keywords: readonly string[]; cost?: number }[]): number | undefined;
 
+  /**
+   * choices.ts's tables below are this character's preferences, read only while it plays (a card of its
+   * that another character holds plays by the rules above, but is chosen as that character would).
+   */
   /** choices.ts: the character's cards as CARDS rates the Ironclad's (tiers, pick %). */
   cards?: Record<string, CardRow>;
   /** choices.ts rules2's sets: always take, never take, AoE, multi-hit, damage. */
@@ -117,7 +121,7 @@ export interface CharacterRules {
    * over the table's (the Ironclad's): the Regent takes Touch of Orobas (Divine Right → Divine Destiny).
    */
   ancients?: Readonly<Record<string, { first?: readonly string[]; avoid?: readonly string[] }>>;
-  /** Whose rules these are: an Ancient's picks (ancients) are that character's alone, relic ids being everyone's. */
+  /** Whose rules these are: the choices' tables and an Ancient's picks are that character's alone. */
   character?: CharacterId;
 }
 
@@ -147,6 +151,14 @@ export interface Merged {
   soak: NonNullable<CharacterRules["soak"]>[];
   cloneExt: NonNullable<CharacterRules["cloneExt"]>[];
   keyExt: NonNullable<CharacterRules["keyExt"]>[];
+  /** Each character's choices' tables, by character: read for the one playing (choices.ts). */
+  tables: Partial<Record<CharacterId, ChoiceTables>>;
+  /** By "<character>:<Ancient's event id>": what that character takes first there, and avoids. */
+  ancients: Record<string, { first: string[]; avoid: string[] }>;
+}
+
+/** A character's choices' tables (choices.ts). */
+export interface ChoiceTables {
   cards: Record<string, CardRow>;
   always: Set<string>;
   never: Set<string>;
@@ -155,9 +167,10 @@ export interface Merged {
   damage: Set<string>;
   smithFirst: string[];
   smithLast: Set<string>;
-  /** By "<character>:<Ancient's event id>": what that character takes first there, and avoids. */
-  ancients: Record<string, { first: string[]; avoid: string[] }>;
 }
+const noTables = (): ChoiceTables => ({ cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set() });
+/** The tables of a character with none of its own (the Ironclad's are choices.ts's own). */
+export const NO_TABLES: ChoiceTables = noTables();
 
 let merged: Merged | undefined;
 
@@ -167,7 +180,7 @@ export function rules(): Merged {
   const m: Merged = {
     special: {}, counts: {}, potions: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], resultPile: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
     endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], soak: [], cloneExt: [], keyExt: [],
-    cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(), ancients: {},
+    tables: {}, ancients: {},
   };
   for (const r of all()) {
     for (const [id, f] of Object.entries(r.special ?? {})) {
@@ -176,13 +189,18 @@ export function rules(): Merged {
     }
     Object.assign(m.counts, r.counts ?? {});
     Object.assign(m.potions, r.potions ?? {});
-    Object.assign(m.cards, r.cards ?? {});
     for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "resultPile", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "soak", "cloneExt", "keyExt", "combatSelect"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
     }
-    for (const k of ["always", "never", "aoe", "multiHit", "damage", "smithLast"] as const) for (const id of r[k] ?? []) m[k].add(id);
-    m.smithFirst.push(...(r.smithFirst ?? []));
+    const tabled = r.cards || r.always || r.never || r.aoe || r.multiHit || r.damage || r.smithFirst || r.smithLast;
+    if (tabled && !r.character) throw new Error("characters: choices' tables with no character");
+    if (tabled) {
+      const t = (m.tables[r.character!] ??= noTables());
+      Object.assign(t.cards, r.cards ?? {});
+      for (const k of ["always", "never", "aoe", "multiHit", "damage", "smithLast"] as const) for (const id of r[k] ?? []) t[k].add(id);
+      t.smithFirst.push(...(r.smithFirst ?? []));
+    }
     for (const [id, a] of Object.entries(r.ancients ?? {})) {
       if (!r.character) throw new Error(`characters: an Ancient's picks (${id}) with no character`);
       const to = (m.ancients[`${r.character}:${id}`] ??= { first: [], avoid: [] });
