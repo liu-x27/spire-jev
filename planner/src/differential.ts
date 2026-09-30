@@ -8,6 +8,7 @@
  */
 
 import type { State } from "./sim.ts";
+import { orbKey } from "./characters/defect.ts";
 
 export interface Mismatch {
   card: string;
@@ -48,5 +49,11 @@ export function compare(card: string, predicted: State, actual: State): Mismatch
   if (predicted.drawn === 0) check("hand.size", predicted.hand.length, actual.hand.length);
   check("discard.size", predicted.discard.length, actual.discard.length);
   check("exhaust.size", predicted.exhaust.length, actual.exhaust.length);
+  // A character's ally (the Necrobinder's Osty: characters/necrobinder.ts), where the state has one.
+  const ally = (x: State) => (typeof x.ext?.["ostyHp"] === "number" ? `${x.ext["ostyHp"]}/${x.ext["ostyMax"]}` : undefined);
+  if (ally(actual) !== undefined) check("osty", ally(predicted) ?? "none", ally(actual)!);
+  // The Defect's orbs and slots (characters/defect.ts), where the state has them.
+  const orbs = orbKey(actual);
+  if (orbs !== undefined) check("orbs", orbKey(predicted) ?? "none", orbs);
   return out;
 }

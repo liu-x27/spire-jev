@@ -1,0 +1,1639 @@
+{
+ "source": "Spire Codex community run API (spire-codex.com), fetched 2026-09-29: /api/runs/scores/cards?stat_filter=a10_wr50&character=NECROBINDER&include_skip=true (wr50), /api/runs/metrics/cards?bracket=a10&character=NECROBINDER (winRate, n)",
+ "band": "A10",
+ "patch": "mixed builds (no patch filter applied)",
+ "notes": {
+  "wr50": "A10 runs of every character by uploaders with >=50% overall win rate (the scores endpoint ignores character=); elo = Codex Elo from pick-vs-alternative choices; SKIP elo 1571.3 (all characters), eloVsSkip < 0: good players would rather skip. A Necrobinder card's Elo comes almost only from Necrobinder runs (only she is offered it). Cards with fewer than 100 picks left out.",
+  "n": "Necrobinder A10 runs that picked the card",
+  "winRate": "win rate of those runs (survivorship-biased)",
+  "scope": "Codex's Elo is global (the character filter does not change it: Dominate's +275 is the Ironclad file's); kept: the Necrobinder's cards and every card not of another character's pool"
+ },
+ "baseline": {
+  "skipElo": 1571.3,
+  "a10WinRate": 25.7,
+  "a10Runs": 87268,
+  "a10Wins": 18037
+ },
+ "cards": {
+  "AFTERLIFE": {
+   "n": 17944,
+   "winRate": 27.9,
+   "wr50": {
+    "elo": 1379.0,
+    "eloVsSkip": -192.3,
+    "winRate": 69.4,
+    "n": 2153
+   }
+  },
+  "ALCHEMIZE": {
+   "n": 1221,
+   "winRate": 53.6,
+   "wr50": {
+    "elo": 1354.7,
+    "eloVsSkip": -216.6,
+    "winRate": 74.7,
+    "n": 672
+   }
+  },
+  "ANOINTED": {
+   "n": 328,
+   "winRate": 61.6,
+   "wr50": {
+    "elo": 1117.6,
+    "eloVsSkip": -453.7,
+    "winRate": 75.3,
+    "n": 174
+   }
+  },
+  "AUTOMATION": {
+   "n": 2667,
+   "winRate": 50.0,
+   "wr50": {
+    "elo": 1518.8,
+    "eloVsSkip": -52.5,
+    "winRate": 72.6,
+    "n": 1152
+   }
+  },
+  "BANSHEES_CRY": {
+   "n": 5240,
+   "winRate": 40.9,
+   "wr50": {
+    "elo": 1558.2,
+    "eloVsSkip": -13.1,
+    "winRate": 76.3,
+    "n": 653
+   }
+  },
+  "BEACON_OF_HOPE": {
+   "n": 2394,
+   "winRate": 68.2,
+   "wr50": {
+    "elo": 1588.3,
+    "eloVsSkip": 17.0,
+    "winRate": 86.1,
+    "n": 1542
+   }
+  },
+  "BEAT_DOWN": {
+   "n": 424,
+   "winRate": 55.0,
+   "wr50": {
+    "elo": 1164.5,
+    "eloVsSkip": -406.8,
+    "winRate": 72.3,
+    "n": 235
+   }
+  },
+  "BELIEVE_IN_YOU": {
+   "n": 3122,
+   "winRate": 46.3,
+   "wr50": {
+    "elo": 1510.3,
+    "eloVsSkip": -61.0,
+    "winRate": 69.0,
+    "n": 1268
+   }
+  },
+  "BLADE_SYMPHONY": {
+   "n": 1026,
+   "winRate": 63.4,
+   "wr50": {
+    "elo": 1664.2,
+    "eloVsSkip": 92.9,
+    "winRate": 75.5,
+    "n": 867
+   }
+  },
+  "BLAZE": {
+   "n": 575,
+   "winRate": 61.7,
+   "wr50": {
+    "elo": 1540.8,
+    "eloVsSkip": -30.5,
+    "winRate": 80.7,
+    "n": 596
+   }
+  },
+  "BLIGHT_STRIKE": {
+   "n": 10133,
+   "winRate": 20.6,
+   "wr50": {
+    "elo": 1235.8,
+    "eloVsSkip": -335.5,
+    "winRate": 60.5,
+    "n": 849
+   }
+  },
+  "BOLAS": {
+   "n": 535,
+   "winRate": 52.9,
+   "wr50": {
+    "elo": 1219.0,
+    "eloVsSkip": -352.3,
+    "winRate": 74.2,
+    "n": 325
+   }
+  },
+  "BONE_SHARDS": {
+   "n": 9768,
+   "winRate": 25.5,
+   "wr50": {
+    "elo": 1343.6,
+    "eloVsSkip": -227.7,
+    "winRate": 67.0,
+    "n": 797
+   }
+  },
+  "BORROWED_TIME": {
+   "n": 18553,
+   "winRate": 39.6,
+   "wr50": {
+    "elo": 1696.0,
+    "eloVsSkip": 124.7,
+    "winRate": 74.5,
+    "n": 2698
+   }
+  },
+  "BURY": {
+   "n": 4747,
+   "winRate": 33.5,
+   "wr50": {
+    "elo": 1278.9,
+    "eloVsSkip": -292.4,
+    "winRate": 73.8,
+    "n": 535
+   }
+  },
+  "CACOPHONY": {
+   "n": 1793,
+   "winRate": 52.5,
+   "wr50": {
+    "elo": 1746.5,
+    "eloVsSkip": 175.2,
+    "winRate": 82.4,
+    "n": 420
+   }
+  },
+  "CALAMITY": {
+   "n": 543,
+   "winRate": 57.8,
+   "wr50": {
+    "elo": 1206.0,
+    "eloVsSkip": -365.3,
+    "winRate": 84.1,
+    "n": 333
+   }
+  },
+  "CALCIFY": {
+   "n": 9143,
+   "winRate": 29.9,
+   "wr50": {
+    "elo": 1419.1,
+    "eloVsSkip": -152.2,
+    "winRate": 70.6,
+    "n": 1236
+   }
+  },
+  "CALL_OF_THE_VOID": {
+   "n": 8895,
+   "winRate": 42.9,
+   "wr50": {
+    "elo": 1774.1,
+    "eloVsSkip": 202.8,
+    "winRate": 76.3,
+    "n": 1424
+   }
+  },
+  "CAPTURE_SPIRIT": {
+   "n": 15622,
+   "winRate": 35.7,
+   "wr50": {
+    "elo": 1634.9,
+    "eloVsSkip": 63.6,
+    "winRate": 72.2,
+    "n": 2301
+   }
+  },
+  "CATASTROPHE": {
+   "n": 973,
+   "winRate": 47.6,
+   "wr50": {
+    "elo": 1285.1,
+    "eloVsSkip": -286.2,
+    "winRate": 74.5,
+    "n": 415
+   }
+  },
+  "CLEANSE": {
+   "n": 12291,
+   "winRate": 37.9,
+   "wr50": {
+    "elo": 1578.5,
+    "eloVsSkip": 7.2,
+    "winRate": 72.6,
+    "n": 2007
+   }
+  },
+  "CONCOCT": {
+   "n": 793,
+   "winRate": 53.6,
+   "wr50": {
+    "elo": 1553.5,
+    "eloVsSkip": -17.8,
+    "winRate": 73.0,
+    "n": 623
+   }
+  },
+  "CONSTELLATION": {
+   "n": 608,
+   "winRate": 53.3,
+   "wr50": {
+    "elo": 1511.8,
+    "eloVsSkip": -59.5,
+    "winRate": 69.7,
+    "n": 505
+   }
+  },
+  "COORDINATE": {
+   "n": 570,
+   "winRate": 42.1,
+   "wr50": {
+    "elo": 1180.8,
+    "eloVsSkip": -390.5,
+    "winRate": 64.8,
+    "n": 315
+   }
+  },
+  "COUNTDOWN": {
+   "n": 14102,
+   "winRate": 28.8,
+   "wr50": {
+    "elo": 1477.4,
+    "eloVsSkip": -93.9,
+    "winRate": 67.3,
+    "n": 1476
+   }
+  },
+  "DANSE_MACABRE": {
+   "n": 11305,
+   "winRate": 40.4,
+   "wr50": {
+    "elo": 1485.0,
+    "eloVsSkip": -86.3,
+    "winRate": 74.0,
+    "n": 1613
+   }
+  },
+  "DARK_SHACKLES": {
+   "n": 2916,
+   "winRate": 50.4,
+   "wr50": {
+    "elo": 1570.4,
+    "eloVsSkip": -0.9,
+    "winRate": 75.4,
+    "n": 1311
+   }
+  },
+  "DEATHBRINGER": {
+   "n": 16205,
+   "winRate": 30.2,
+   "wr50": {
+    "elo": 1535.3,
+    "eloVsSkip": -36.0,
+    "winRate": 70.5,
+    "n": 1555
+   }
+  },
+  "DEATHS_DOOR": {
+   "n": 11376,
+   "winRate": 31.9,
+   "wr50": {
+    "elo": 1474.9,
+    "eloVsSkip": -96.4,
+    "winRate": 70.5,
+    "n": 1151
+   }
+  },
+  "DEATH_MARCH": {
+   "n": 4619,
+   "winRate": 30.0,
+   "wr50": {
+    "elo": 1272.6,
+    "eloVsSkip": -298.7,
+    "winRate": 69.9,
+    "n": 482
+   }
+  },
+  "DEBILITATE": {
+   "n": 18890,
+   "winRate": 44.3,
+   "wr50": {
+    "elo": 1773.9,
+    "eloVsSkip": 202.6,
+    "winRate": 80.2,
+    "n": 3452
+   }
+  },
+  "DEFILE": {
+   "n": 11644,
+   "winRate": 22.4,
+   "wr50": {
+    "elo": 1226.4,
+    "eloVsSkip": -344.9,
+    "winRate": 63.9,
+    "n": 986
+   }
+  },
+  "DEFY": {
+   "n": 43694,
+   "winRate": 30.8,
+   "wr50": {
+    "elo": 1623.0,
+    "eloVsSkip": 51.7,
+    "winRate": 70.2,
+    "n": 5133
+   }
+  },
+  "DELAY": {
+   "n": 16542,
+   "winRate": 34.9,
+   "wr50": {
+    "elo": 1642.5,
+    "eloVsSkip": 71.2,
+    "winRate": 73.7,
+    "n": 2230
+   }
+  },
+  "DEMESNE": {
+   "n": 11919,
+   "winRate": 46.5,
+   "wr50": {
+    "elo": 1925.3,
+    "eloVsSkip": 354.0,
+    "winRate": 77.7,
+    "n": 1922
+   }
+  },
+  "DEVOUR_LIFE": {
+   "n": 5255,
+   "winRate": 36.7,
+   "wr50": {
+    "elo": 1596.5,
+    "eloVsSkip": 25.2,
+    "winRate": 77.2,
+    "n": 742
+   }
+  },
+  "DIRGE": {
+   "n": 15601,
+   "winRate": 36.9,
+   "wr50": {
+    "elo": 1622.7,
+    "eloVsSkip": 51.4,
+    "winRate": 74.4,
+    "n": 2129
+   }
+  },
+  "DISCOVERY": {
+   "n": 3101,
+   "winRate": 46.3,
+   "wr50": {
+    "elo": 1550.5,
+    "eloVsSkip": -20.8,
+    "winRate": 69.6,
+    "n": 1407
+   }
+  },
+  "DRAIN_POWER": {
+   "n": 13224,
+   "winRate": 23.0,
+   "wr50": {
+    "elo": 1287.7,
+    "eloVsSkip": -283.6,
+    "winRate": 64.1,
+    "n": 1469
+   }
+  },
+  "DRAMATIC_ENTRANCE": {
+   "n": 1402,
+   "winRate": 31.7,
+   "wr50": {
+    "elo": 1299.0,
+    "eloVsSkip": -272.3,
+    "winRate": 67.9,
+    "n": 449
+   }
+  },
+  "DREDGE": {
+   "n": 11167,
+   "winRate": 45.2,
+   "wr50": {
+    "elo": 1566.1,
+    "eloVsSkip": -5.2,
+    "winRate": 76.2,
+    "n": 1729
+   }
+  },
+  "EIDOLON": {
+   "n": 2302,
+   "winRate": 43.2,
+   "wr50": {
+    "elo": 1394.0,
+    "eloVsSkip": -177.3,
+    "winRate": 76.3,
+    "n": 354
+   }
+  },
+  "END_OF_DAYS": {
+   "n": 7243,
+   "winRate": 33.7,
+   "wr50": {
+    "elo": 1582.6,
+    "eloVsSkip": 11.3,
+    "winRate": 69.8,
+    "n": 786
+   }
+  },
+  "ENFEEBLING_TOUCH": {
+   "n": 24606,
+   "winRate": 38.7,
+   "wr50": {
+    "elo": 1845.3,
+    "eloVsSkip": 274.0,
+    "winRate": 76.1,
+    "n": 3587
+   }
+  },
+  "ENTROPY": {
+   "n": 954,
+   "winRate": 57.3,
+   "wr50": {
+    "elo": 1367.5,
+    "eloVsSkip": -203.8,
+    "winRate": 73.7,
+    "n": 638
+   }
+  },
+  "EQUILIBRIUM": {
+   "n": 1873,
+   "winRate": 45.3,
+   "wr50": {
+    "elo": 1397.5,
+    "eloVsSkip": -173.8,
+    "winRate": 71.0,
+    "n": 817
+   }
+  },
+  "ERADICATE": {
+   "n": 6206,
+   "winRate": 46.8,
+   "wr50": {
+    "elo": 1627.6,
+    "eloVsSkip": 56.3,
+    "winRate": 82.2,
+    "n": 926
+   }
+  },
+  "ETERNAL_ARMOR": {
+   "n": 808,
+   "winRate": 57.4,
+   "wr50": {
+    "elo": 1281.3,
+    "eloVsSkip": -290.0,
+    "winRate": 75.6,
+    "n": 426
+   }
+  },
+  "FADE": {
+   "n": 587,
+   "winRate": 51.4,
+   "wr50": {
+    "elo": 1415.4,
+    "eloVsSkip": -155.9,
+    "winRate": 79.6,
+    "n": 388
+   }
+  },
+  "FASTEN": {
+   "n": 3950,
+   "winRate": 38.2,
+   "wr50": {
+    "elo": 1562.7,
+    "eloVsSkip": -8.6,
+    "winRate": 68.2,
+    "n": 1477
+   }
+  },
+  "FEAR": {
+   "n": 19774,
+   "winRate": 29.5,
+   "wr50": {
+    "elo": 1401.6,
+    "eloVsSkip": -169.7,
+    "winRate": 69.8,
+    "n": 2351
+   }
+  },
+  "FETCH": {
+   "n": 13711,
+   "winRate": 32.9,
+   "wr50": {
+    "elo": 1549.5,
+    "eloVsSkip": -21.8,
+    "winRate": 69.6,
+    "n": 1649
+   }
+  },
+  "FINESSE": {
+   "n": 3486,
+   "winRate": 47.3,
+   "wr50": {
+    "elo": 1575.1,
+    "eloVsSkip": 3.8,
+    "winRate": 72.1,
+    "n": 1599
+   }
+  },
+  "FISTICUFFS": {
+   "n": 1562,
+   "winRate": 44.9,
+   "wr50": {
+    "elo": 1424.1,
+    "eloVsSkip": -147.2,
+    "winRate": 75.7,
+    "n": 789
+   }
+  },
+  "FLASH_OF_STEEL": {
+   "n": 2302,
+   "winRate": 46.0,
+   "wr50": {
+    "elo": 1521.2,
+    "eloVsSkip": -50.1,
+    "winRate": 75.3,
+    "n": 1181
+   }
+  },
+  "FLATTEN": {
+   "n": 14724,
+   "winRate": 24.2,
+   "wr50": {
+    "elo": 1322.4,
+    "eloVsSkip": -248.9,
+    "winRate": 65.0,
+    "n": 1567
+   }
+  },
+  "FRIENDSHIP": {
+   "n": 24191,
+   "winRate": 36.9,
+   "wr50": {
+    "elo": 1720.5,
+    "eloVsSkip": 149.2,
+    "winRate": 73.6,
+    "n": 3566
+   }
+  },
+  "GANG_UP": {
+   "n": 1684,
+   "winRate": 54.0,
+   "wr50": {
+    "elo": 1421.1,
+    "eloVsSkip": -150.2,
+    "winRate": 72.9,
+    "n": 1008
+   }
+  },
+  "GLIMPSE_BEYOND": {
+   "n": 4608,
+   "winRate": 52.1,
+   "wr50": {
+    "elo": 1795.4,
+    "eloVsSkip": 224.1,
+    "winRate": 82.9,
+    "n": 1208
+   }
+  },
+  "GOLD_AXE": {
+   "n": 1684,
+   "winRate": 59.7,
+   "wr50": {
+    "elo": 1504.3,
+    "eloVsSkip": -67.0,
+    "winRate": 73.7,
+    "n": 988
+   }
+  },
+  "GRAVEBLAST": {
+   "n": 20228,
+   "winRate": 37.6,
+   "wr50": {
+    "elo": 1480.3,
+    "eloVsSkip": -91.0,
+    "winRate": 74.3,
+    "n": 2996
+   }
+  },
+  "GRAVE_WARDEN": {
+   "n": 38725,
+   "winRate": 29.7,
+   "wr50": {
+    "elo": 1589.7,
+    "eloVsSkip": 18.4,
+    "winRate": 69.3,
+    "n": 4749
+   }
+  },
+  "HANG": {
+   "n": 7287,
+   "winRate": 39.3,
+   "wr50": {
+    "elo": 1698.8,
+    "eloVsSkip": 127.5,
+    "winRate": 74.0,
+    "n": 1053
+   }
+  },
+  "HAUNT": {
+   "n": 9851,
+   "winRate": 30.8,
+   "wr50": {
+    "elo": 1421.3,
+    "eloVsSkip": -150.0,
+    "winRate": 71.9,
+    "n": 1152
+   }
+  },
+  "HIBERNATE": {
+   "n": 997,
+   "winRate": 62.2,
+   "wr50": {
+    "elo": 1795.1,
+    "eloVsSkip": 223.8,
+    "winRate": 80.8,
+    "n": 876
+   }
+  },
+  "HIDDEN_GEM": {
+   "n": 4534,
+   "winRate": 53.6,
+   "wr50": {
+    "elo": 1597.6,
+    "eloVsSkip": 26.3,
+    "winRate": 76.5,
+    "n": 2147
+   }
+  },
+  "HIGH_FIVE": {
+   "n": 11728,
+   "winRate": 30.6,
+   "wr50": {
+    "elo": 1483.8,
+    "eloVsSkip": -87.5,
+    "winRate": 74.2,
+    "n": 1334
+   }
+  },
+  "HUDDLE_UP": {
+   "n": 1703,
+   "winRate": 55.8,
+   "wr50": {
+    "elo": 1452.7,
+    "eloVsSkip": -118.6,
+    "winRate": 76.9,
+    "n": 1016
+   }
+  },
+  "IMITATION_LEARNING": {
+   "n": 561,
+   "winRate": 55.3,
+   "wr50": {
+    "elo": 1850.9,
+    "eloVsSkip": 279.6,
+    "winRate": 73.0,
+    "n": 500
+   }
+  },
+  "IMPATIENCE": {
+   "n": 924,
+   "winRate": 51.8,
+   "wr50": {
+    "elo": 1284.9,
+    "eloVsSkip": -286.4,
+    "winRate": 72.8,
+    "n": 427
+   }
+  },
+  "INTERCEPT": {
+   "n": 409,
+   "winRate": 49.6,
+   "wr50": {
+    "elo": 1186.8,
+    "eloVsSkip": -384.5,
+    "winRate": 64.3,
+    "n": 255
+   }
+  },
+  "INVOKE": {
+   "n": 29732,
+   "winRate": 32.3,
+   "wr50": {
+    "elo": 1545.3,
+    "eloVsSkip": -26.0,
+    "winRate": 70.5,
+    "n": 4193
+   }
+  },
+  "JACKPOT": {
+   "n": 1437,
+   "winRate": 53.9,
+   "wr50": {
+    "elo": 1392.5,
+    "eloVsSkip": -178.8,
+    "winRate": 76.4,
+    "n": 793
+   }
+  },
+  "JACK_OF_ALL_TRADES": {
+   "n": 1040,
+   "winRate": 44.8,
+   "wr50": {
+    "elo": 1359.0,
+    "eloVsSkip": -212.3,
+    "winRate": 66.5,
+    "n": 510
+   }
+  },
+  "KNOCKDOWN": {
+   "n": 1000,
+   "winRate": 73.2,
+   "wr50": {
+    "elo": 1446.9,
+    "eloVsSkip": -124.4,
+    "winRate": 83.7,
+    "n": 743
+   }
+  },
+  "LEGION_OF_BONE": {
+   "n": 6635,
+   "winRate": 48.1,
+   "wr50": {
+    "elo": 1622.2,
+    "eloVsSkip": 50.9,
+    "winRate": 80.2,
+    "n": 1704
+   }
+  },
+  "LETHALITY": {
+   "n": 22591,
+   "winRate": 35.9,
+   "wr50": {
+    "elo": 1710.3,
+    "eloVsSkip": 139.0,
+    "winRate": 74.7,
+    "n": 3154
+   }
+  },
+  "LIFT": {
+   "n": 778,
+   "winRate": 40.0,
+   "wr50": {
+    "elo": 1226.6,
+    "eloVsSkip": -344.7,
+    "winRate": 69.1,
+    "n": 363
+   }
+  },
+  "MASTER_OF_STRATEGY": {
+   "n": 1666,
+   "winRate": 64.1,
+   "wr50": {
+    "elo": 1419.9,
+    "eloVsSkip": -151.4,
+    "winRate": 80.4,
+    "n": 948
+   }
+  },
+  "MAYHEM": {
+   "n": 1459,
+   "winRate": 54.6,
+   "wr50": {
+    "elo": 1387.1,
+    "eloVsSkip": -184.2,
+    "winRate": 76.7,
+    "n": 701
+   }
+  },
+  "MELANCHOLY": {
+   "n": 7654,
+   "winRate": 30.2,
+   "wr50": {
+    "elo": 1345.1,
+    "eloVsSkip": -226.2,
+    "winRate": 67.1,
+    "n": 721
+   }
+  },
+  "MIDNIGHT": {
+   "n": 837,
+   "winRate": 67.3,
+   "wr50": {
+    "elo": 1892.5,
+    "eloVsSkip": 321.2,
+    "winRate": 85.6,
+    "n": 674
+   }
+  },
+  "MIMIC": {
+   "n": 810,
+   "winRate": 60.5,
+   "wr50": {
+    "elo": 1349.7,
+    "eloVsSkip": -221.6,
+    "winRate": 80.9,
+    "n": 486
+   }
+  },
+  "MIND_BLAST": {
+   "n": 524,
+   "winRate": 42.6,
+   "wr50": {
+    "elo": 1204.8,
+    "eloVsSkip": -366.5,
+    "winRate": 70.9,
+    "n": 254
+   }
+  },
+  "MISERY": {
+   "n": 7401,
+   "winRate": 41.7,
+   "wr50": {
+    "elo": 1738.0,
+    "eloVsSkip": 166.7,
+    "winRate": 77.2,
+    "n": 1288
+   }
+  },
+  "NECRO_MASTERY": {
+   "n": 5539,
+   "winRate": 34.7,
+   "wr50": {
+    "elo": 1565.7,
+    "eloVsSkip": -5.6,
+    "winRate": 74.4,
+    "n": 742
+   }
+  },
+  "NEGATIVE_PULSE": {
+   "n": 26368,
+   "winRate": 23.7,
+   "wr50": {
+    "elo": 1441.4,
+    "eloVsSkip": -129.9,
+    "winRate": 62.4,
+    "n": 2373
+   }
+  },
+  "NEUROSURGE": {
+   "n": 9651,
+   "winRate": 49.3,
+   "wr50": {
+    "elo": 1827.4,
+    "eloVsSkip": 256.1,
+    "winRate": 79.5,
+    "n": 1603
+   }
+  },
+  "NOSTALGIA": {
+   "n": 1134,
+   "winRate": 57.8,
+   "wr50": {
+    "elo": 1378.4,
+    "eloVsSkip": -192.9,
+    "winRate": 75.0,
+    "n": 736
+   }
+  },
+  "NO_ESCAPE": {
+   "n": 14271,
+   "winRate": 31.3,
+   "wr50": {
+    "elo": 1593.3,
+    "eloVsSkip": 22.0,
+    "winRate": 67.2,
+    "n": 1638
+   }
+  },
+  "OBLIVION": {
+   "n": 6550,
+   "winRate": 39.5,
+   "wr50": {
+    "elo": 1602.9,
+    "eloVsSkip": 31.6,
+    "winRate": 76.1,
+    "n": 844
+   }
+  },
+  "OMNISLICE": {
+   "n": 1213,
+   "winRate": 32.8,
+   "wr50": {
+    "elo": 1296.0,
+    "eloVsSkip": -275.3,
+    "winRate": 67.6,
+    "n": 454
+   }
+  },
+  "ONE_FOR_ALL": {
+   "n": 349,
+   "winRate": 58.7,
+   "wr50": {
+    "elo": 1722.0,
+    "eloVsSkip": 150.7,
+    "winRate": 78.6,
+    "n": 322
+   }
+  },
+  "OUTRAGE": {
+   "n": 412,
+   "winRate": 48.8,
+   "wr50": {
+    "elo": 1399.9,
+    "eloVsSkip": -171.4,
+    "winRate": 80.1,
+    "n": 292
+   }
+  },
+  "PAGESTORM": {
+   "n": 9551,
+   "winRate": 43.1,
+   "wr50": {
+    "elo": 1420.9,
+    "eloVsSkip": -150.4,
+    "winRate": 78.6,
+    "n": 1329
+   }
+  },
+  "PANACHE": {
+   "n": 1565,
+   "winRate": 41.2,
+   "wr50": {
+    "elo": 1395.1,
+    "eloVsSkip": -176.2,
+    "winRate": 70.0,
+    "n": 601
+   }
+  },
+  "PANIC_BUTTON": {
+   "n": 563,
+   "winRate": 43.2,
+   "wr50": {
+    "elo": 1129.9,
+    "eloVsSkip": -441.4,
+    "winRate": 75.6,
+    "n": 238
+   }
+  },
+  "PARSE": {
+   "n": 8557,
+   "winRate": 42.8,
+   "wr50": {
+    "elo": 1495.1,
+    "eloVsSkip": -76.2,
+    "winRate": 76.5,
+    "n": 1381
+   }
+  },
+  "PLOT": {
+   "n": 740,
+   "winRate": 64.3,
+   "wr50": {
+    "elo": 1619.6,
+    "eloVsSkip": 48.3,
+    "winRate": 77.6,
+    "n": 754
+   }
+  },
+  "POKE": {
+   "n": 15060,
+   "winRate": 24.5,
+   "wr50": {
+    "elo": 1332.3,
+    "eloVsSkip": -239.0,
+    "winRate": 64.7,
+    "n": 1618
+   }
+  },
+  "PREP_TIME": {
+   "n": 1037,
+   "winRate": 41.8,
+   "wr50": {
+    "elo": 1295.1,
+    "eloVsSkip": -276.2,
+    "winRate": 70.4,
+    "n": 467
+   }
+  },
+  "PRODUCTION": {
+   "n": 3069,
+   "winRate": 48.4,
+   "wr50": {
+    "elo": 1530.0,
+    "eloVsSkip": -41.3,
+    "winRate": 70.9,
+    "n": 1352
+   }
+  },
+  "PROLONG": {
+   "n": 2071,
+   "winRate": 47.2,
+   "wr50": {
+    "elo": 1483.4,
+    "eloVsSkip": -87.9,
+    "winRate": 71.9,
+    "n": 1032
+   }
+  },
+  "PROWESS": {
+   "n": 2456,
+   "winRate": 42.2,
+   "wr50": {
+    "elo": 1487.3,
+    "eloVsSkip": -84.0,
+    "winRate": 72.8,
+    "n": 1170
+   }
+  },
+  "PULL_AGGRO": {
+   "n": 18872,
+   "winRate": 26.7,
+   "wr50": {
+    "elo": 1388.5,
+    "eloVsSkip": -182.8,
+    "winRate": 65.4,
+    "n": 2241
+   }
+  },
+  "PULL_FROM_BELOW": {
+   "n": 8037,
+   "winRate": 37.4,
+   "wr50": {
+    "elo": 1411.6,
+    "eloVsSkip": -159.7,
+    "winRate": 75.2,
+    "n": 954
+   }
+  },
+  "PURITY": {
+   "n": 1636,
+   "winRate": 53.4,
+   "wr50": {
+    "elo": 1425.8,
+    "eloVsSkip": -145.5,
+    "winRate": 71.6,
+    "n": 845
+   }
+  },
+  "PUTREFY": {
+   "n": 16556,
+   "winRate": 38.1,
+   "wr50": {
+    "elo": 1627.9,
+    "eloVsSkip": 56.6,
+    "winRate": 75.8,
+    "n": 2264
+   }
+  },
+  "RALLY": {
+   "n": 1246,
+   "winRate": 65.2,
+   "wr50": {
+    "elo": 1434.8,
+    "eloVsSkip": -136.5,
+    "winRate": 77.9,
+    "n": 757
+   }
+  },
+  "RATTLE": {
+   "n": 6784,
+   "winRate": 28.9,
+   "wr50": {
+    "elo": 1404.9,
+    "eloVsSkip": -166.4,
+    "winRate": 69.1,
+    "n": 919
+   }
+  },
+  "REANIMATE": {
+   "n": 7445,
+   "winRate": 42.6,
+   "wr50": {
+    "elo": 1718.8,
+    "eloVsSkip": 147.5,
+    "winRate": 80.6,
+    "n": 1236
+   }
+  },
+  "REAP": {
+   "n": 13400,
+   "winRate": 24.7,
+   "wr50": {
+    "elo": 1251.0,
+    "eloVsSkip": -320.3,
+    "winRate": 65.0,
+    "n": 1217
+   }
+  },
+  "REAPER_FORM": {
+   "n": 7527,
+   "winRate": 40.0,
+   "wr50": {
+    "elo": 1698.6,
+    "eloVsSkip": 127.3,
+    "winRate": 73.0,
+    "n": 1138
+   }
+  },
+  "REAVE": {
+   "n": 10064,
+   "winRate": 23.2,
+   "wr50": {
+    "elo": 1228.7,
+    "eloVsSkip": -342.6,
+    "winRate": 67.6,
+    "n": 974
+   }
+  },
+  "REND": {
+   "n": 334,
+   "winRate": 54.8,
+   "wr50": {
+    "elo": 1058.8,
+    "eloVsSkip": -512.5,
+    "winRate": 78.0,
+    "n": 132
+   }
+  },
+  "RESTLESSNESS": {
+   "n": 875,
+   "winRate": 48.0,
+   "wr50": {
+    "elo": 1265.7,
+    "eloVsSkip": -305.6,
+    "winRate": 66.0,
+    "n": 430
+   }
+  },
+  "RIGHT_HAND_HAND": {
+   "n": 7406,
+   "winRate": 30.3,
+   "wr50": {
+    "elo": 1419.1,
+    "eloVsSkip": -152.2,
+    "winRate": 69.3,
+    "n": 967
+   }
+  },
+  "ROLLING_BOULDER": {
+   "n": 982,
+   "winRate": 41.4,
+   "wr50": {
+    "elo": 1227.8,
+    "eloVsSkip": -343.5,
+    "winRate": 67.3,
+    "n": 333
+   }
+  },
+  "SACRIFICE": {
+   "n": 3127,
+   "winRate": 35.6,
+   "wr50": {
+    "elo": 1405.1,
+    "eloVsSkip": -166.2,
+    "winRate": 74.8,
+    "n": 412
+   }
+  },
+  "SALVO": {
+   "n": 488,
+   "winRate": 59.2,
+   "wr50": {
+    "elo": 1182.2,
+    "eloVsSkip": -389.1,
+    "winRate": 73.8,
+    "n": 263
+   }
+  },
+  "SCOURGE": {
+   "n": 18642,
+   "winRate": 27.2,
+   "wr50": {
+    "elo": 1380.0,
+    "eloVsSkip": -191.3,
+    "winRate": 63.9,
+    "n": 1879
+   }
+  },
+  "SCRAWL": {
+   "n": 750,
+   "winRate": 65.2,
+   "wr50": {
+    "elo": 1274.8,
+    "eloVsSkip": -296.5,
+    "winRate": 84.4,
+    "n": 442
+   }
+  },
+  "SCULPTING_STRIKE": {
+   "n": 10267,
+   "winRate": 30.5,
+   "wr50": {
+    "elo": 1288.6,
+    "eloVsSkip": -282.7,
+    "winRate": 65.7,
+    "n": 1369
+   }
+  },
+  "SEANCE": {
+   "n": 7441,
+   "winRate": 43.3,
+   "wr50": {
+    "elo": 1726.3,
+    "eloVsSkip": 155.0,
+    "winRate": 75.3,
+    "n": 1382
+   }
+  },
+  "SECRET_TECHNIQUE": {
+   "n": 916,
+   "winRate": 65.0,
+   "wr50": {
+    "elo": 1323.5,
+    "eloVsSkip": -247.8,
+    "winRate": 83.4,
+    "n": 555
+   }
+  },
+  "SECRET_WEAPON": {
+   "n": 575,
+   "winRate": 61.6,
+   "wr50": {
+    "elo": 1190.0,
+    "eloVsSkip": -381.3,
+    "winRate": 68.5,
+    "n": 289
+   }
+  },
+  "SEEKER_STRIKE": {
+   "n": 734,
+   "winRate": 46.5,
+   "wr50": {
+    "elo": 1204.3,
+    "eloVsSkip": -367.0,
+    "winRate": 73.2,
+    "n": 336
+   }
+  },
+  "SENTRY_MODE": {
+   "n": 5832,
+   "winRate": 36.7,
+   "wr50": {
+    "elo": 1620.5,
+    "eloVsSkip": 49.2,
+    "winRate": 74.7,
+    "n": 823
+   }
+  },
+  "SEVERANCE": {
+   "n": 8414,
+   "winRate": 31.5,
+   "wr50": {
+    "elo": 1398.8,
+    "eloVsSkip": -172.5,
+    "winRate": 70.0,
+    "n": 907
+   }
+  },
+  "SHARED_FATE": {
+   "n": 5355,
+   "winRate": 46.1,
+   "wr50": {
+    "elo": 1642.2,
+    "eloVsSkip": 70.9,
+    "winRate": 79.1,
+    "n": 932
+   }
+  },
+  "SHOCKWAVE": {
+   "n": 2543,
+   "winRate": 49.7,
+   "wr50": {
+    "elo": 1506.1,
+    "eloVsSkip": -65.2,
+    "winRate": 75.2,
+    "n": 1151
+   }
+  },
+  "SHROUD": {
+   "n": 10906,
+   "winRate": 33.4,
+   "wr50": {
+    "elo": 1454.3,
+    "eloVsSkip": -117.0,
+    "winRate": 69.9,
+    "n": 1207
+   }
+  },
+  "SIC_EM": {
+   "n": 7439,
+   "winRate": 28.7,
+   "wr50": {
+    "elo": 1413.4,
+    "eloVsSkip": -157.9,
+    "winRate": 68.2,
+    "n": 946
+   }
+  },
+  "SIDESTEP": {
+   "n": 731,
+   "winRate": 56.4,
+   "wr50": {
+    "elo": 1586.1,
+    "eloVsSkip": 14.8,
+    "winRate": 74.1,
+    "n": 607
+   }
+  },
+  "SLEIGHT_OF_FLESH": {
+   "n": 16080,
+   "winRate": 34.0,
+   "wr50": {
+    "elo": 1512.0,
+    "eloVsSkip": -59.3,
+    "winRate": 70.7,
+    "n": 1782
+   }
+  },
+  "SNAP": {
+   "n": 17376,
+   "winRate": 29.9,
+   "wr50": {
+    "elo": 1411.0,
+    "eloVsSkip": -160.3,
+    "winRate": 69.6,
+    "n": 2336
+   }
+  },
+  "SOULBOUND": {
+   "n": 2763,
+   "winRate": 45.7,
+   "wr50": {
+    "elo": 1526.8,
+    "eloVsSkip": -44.5,
+    "winRate": 82.3,
+    "n": 648
+   }
+  },
+  "SOUL_STORM": {
+   "n": 3922,
+   "winRate": 34.0,
+   "wr50": {
+    "elo": 1477.7,
+    "eloVsSkip": -93.6,
+    "winRate": 74.4,
+    "n": 547
+   }
+  },
+  "SOW": {
+   "n": 11378,
+   "winRate": 18.1,
+   "wr50": {
+    "elo": 1155.2,
+    "eloVsSkip": -416.1,
+    "winRate": 58.7,
+    "n": 738
+   }
+  },
+  "SPIRIT_OF_ASH": {
+   "n": 5806,
+   "winRate": 43.8,
+   "wr50": {
+    "elo": 1627.3,
+    "eloVsSkip": 56.0,
+    "winRate": 77.5,
+    "n": 946
+   }
+  },
+  "SPLASH": {
+   "n": 2691,
+   "winRate": 46.0,
+   "wr50": {
+    "elo": 1511.0,
+    "eloVsSkip": -60.3,
+    "winRate": 73.1,
+    "n": 1267
+   }
+  },
+  "SPUR": {
+   "n": 12602,
+   "winRate": 31.2,
+   "wr50": {
+    "elo": 1526.5,
+    "eloVsSkip": -44.8,
+    "winRate": 70.6,
+    "n": 1599
+   }
+  },
+  "SQUEEZE": {
+   "n": 4807,
+   "winRate": 36.2,
+   "wr50": {
+    "elo": 1525.3,
+    "eloVsSkip": -46.0,
+    "winRate": 72.1,
+    "n": 603
+   }
+  },
+  "STRATAGEM": {
+   "n": 1306,
+   "winRate": 51.5,
+   "wr50": {
+    "elo": 1404.4,
+    "eloVsSkip": -166.9,
+    "winRate": 74.3,
+    "n": 615
+   }
+  },
+  "TAG_TEAM": {
+   "n": 954,
+   "winRate": 48.6,
+   "wr50": {
+    "elo": 1227.4,
+    "eloVsSkip": -343.9,
+    "winRate": 72.6,
+    "n": 376
+   }
+  },
+  "THE_BALL": {
+   "n": 1399,
+   "winRate": 49.5,
+   "wr50": {
+    "elo": 1596.4,
+    "eloVsSkip": 25.1,
+    "winRate": 73.5,
+    "n": 761
+   }
+  },
+  "THE_BOMB": {
+   "n": 843,
+   "winRate": 28.5,
+   "wr50": {
+    "elo": 1120.0,
+    "eloVsSkip": -451.3,
+    "winRate": 54.8,
+    "n": 241
+   }
+  },
+  "THE_GAMBIT": {
+   "n": 338,
+   "winRate": 63.6,
+   "wr50": {
+    "elo": 1118.6,
+    "eloVsSkip": -452.7,
+    "winRate": 82.2,
+    "n": 135
+   }
+  },
+  "THE_SCYTHE": {
+   "n": 4259,
+   "winRate": 31.8,
+   "wr50": {
+    "elo": 1405.8,
+    "eloVsSkip": -165.5,
+    "winRate": 73.8,
+    "n": 497
+   }
+  },
+  "THINKING_AHEAD": {
+   "n": 1253,
+   "winRate": 49.3,
+   "wr50": {
+    "elo": 1382.3,
+    "eloVsSkip": -189.0,
+    "winRate": 71.1,
+    "n": 612
+   }
+  },
+  "THRUMMING_HATCHET": {
+   "n": 592,
+   "winRate": 36.8,
+   "wr50": {
+    "elo": 1163.9,
+    "eloVsSkip": -407.4,
+    "winRate": 66.1,
+    "n": 245
+   }
+  },
+  "TIMES_UP": {
+   "n": 4782,
+   "winRate": 41.0,
+   "wr50": {
+    "elo": 1539.7,
+    "eloVsSkip": -31.6,
+    "winRate": 72.3,
+    "n": 694
+   }
+  },
+  "TRANSFIGURE": {
+   "n": 8645,
+   "winRate": 43.9,
+   "wr50": {
+    "elo": 1785.3,
+    "eloVsSkip": 214.0,
+    "winRate": 77.3,
+    "n": 1533
+   }
+  },
+  "TUTOR": {
+   "n": 310,
+   "winRate": 60.0,
+   "wr50": {
+    "elo": 1659.0,
+    "eloVsSkip": 87.7,
+    "winRate": 77.5,
+    "n": 240
+   }
+  },
+  "ULTIMATE_DEFEND": {
+   "n": 3566,
+   "winRate": 41.3,
+   "wr50": {
+    "elo": 1394.9,
+    "eloVsSkip": -176.4,
+    "winRate": 70.6,
+    "n": 1433
+   }
+  },
+  "ULTIMATE_STRIKE": {
+   "n": 3196,
+   "winRate": 35.8,
+   "wr50": {
+    "elo": 1149.3,
+    "eloVsSkip": -422.0,
+    "winRate": 66.4,
+    "n": 981
+   }
+  },
+  "UNDEATH": {
+   "n": 6069,
+   "winRate": 37.0,
+   "wr50": {
+    "elo": 1593.4,
+    "eloVsSkip": 22.1,
+    "winRate": 75.2,
+    "n": 810
+   }
+  },
+  "UNDERWORLD": {
+   "n": 2183,
+   "winRate": 49.7,
+   "wr50": {
+    "elo": 1545.8,
+    "eloVsSkip": -25.5,
+    "winRate": 77.4,
+    "n": 593
+   }
+  },
+  "VEILPIERCER": {
+   "n": 7928,
+   "winRate": 31.4,
+   "wr50": {
+    "elo": 1395.0,
+    "eloVsSkip": -176.3,
+    "winRate": 70.3,
+    "n": 910
+   }
+  },
+  "VOLLEY": {
+   "n": 774,
+   "winRate": 38.6,
+   "wr50": {
+    "elo": 1166.4,
+    "eloVsSkip": -404.9,
+    "winRate": 59.3,
+    "n": 226
+   }
+  },
+  "WISP": {
+   "n": 24665,
+   "winRate": 31.7,
+   "wr50": {
+    "elo": 1480.1,
+    "eloVsSkip": -91.2,
+    "winRate": 69.3,
+    "n": 3127
+   }
+  }
+ }
+}

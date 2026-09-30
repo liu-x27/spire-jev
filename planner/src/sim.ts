@@ -47,6 +47,10 @@ export interface Card {
   fullCost?: number;
   /** Played this turn and back in the hand before the next draw (Bolas, Thrumming Hatchet). */
   returns?: boolean;
+  /** The Regent's star cost now (the bridge's current_star_cost); absent for a card without one. */
+  starCost?: number;
+  /** An X star cost (Stardust): every star there is. */
+  starX?: boolean;
 }
 
 export interface Unit {
@@ -232,6 +236,7 @@ export function cardOf(c: CardObs, energy?: number): Card {
     ...(c.enchantment_vars && Object.keys(c.enchantment_vars).length > 0 ? { enchantmentVars: c.enchantment_vars } : {}),
     ...(c.fields && Object.keys(c.fields).length > 0 ? { fields: c.fields } : {}),
     ...(c.affliction === "BOUND" ? { bound: true } : {}),
+    ...(c.star_cost_x ? { starX: true } : (c.current_star_cost ?? c.star_cost ?? -1) >= 0 ? { starCost: c.current_star_cost ?? c.star_cost ?? 0 } : {}),
   };
 }
 
@@ -409,13 +414,20 @@ export function attackDamage(base: number, attacker: Unit, target: Unit, extra =
   // Pen Nib's tenth attack (resolve sets PEN_NIB_DOUBLE while it resolves): double.
   if (has(attacker, "PEN_NIB_DOUBLE")) d *= 2;
   if (has(attacker, "WEAK")) d *= 0.75;
+  // Lethality (IL: LethalityPower.ModifyDamageMultiplicative): all the powered damage of the turn's
+  // first attack card, Osty's too, Amount percent more (characters/necrobinder.ts: LETHAL_NOW while it resolves).
+  if (has(attacker, "LETHAL_NOW")) d *= 1 + attacker.powers["LETHAL_NOW"]! / 100;
+  // Hang (IL: HangPower.ModifyDamageMultiplicative): a Hang card's damage times the target's Hang (HANG_NOW while one resolves).
+  if (has(attacker, "HANG_NOW") && has(target, "HANG")) d *= target.powers["HANG"]!;
   // Shrink (Shrinker Beetle): the owner's attacks deal DamageDecrease percent less.
   if (present(attacker, "SHRINK")) d *= 1 - powerVar(attacker, "SHRINK", "DamageDecrease", 30) / 100;
   // Cruelty (IL: CrueltyPower.ModifyVulnerableMultiplier): the owner's attacks add Amount/100 to
   // Vulnerable's multiplier, 1.5 to 1.75.
   // Paper Phrog (IL: PaperPhrog.ModifyVulnerableMultiplier): the owner's attacks 0.25 more.
   if (has(target, "VULNERABLE")) {
-    d *= powerVar(target, "VULNERABLE", "DamageIncrease", 1.5) + Math.max(0, attacker.powers["CRUELTY"] ?? 0) / 100 + (has(attacker, "PAPER_PHROG") ? 0.25 : 0);
+    const m = powerVar(target, "VULNERABLE", "DamageIncrease", 1.5) + Math.max(0, attacker.powers["CRUELTY"] ?? 0) / 100 + (has(attacker, "PAPER_PHROG") ? 0.25 : 0);
+    // Debilitate (IL: DebilitatePower.ModifyVulnerableMultiplier): m + (m - 1), 1.5 to 2.
+    d *= has(target, "DEBILITATE") ? 2 * m - 1 : m;
   }
   // Double Damage (the Silent's Shadow Step, the turn after; IL: DoubleDamagePower.ModifyDamageMultiplicative):
   // an attack card's damage twice over. Tracking (IL: TrackingPower): ×(1 + amount/100) on a Weak target.
@@ -499,25 +511,32 @@ export function hit(target: Enemy, damage: number): number {
     target.intents = [{ type: "Stun", damage: 0, hits: 0 }];
     target.move = "STUNNED";
   }
-  if (target.hp <= 0) {
-    target.hp = 0;
-    target.alive = false;
-    // Stunned for the rest of this turn and the enemies' turn, then its DeathBlow.
-    if (target.model === "WATERFALL_GIANT") {
-      target.deathBlow = Math.max(0, target.powers["STEAM_ERUPTION"] ?? 0);
-      target.blowNow = false;
-    }
-    // A Test Subject in its first or second form respawns on the enemies' turn: every power but
-    // Adaptable and Painful Stabs is stripped (Enrage and its Strength, the player's debuffs), and
-    // the move it showed becomes the Respawn, which does no damage.
-    if (target.model === "TEST_SUBJECT" && has(target, "ADAPTABLE")) {
-      target.revive = nextForm(target.maxHp);
-      for (const p of Object.keys(target.powers)) if (p !== "ADAPTABLE" && p !== "PAINFUL_STABS") delete target.powers[p];
-      target.intents = [{ type: "Heal", damage: 0, hits: 0 }, { type: "Buff", damage: 0, hits: 0 }];
-      target.move = "RESPAWN_MOVE";
-    }
-  }
+  if (target.hp <= 0) downed(target);
   return lost;
+}
+
+/**
+ * An enemy brought to 0 HP, by a hit or by Doom (IL: CreatureCmd.Kill runs the same death handling):
+ * dead, or in the state its powers keep it in (the Waterfall Giant's blow to come, a Test Subject's
+ * next form). died() is the rest of the death.
+ */
+export function downed(target: Enemy): void {
+  target.hp = 0;
+  target.alive = false;
+  // Stunned for the rest of this turn and the enemies' turn, then its DeathBlow.
+  if (target.model === "WATERFALL_GIANT") {
+    target.deathBlow = Math.max(0, target.powers["STEAM_ERUPTION"] ?? 0);
+    target.blowNow = false;
+  }
+  // A Test Subject in its first or second form respawns on the enemies' turn: every power but
+  // Adaptable and Painful Stabs is stripped (Enrage and its Strength, the player's debuffs), and
+  // the move it showed becomes the Respawn, which does no damage.
+  if (target.model === "TEST_SUBJECT" && has(target, "ADAPTABLE")) {
+    target.revive = nextForm(target.maxHp);
+    for (const p of Object.keys(target.powers)) if (p !== "ADAPTABLE" && p !== "PAINFUL_STABS") delete target.powers[p];
+    target.intents = [{ type: "Heal", damage: 0, hits: 0 }, { type: "Buff", damage: 0, hits: 0 }];
+    target.move = "RESPAWN_MOVE";
+  }
 }
 
 /** The most cards a hand holds; a draw past it does not happen. */
@@ -675,7 +694,7 @@ const POTION_VARS = /^(Damage|Block|Energy|Cards|Heal|HpLoss|Repeat|\w+Power)$/;
 /** A potion the model can drink in a fight: one whose every number it understands. */
 export function drinkable(p: Potion): boolean {
   if (/OutOfCombat|Automatic|None/i.test(p.usage)) return false;
-  if (POTION_SPECIAL[p.id]) return true;
+  if (POTION_SPECIAL[p.id] || rules().potions[p.id]) return true;
   const names = Object.keys(p.vars);
   return names.length > 0 && names.every((n) => POTION_VARS.test(n));
 }
@@ -700,7 +719,7 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
     addPower(s.player, "STRENGTH", n);
     addPower(s.player, "REPTILE_TRINKET", n);
   }
-  const special = POTION_SPECIAL[p.id];
+  const special = POTION_SPECIAL[p.id] ?? rules().potions[p.id];
   if (special) {
     special(s, v["Cards"] ?? Object.values(v)[0] ?? 0);
     return s;
@@ -984,8 +1003,12 @@ export function died(s: State, e: Enemy): void {
   if (alive.length > 0 && alive.every((o) => has(o, "MINION"))) for (const o of alive) o.alive = false;
 }
 
-/** Each living victim, `times` times over. */
-export function strike(s: State, victims: readonly Enemy[], base: number, times: number): void {
+/**
+ * Each living victim, `times` times over. `attacker`: whose powers the damage takes (the Necrobinder's
+ * Osty deals his own attacks: not the player's Strength or Weak); `thornsTo`: where a Thorns victim's
+ * damage goes back, if not to the player.
+ */
+export function strike(s: State, victims: readonly Enemy[], base: number, times: number, attacker: Unit = s.player, thornsTo?: (s: State, e: Enemy) => void): void {
   const curling = new Map<Enemy, number>();
   const skittish = new Set<Enemy>();
   for (let r = 0; r < times; r++) {
@@ -993,7 +1016,7 @@ export function strike(s: State, victims: readonly Enemy[], base: number, times:
       if (!e.alive) continue;
       // Slow (Bygone Effigy): 10% more for every card played this turn, this one not yet counted.
       const slow = has(e, "SLOW") ? 1 + (powerVar(e, "SLOW", "SlowAmount", 0) + s.played) / 10 : 1;
-      const lost = hit(e, attackDamage(base, s.player, e, slow));
+      const lost = hit(e, attackDamage(base, attacker, e, slow));
       for (const f of rules().afterHit) f(s, e, lost);
       // Personal Hive (Entomancer; IL: PersonalHivePower.AfterDamageReceived): every hit of the
       // player's attacks on it puts its amount of Dazed into the draw pile, blocked or not.
@@ -1002,7 +1025,8 @@ export function strike(s: State, victims: readonly Enemy[], base: number, times:
       // not): the first hit curls it up, for block once the card is done.
       if (has(e, "CURL_UP")) curling.set(e, e.powers["CURL_UP"] ?? 0);
       if (lost > 0 && has(e, "SKITTISH") && !e.skittishUsed) skittish.add(e);
-      thorns(s, e);
+      if (thornsTo) thornsTo(s, e);
+      else thorns(s, e);
       // Flutter (Thieving Hopper; IL: FlutterPower.AfterDamageReceived): a stack off for every hit that
       // takes HP (every hit, before), and the last one stuns it — the move it showed does not come.
       if (lost > 0 && has(e, "FLUTTER")) {
@@ -1800,7 +1824,15 @@ export function resolve(s: State, card: Card, target: Enemy | undefined, x: numb
     s.onTop = (s.onTop ?? 0) + 1;
     s.draw.push(after);
   } else {
-    s.discard.push(after);
+    // A character's card that goes elsewhere (characters/index.ts resultPile): back into the hand, or
+    // onto the draw pile, known on top as Nostalgia's are.
+    let to: "hand" | "top" | undefined;
+    for (const f of rules().resultPile) to ??= f(s, after);
+    if (to === "hand" && s.hand.length + s.drawn < HAND_LIMIT) s.hand.push(after);
+    else if (to === "top") {
+      s.onTop = (s.onTop ?? 0) + 1;
+      s.draw.push(after);
+    } else s.discard.push(after);
   }
 }
 
@@ -1947,7 +1979,7 @@ export function endOfTurnBlock(s: State): number {
  * HP the end of the turn takes. Constrict (Slithering Strangler) hits the
  * player at the end of the turn and block takes it like an attack.
  */
-export function hpLoss(s0: State): number {
+export function hpLoss(s0: State, soak?: Soak): number {
   const s = endOfTurn(s0);
   // Sandpit (The Insatiable) devours the player when it runs out.
   if (!extraTurn(s) && s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
@@ -1965,21 +1997,40 @@ export function hpLoss(s0: State): number {
   const rod = rodCut(s);
   // The Gambit: an attack's damage past block is death (the end of the turn's own damage takes block first).
   if (has(s.player, "THE_GAMBIT") && incomingDamage(s) > Math.max(0, endOfTurnBlock(s) - constrict - statuses - disintegration)) return s.player.hp;
-  if (rod <= 0) return Math.max(0, incomingDamage(s) + constrict + statuses + disintegration - endOfTurnBlock(s)) + mantle + beckons;
+  const ally = soak ?? soakOf(s);
+  if (rod <= 0 && !ally) return Math.max(0, incomingDamage(s) + constrict + statuses + disintegration - endOfTurnBlock(s)) + mantle + beckons;
   // Tungsten Rod takes its amount off every hit that gets past block, so the hits go one at a time:
-  // the end of the turn's own damage into block first, then the enemies'.
+  // the end of the turn's own damage into block first, then the enemies'. An ally in front (Osty)
+  // takes an attack's hit past block before the player, and Tungsten Rod cuts what gets through
+  // (IL: CreatureCmd.Damage, ModifyHpLostAfterOsty); the turn's own damage is not an attack.
   let block = endOfTurnBlock(s);
   let lost = 0;
   const statusHits = s.hand.map((c) => (c.type === "Status" ? c.vars["Damage"] ?? 0 : 0));
   const beckonHits = s.hand.map((c) => (c.id === "BECKON" ? c.vars["HpLoss"] ?? 6 : 0));
-  for (const n of [...statusHits, disintegration, constrict, ...incomingHits(s)]) {
-    if (n <= 0) continue;
+  const own = statusHits.length + 2;
+  [...statusHits, disintegration, constrict, ...incomingHits(s)].forEach((n, i) => {
+    if (n <= 0) return;
     const absorbed = Math.min(block, n);
     block -= absorbed;
-    lost += Math.max(0, n - absorbed - rod);
-  }
+    const past = i >= own && ally ? ally(n - absorbed) : n - absorbed;
+    lost += Math.max(0, past - rod);
+  });
   for (const n of [mantle, ...beckonHits]) if (n > 0) lost += Math.max(0, n - rod);
   return lost;
+}
+
+/**
+ * An ally that takes the unblocked part of each enemy attack hit before the player (the
+ * Necrobinder's Osty): given the hit past block, what gets through to the player.
+ */
+export type Soak = (pastBlock: number) => number;
+/** The characters' ally for this turn's hits, if one stands in front (characters/index.ts soak). */
+function soakOf(s: State): Soak | undefined {
+  for (const f of rules().soak) {
+    const g = f(s);
+    if (g) return g;
+  }
+  return undefined;
 }
 
 /**

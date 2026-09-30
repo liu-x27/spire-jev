@@ -28,6 +28,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { character, characterOf, defaultLibrary, setCharacter } from "./character.ts";
 import { rules as characterRules } from "./characters/index.ts";
+import { orbKey } from "./characters/defect.ts";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
@@ -253,7 +254,7 @@ function combatSelect(obs: Observation, legal: LegalAction[], source?: string): 
   const sloth = cards.findIndex((c) => c.card_id === "SLOTH");
   if (hasFlag("curse") && sloth >= 0 && cards.some((c) => c.card_id === "DISINTEGRATION")) return offers[Math.min(sloth, offers.length - 1)]!.action_id;
   // A character's own choice first (characters/index.ts combatSelect: the Silent's discards).
-  const own = characterRules().combatSelect.map((f) => f(source, purpose, cards.map((c) => ({ id: c.card_id, type: c.card_type, keywords: c.keywords ?? [] })))).find((x) => x !== undefined);
+  const own = characterRules().combatSelect.map((f) => f(source, purpose, cards.map((c) => ({ id: c.card_id, type: c.card_type, keywords: c.keywords ?? [], cost: c.current_cost })))).find((x) => x !== undefined);
   if (own !== undefined) {
     i = own;
   } else if (/^FromHand(ForDiscard)?$/.test(purpose)) {
@@ -626,6 +627,11 @@ function compareTurnStart(p: State, a: State): { field: string; predicted: strin
   check("energy", p.energy, a.energy);
   check("hand.size", p.hand.length, a.hand.length);
   check("player.powers", powers(p.player.powers), powers(a.player.powers));
+  // The Necrobinder's Osty after the enemies' turn and the turn's start (characters/necrobinder.ts).
+  if (typeof a.ext?.["ostyHp"] === "number") check("osty", `${p.ext?.["ostyHp"]}/${p.ext?.["ostyMax"]}`, `${a.ext["ostyHp"]}/${a.ext["ostyMax"]}`);
+  // The Defect's orbs after the enemies' turn and the turn's start (characters/defect.ts).
+  const orbs = orbKey(a);
+  if (orbs !== undefined) check("orbs", orbKey(p) ?? "none", orbs);
   a.enemies.forEach((e, i) => {
     const q = p.enemies.find((x) => x.id === e.id);
     if (!q || !e.alive) return;

@@ -334,6 +334,30 @@ public static class FullAppStateTracker
             }
         }
 
+        // spire-jev: the Defect's orbs (PlayerCombatState.OrbQueue), front first — what the orbs do at the
+        // turn's end and what a channel into full slots evokes.
+        if (player is not null)
+        {
+            try
+            {
+                var queue = player.PlayerCombatState?.OrbQueue;
+                if (queue is not null && (queue.Capacity > 0 || queue.Orbs.Count > 0))
+                {
+                    obs.OrbSlots = queue.Capacity;
+                    obs.PlayerOrbs = new List<OrbObservationDto>();
+                    foreach (var orb in queue.Orbs)
+                    {
+                        var o = new OrbObservationDto { Id = orb.Id.Entry };
+                        try { o.Passive = (double)orb.PassiveVal; } catch { }
+                        try { o.Evoke = (double)orb.EvokeVal; } catch { }
+                        AddDeclaredNumbers(orb, o.Fields);
+                        obs.PlayerOrbs.Add(o);
+                    }
+                }
+            }
+            catch { }
+        }
+
         var legalActions = new List<LegalActionDto>();
 
         if (phase == "combat" && combatManager is not null && combatManager.IsInProgress && player is not null)

@@ -3,6 +3,8 @@
 Since 2026-09-29 the planner can play any of the game's five characters. The Ironclad plays exactly
 as before (spar bouts on four decks against every modelled boss: identical to main 905680d; 302 of
 302 tests); the others start with none of their own rules, and each is filled in by the work on it.
+All five now have theirs: the Silent (`silent.ts`), the Necrobinder (`necrobinder.ts`), the Regent
+(`regent.ts`) and, since 2026-09-30, the Defect (`defect.ts`: orbs and Focus, below).
 
 ## Who is playing
 
@@ -52,8 +54,31 @@ Every character's rules are always on: ids do not overlap, and a card of another
   MaxAscension), the other four with no runs, so NumberOfRuns (the total over every character,
   what the first-run rules read) stays 2 and the Ironclad's runs are drawn as before.
 
+## The Defect's orbs
+
+`characters/defect.ts`, from the game's IL (v0.111.0):
+
+- The orb queue (IL: OrbQueue): the front, the oldest, is evoked next. A channel into full slots
+  evokes the front (removed) and appends; 3 slots a fight, at most 10; with none, the Defect's
+  channels are lost (another character gets a slot for its first). Bulk Up's lost slot deletes the
+  newest orb unevoked. Dualcast, Multi-Cast and Quadcast evoke the front in place, removed on the last.
+- Values, read live: Lightning 3/8 and Frost 2/5 with Focus, `max(0, v + Focus)`; Dark grows its
+  evoke by 6 + Focus a passive (6 as channeled; its evoke no Focus); Plasma 1/2 energy, no Focus;
+  Glass hits every enemy for 4 + Focus and loses 1 a passive, its evoke twice its passive. Orb damage
+  and block are unpowered: no Strength, Vulnerable, Dexterity or Frail.
+- The turn: at its end Hailstorm, the passives front first (Gold-Plated Cables: the front twice),
+  then Consuming Shadow's evokes; temporary Focus (Hotfix, Focused Strike, Synchronize, Hyperbeam's
+  −3) is given back after. At the next start Lightning Rod and Spinner channel before the draw, Loop
+  and Emotion Chip trigger passives after it, and Plasma's energy comes last.
+- State: `orbs` and `orbSlots` on `State.ext` (the bridge's `player_orbs`, front first, and
+  `orb_slots`); the checks against the game compare them after every card and at every turn's start.
+- The evaluation counts what the orbs and the powers will give over the fight's likely turns
+  (`defectAhead`), as the Silent's counts its Poison.
+- Human data: `data/defect/` (v0.111.0 A10, 1731 runs, 16.1% won).
+
 ## The bridge
 
 One package for every character's fields (the Regent's `player_stars` and star costs, the
-Necrobinder's `player_allies`), built as `mod/Bridge/bin/StagingChars`. The Ironclad's evaluations
+Necrobinder's `player_allies`), built as `mod/Bridge/bin/StagingChars`; the Defect's `player_orbs`
+and `orb_slots` from `mod/Bridge/bin/StagingDefect` on. The Ironclad's evaluations
 keep their package.
