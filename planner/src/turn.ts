@@ -192,8 +192,9 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     }
     if (!e.alive) return { ...e, powers: { ...e.powers } };
     const ep = { ...e.powers };
-    // Strength taken for the turn (Mangle, Dark Shackles) comes back at the end of the enemy's turn.
-    for (const k of ["MANGLE", "DARK_SHACKLES"]) {
+    // Strength taken for the turn (Mangle, Dark Shackles, the Necrobinder's Enfeebling Touch) comes back
+    // at the end of the enemy's turn.
+    for (const k of ["MANGLE", "DARK_SHACKLES", "ENFEEBLING_TOUCH"]) {
       if ((ep[k] ?? 0) <= 0) continue;
       ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
       if (ep["STRENGTH"] === 0) delete ep["STRENGTH"];
