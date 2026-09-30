@@ -219,7 +219,9 @@ export function relicOpening(me: Player): Player {
     ...me, powers,
     block: me.block + (has("ANCHOR") ? v("ANCHOR", "Block", 10) : 0),
     energy: me.energy + (has("LANTERN") ? v("LANTERN", "Energy", 1) : 0) + tea,
-    hand: me.hand + (has("BAG_OF_PREPARATION") ? v("BAG_OF_PREPARATION", "Cards", 2) : 0) + (has("PAELS_BLOOD") ? v("PAELS_BLOOD", "Cards", 1) : 0),
+    // Ring of the Snake (the Silent's; IL: ModifyHandDraw, turn 1): 2 more.
+    hand: me.hand + (has("BAG_OF_PREPARATION") ? v("BAG_OF_PREPARATION", "Cards", 2) : 0) + (has("PAELS_BLOOD") ? v("PAELS_BLOOD", "Cards", 1) : 0)
+      + (has("RING_OF_THE_SNAKE") ? v("RING_OF_THE_SNAKE", "Cards", 2) : 0),
     hp: Math.min(me.maxHp, me.hp + (has("BLOOD_VIAL") ? v("BLOOD_VIAL", "Heal", 2) : 0)),
   };
 }

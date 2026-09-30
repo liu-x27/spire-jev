@@ -49,6 +49,10 @@ export interface CharacterRules {
   beforePlay?(s: State, card: Card, target: Enemy | undefined): void;
   /** A card resolved (sim.ts resolve, after the relics' AfterCardPlayed, before it goes to its pile). */
   afterPlay?(s: State, card: Card, target: Enemy | undefined): void;
+  /** How many more times the card resolves (sim.ts resolve, as One-Two Punch replays an attack): the Silent's Burst. */
+  extraPlays?(s: State, card: Card): number;
+  /** The card as it goes to its pile after the play (sim.ts resolve): Up My Sleeve's cost, Master Planner's Sly. */
+  afterCard?(s: State, card: Card): Card;
   /** `n` cards were drawn in the turn (sim.ts draw), known or not: the Silent's Corrosive Wave, Speedster. */
   onDraw?(s: State, n: number): void;
   /** A hit of the player's attack landed on `e` and took `lost` HP (sim.ts strike): the Silent's Envenom. */
@@ -107,6 +111,8 @@ export interface Merged {
   combatSelect: NonNullable<CharacterRules["combatSelect"]>[];
   beforePlay: NonNullable<CharacterRules["beforePlay"]>[];
   afterPlay: NonNullable<CharacterRules["afterPlay"]>[];
+  extraPlays: NonNullable<CharacterRules["extraPlays"]>[];
+  afterCard: NonNullable<CharacterRules["afterCard"]>[];
   startOfTurn: NonNullable<CharacterRules["startOfTurn"]>[];
   endOfTurn: NonNullable<CharacterRules["endOfTurn"]>[];
   nextTurn: NonNullable<CharacterRules["nextTurn"]>[];
@@ -130,7 +136,7 @@ let merged: Merged | undefined;
 export function rules(): Merged {
   if (merged) return merged;
   const m: Merged = {
-    special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
+    special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
     endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], cloneExt: [], keyExt: [],
     cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(),
   };
@@ -141,7 +147,7 @@ export function rules(): Merged {
     }
     Object.assign(m.counts, r.counts ?? {});
     Object.assign(m.cards, r.cards ?? {});
-    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "cloneExt", "keyExt", "combatSelect"] as const) {
+    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "cloneExt", "keyExt", "combatSelect"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
     }
