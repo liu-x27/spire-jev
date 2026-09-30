@@ -5,7 +5,7 @@
 ![Floor 49: the Regent beats Torch Head Amalgam and the Queen with 6 HP left (2×)](media/a10-regent-3019-floor49-2x.gif)
 
 The Regent, ascension 10, seed JEV03019, played whole from floor 1: the one win of the 20 fresh
-seeds 3001–3020 on the development branch's characters (`45d61d8`, not yet in this repository),
+seeds 3001–3020, recorded on `45d61d8` (the Regent branch before it was rebased; the characters are in `planner/src/characters/` now),
 with the best configuration so far (`--choices rules2 --flags pathdp,restbudget,potions2,sleep,spar,spar3,spar5,spar4up,spar4shop,powbonus,spartake,halllook1,lookfix`,
 `SPIRE_JEV_POW_BONUS=10`, `SPIRE_JEV_CHARACTER=REGENT`). Its bosses, HP going in → left at the end
 (of 66): Kin Priest 57 → 55, Crusher and Rocket 51 → 12, Aeonglass 60 → 16, Torch Head Amalgam and

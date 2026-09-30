@@ -32,8 +32,9 @@ no save in between: 20 fights, 20 won, 456 cards in 560 decisions (p50 2.0 ms, p
 Its bosses, HP going in → left at the end (of 66): Kin Priest 57 → 55, Crusher and Rocket
 51 → 12, Aeonglass 60 → 16, Torch Head Amalgam and the Queen 14 → 6. A narrow win, not a win
 rate: 1 of the 20 fresh seeds (3001–3020) this configuration played was won, and the 20 reached
-floor 29.4 on average. The characters other than the Ironclad are on a development branch,
-not yet in this repository; this run is its code (`45d61d8`) on the best configuration so far
+floor 29.4 on average. It was recorded on `45d61d8`, the Regent branch before it was rebased;
+the characters other than the Ironclad are now in this repository (`planner/src/characters/`,
+[docs/CHARACTERS.md](docs/CHARACTERS.md)). The configuration is the best so far
 (`--choices rules2 --flags pathdp,restbudget,potions2,sleep,spar,spar3,spar5,spar4up,spar4shop,powbonus,spartake,halllook1,lookfix`).
 The recording matches the headless run fight for fight. The whole run:
 [docs/media/a10-regent-3019-run.mp4](docs/media/a10-regent-3019-run.mp4) (4 min 34 s for 28
@@ -64,7 +65,7 @@ https://github.com/user-attachments/assets/16900a43-facf-4d3e-a3b5-e86fd102826f
 from the first headless game to the first A10 win, the results on fresh seeds, where the limit
 turned out to be (the simulator more than the planner), the changes kept and the ones dropped, and
 seed 849's whole run, floors 1 to 49, in the game's Chinese interface. Its figures are from the
-development work since this code, not yet in this repository. The run is two recordings joined
+development work since this code. The run is two recordings joined
 where the win was: floors 1–32 as the evaluation that saved floor 32 played them, floors 32–49 from
 that save on the newer rules. How, and the one card reward the first had to skip as the original
 did: [docs/RECORDING.md](docs/RECORDING.md).*
@@ -77,12 +78,12 @@ no model is involved at all.
 
 ## Where it stands
 
-**The first Regent win, and the first from floor 1 (2026-09-30):** seed 3019, on the development
-branch's characters (not yet in this repository), 1 of 20 fresh seeds; see
+**The first Regent win, and the first from floor 1 (2026-09-30):** seed 3019, on the Regent's
+rules as they stood then (`45d61d8`, the branch before its rebase), 1 of 20 fresh seeds; see
 [The Regent](#the-regent-a-win-from-floor-1) above.
 
 **The first A10 win (2026-09-26):** seed 849, replayed from its floor-32 save on the development
-rules (`spar3` and later, not yet in this repository), beat act 2's boss and both of act 3's —
+rules (`spar3` and later), beat act 2's boss and both of act 3's —
 1 of those 97 floor-32 saves, and narrowly (details in [docs/RECORDING.md](docs/RECORDING.md)).
 The table below is still the confirmation set on the rules published here.
 
