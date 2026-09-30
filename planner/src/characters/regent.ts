@@ -813,7 +813,7 @@ export const REGENT: CharacterRules = {
   },
 
   // The runner's choices inside a fight, as the rules above make them.
-  combatSelect(source: string | undefined, _purpose: string, cards: readonly { id: string; type: string; keywords: readonly string[] }[]): number | undefined {
+  combatSelect(source: string | undefined, purpose: string, cards: readonly { id: string; type: string; keywords: readonly string[] }[]): number | undefined {
     switch (source) {
       case "GLIMMER":
       case "PHOTON_CUT":
@@ -828,7 +828,9 @@ export const REGENT: CharacterRules = {
         return blade >= 0 ? blade : undefined;
       }
       default:
-        return undefined;
+        // Tyranny's exhaust as the turn starts, and any other card of the hand to give up: a curse or
+        // status, a Strike, a Defend (the core's pick is the hand's last card).
+        return character() === "REGENT" && source === undefined && /^FromHand/.test(purpose) ? worstIndex(cards) : undefined;
     }
   },
 
@@ -928,8 +930,7 @@ export const REGENT: CharacterRules = {
     // Tyranny: a card more, then one exhausted a stack.
     for (let i = 0; i < power(next, "TYRANNY"); i++) {
       if (next.draw.length > 0 && next.hand.length < HAND_LIMIT) next.hand.push(next.draw.pop()!);
-      const j = junkIndex(next.hand);
-      if (next.hand.length > 0) exhaustCard(next, next.hand.splice(j >= 0 ? j : 0, 1)[0]!);
+      if (next.hand.length > 0) exhaustCard(next, next.hand.splice(worstIndex(next.hand), 1)[0]!);
     }
     // Kingly Kick costs 1 less, and Kingly Punch deals its Increase more, for every draw.
     next.hand = next.hand.map((c) => c.id === "KINGLY_KICK" ? { ...c, cost: Math.max(0, c.cost - 1) }
@@ -939,11 +940,13 @@ export const REGENT: CharacterRules = {
   evaluate(s: State, w: Weights): number {
     const e = s.ext as unknown as Ext | undefined;
     const bl = blades(s);
-    if (!e && bl.length === 0) return 0;
+    if (!e && bl.length === 0 && !s.draw.some((c) => c.id === "MINION_DIVE_BOMB")) return 0;
     let score = 0;
     const stars = e ? e.stars : 0;
     score += Math.min(stars, 6) * STAR + Math.max(0, stars - 6) * STAR_MORE;
     score += bl.reduce((a, b) => a + (b.vars["Damage"] ?? 10), 0) * FORGE;
+    // Charge's Minion Dive Bombs in the piles to draw: free hits to come (half of each, as the fight may end first).
+    for (const c of [...s.draw, ...s.discard]) if (c.id === "MINION_DIVE_BOMB") score += (c.vars["Damage"] ?? 13) * 0.5 * w.enemyHp;
     score += regentEngines(s, w);
     score += reflected(s) * w.enemyHp;
     return score;
