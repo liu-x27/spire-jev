@@ -17,7 +17,7 @@ import { eloValue } from "./cardstats.ts";
 import { humanScore, humanSkipScore, humanTake } from "./takerates.ts";
 import { relicSurplus } from "./relics.ts";
 import { character, isBasic, isBasicDefend, isBasicStrike, starterExtras } from "./character.ts";
-import { rules as characterRules } from "./characters/index.ts";
+import { NO_TABLES, rules as characterRules } from "./characters/index.ts";
 import { bare, type Boss, bossFor, cardFromId, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
 
@@ -144,12 +144,14 @@ const AOE = new Set(["CONFLAGRATION", "BREAKTHROUGH", "WHIRLWIND", "HOWL_FROM_BE
 const MULTI_HIT = new Set(["TWIN_STRIKE", "SWORD_BOOMERANG", "PECK", "CONFLAGRATION", "THRASH", "WHIRLWIND", "FIGHT_ME", "ANGER", "INFERNO"]);
 const DAMAGE = new Set(["THRASH", "CONFLAGRATION", "DISMANTLE", "BLUDGEON", "POMMEL_STRIKE", "TWIN_STRIKE", "ANGER", "PERFECTED_STRIKE", "HEMOKINESIS", "UNRELENTING"]);
 /** The tables above with the other characters' own (characters/index.ts): a card is in one or the other. */
-const cardRow = (c: string) => CARDS[c] ?? characterRules().cards[c];
-const isAlways = (c: string) => ALWAYS.has(c) || characterRules().always.has(c);
-const isNever = (c: string) => NEVER.has(c) || characterRules().never.has(c);
-const isAoe = (c: string) => AOE.has(c) || characterRules().aoe.has(c);
-const isMultiHit = (c: string) => MULTI_HIT.has(c) || characterRules().multiHit.has(c);
-const isDamage = (c: string) => DAMAGE.has(c) || characterRules().damage.has(c);
+/** The playing character's own tables (characters/index.ts): another character's preferences are not this one's. */
+const own = () => characterRules().tables[character()] ?? NO_TABLES;
+const cardRow = (c: string) => CARDS[c] ?? own().cards[c];
+const isAlways = (c: string) => ALWAYS.has(c) || own().always.has(c);
+const isNever = (c: string) => NEVER.has(c) || own().never.has(c);
+const isAoe = (c: string) => AOE.has(c) || own().aoe.has(c);
+const isMultiHit = (c: string) => MULTI_HIT.has(c) || own().multiHit.has(c);
+const isDamage = (c: string) => DAMAGE.has(c) || own().damage.has(c);
 
 /** Act 1, 2 or 3 from the observation (the bridge counts from 0 or 1; either works here). */
 function actOf(o: Observation): 0 | 1 | 2 {
@@ -726,11 +728,11 @@ export function chooseUpgrade(o: Observation, legal: LegalAction[]): string {
     }
     const i = SMITH_ORDER.indexOf(id);
     if (i >= 0) return 100 - i;
-    const j = characterRules().smithFirst.indexOf(id);
+    const j = own().smithFirst.indexOf(id);
     if (j >= 0) return 100 - j;
     // Bash only in act 1, and only with no other Vulnerable source (§3.8).
     if (id === "BASH") return actOf(o) === 0 ? 10 : 0;
-    if (SMITH_LAST.has(id) || isBasic(id) || characterRules().smithLast.has(id)) return -10;
+    if (SMITH_LAST.has(id) || isBasic(id) || own().smithLast.has(id)) return -10;
     return 20 + cardValue(id, actOf(o), o.deck_cards) * 10;
   };
   const best = [...offers].sort((a, b) => rank(b) - rank(a))[0];
