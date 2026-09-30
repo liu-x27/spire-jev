@@ -1,6 +1,7 @@
 # spire-jev
 
-A bot that plays Slay the Spire 2 in the real game — Ironclad, whole runs, no human input.
+A bot that plays Slay the Spire 2 in the real game — all five characters, the Ironclad the
+longest worked on, whole runs, no human input.
 A mod bridges the game to a planner in TypeScript: each turn a simulator of the game's
 combat searches the order to play the hand in, well under a millisecond at the median, and
 the choices around the fights (card rewards, the path, rest sites, shops, events) are made
@@ -77,6 +78,18 @@ judge questions for the calls around it); nothing here calls TypeSafe's Jev API,
 no model is involved at all.
 
 ## Where it stands
+
+**All five characters (2026-09-29/30):** the Silent, the Necrobinder, the Regent and the Defect
+play as well as the Ironclad, each with its own rules in `planner/src/characters/` written from
+the game's code and checked card by card against the game (Poison and Shivs; Osty and Doom;
+stars and the Sovereign Blade; orbs and Focus: [docs/CHARACTERS.md](docs/CHARACTERS.md)). On the
+best configuration they are weaker than the Ironclad so far: the Regent's 20 fresh seeds
+(3001–3020) reached floor 29.4 on average and won one (above); the Defect's first six
+(4001–4006) all beat act 1's boss and died in act 2, at floor 31.5 on average. The Ironclad
+plays as it did before they came: replayed from 18 saves, fight for fight, it differed only
+where its deck held another character's card (a transform, Prismatic Shard), which that
+character's rules now model.
+`--character DEFECT` (or `SPIRE_JEV_CHARACTER`) on run-fights, eval and bench chooses who plays.
 
 **The first Regent win, and the first from floor 1 (2026-09-30):** seed 3019, on the Regent's
 rules as they stood then (`45d61d8`, the branch before its rebase), 1 of 20 fresh seeds; see
