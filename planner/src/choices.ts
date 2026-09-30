@@ -820,9 +820,24 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   // times in 307 runs (Spire Codex, v0.111.0); C2 never did (0 removals in 130 shop choices: spar
   // weighs a removal by the next boss's bout alone, where a Strike is damage, and spar4shop keeps the
   // rules from buying what the bout passed over).
-  if (flags.has("rmstrike") && removal) {
+  // rmspare (the other session's idea from the Ironclad's shoprm, whose removals crowded out purchases
+  // worth more): only with the gold to buy, after it, what the shop would have bought otherwise.
+  if ((flags.has("rmstrike") || flags.has("rmspare")) && removal) {
     const strikes = o.deck_cards.filter(isBasicStrike).sort((a, b) => Number(a.endsWith("+")) - Number(b.endsWith("+")));
-    if (strikes[0]) {
+    let spare = true;
+    if (strikes[0] && flags.has("rmspare")) {
+      flags.delete("rmspare");
+      let instead: string;
+      try {
+        instead = chooseShop(o, legal);
+      } finally {
+        flags.add("rmspare");
+      }
+      const bought = legal.find((a) => a.action_id === instead);
+      if (bought && bought !== removal && instead !== leave) spare = o.gold - price(removal) >= price(bought);
+      if (!spare) return instead;
+    }
+    if (strikes[0] && spare) {
       resetCardSelect();
       removeNext = { id: strikes[0], floor: o.floor };
       return removal.action_id;
