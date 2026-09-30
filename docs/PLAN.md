@@ -1436,6 +1436,17 @@ states, and only a simulator is fast enough for that.
      -0.28, for +0.81 relics and +0.36 cards. Stopped on budget, no check
      half (0.4 SE): the relics did not turn into act 2's end, and pathdp's
      caution about elites is not without reason.
+   - **hallpots** (the same branch: act 2's ordinary fights keep a potion's
+     full price where an enemy has 100+ max HP; elites, bosses and the
+     runner's urges as they were): the 185 f16 saves whose base
+     (bench-c2full-f16-c1, c1ac146, the 315 to act 2's end) drank in an act
+     2 hallway fight, to act 2's end; the other 130 play as the base (a
+     price only rises). Hallway potions 1.64 -> 1.46 a run, into act 2's
+     boss +0.15 ± 0.04 (registered +0.3-0.5); act 2 finished 44 -> 43
+     (+6/-7; -0.5 ± 2.0 points on the 185, -0.3 ± 1.1 on all 315, a
+     one-sided bound of about +1.5); hallway deaths 48 / 49, HP at the boss
+     -0.6 ± 0.9. Stopped on budget: the discount barely moves the potions,
+     and the few kept do not reach act 2's end.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
