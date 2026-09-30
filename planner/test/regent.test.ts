@@ -277,3 +277,14 @@ test("the Regent's potions: Star Potion's stars, King's Courage's Forge", () => 
   const b = drink(a, { kind: "potion", slot: 1 });
   assert.deepEqual(bladeDamage(b), [25]);
 });
+
+test("another character's fields on State.ext: the Regent's rules keep them and score as without them", () => {
+  const plain = state([FALLING_STAR, STRIKE], 3);
+  const shared = { ...plain, ext: { ...plain.ext, discards: 2, ostyHp: 5 } };
+  assert.equal(evaluate(shared), evaluate(plain));
+  const a = at(shared, 0, 1);
+  assert.equal(starsOf(a), 1);
+  assert.equal((a.ext as Record<string, unknown>)["ostyHp"], 5);
+  const other: State = { ...noExt(plain), ext: { discards: 2 } };
+  assert.ok(Number.isFinite(evaluate(other)));
+});

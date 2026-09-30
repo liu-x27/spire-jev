@@ -815,6 +815,19 @@ export function chooseShop(o: Observation, legal: LegalAction[]): string {
   // at A10 it heals four times, twice in act 3's back-to-back pair (docs/relic-tiers.md: A, 0.76).
   const pantograph = flags.has("pantograph") ? stock.find((a) => type(a) === "Relic" && item(a) === "PANTOGRAPH") : undefined;
   if (pantograph) return pantograph.action_id;
+  // rmstrike: a basic Strike removed first, while there is one, before anything the bout would buy.
+  // A10 Regents who won removed a card at 24% / 43% / 47% of their shops in acts 1-3, a Strike 252
+  // times in 307 runs (Spire Codex, v0.111.0); C2 never did (0 removals in 130 shop choices: spar
+  // weighs a removal by the next boss's bout alone, where a Strike is damage, and spar4shop keeps the
+  // rules from buying what the bout passed over).
+  if (flags.has("rmstrike") && removal) {
+    const strikes = o.deck_cards.filter(isBasicStrike).sort((a, b) => Number(a.endsWith("+")) - Number(b.endsWith("+")));
+    if (strikes[0]) {
+      resetCardSelect();
+      removeNext = { id: strikes[0], floor: o.floor };
+      return removal.action_id;
+    }
+  }
   const topCard = cards[0];
   // spar4: the bout decides the cards, this one too.
   if (topCard && topCard.v >= 0.85 && !spar4("shop")) return topCard.a.action_id;
