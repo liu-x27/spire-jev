@@ -2,7 +2,7 @@
 // Sovereign Blade, the cards and powers built on them.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { actions, type Card, endOfTurn, type Enemy, play, stateKey, type State } from "../src/sim.ts";
+import { actions, type Card, drink, endOfTurn, type Enemy, play, stateKey, type State } from "../src/sim.ts";
 import { nextTurn, seeded } from "../src/turn.ts";
 import { evaluate } from "../src/search.ts";
 import { starsOf } from "../src/characters/regent.ts";
@@ -262,4 +262,18 @@ test("Orbit: every 4 energy paid for cards over the fight gives its amount, from
   const a = at(s, 0, 1);
   assert.equal(a.energy, 3);
   assert.equal(at(a, 0).energy, 2);
+});
+
+test("the Regent's potions: Star Potion's stars, King's Courage's Forge", () => {
+  const s = state([STRIKE], 1, [foe(50)], {
+    potions: [
+      { slot: 0, id: "STAR_POTION", target: "AnyPlayer", usage: "CombatOnly", vars: { Stars: 3 } },
+      { slot: 1, id: "KINGS_COURAGE", target: "AnyPlayer", usage: "CombatOnly", vars: { Forge: 15 } },
+    ],
+  });
+  assert.ok(actions(s).some((a) => a.kind === "potion" && a.slot === 0));
+  const a = drink(s, { kind: "potion", slot: 0 });
+  assert.equal(starsOf(a), 4);
+  const b = drink(a, { kind: "potion", slot: 1 });
+  assert.deepEqual(bladeDamage(b), [25]);
 });

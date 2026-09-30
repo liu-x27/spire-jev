@@ -694,6 +694,13 @@ const CARDS: Record<string, CardRow> = {
 export const REGENT: CharacterRules = {
   special: SPECIAL,
   counts: COUNTS,
+  // The Regent's potions (IL): Star Potion's stars, King's Courage's Forge, Cosmic Concoction's 3 upgraded
+  // colourless cards (unknown, as draws are).
+  potions: {
+    STAR_POTION: (s, n) => gainStars(s, n),
+    KINGS_COURAGE: (s, n) => forge(s, n),
+    COSMIC_CONCOCTION: (s, n) => unknownIntoHand(s, n),
+  },
   // Orobas: A10 Regents (Spire Codex, v0.111.0, 1523 runs) take Archaic Tooth (Falling Star into Meteor
   // Shower) 62% of the times it is offered, winning 38.7% against 26.3% of those passing it, and Touch
   // of Orobas (Divine Right into Divine Destiny: 7 stars on turn 1, not 3) 28%, 41.0% against 31.3%.

@@ -39,6 +39,11 @@ export interface CharacterRules {
   special?: Record<string, Rule>;
   /** Calculated damage, by card id. */
   counts?: Record<string, Count>;
+  /**
+   * Potions whose effect is not what their numbers say (sim.ts POTION_SPECIAL), by potion id: `n` is its
+   * Cards var or else its first. The Regent's Star Potion (stars), King's Courage (Forge).
+   */
+  potions?: Record<string, (s: State, n: number) => void>;
   /** The state built from an observation (sim.ts fromObservation): fill `ext` from the bridge's fields. */
   fromObservation?(obs: Observation, s: State): void;
   /** False: the card cannot be played now (a cost the core does not know, like the Regent's stars). */
@@ -113,6 +118,7 @@ export const ALL: readonly CharacterRules[] = [SILENT, NECROBINDER, REGENT, DEFE
 export interface Merged {
   special: Record<string, Rule>;
   counts: Record<string, Count>;
+  potions: Record<string, (s: State, n: number) => void>;
   fromObservation: NonNullable<CharacterRules["fromObservation"]>[];
   playable: NonNullable<CharacterRules["playable"]>[];
   cost: NonNullable<CharacterRules["cost"]>[];
@@ -148,7 +154,7 @@ let merged: Merged | undefined;
 export function rules(): Merged {
   if (merged) return merged;
   const m: Merged = {
-    special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], resultPile: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
+    special: {}, counts: {}, potions: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], resultPile: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
     endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], cloneExt: [], keyExt: [],
     cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(), ancients: {},
   };
@@ -158,6 +164,7 @@ export function rules(): Merged {
       m.special[id] = f;
     }
     Object.assign(m.counts, r.counts ?? {});
+    Object.assign(m.potions, r.potions ?? {});
     Object.assign(m.cards, r.cards ?? {});
     for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "resultPile", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "cloneExt", "keyExt", "combatSelect"] as const) {
       const f = r[k];

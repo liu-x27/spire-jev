@@ -680,7 +680,7 @@ const POTION_VARS = /^(Damage|Block|Energy|Cards|Heal|HpLoss|Repeat|\w+Power)$/;
 /** A potion the model can drink in a fight: one whose every number it understands. */
 export function drinkable(p: Potion): boolean {
   if (/OutOfCombat|Automatic|None/i.test(p.usage)) return false;
-  if (POTION_SPECIAL[p.id]) return true;
+  if (POTION_SPECIAL[p.id] || rules().potions[p.id]) return true;
   const names = Object.keys(p.vars);
   return names.length > 0 && names.every((n) => POTION_VARS.test(n));
 }
@@ -705,7 +705,7 @@ export function drink(s0: State, a: Action & { kind: "potion" }): State {
     addPower(s.player, "STRENGTH", n);
     addPower(s.player, "REPTILE_TRINKET", n);
   }
-  const special = POTION_SPECIAL[p.id];
+  const special = POTION_SPECIAL[p.id] ?? rules().potions[p.id];
   if (special) {
     special(s, v["Cards"] ?? Object.values(v)[0] ?? 0);
     return s;
