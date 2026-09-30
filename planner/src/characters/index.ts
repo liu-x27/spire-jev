@@ -98,7 +98,7 @@ export interface CharacterRules {
    * of the card to take from `cards`, for the select's `purpose` (the bridge's CardSelectCmd method:
    * FromHand, FromHandForDiscard…) after playing `source`; undefined leaves it to the core (junkIndex).
    */
-  combatSelect?(source: string | undefined, purpose: string, cards: readonly { id: string; type: string; keywords: readonly string[] }[]): number | undefined;
+  combatSelect?(source: string | undefined, purpose: string, cards: readonly { id: string; type: string; keywords: readonly string[]; cost?: number }[]): number | undefined;
 
   /** choices.ts: the character's cards as CARDS rates the Ironclad's (tiers, pick %). */
   cards?: Record<string, CardRow>;

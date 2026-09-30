@@ -35,6 +35,11 @@ const F: Orb = { id: "FROST_ORB" };
 const D = (n = 6): Orb => ({ id: "DARK_ORB", n });
 const G = (n = 4): Orb => ({ id: "GLASS_ORB", n });
 const P: Orb = { id: "PLASMA_ORB" };
+/** The state with no ext (a spar bout's, another character's). */
+const noExt = (s: State): State => {
+  const { ext: _e, ...rest } = s;
+  return rest;
+};
 const withPowers = (s: State, powers: Record<string, number>): State => ({ ...s, player: { ...s.player, powers: { ...s.player.powers, ...powers } } });
 const at = (s: State, hand: number, target?: number) => play(s, { kind: "play", hand, ...(target !== undefined ? { target } : {}) });
 const next = (s: State) => nextTurn(s, seeded(1), () => [])!;
@@ -55,7 +60,7 @@ test("channel: into full slots the front is evoked (removed) first, then the new
 test("channel: the Defect with no slots loses the orb; another character gets a slot for its first", () => {
   const none = at(state([ZAP], [], [foe(60)], {}, 0), 0);
   assert.equal(orbKey(none), "0:");
-  const ironclad = state([ZAP], [], [foe(60)], { relics: [], ext: undefined });
+  const ironclad = noExt(state([ZAP], [], [foe(60)], { relics: [] }));
   const s = at(ironclad, 0);
   assert.equal(orbKey(s), "1:LIGHTNING");
 });
@@ -270,7 +275,7 @@ test("hologram: the dearest card of the discard pile that is not a Status", () =
 });
 
 test("a spar bout's Defect opens with 3 slots and Cracked Core's Lightning on turn 1", () => {
-  const s: State = { ...state([]), ext: undefined, turn: 1 };
+  const s: State = noExt(state([], [], [foe(60)], { turn: 1 }));
   assert.equal(orbsOf(s).length, 1);
   channel(s, "FROST_ORB");
   assert.equal(orbKey(s), "3:LIGHTNING FROST");
@@ -283,7 +288,7 @@ test("orbs to come count in the evaluation: a Frost held is worth more than none
 });
 
 test("another character's state: no Defect ext made by its plays", () => {
-  const s: State = { ...state([STRIKE, DEFEND]), relics: [], ext: undefined };
+  const s: State = noExt(state([STRIKE, DEFEND], [], [foe(60)], { relics: [] }));
   const a = at(at(s, 0, 1), 0);
   assert.equal(a.ext, undefined);
 });

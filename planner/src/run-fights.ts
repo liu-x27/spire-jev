@@ -254,7 +254,7 @@ function combatSelect(obs: Observation, legal: LegalAction[], source?: string): 
   const sloth = cards.findIndex((c) => c.card_id === "SLOTH");
   if (hasFlag("curse") && sloth >= 0 && cards.some((c) => c.card_id === "DISINTEGRATION")) return offers[Math.min(sloth, offers.length - 1)]!.action_id;
   // A character's own choice first (characters/index.ts combatSelect: the Silent's discards).
-  const own = characterRules().combatSelect.map((f) => f(source, purpose, cards.map((c) => ({ id: c.card_id, type: c.card_type, keywords: c.keywords ?? [] })))).find((x) => x !== undefined);
+  const own = characterRules().combatSelect.map((f) => f(source, purpose, cards.map((c) => ({ id: c.card_id, type: c.card_type, keywords: c.keywords ?? [], cost: c.current_cost })))).find((x) => x !== undefined);
   if (own !== undefined) {
     i = own;
   } else if (/^FromHand(ForDiscard)?$/.test(purpose)) {
