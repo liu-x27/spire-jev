@@ -139,10 +139,13 @@ function ostyThorns(s: State, e: Enemy): void {
   ostyLoses(s, n - absorbed);
 }
 
-/** An Osty Attack card's own number, and Miniature Cannon's on an upgraded card. */
+/**
+ * An Osty Attack card's own number, Miniature Cannon's on an upgraded card, and Sharp's on a card
+ * whose damage is worked out (fromObservation: SharpBonus; the bridge's enchanted OstyDamage has it already).
+ */
 function ostyBase(s: State, c: Card, base: number): number {
   const cannon = c.upgrades > 0 && s.relics.includes("MINIATURE_CANNON") ? s.relicVars?.["MINIATURE_CANNON"]?.["ExtraDamage"] ?? 3 : 0;
-  return base + cannon;
+  return base + cannon + v(c, "SharpBonus");
 }
 
 /**
@@ -200,6 +203,8 @@ function toHand(s: State, c: Card): void {
   else s.discard.push(c);
 }
 
+/** Osty cards whose damage is worked out from a count (CalculatedDamage), not a number of theirs. */
+const WORKED_OUT = new Set(["UNLEASH", "PROTECTOR", "SQUEEZE"]);
 const OSTY_ATTACKS = new Set(["BONE_SHARDS", "FETCH", "FLATTEN", "HIGH_FIVE", "POKE", "PROTECTOR", "RATTLE", "RIGHT_HAND_HAND", "SIC_EM", "SNAP", "SQUEEZE", "SWEEPING_GAZE", "UNLEASH"]);
 const isBasic = (id: string) => /^(STRIKE|DEFEND)_/.test(id);
 
@@ -692,6 +697,16 @@ export const NECROBINDER: CharacterRules = {
     n.etherealBefore = calc("PULL_FROM_BELOW", "CalculatedHits");
     n.doomed = hand.some((c) => c.card_id === "DEATHS_DOOR" && c.glows === true);
     s.ext = { ...(s.ext ?? {}), ...n };
+    // Sharp (IL: Sharp.EnchantDamageAdditive: its amount on every powered hit the card deals, Osty's
+    // too) on a card whose damage is worked out: no enchanted var carries it (JEV00003, Unleash~Sharp: 2 short).
+    const c = obs.combat;
+    if (c) {
+      for (const [from, to] of [[c.hand, s.hand], [c.draw_pile, s.draw], [c.discard_pile, s.discard], [c.exhaust_pile, s.exhaust]] as const) {
+        from.forEach((o, i) => {
+          if (o.enchantment === "SHARP" && WORKED_OUT.has(o.card_id) && to[i]) to[i] = { ...to[i]!, vars: { ...to[i]!.vars, SharpBonus: o.enchantment_amount ?? 0 } };
+        });
+      }
+    }
     // Enfeebling Touch's amount is the Strength it gives back, whatever sign the bridge shows.
     for (const e of s.enemies) if (e.powers["ENFEEBLING_TOUCH"]) e.powers["ENFEEBLING_TOUCH"] = Math.abs(e.powers["ENFEEBLING_TOUCH"]!);
   },
@@ -827,8 +842,8 @@ export const NECROBINDER: CharacterRules = {
       if ((e.powers["DEBILITATE"] ?? 0) > 0 && --e.powers["DEBILITATE"]! <= 0) delete e.powers["DEBILITATE"];
     }
     const p = next.player.powers;
+    // Borrowed Time goes with her turn; Veilpiercer lasts until an Ethereal card uses it (the game's next turns kept it).
     delete p["BORROWED_TIME"];
-    delete p["VEILPIERCER"];
     // Friendship and Demesne played this turn: max energy from now on (the observation's max has the older ones).
     if (x.energyNext > 0) {
       next.energy += x.energyNext;
