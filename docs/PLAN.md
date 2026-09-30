@@ -1447,6 +1447,34 @@ states, and only a simulator is fast enough for that.
      one-sided bound of about +1.5); hallway deaths 48 / 49, HP at the boss
      -0.6 ± 0.9. Stopped on budget: the discount barely moves the potions,
      and the few kept do not reach act 2's end.
+   - **The hallway forks** (the user's next pick: the bot's act 2 hallway
+     fights cost about twice the humans'): the 8 act 2 ordinary encounters
+     costing most in bench-c2full-f16-c1 (HP lost, + 10 a potion: the three
+     Bowlbugs 33.9, Spiny Toad 28.8, Hunter Killer 26.8, Chomper 26.6, Louse
+     Progenitor 24.7, Myte 23.2, Egg + Nectar + Rock 22.8, The Obscura
+     21.3), 15 fights of each drawn at random, whatever came of them; turn
+     1; block and damage kept to turn 2, power to turn 2 where a Power is in
+     hand, guard (forks2 3865098: the most block when an attack is coming,
+     else the most damage) the fight long; judged on the points where the
+     plays parted. Dev half (62; the bot 29.3 a fight, every bot arm its
+     source): block +5.2 ± 1.6 a fight (44 of 61 parted; deaths 8 / 5),
+     damage +8.0 ± 1.9 (48), guard +7.7 ± 2.8 (52; deaths 9 / 5, +10
+     potions), power +1.9 ± 1.7 (9 of 18). Every one costs more than the bot:
+     harmful (power undecided); the held-out half not run. The hallways'
+     cost is not these structural choices; the deck's defence is next.
+   - **The Gremlin Merc's Surprise** (b06a323; the Defect session's find,
+     SurprisePower.AfterDeath): its death brings a Fat and a Sneaky Gremlin,
+     not the win the model had. **And a regression the characters' merge
+     brought** (148a0a9): the Necrobinder's keyExt ("" for the Ironclad)
+     put "|" on every Ironclad state key since 4b75738, and lookfix seeds
+     its sampled draws by the key's hash, so act 1's hallway look ahead drew
+     other hands: 25 of 31 f1 saves parted from c1ac146's base before floor
+     16 (bisected on JEV02074's floor 2, then the hooks one by one); the
+     Defect session's f16 check could not see it (act 2's hallways have no
+     look ahead). extKey adds nothing when no character does. At 148a0a9 the
+     31 f1 saves that meet the Merc play as the base up to it in 30 (the
+     last holds the Defect's Bulk Up, a foreign card); its fight -1.1 ± 0.9
+     HP + 10 a potion (30, all won).
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
