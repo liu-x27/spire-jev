@@ -2081,8 +2081,12 @@ export function stateKey(s: State): string {
 }
 /** The characters' state in the key (characters/index.ts keyExt); nothing without one. */
 function extKey(s: State): string {
-  const hooks = rules().keyExt;
-  return hooks.length === 0 ? "" : `|${hooks.map((f) => f(s)).join(",")}`;
+  // Nothing when no character has anything in this state: the key, and so the look ahead's draws seeded
+  // by its hash (lookfix), stay as they were before the other characters came. The Necrobinder's keyExt
+  // ("" for the Ironclad) had added "|" to every Ironclad key: act 1's hallway look ahead drew other hands
+  // and played otherwise (25 of 31 f1 saves parted from c1ac146's base before floor 16).
+  const parts = rules().keyExt.map((f) => f(s));
+  return parts.every((p) => p === "") ? "" : `|${parts.join(",")}`;
 }
 /** Relic flags and counters a play can change: states that differ in them are not the same. */
 const RELIC_FLAGS: [string, string][] = [
