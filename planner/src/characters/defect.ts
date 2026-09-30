@@ -33,8 +33,8 @@ import { character } from "../character.ts";
 import type { Observation } from "../obs.ts";
 import type { Weights } from "../search.ts";
 import {
-  addPower, applyPower, autoPlay, blockGain, type Card, costOf, died, dmg, draw, type Enemy, exhaustCard, gainBlock, HAND_LIMIT, hit,
-  junkIndex, num, one, powerVar, relicVar, setRelicVar, standard, type State, strike, takeFromDraw,
+  addPower, applyPower, autoPlay, blockGain, type Card, costOf, died, dmg, draw, type Enemy, endOfTurnBlock, exhaustCard, extraTurn, gainBlock,
+  HAND_LIMIT, hit, incomingHits, junkIndex, num, one, powerVar, relicVar, setRelicVar, standard, type State, strike, takeFromDraw,
 } from "../sim.ts";
 import type { CardRow, CharacterRules, Rule } from "./index.ts";
 
@@ -692,6 +692,20 @@ function startTurn(prev: State, next: State): void {
     if (p["LIGHTNING_ROD"]! <= 0) delete p["LIGHTNING_ROD"];
   }
   channel(next, "GLASS_ORB", power(next, "SPINNER"));
+  // Buffer's stacks the enemies' hits spent (a hit past block that would take HP, a stack each).
+  const buffer = power(prev, "BUFFER");
+  if (buffer > 0 && !extraTurn(prev)) {
+    let block = endOfTurnBlock(prev);
+    let used = 0;
+    for (const h of incomingHits(prev)) {
+      if (h > block && used < buffer) used++;
+      block = Math.max(0, block - h);
+    }
+    if (used >= buffer) delete p["BUFFER"];
+    else if (used > 0) p["BUFFER"] = buffer - used;
+  }
+  // Creative AI (IL: BeforeHandDraw): a random Power card of the Defect's into the hand a stack, not known here.
+  for (let i = 0; i < power(next, "CREATIVE_AI") && next.hand.length + next.drawn < HAND_LIMIT; i++) next.drawn++;
   // Machine Learning: that many more cards in the turn's draw.
   for (let i = 0; i < power(next, "MACHINE_LEARNING") && next.hand.length < HAND_LIMIT && next.draw.length > 0; i++) next.hand.push({ ...next.draw.pop()!, locked: false });
   // AfterPlayerTurnStart: Emotion Chip, if the player lost HP last turn or in the enemies' (every orb, the hooks on); Loop (the front orb's, a stack a time).

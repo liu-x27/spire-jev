@@ -250,6 +250,18 @@ test("buffer: the next hit that would take HP takes none", () => {
   assert.equal(hpLoss(s), 7);
 });
 
+test("buffer: a stack the enemies' hit spent is gone the next turn; a blocked hit spends none", () => {
+  const s = withPowers(state([], [], [foe(60, 1, {}, 10)]), { BUFFER: 2 });
+  assert.equal(next(s).player.powers["BUFFER"], 1);
+  const blocked = withPowers({ ...state([], [], [foe(60, 1, {}, 10)]), player: { hp: 60, maxHp: 75, block: 12, powers: {} } }, { BUFFER: 1 });
+  assert.equal(next(blocked).player.powers["BUFFER"], 1);
+});
+
+test("creative ai: a card at the next turn's start the model cannot know", () => {
+  const n = next(withPowers(state([]), { CREATIVE_AI: 1 }));
+  assert.equal(n.drawn, 1);
+});
+
 test("metronome: the fight's 7th channel deals 30 to every enemy, once", () => {
   const s = state([ZAP], [], [foe(60)], { relics: ["CRACKED_CORE", "METRONOME"], relicVars: { METRONOME: { _orbsChanneled: 6, Damage: 30 } } });
   assert.equal(at(s, 0).enemies[0]!.hp, 30);
