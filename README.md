@@ -22,6 +22,23 @@ here (`--flags pathdp,restbudget,potions2,sleep,spar,spar3`). The replay from fl
 [docs/media/a10-849-run.mp4](docs/media/a10-849-run.mp4) (2 min 52 s for 8.9 minutes of play;
 its last card reads 0 HP because the game's closing event takes it after the final boss).*
 
+### The Regent: a win from floor 1
+
+![Floor 49: the Regent beats Torch Head Amalgam and the Queen with 6 HP left (2×)](docs/media/a10-regent-3019-floor49-2x.gif)
+
+*Ascension 10, seed 3019, the Regent (2026-09-30): the last fight at 2×, the Queen falling
+with the bot on 6 of 66 HP. Unlike 849 this run was played from floor 1 to floor 49 in one go,
+no save in between: 20 fights, 20 won, 456 cards in 560 decisions (p50 2.0 ms, p95 122 ms).
+Its bosses, HP going in → left at the end (of 66): Kin Priest 57 → 55, Crusher and Rocket
+51 → 12, Aeonglass 60 → 16, Torch Head Amalgam and the Queen 14 → 6. A narrow win, not a win
+rate: 1 of the 20 fresh seeds (3001–3020) this configuration played was won, and the 20 reached
+floor 29.4 on average. The characters other than the Ironclad are on a development branch,
+not yet in this repository; this run is its code (`45d61d8`) on the best configuration so far
+(`--choices rules2 --flags pathdp,restbudget,potions2,sleep,spar,spar3,spar5,spar4up,spar4shop,powbonus,spartake,halllook1,lookfix`).
+The recording matches the headless run fight for fight. The whole run:
+[docs/media/a10-regent-3019-run.mp4](docs/media/a10-regent-3019-run.mp4) (4 min 34 s for 28
+minutes of play, fights 2×, the rest 8×).*
+
 ### Three climbs to act 3
 
 The three runs that reached act 3's bosses, in the order the rules came, each on the code of its
@@ -59,6 +76,10 @@ judge questions for the calls around it); nothing here calls TypeSafe's Jev API,
 no model is involved at all.
 
 ## Where it stands
+
+**The first Regent win, and the first from floor 1 (2026-09-30):** seed 3019, on the development
+branch's characters (not yet in this repository), 1 of 20 fresh seeds; see
+[The Regent](#the-regent-a-win-from-floor-1) above.
 
 **The first A10 win (2026-09-26):** seed 849, replayed from its floor-32 save on the development
 rules (`spar3` and later, not yet in this repository), beat act 2's boss and both of act 3's —

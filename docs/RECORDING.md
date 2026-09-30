@@ -1,5 +1,27 @@
 # Recording the bot on screen
 
+## Seed 3019: the Regent, A10, floor 49 of 49, a win from floor 1
+
+![Floor 49: the Regent beats Torch Head Amalgam and the Queen with 6 HP left (2×)](media/a10-regent-3019-floor49-2x.gif)
+
+The Regent, ascension 10, seed JEV03019, played whole from floor 1: the one win of the 20 fresh
+seeds 3001–3020 on the development branch's characters (`45d61d8`, not yet in this repository),
+with the best configuration so far (`--choices rules2 --flags pathdp,restbudget,potions2,sleep,spar,spar3,spar5,spar4up,spar4shop,powbonus,spartake,halllook1,lookfix`,
+`SPIRE_JEV_POW_BONUS=10`, `SPIRE_JEV_CHARACTER=REGENT`). Its bosses, HP going in → left at the end
+(of 66): Kin Priest 57 → 55, Crusher and Rocket 51 → 12, Aeonglass 60 → 16, Torch Head Amalgam and
+the Queen 14 → 6. The game's closing event takes the HP to 0 about a second after the Queen falls,
+so the video and the GIF stop on the killing blow.
+
+The evaluation played 3019 ninth in a sandbox after 3011–3018, and an evaluation keeps some state
+between its seeds; played alone, headless and then on screen, it came out the same: all 20 fights
+(every HP and turn count) and all 127 rooms match the evaluation, the rooms but for the language
+of their text.
+
+- [`media/a10-regent-3019-run.mp4`](media/a10-regent-3019-run.mp4): floors 1–49, 4 min 34 s for
+  28 minutes of play, fights at 2× and the rest 8×. 960 wide.
+- [`media/a10-regent-3019-floor49-2x.webp`](media/a10-regent-3019-floor49-2x.webp): the GIF's fight
+  as an animated WebP.
+
 ## Seed 849: A10, floor 49 of 49, a win
 
 ![Floors 48 and 49: the bot beats Aeonglass with 3 HP left, then Test Subject (2×)](media/a10-849-floor48-49-2x.gif)
