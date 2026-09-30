@@ -15,7 +15,7 @@
  * CARDS). With every module empty the core plays exactly as before.
  */
 
-import type { Card, Enemy, State } from "../sim.ts";
+import type { Card, Enemy, Soak, State } from "../sim.ts";
 import type { Observation } from "../obs.ts";
 import type { Weights } from "../search.ts";
 import { DEFECT } from "./defect.ts";
@@ -74,6 +74,11 @@ export interface CharacterRules {
   enemyTurnStart?(s: State, e: Enemy, powers?: Record<string, number>): number;
   /** A term added to search.ts evaluate's score of a state that is neither won nor lost. */
   evaluate?(s: State, w: Weights): number;
+  /**
+   * An ally in front of the player this turn (sim.ts hpLoss): it takes each enemy attack hit's part
+   * past block before the player does (the Necrobinder's Osty, Die for You); none, undefined.
+   */
+  soak?(s: State): Soak | undefined;
   /** A copy of `ext` a play may change (sim.ts clone); by default a shallow copy, so replace values, do not mutate them. */
   cloneExt?(ext: Record<string, unknown>): Record<string, unknown>;
   /** What of `ext` makes two states different (sim.ts stateKey). */
@@ -118,6 +123,7 @@ export interface Merged {
   nextTurn: NonNullable<CharacterRules["nextTurn"]>[];
   enemyTurnStart: NonNullable<CharacterRules["enemyTurnStart"]>[];
   evaluate: NonNullable<CharacterRules["evaluate"]>[];
+  soak: NonNullable<CharacterRules["soak"]>[];
   cloneExt: NonNullable<CharacterRules["cloneExt"]>[];
   keyExt: NonNullable<CharacterRules["keyExt"]>[];
   cards: Record<string, CardRow>;
@@ -137,7 +143,7 @@ export function rules(): Merged {
   if (merged) return merged;
   const m: Merged = {
     special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
-    endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], cloneExt: [], keyExt: [],
+    endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], soak: [], cloneExt: [], keyExt: [],
     cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(),
   };
   for (const r of ALL) {
@@ -147,7 +153,7 @@ export function rules(): Merged {
     }
     Object.assign(m.counts, r.counts ?? {});
     Object.assign(m.cards, r.cards ?? {});
-    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "cloneExt", "keyExt", "combatSelect"] as const) {
+    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "soak", "cloneExt", "keyExt", "combatSelect"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
     }

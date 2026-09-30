@@ -626,6 +626,8 @@ function compareTurnStart(p: State, a: State): { field: string; predicted: strin
   check("energy", p.energy, a.energy);
   check("hand.size", p.hand.length, a.hand.length);
   check("player.powers", powers(p.player.powers), powers(a.player.powers));
+  // The Necrobinder's Osty after the enemies' turn and the turn's start (characters/necrobinder.ts).
+  if (typeof a.ext?.["ostyHp"] === "number") check("osty", `${p.ext?.["ostyHp"]}/${p.ext?.["ostyMax"]}`, `${a.ext["ostyHp"]}/${a.ext["ostyMax"]}`);
   a.enemies.forEach((e, i) => {
     const q = p.enemies.find((x) => x.id === e.id);
     if (!q || !e.alive) return;

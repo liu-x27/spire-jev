@@ -209,8 +209,9 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     const ticked = enemyTurnStart(s, e, ep);
     if (e.hp - ticked <= 0) return { ...e, hp: 0, alive: false, powers: ep, intents: [] };
     // Strength taken for the turn (Mangle, Dark Shackles) comes back at the end of the enemy's turn.
-    // Piercing Wail (the Silent's; IL: PiercingWailPower, a TemporaryStrengthPower) the same.
-    for (const k of ["MANGLE", "DARK_SHACKLES", "PIERCING_WAIL"]) {
+    // Piercing Wail (the Silent's; IL: PiercingWailPower, a TemporaryStrengthPower) and Enfeebling Touch
+    // (the Necrobinder's) the same.
+    for (const k of ["MANGLE", "DARK_SHACKLES", "PIERCING_WAIL", "ENFEEBLING_TOUCH"]) {
       if ((ep[k] ?? 0) <= 0) continue;
       ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
       if (ep["STRENGTH"] === 0) delete ep["STRENGTH"];
