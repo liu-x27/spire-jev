@@ -299,6 +299,16 @@ test("spiral: a Spiral Defend or Strike is played twice", () => {
   assert.equal(at(state([spiral(STRIKE)], [foe("TUNNELER", 5)]), 0).enemies[0]!.alive, false);
 });
 
+test("vigor: the first play of an attack spends it, not Spiral's or One-Two Punch's replay", () => {
+  const spiral = (c: Card): Card => ({ ...c, enchantment: "SPIRAL" });
+  const vigor = (s: State, powers: Record<string, number>): State => ({ ...s, player: { ...s.player, powers: { VIGOR: 4, ...powers } } });
+  // 6 + 4, then 6: 60 - 16.
+  const one = at(vigor(state([spiral(STRIKE)], [foe("TUNNELER", 60)]), {}), 0);
+  assert.equal(one.enemies[0]!.hp, 44);
+  assert.equal(one.player.powers["VIGOR"] ?? 0, 0);
+  assert.equal(at(vigor(state([STRIKE], [foe("TUNNELER", 60)]), { ONE_TWO_PUNCH: 1 }), 0).enemies[0]!.hp, 44);
+});
+
 test("pael's legion: off cooldown a card's block is doubled, then every other turn", () => {
   const s0 = { ...state([DEFEND, DEFEND], [foe("TUNNELER", 60)]), relics: ["PAELS_LEGION"], relicVars: { PAELS_LEGION: { Turns: 2, _cooldown: -1 } } };
   const one = at(s0, 0);
