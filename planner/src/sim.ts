@@ -1879,8 +1879,16 @@ export function enemyTurnStart(s: State, e: Enemy, powers?: Record<string, numbe
   return lost;
 }
 
+/**
+ * Ambergris (IL: AmbergrisPower.ShouldTakeExtraTurn; CombatManager.SwitchFromPlayerToEnemySide,
+ * StartTurn): the player takes the next turn too, and the enemies' turn does not happen — no attack,
+ * no turn start (Poison, Sandpit), their block and intents as they are.
+ */
+export const extraTurn = (s: State): boolean => has(s.player, "AMBERGRIS");
+
 /** The hits of each enemy (s.enemies' order) at the end of this turn. */
 export function incomingHitsBy(s: State): number[][] {
+  if (extraTurn(s)) return s.enemies.map(() => []);
   const by: number[][] = [];
   for (const e of s.enemies) {
     const hits: number[] = [];
@@ -1939,7 +1947,7 @@ export function endOfTurnBlock(s: State): number {
 export function hpLoss(s0: State): number {
   const s = endOfTurn(s0);
   // Sandpit (The Insatiable) devours the player when it runs out.
-  if (s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
+  if (!extraTurn(s) && s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1)) return s.player.hp;
   const constrict = Math.max(0, s.player.powers["CONSTRICT"] ?? 0);
   // A status card left in hand that deals damage does it at the end of the turn, into block
   // (Infection, Burn, Aeonglass's Wither).
@@ -1987,7 +1995,7 @@ export function hpAfterTurn(s: State): { hp: number; revived?: Reviver } {
 }
 
 /** The Insatiable's Sandpit runs out this turn: it devours the player, and no relic or potion undoes that. */
-export const sandpitDevours = (s: State) => s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1);
+export const sandpitDevours = (s: State) => !extraTurn(s) && s.enemies.some((e) => e.alive && (e.powers["SANDPIT"] ?? 0) > 0 && (e.powers["SANDPIT"] ?? 0) <= 1);
 
 /** The second life a death at the end of this turn would use: none against Sandpit (research §2.1). */
 export function endOfTurnRevival(s: State): { by: Reviver; hp: number } | undefined {
