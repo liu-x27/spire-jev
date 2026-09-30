@@ -48,13 +48,22 @@ const amount = (s: State, p: string) => Math.max(0, s.player.powers[p] ?? 0);
 const poisonOf = (e: Enemy) => Math.max(0, e.powers["POISON"] ?? 0);
 /** How many times an enemy's Poison ticks (IL: PoisonPower.get_TriggerCount): min(P, 1 + the player's Accelerant). */
 const ticks = (s: State, p: number) => Math.min(p, 1 + amount(s, "ACCELERANT"));
-/** The HP a turn's start takes for Poison `p`: p, p-1, … for its ticks, 1 a tick through Intangible. */
-function poisonLoss(s: State, e: Enemy, p: number): number {
+/**
+ * What a turn's start's Poison does to `e` (IL: PoisonPower.Trigger): its ticks, p, p-1, …, each
+ * through what caps an enemy's HP loss as a hit's (sim.ts hit: Intangible 1, Slippery 1 a stack,
+ * Hard to Kill; SlipperyPower.ModifyHpLostAfterOsty has no powered check), on a copy of it: the HP
+ * it loses and its powers after (Poison down, Slippery's stacks spent).
+ */
+function poisonTick(s: State, e: Enemy): { lost: number; powers: Record<string, number> } {
+  const p = poisonOf(e);
+  const copy: Enemy = { ...e, block: 0, powers: { ...e.powers } };
   const n = ticks(s, p);
-  if (has(e, "INTANGIBLE")) return n;
-  let lost = 0;
-  for (let i = 0; i < n; i++) lost += p - i;
-  return lost;
+  for (let i = 0; i < n && copy.alive; i++) hit(copy, p - i);
+  if (copy.alive) {
+    if (p - n > 0) copy.powers["POISON"] = p - n;
+    else delete copy.powers["POISON"];
+  }
+  return { lost: e.hp - copy.hp, powers: copy.powers };
 }
 
 /** HP an enemy loses through block (Poison, Strangle): each hit a tick, as the game deals them. */
@@ -96,10 +105,11 @@ export function poisonAhead(s: State): number {
     pace ??= deckPace(s).perTurn;
     let hp = e.hp;
     let p = poisonOf(e);
+    let slippery = Math.max(0, e.powers["SLIPPERY"] ?? 0);
     for (let t = 0; t < POISON_TURNS && p > 0 && hp > 0; t++) {
       const n = ticks(s, p);
       for (let i = 0; i < n && hp > 0; i++) {
-        const d = Math.min(hp, has(e, "INTANGIBLE") ? 1 : p);
+        const d = Math.min(hp, has(e, "INTANGIBLE") || slippery-- > 0 ? 1 : p);
         total += d * Math.pow(POISON_DECAY, t);
         hp -= d;
         p--;
@@ -499,16 +509,14 @@ const SILENT_RULES: CharacterRules = {
     if (lost > 0 && e.alive && has(s.player, "ENVENOM")) applyPower(s, e, "POISON", amount(s, "ENVENOM"));
   },
   enemyTurnStart(s, e, powers) {
+    const tick = poisonOf(e) > 0 ? poisonTick(s, e) : undefined;
+    if (powers && tick) {
+      for (const k of Object.keys(powers)) if (!(k in tick.powers)) delete powers[k];
+      Object.assign(powers, tick.powers);
+    }
     // Strangle is the player's turn's; gone by the enemy's end.
     if (powers) delete powers["STRANGLE"];
-    const p = poisonOf(e);
-    if (p <= 0) return 0;
-    if (powers) {
-      const left = p - ticks(s, p);
-      if (left > 0) powers["POISON"] = left;
-      else delete powers["POISON"];
-    }
-    return poisonLoss(s, e, p);
+    return tick?.lost ?? 0;
   },
   nextTurn(prev, next) {
     const p = prev.player.powers;

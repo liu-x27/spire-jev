@@ -60,6 +60,13 @@ test("accelerant: Poison ticks once more a stack, one less each time", () => {
   assert.equal(n.enemies[0]!.powers["POISON"], 3);
 });
 
+test("poison through Slippery: 1 a tick and a stack spent (IL: SlipperyPower.ModifyHpLostAfterOsty, any damage)", () => {
+  const n = next(state([], [foe(30, 1, { POISON: 5, SLIPPERY: 2 })]));
+  assert.equal(n.enemies[0]!.hp, 29);
+  assert.equal(n.enemies[0]!.powers["SLIPPERY"], 1);
+  assert.equal(n.enemies[0]!.powers["POISON"], 4);
+});
+
 test("poison through Intangible: 1 a tick", () => {
   const n = next(state([], [foe(30, 1, { POISON: 5, INTANGIBLE: 1 })]));
   assert.equal(n.enemies[0]!.hp, 29);
