@@ -14,7 +14,7 @@
 import type { IntentObs } from "./obs.ts";
 import { type EnemyTurn, moveIntents, playMove, scripted } from "./scripts.ts";
 import { rules } from "./characters/index.ts";
-import { type Card, cloneExt, type Enemy, endOfTurn, enemyTurnStart, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, incomingHitsBy, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
+import { type Card, cloneExt, type Enemy, endOfTurn, enemyTurnStart, extraTurn, endOfTurnBlock, hpAfterTurn, hpLoss, incomingDamage, incomingHitsBy, isClaw, redSkull, spendRevival, startOfTurn, type State } from "./sim.ts";
 
 /** Powers that last the turn they were played in. */
 // Ringing (the Ceremonial Beast's Beast Cry) is one turn's: the game's fights have it the turn after
@@ -164,7 +164,15 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
       guard = Math.max(0, guard - sum);
     });
   }
+  // Ambergris: the enemies' turn does not happen (sim.ts extraTurn); the player's next turn is an extra
+  // one, a stack of it spent (IL: AmbergrisPower.AfterTakingExtraTurn, Decrement).
+  const extra = extraTurn(s);
+  if (extra) {
+    powers["AMBERGRIS"] = (powers["AMBERGRIS"] ?? 1) - 1;
+    if (powers["AMBERGRIS"]! <= 0) delete powers["AMBERGRIS"];
+  }
   const enemies = s.enemies.map((e): Enemy => {
+    if (extra) return { ...e, powers: { ...e.powers } };
     // A killed Waterfall Giant: its stun passes, and the turn after it strikes for its DeathBlow (the
     // game shows it with Weak taken off already); once struck it is gone.
     if (!e.alive && (e.deathBlow ?? 0) > 0) {
@@ -287,7 +295,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
   // Thorns on the player (Bronze Scales; IL: ThornsPower.BeforeDamageReceived): every hit of an
   // enemy's attack costs the attacker its amount, blocked or not.
   const thornsBack = Math.max(0, powers["THORNS"] ?? 0);
-  if (thornsBack > 0) {
+  if (thornsBack > 0 && !extra) {
     s.enemies.forEach((before, i) => {
       const e = enemies[i]!;
       if (!before.alive || !e.alive) return;
@@ -312,7 +320,7 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
   }
   const vulnerable = (powers["VULNERABLE"] ?? 0) > 0;
   for (const o of enemies) {
-    if (!o.alive || !scripted(o) || !o.intents.some((i) => i.type === "Attack")) continue;
+    if (extra || !o.alive || !scripted(o) || !o.intents.some((i) => i.type === "Attack")) continue;
     if (!gifted.has(o.id) && shownWith.get(o.id) === vulnerable) continue;
     const mult = { vulnerable, weak: (o.powers["WEAK"] ?? 0) > 0, behind: o.behindAtStart ?? false, shrink: shrinkOf(o.powers, o) };
     o.intents = moveIntents(o.model, o.move!, o.startStrength, mult, o.intents.find((i) => i.type === "Attack")?.hits);
