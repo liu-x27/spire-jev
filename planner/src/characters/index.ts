@@ -118,7 +118,8 @@ export interface CharacterRules {
   ancients?: Readonly<Record<string, { first?: readonly string[]; avoid?: readonly string[] }>>;
 }
 
-export const ALL: readonly CharacterRules[] = [SILENT, NECROBINDER, REGENT, DEFECT];
+/** Every character's rules, asked for at call time: a module that imports one of them first (differential.ts the Defect's) closes the cycle before the list could be built at load. */
+export const all = (): readonly CharacterRules[] => [SILENT, NECROBINDER, REGENT, DEFECT];
 
 export interface Merged {
   special: Record<string, Rule>;
@@ -164,7 +165,7 @@ export function rules(): Merged {
     endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], soak: [], cloneExt: [], keyExt: [],
     cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(), ancients: {},
   };
-  for (const r of ALL) {
+  for (const r of all()) {
     for (const [id, f] of Object.entries(r.special ?? {})) {
       if (m.special[id]) throw new Error(`characters: two rules for ${id}`);
       m.special[id] = f;
