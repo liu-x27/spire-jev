@@ -1340,6 +1340,21 @@ states, and only a simulator is fast enough for that.
      yet here: Ambergris (an extra turn, AmbergrisPower.ShouldTakeExtraTurn;
      held in 76 of the baselines' 4,330 fights, drunk 28 times) in
      b0edc12, checked with 221fa1b and 7fac83f before they come in.
+   - **sparengval** (the engval branch, 208769e; not in main: the user took
+     only src/replay-rewards.ts from it, b3981ea): spar's bouts planned with
+     engval too, so a deck's Powers are worth what they do in the turns to
+     come. Offline (replay-rewards on c2early, acts 1-2, 1 reward in 10:
+     200; C2 replayed as chosen 95%): 18 picks changed, Powers 9 to 1,
+     skips 4 to 1; spar5's score of a Power +2.21 ± 0.73 (73); 1.35 times the
+     CPU where it costs most (the Crab, the Insatiable). In the game, C2 +
+     engval + sparengval from the 157 odd f16 saves to the act 2 boss, A =
+     bench-c2full-f16 (3 of them replayed as A, play for play): HP% at the
+     boss (0 if not reached) -0.01 ± 1.54; the boss reached 83 vs 81, beaten
+     26 vs 30 (+9/-13); act 1's boss HP lost -0.12 ± 0.31. The mechanism is
+     all there: Powers in the deck at 33 +0.20 ± 0.05, played a hallway
+     fight 0.44 -> 0.70, rewards skipped 0.92 -> 0.83; no timeout (one
+     connection reset at a shop, resumed). Dropped, no check half: the
+     engine line (engval, then the deck) stops here.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
