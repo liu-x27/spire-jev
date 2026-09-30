@@ -85,11 +85,16 @@ function opening(s: State): number {
   const destiny = s.relics.includes("DIVINE_DESTINY") && (s.turn ?? 1) <= 1 ? relicVar(s, "DIVINE_DESTINY", "Stars", 7) : 0;
   return right + destiny;
 }
+/**
+ * State.ext is shared by every character's rules (the Silent's counts, the Necrobinder's Osty): the Regent's
+ * part is there once it has its stars.
+ */
+const mine = (s: State): Ext | undefined => typeof (s.ext as Partial<Ext> | undefined)?.stars === "number" ? s.ext as unknown as Ext : undefined;
 /** The Regent's state, read only. */
-const peek = (s: State): Ext => (s.ext as Ext | undefined) ?? { stars: opening(s) };
+const peek = (s: State): Ext => mine(s) ?? { stars: opening(s) };
 /** The Regent's state, to change: made on the state (its own copy, sim.ts clone) the first time. */
 function ext(s: State): Ext {
-  if (!s.ext) s.ext = { stars: opening(s) } satisfies Ext;
+  if (!mine(s)) s.ext = { ...(s.ext ?? {}), stars: opening(s) } satisfies Partial<Ext>;
   return s.ext as unknown as Ext;
 }
 export const starsOf = (s: State): number => peek(s).stars;
@@ -546,7 +551,7 @@ function starCost(s: State, c: Card): number {
  */
 function voidFree(s: State): boolean {
   const vf = power(s, "VOID_FORM");
-  if (vf <= 0 || (s.ext && (s.ext as unknown as Ext).ended)) return false;
+  if (vf <= 0 || mine(s)?.ended) return false;
   return (s.playedBefore?.length ?? 0) + s.played < vf;
 }
 
@@ -746,7 +751,7 @@ export const REGENT: CharacterRules = {
       e.monologue = obs.player_powers["MONOLOGUE_POWER"] ?? 1;
       e.monologueGiven = mono["StrengthApplied"] ?? 0;
     }
-    s.ext = e as unknown as Record<string, unknown>;
+    s.ext = { ...(s.ext ?? {}), ...e };
     // I Am Invincible on top of the draw pile (the bridge's first) plays itself at the turn's end.
     if (c && c.draw_pile[0]?.card_id === "I_AM_INVINCIBLE" && s.draw.length > 0 && !(s.onTop ?? 0)) {
       const top = s.draw.splice(0, 1)[0]!;
@@ -756,14 +761,14 @@ export const REGENT: CharacterRules = {
   },
 
   playable(s: State, c: Card): boolean {
-    if (s.ext && (s.ext as unknown as Ext).ended) return false;
+    if (mine(s)?.ended) return false;
     if (c.starCost === undefined && !c.starX) return true;
     return starCost(s, c) <= starsOf(s);
   },
 
   beforePlay(s: State, c: Card): void {
     const paid = c.starCost !== undefined || c.starX ? starCost(s, c) : 0;
-    const e = s.ext || paid > 0 || c.starX || power(s, "THE_SEALED_THRONE") > 0 || power(s, "ORBIT") > 0 ? ext(s) : undefined;
+    const e = mine(s) || paid > 0 || c.starX || power(s, "THE_SEALED_THRONE") > 0 || power(s, "ORBIT") > 0 ? ext(s) : undefined;
     if (!e) return;
     if (c.starCost !== undefined || c.starX) spendStars(s, paid);
     else e.spent = 0;
@@ -787,7 +792,7 @@ export const REGENT: CharacterRules = {
         s.exact = false;
       }
     }
-    if (!s.ext && power(s, "BLACK_HOLE") <= 0) return;
+    if (!mine(s) && power(s, "BLACK_HOLE") <= 0) return;
     const e = ext(s);
     // Black Hole (IL: AfterCardPlayed): a card that paid stars hits every enemy.
     if ((e.spent ?? 0) > 0 && power(s, "BLACK_HOLE") > 0) relicDamage(s, power(s, "BLACK_HOLE"), true);
@@ -805,7 +810,7 @@ export const REGENT: CharacterRules = {
 
   afterHit(s: State, e: Enemy): void {
     const gaze = power(s, "MONARCHS_GAZE");
-    if (!s.ext && gaze <= 0 && character() !== "REGENT") return;
+    if (!mine(s) && gaze <= 0 && character() !== "REGENT") return;
     const x = ext(s);
     x.hitsOn = { ...(x.hitsOn ?? {}), [e.id]: (x.hitsOn?.[e.id] ?? 0) + 1 };
     // Monarch's Gaze (IL: MonarchsGazePower.AfterDamageGiven): every powered hit takes Strength for the enemy's turn.
@@ -900,10 +905,10 @@ export const REGENT: CharacterRules = {
       if ((e.powers["CONQUEROR"] ?? 1) <= 0) delete e.powers["CONQUEROR"];
     }
     // A bout's state has the Regent's only once a star moved: its opening stars carry into the next turn.
-    if (!next.ext) {
+    if (!mine(next)) {
       const kept = peek(prev).stars;
       if (kept <= 0 && !["GENESIS", "STAR_NEXT_TURN", "VOID_FORM", "MONOLOGUE"].some((k) => power(next, k) > 0)) return;
-      next.ext = { stars: kept } satisfies Ext;
+      next.ext = { ...(next.ext ?? {}), stars: kept } satisfies Partial<Ext>;
     }
     const e = ext(next);
     // The turn's counts start again; Monologue's Strength goes back.
@@ -938,7 +943,7 @@ export const REGENT: CharacterRules = {
   },
 
   evaluate(s: State, w: Weights): number {
-    const e = s.ext as unknown as Ext | undefined;
+    const e = mine(s);
     const bl = blades(s);
     if (!e && bl.length === 0 && !s.draw.some((c) => c.id === "MINION_DIVE_BOMB")) return 0;
     let score = 0;
@@ -953,7 +958,7 @@ export const REGENT: CharacterRules = {
   },
 
   keyExt(s: State): string {
-    const e = s.ext as unknown as Ext | undefined;
+    const e = mine(s);
     if (!e) return "";
     return `${e.stars}/${e.generated ?? 0}${e.ended ? "e" : ""}/${bladesKey(s)}`;
   },
