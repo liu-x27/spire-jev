@@ -20,7 +20,7 @@
 
 import type { Observation } from "../obs.ts";
 import {
-  addPower, applyPower, blockGain, type Card, costOf, counted, died, dmg, downed, draw, type Enemy, endOfTurn, endOfTurnBlock, gainBlock, has, hit, hpLoss, incomingHitsBy,
+  addPower, applyPower, blockGain, type Card, costOf, counted, died, dmg, downed, draw, type Enemy, endOfTurn, endOfTurnBlock, extraTurn, gainBlock, has, hit, hpLoss, incomingHitsBy,
   one, type Soak, type State, strike, targetable, type Unit, autoPlay, HAND_LIMIT,
 } from "../sim.ts";
 import type { Weights } from "../search.ts";
@@ -829,16 +829,19 @@ export const NECROBINDER: CharacterRules = {
     });
     const nm = prev.player.powers["NECRO_MASTERY"] ?? 0;
     if (nm > 0 && lost > 0) for (const e of next.enemies) if (e.alive) unblockable(next, e, lost * nm);
+    // Ambergris's extra turn: no enemies' turn, so none of its end (sim.ts extraTurn).
+    const enemiesTurn = !extraTurn(prev);
     // Doom: every enemy at or under its Doom dies as the enemies' turn ends (IL: BeforeSideTurnEnd).
     for (const e of next.enemies) {
-      if (!doomed(e)) continue;
+      if (!enemiesTurn || !doomed(e)) continue;
       downed(e);
       kill(next, e);
     }
-    // The enemies' turn's end: Sic 'Em goes, Debilitate runs down; hers: Oblivion and Borrowed Time go.
+    // Her turn's end: Oblivion goes; the enemies': Sic 'Em goes, Debilitate runs down.
     for (const e of next.enemies) {
-      delete e.powers["SIC_EM"];
       delete e.powers["OBLIVION"];
+      if (!enemiesTurn) continue;
+      delete e.powers["SIC_EM"];
       if ((e.powers["DEBILITATE"] ?? 0) > 0 && --e.powers["DEBILITATE"]! <= 0) delete e.powers["DEBILITATE"];
     }
     const p = next.player.powers;
