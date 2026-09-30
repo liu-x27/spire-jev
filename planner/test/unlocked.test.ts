@@ -299,6 +299,15 @@ test("spiral: a Spiral Defend or Strike is played twice", () => {
   assert.equal(at(state([spiral(STRIKE)], [foe("TUNNELER", 5)]), 0).enemies[0]!.alive, false);
 });
 
+test("surprise: the Gremlin Merc's death brings a Fat and a Sneaky Gremlin, and the fight goes on", () => {
+  const s = at(state([STRIKE], [foe("GREMLIN_MERC", 5, { SURPRISE: 1, THIEVERY: 20 })]), 0);
+  assert.equal(s.enemies[0]!.alive, false);
+  assert.deepEqual(s.enemies.filter((e) => e.alive).map((e) => [e.model, e.hp, e.move]), [["FAT_GREMLIN", 16, "SPAWNED_MOVE"], ["SNEAKY_GREMLIN", 13, "SPAWNED_MOVE"]]);
+  assert.equal(s.exact, false);
+  // Not scored as a win: something is still alive.
+  assert.ok(evaluate(s) < evaluate({ ...s, enemies: s.enemies.map((e) => ({ ...e, alive: false })) }));
+});
+
 test("vigor: the first play of an attack spends it, not Spiral's or One-Two Punch's replay", () => {
   const spiral = (c: Card): Card => ({ ...c, enchantment: "SPIRAL" });
   const vigor = (s: State, powers: Record<string, number>): State => ({ ...s, player: { ...s.player, powers: { VIGOR: 4, ...powers } } });

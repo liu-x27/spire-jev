@@ -958,6 +958,21 @@ export function died(s: State, e: Enemy): void {
       });
     }
   }
+  // Surprise (Gremlin Merc; IL: SurprisePower.AfterDeath): its death brings a Fat Gremlin (holding the
+  // gold stolen, HeistPower: it flees with it) and a Sneaky Gremlin, both on SPAWNED_MOVE (nothing the
+  // turn they come). The fight is not won: the model called the Merc's kill the win (the Defect
+  // session's check). Their HP is drawn (14-18, 11-15): the middle, and the state not exact.
+  if ((e.powers["SURPRISE"] ?? 0) > 0) {
+    delete e.powers["SURPRISE"];
+    const id = Math.max(...s.enemies.map((o) => o.id)) + 1;
+    for (const [i, [model, hp]] of ([["FAT_GREMLIN", 16], ["SNEAKY_GREMLIN", 13]] as const).entries()) {
+      s.enemies.push({
+        id: id + i, model, hp, maxHp: hp, block: 0, alive: true, powers: {},
+        weakAtStart: false, startStrength: 0, intents: [], move: "SPAWNED_MOVE",
+      });
+    }
+    s.exact = false;
+  }
   // Ravenous (Corpse Slug; IL: RavenousPower.AfterDeath): every other slug devours the dead one — its
   // amount in Strength, and stunned, so it does not act this turn.
   for (const o of s.enemies) {
