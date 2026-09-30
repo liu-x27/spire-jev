@@ -22,7 +22,7 @@ import {
   has, hit, incomingHitsBy, endOfTurnBlock, junkIndex, num, one, relicDamage, relicVar, setRelicVar, standard, type State, strike, targetable,
 } from "../sim.ts";
 import type { Observation } from "../obs.ts";
-import type { CharacterRules, Rule } from "./index.ts";
+import type { CardRow, CharacterRules, Rule } from "./index.ts";
 
 /** The Regent's part of State.ext. Counts "since the observation" start at 0 with every observation. */
 interface Ext {
@@ -35,14 +35,11 @@ interface Ext {
   spent?: number;
   /** Powered attack hits on each enemy since the observation (Beat Into Shape), and at it for the first. */
   hitsOn?: Readonly<Record<number, number>>;
-  /** The card being played recorded its hits itself (the rules that hit through `hits`). */
-  recorded?: boolean;
   /** Mini Regent's Strength and Regalite's block, once a turn: used this turn. */
   miniUsed?: boolean;
   regaliteUsed?: boolean;
-  /** Void Form: the turn was ended by it (nothing more is played); cards still free this turn. */
+  /** Void Form ended the turn: nothing more is played. */
   ended?: boolean;
-  voidFree?: number;
   /** Monologue: Strength a card for the rest of the turn, and what it has given (taken back at the turn's end). */
   monologue?: number;
   monologueGiven?: number;
@@ -174,21 +171,9 @@ export function forge(s: State, n: number): void {
   s.exhaust = s.exhaust.map(up);
 }
 
-/** Hits through strike, recorded for Beat Into Shape and Monarch's Gaze. */
+/** Hits through strike (the afterHit hook counts them, for Beat Into Shape and Monarch's Gaze). */
 function hits(s: State, victims: readonly Enemy[], base: number, times: number): void {
-  if (times <= 0) return;
-  record(s, victims, times);
-  strike(s, victims, base, times);
-}
-function record(s: State, victims: readonly Enemy[], times: number): void {
-  const e = ext(s);
-  e.recorded = true;
-  const on = { ...(e.hitsOn ?? {}) };
-  for (const v of victims) if (targetable(v)) on[v.id] = (on[v.id] ?? 0) + times;
-  e.hitsOn = on;
-  // Monarch's Gaze (IL: MonarchsGazePower.AfterDamageGiven): every powered hit takes Strength for the enemy's turn.
-  const gaze = power(s, "MONARCHS_GAZE");
-  if (gaze > 0) for (const v of victims) if (v.alive && applyPower(s, v, "STRENGTH", -gaze * times)) addPower(v, "MONARCHS_GAZE_STRENGTH_DOWN", gaze * times);
+  if (times > 0) strike(s, victims, base, times);
 }
 const alive = (s: State) => s.enemies.filter((e) => e.alive);
 /** A card's victims: its target, or every enemy for an AllEnemies card. */
@@ -199,10 +184,37 @@ function strengthDown(s: State, e: Enemy, n: number, marker: string): void {
   if (n > 0 && targetable(e) && applyPower(s, e, "STRENGTH", -n)) addPower(e, marker, n);
 }
 
-/** A card of the hand put on top of the draw pile (Glimmer, Photon Cut): the worst, known on top. */
+type Pick = { id: string; type: string };
+/** The card a transform takes (Begone, Charge): a status or curse, a Strike, a Defend, else the core's pick. */
+function worstIndex(cards: readonly Pick[]): number {
+  for (const test of [(c: Pick) => c.type === "Status" || c.type === "Curse", (c: Pick) => c.id === "STRIKE_REGENT", (c: Pick) => c.id === "DEFEND_REGENT"]) {
+    const i = cards.findIndex(test);
+    if (i >= 0) return i;
+  }
+  return Math.max(0, junkIndex(cards));
+}
+/**
+ * The card put back on top of the draw pile (Glimmer, Photon Cut): I Am Invincible (it plays itself
+ * there at the turn's end), a Kingly card (better for every draw), else the worst.
+ */
+function putBackIndex(cards: readonly Pick[]): number {
+  for (const id of ["I_AM_INVINCIBLE", "KINGLY_KICK", "KINGLY_PUNCH"]) {
+    const i = cards.findIndex((c) => c.id === id);
+    if (i >= 0) return i;
+  }
+  return worstIndex(cards);
+}
+/** The discard pile's card Cosmic Indifference puts on top: a blade, else the first that is not a status or curse. */
+function topIndex(cards: readonly Pick[]): number {
+  const blade = cards.findIndex((c) => c.id === BLADE);
+  if (blade >= 0) return blade;
+  return Math.max(0, cards.findIndex((c) => c.type !== "Status" && c.type !== "Curse"));
+}
+
+/** A card of the hand put on top of the draw pile (Glimmer, Photon Cut), known on top. */
 function putBack(s: State): void {
   if (s.hand.length === 0) return;
-  const i = junkIndex(s.hand);
+  const i = putBackIndex(s.hand);
   const [c] = s.hand.splice(i >= 0 ? i : 0, 1);
   s.draw.push(c!);
   s.onTop = (s.onTop ?? 0) + 1;
@@ -358,18 +370,14 @@ const SPECIAL: Record<string, Rule> = {
   },
   // A card of the hand transformed into a Minion Strike (the worst, as the runner chooses).
   BEGONE: (s, c) => {
-    const i = junkIndex(s.hand);
     if (s.hand.length === 0) return;
-    s.hand[i >= 0 ? i : 0] = made("MINION_STRIKE", c.upgrades > 0);
+    s.hand[worstIndex(s.hand)] = made("MINION_STRIKE", c.upgrades > 0);
     generated(s);
   },
   // Two cards of the draw pile into Minion Dive Bombs (which is not known: the pile's order is not).
   CHARGE: (s, c) => {
     const n = Math.min(num(c, "Cards") || 2, s.draw.length);
-    for (let k = 0; k < n; k++) {
-      const i = junkIndex(s.draw);
-      s.draw[i >= 0 ? i : k] = made("MINION_DIVE_BOMB", c.upgrades > 0);
-    }
+    for (let k = 0; k < n; k++) s.draw[worstIndex(s.draw.map((d) => (d.id.startsWith("MINION_") ? { id: d.id, type: "Minion" } : d)))] = made("MINION_DIVE_BOMB", c.upgrades > 0);
     if (n > 0) s.exact = false;
     generated(s, n);
   },
@@ -392,9 +400,7 @@ const SPECIAL: Record<string, Rule> = {
   // Block, and a card of the discard pile on top of the draw pile.
   COSMIC_INDIFFERENCE: plus((s) => {
     if (s.discard.length === 0) return;
-    const blade = s.discard.findIndex(isBlade);
-    const card = s.discard.findIndex((c) => c.type !== "Status" && c.type !== "Curse");
-    s.draw.push(s.discard.splice(blade >= 0 ? blade : card >= 0 ? card : 0, 1)[0]!);
+    s.draw.push(s.discard.splice(topIndex(s.discard), 1)[0]!);
     s.onTop = (s.onTop ?? 0) + 1;
     s.exact = false;
   }),
@@ -442,7 +448,6 @@ const SPECIAL: Record<string, Rule> = {
     addPower(s.player, "VOID_FORM", num(c, "VoidFormPower") || 2);
     const e = ext(s);
     e.ended = true;
-    e.voidFree = 0;
   },
   // Every later card this turn gives 1 Strength; given back at the turn's end.
   MONOLOGUE: (s, c) => {
@@ -452,9 +457,9 @@ const SPECIAL: Record<string, Rule> = {
   // Draw, then the best skill of the hand played 3 times for nothing.
   DECISIONS_DECISIONS: (s, c) => {
     draw(s, num(c, "Cards"));
-    const skills = s.hand.filter((h) => h.type === "Skill" && !h.keywords.includes("Unplayable"));
-    if (skills.length === 0) return;
-    const pick = skills.reduce((a, b) => ((b.vars["Block"] ?? 0) + (b.vars["Stars"] ?? 0) * 3 > (a.vars["Block"] ?? 0) + (a.vars["Stars"] ?? 0) * 3 ? b : a));
+    const i = decisionsIndex(s.hand);
+    if (i < 0) return;
+    const pick = s.hand[i]!;
     s.hand.splice(s.hand.indexOf(pick), 1);
     s.exact = false;
     for (let i = 0; i < (num(c, "Repeat") || 3); i++) {
@@ -476,6 +481,18 @@ const SPECIAL: Record<string, Rule> = {
   CONSTELLATION: () => {},
 };
 
+/** Decisions, Decisions' skill: the one of most block and stars (3 a star) and forge (half a point). */
+function decisionsIndex(cards: readonly { id: string; type: string; keywords: readonly string[]; vars?: Readonly<Record<string, number>> }[]): number {
+  let best = -1;
+  let worth = -Infinity;
+  cards.forEach((c, i) => {
+    if (c.type !== "Skill" || c.keywords.includes("Unplayable")) return;
+    const v = (c.vars?.["Block"] ?? 0) + (c.vars?.["Stars"] ?? 0) * 3 + (c.vars?.["Forge"] ?? 0) * 0.5;
+    if (v > worth) [best, worth] = [i, v];
+  });
+  return best;
+}
+
 /** Its Damage, as the bridge's calculated number counted, and the cards since: Supermassive (cards made this fight). */
 const COUNTS = {
   SUPERMASSIVE: (s: State, c: Card) => counted(c) + (peek(s).generated ?? 0),
@@ -491,9 +508,18 @@ function starCost(s: State, c: Card): number {
   if (c.starX) return starsOf(s);
   const cost = c.starCost ?? 0;
   if (cost <= 0) return 0;
-  const e = peek(s);
-  if ((e.voidFree ?? 0) > 0 && power(s, "VOID_FORM") > 0) return 0;
-  return cost;
+  return voidFree(s) ? 0 : cost;
+}
+
+/**
+ * Void Form (IL: VoidFormPower): the turn's first cards (its amount), counted from the runner's plays
+ * this turn before the observation and the model's since, cost no energy and no stars; none on the
+ * turn it was played, which it ends.
+ */
+function voidFree(s: State): boolean {
+  const vf = power(s, "VOID_FORM");
+  if (vf <= 0 || (s.ext && (s.ext as unknown as Ext).ended)) return false;
+  return (s.playedBefore?.length ?? 0) + s.played < vf;
 }
 
 /** Score for a star kept, the first 6, and past them; a forge point on a blade still in play. */
@@ -546,6 +572,97 @@ function reflected(s: State): number {
   return back;
 }
 
+/**
+ * choices.ts's CARDS for the Regent's cards: four tier lists on v0.111.0 (Jorbs, Baalorlord, nat1gaming,
+ * JapaneseExport/Mobalytics; the merge and its sources are in docs/regent-research.md) and the share of
+ * offers A10 Regents took in acts 1-3 (Spire Codex, v0.111.0, 1523 runs; an act with under 15 offers
+ * takes the act before's; Meteor Shower and The Sealed Throne, never offered as rewards, 60).
+ */
+const CARDS: Record<string, CardRow> = {
+  ALIGNMENT: { tiers: "CBBB", pick: [22, 30, 31] },
+  ARSENAL: { tiers: "SSCC", pick: [52, 44, 44] },
+  ASTRAL_PULSE: { tiers: "BAAS", pick: [28, 7, 0] },
+  BEAT_INTO_SHAPE: { tiers: "BCCC", pick: [20, 23, 23] },
+  BEGONE: { tiers: "AAAA", pick: [31, 19, 15] },
+  BIG_BANG: { tiers: "SSSS", pick: [78, 81, 81] },
+  BLACK_HOLE: { tiers: "ABBB", pick: [47, 29, 13] },
+  BOMBARDMENT: { tiers: "BSBB", pick: [47, 37, 37] },
+  BULWARK: { tiers: "ASAS", pick: [76, 51, 38] },
+  BUNDLE_OF_JOY: { tiers: "CBCA", pick: [28, 18, 18] },
+  CELESTIAL_MIGHT: { tiers: "BBBC", pick: [13, 3, 1] },
+  CHARGE: { tiers: "SSAS", pick: [66, 58, 37] },
+  CHILD_OF_THE_STARS: { tiers: "AAAS", pick: [54, 53, 47] },
+  CLOAK_OF_STARS: { tiers: "CBBA", pick: [27, 20, 15] },
+  COLLISION_COURSE: { tiers: "ABDA", pick: [28, 10, 2] },
+  COMET: { tiers: "ASSS", pick: [34, 35, 35] },
+  CONQUEROR: { tiers: "ABCC", pick: [17, 19, 18] },
+  CONVERGENCE: { tiers: "CASS", pick: [64, 63, 45] },
+  COSMIC_INDIFFERENCE: { tiers: "BCCC", pick: [30, 30, 17] },
+  CRASH_LANDING: { tiers: "AADS", pick: [30, 17, 17] },
+  CRESCENT_SPEAR: { tiers: "CCDD", pick: [8, 4, 3] },
+  CRUSH_UNDER: { tiers: "BBCB", pick: [25, 7, 1] },
+  DECISIONS_DECISIONS: { tiers: "BSAB", pick: [41, 56, 56] },
+  DEVASTATE: { tiers: "DDCC", pick: [15, 6, 5] },
+  DYING_STAR: { tiers: "ABBA", pick: [43, 36, 25] },
+  FOREGONE_CONCLUSION: { tiers: "DACC", pick: [20, 10, 10] },
+  FURNACE: { tiers: "DBCC", pick: [37, 25, 25] },
+  GAMMA_BLAST: { tiers: "AABA", pick: [42, 28, 19] },
+  GATHER_LIGHT: { tiers: "ABBA", pick: [55, 33, 20] },
+  GENESIS: { tiers: "BCBC", pick: [37, 27, 59] },
+  GLIMMER: { tiers: "CCBB", pick: [15, 22, 30] },
+  GLITTERSTREAM: { tiers: "SABB", pick: [28, 17, 12] },
+  GLOW: { tiers: "CAAS", pick: [40, 31, 22] },
+  GUARDS: { tiers: "BSAS", pick: [45, 47, 47] },
+  GUIDING_STAR: { tiers: "BAAB", pick: [19, 14, 9] },
+  HEAVENLY_DRILL: { tiers: "SABB", pick: [21, 19, 19] },
+  HEGEMONY: { tiers: "CBCC", pick: [18, 9, 9] },
+  HEIRLOOM_HAMMER: { tiers: "ABCD", pick: [18, 14, 14] },
+  HIDDEN_CACHE: { tiers: "SABB", pick: [32, 22, 15] },
+  I_AM_INVINCIBLE: { tiers: "ABBC", pick: [32, 15, 15] },
+  KINGLY_KICK: { tiers: "AABA", pick: [27, 3, 2] },
+  KINGLY_PUNCH: { tiers: "AABB", pick: [19, 3, 0] },
+  KNOCKOUT_BLOW: { tiers: "CCDC", pick: [16, 1, 0] },
+  KNOW_THY_PLACE: { tiers: "AABS", pick: [34, 27, 18] },
+  LUNAR_BLAST: { tiers: "BDDC", pick: [15, 6, 3] },
+  MAKE_IT_SO: { tiers: "SBAA", pick: [39, 33, 33] },
+  MANIFEST_AUTHORITY: { tiers: "BACA", pick: [51, 38, 22] },
+  METEOR_SHOWER: { tiers: "SASS", pick: [60, 60, 60] },
+  MONARCHS_GAZE: { tiers: "DBFD", pick: [20, 19, 31] },
+  MONOLOGUE: { tiers: "DCFD", pick: [9, 9, 9] },
+  NEUTRON_AEGIS: { tiers: "CDDC", pick: [18, 21, 21] },
+  ORBIT: { tiers: "CABA", pick: [41, 55, 49] },
+  PALE_BLUE_DOT: { tiers: "BABC", pick: [16, 27, 30] },
+  PARRY: { tiers: "BBDC", pick: [22, 33, 41] },
+  PARTICLE_WALL: { tiers: "BSAA", pick: [39, 36, 25] },
+  PATTER: { tiers: "ABCB", pick: [23, 12, 7] },
+  PHOTON_CUT: { tiers: "CBBB", pick: [12, 5, 2] },
+  PILLAR_OF_CREATION: { tiers: "AACS", pick: [32, 43, 50] },
+  PROPHESIZE: { tiers: "DBDC", pick: [5, 8, 10] },
+  QUASAR: { tiers: "CACA", pick: [26, 22, 24] },
+  RADIATE: { tiers: "ABBA", pick: [18, 14, 14] },
+  REFINE_BLADE: { tiers: "ABCA", pick: [29, 12, 9] },
+  REFLECT: { tiers: "SSSS", pick: [69, 65, 46] },
+  RESONANCE: { tiers: "BFFD", pick: [13, 13, 13] },
+  ROYALTIES: { tiers: "DBBA", pick: [18, 7, 7] },
+  ROYAL_GAMBLE: { tiers: "AABS", pick: [29, 41, 42] },
+  SEEKING_EDGE: { tiers: "ACCC", pick: [42, 26, 26] },
+  SEVEN_STARS: { tiers: "SDCC", pick: [31, 18, 18] },
+  SHINING_STRIKE: { tiers: "ABBC", pick: [22, 11, 7] },
+  SOLAR_STRIKE: { tiers: "CCCC", pick: [15, 5, 1] },
+  SPECTRUM_SHIFT: { tiers: "BACS", pick: [42, 36, 40] },
+  SPOILS_OF_BATTLE: { tiers: "CCCC", pick: [17, 16, 13] },
+  STARDUST: { tiers: "BBCC", pick: [23, 18, 18] },
+  SUMMON_FORTH: { tiers: "BBCC", pick: [30, 25, 30] },
+  SUPERMASSIVE: { tiers: "AACB", pick: [16, 21, 19] },
+  SWORD_SAGE: { tiers: "BBCC", pick: [35, 29, 29] },
+  TERRAFORMING: { tiers: "CBFC", pick: [18, 9, 11] },
+  THE_SEALED_THRONE: { tiers: "SSSS", pick: [60, 60, 60] },
+  THE_SMITH: { tiers: "BAAA", pick: [34, 35, 35] },
+  TYRANNY: { tiers: "SSBA", pick: [65, 56, 56] },
+  VOID_FORM: { tiers: "BSAS", pick: [55, 47, 47] },
+  WROUGHT_IN_WAR: { tiers: "ACCC", pick: [18, 2, 0] },
+};
+
 export const REGENT: CharacterRules = {
   special: SPECIAL,
   counts: COUNTS,
@@ -553,6 +670,20 @@ export const REGENT: CharacterRules = {
   // Shower) 62% of the times it is offered, winning 38.7% against 26.3% of those passing it, and Touch
   // of Orobas (Divine Right into Divine Destiny: 7 stars on turn 1, not 3) 28%, 41.0% against 31.3%.
   ancients: { OROBAS: { first: ["ARCHAIC_TOOTH", "TOUCH_OF_OROBAS"] } },
+  cards: CARDS,
+  // The four lists' consensus and the humans' most-taken (65%+ of offers in act 1).
+  always: ["BIG_BANG", "REFLECT", "BULWARK", "CHARGE"],
+  // Every list at D or below, and taken from 13% of offers or less; the multiplayer-only cards.
+  never: ["MONOLOGUE", "RESONANCE", "CRESCENT_SPEAR", "TUTOR", "LARGESSE", "PLOT", "CONSTELLATION", "HAMMER_TIME"],
+  aoe: ["ASTRAL_PULSE", "CRASH_LANDING", "SEVEN_STARS", "METEOR_SHOWER", "DYING_STAR", "CRUSH_UNDER", "RADIATE", "BLACK_HOLE"],
+  multiHit: ["ASTRAL_PULSE", "CELESTIAL_MIGHT", "SEVEN_STARS", "STARDUST", "RADIATE", "HEAVENLY_DRILL", "LUNAR_BLAST"],
+  damage: ["ASTRAL_PULSE", "GAMMA_BLAST", "COLLISION_COURSE", "BOMBARDMENT", "COMET", "CRASH_LANDING", "KINGLY_KICK", "KINGLY_PUNCH", "SHINING_STRIKE", "CHARGE", "MAKE_IT_SO"],
+  // The lists' upgrade flags and what A7+ Regents upgrade in act 1 (untapped: Spectrum Shift 77%, Orbit 73%,
+  // Sword Sage 65% ...); Falling Star, upgraded by 1%, last.
+  smithFirst: ["THE_SEALED_THRONE", "SPECTRUM_SHIFT", "ORBIT", "PALE_BLUE_DOT", "TYRANNY", "ARSENAL", "SWORD_SAGE", "GLOW", "BOMBARDMENT",
+    "HIDDEN_CACHE", "CONVERGENCE", "MANIFEST_AUTHORITY", "ROYAL_GAMBLE", "QUASAR", "BULWARK", "BIG_BANG", "MAKE_IT_SO", "GLITTERSTREAM",
+    "KNOW_THY_PLACE", "VENERATE", "MONARCHS_GAZE"],
+  smithLast: ["FALLING_STAR"],
 
   fromObservation(obs: Observation, s: State): void {
     const regent = /REGENT/.test(String((obs as { character?: string }).character ?? ""));
@@ -566,22 +697,13 @@ export const REGENT: CharacterRules = {
       const extra = beat.vars["CalculationExtra"] ?? 0;
       if (extra > 0) e.hitsOn = { [first.id]: Math.max(0, Math.round(((beat.calculated!["CalculatedForge"] ?? 0) - (beat.vars["CalculationBase"] ?? 0)) / extra)) };
     }
-    // Void Form: its cards played this turn, and so the free ones left.
-    const vf = obs.player_powers["VOID_FORM_POWER"] ?? 0;
-    if (vf > 0) {
-      const played = obs.player_power_vars?.["VOID_FORM_POWER"]?.["cardsPlayedThisTurn"];
-      e.voidFree = played === undefined ? 0 : Math.max(0, vf - played);
-    }
-    // Its hand's costs are the free ones: their own kept, for when the free cards are used.
-    if ((e.voidFree ?? 0) > 0 && c) {
+    // Void Form: the hand's own costs, the free cards' being the cost hook's (a card the game shows free
+    // under it costs what it did once the free ones are used).
+    if ((obs.player_powers["VOID_FORM_POWER"] ?? 0) > 0 && c) {
       c.hand.forEach((h, i) => {
         const card = s.hand[i];
         if (!card) return;
-        s.hand[i] = {
-          ...card,
-          ...(h.cost > h.current_cost ? { fullCost: h.cost } : {}),
-          ...((h.star_cost ?? -1) >= 0 ? { starCost: h.star_cost } : {}),
-        };
+        s.hand[i] = { ...card, cost: Math.max(card.cost, h.cost), ...((h.star_cost ?? -1) >= 0 ? { starCost: h.star_cost! } : {}) };
       });
     }
     const mono = obs.player_power_vars?.["MONOLOGUE_POWER"];
@@ -606,39 +728,31 @@ export const REGENT: CharacterRules = {
 
   beforePlay(s: State, c: Card): void {
     const paid = c.starCost !== undefined || c.starX ? starCost(s, c) : 0;
-    const e = s.ext || paid > 0 || c.starX || power(s, "THE_SEALED_THRONE") > 0 || power(s, "VOID_FORM") > 0 ? ext(s) : undefined;
+    const e = s.ext || paid > 0 || c.starX || power(s, "THE_SEALED_THRONE") > 0 ? ext(s) : undefined;
     if (!e) return;
-    e.recorded = false;
     if (c.starCost !== undefined || c.starX) spendStars(s, paid);
     else e.spent = 0;
-    if ((e.voidFree ?? 0) > 0 && power(s, "VOID_FORM") > 0) {
-      e.voidFree! -= 1;
-      // The free cards used: the rest of the hand costs what it did.
-      if (e.voidFree === 0) s.hand = s.hand.map((h) => (h.fullCost !== undefined ? (({ fullCost, ...rest }) => ({ ...rest, cost: fullCost as number }))(h) : h));
-    }
     // The Sealed Throne (IL: BeforeCardPlayed, after the card was paid for): stars for every card.
     gainStars(s, power(s, "THE_SEALED_THRONE"));
   },
 
   afterPlay(s: State, c: Card, t: Enemy | undefined): void {
     // Make It So (IL: AfterCardPlayedLate): every 3rd skill of the turn brings it back into the hand
-    // (the skills since the observation: one before it is not counted).
+    // (the runner's skills this turn before the observation, and the model's since).
     if (c.type === "Skill") {
       for (const pile of ["discard", "draw", "exhaust"] as const) {
         const i = s[pile].findIndex((x) => x.id === "MAKE_IT_SO");
         if (i < 0) continue;
         const card = s[pile][i]!;
-        if (s.skills % (num(card, "Cards") || 3) !== 0) continue;
+        const skills = (s.playedBefore ?? []).filter((x) => x.type === "Skill").length + s.skills;
+        if (skills % (num(card, "Cards") || 3) !== 0) continue;
         s[pile] = s[pile].filter((_, j) => j !== i);
         intoHand(s, card);
         s.exact = false;
       }
     }
-    if (!s.ext && power(s, "MONARCHS_GAZE") <= 0 && power(s, "BLACK_HOLE") <= 0) return;
+    if (!s.ext && power(s, "BLACK_HOLE") <= 0) return;
     const e = ext(s);
-    // A standard attack's hits, for Beat Into Shape and Monarch's Gaze.
-    if (c.type === "Attack" && !e.recorded) record(s, victimsOf(s, c, t), Math.max(1, c.vars["Repeat"] ?? 1));
-    e.recorded = false;
     // Black Hole (IL: AfterCardPlayed): a card that paid stars hits every enemy.
     if ((e.spent ?? 0) > 0 && power(s, "BLACK_HOLE") > 0) relicDamage(s, power(s, "BLACK_HOLE"), true);
     e.spent = 0;
@@ -646,6 +760,39 @@ export const REGENT: CharacterRules = {
     if ((e.monologue ?? 0) > 0 && c.id !== "MONOLOGUE") {
       addPower(s.player, "STRENGTH", e.monologue!);
       e.monologueGiven = (e.monologueGiven ?? 0) + e.monologue!;
+    }
+  },
+
+  cost(s: State, _c: Card, cost: number): number {
+    return cost > 0 && voidFree(s) ? 0 : cost;
+  },
+
+  afterHit(s: State, e: Enemy): void {
+    const gaze = power(s, "MONARCHS_GAZE");
+    if (!s.ext && gaze <= 0 && character() !== "REGENT") return;
+    const x = ext(s);
+    x.hitsOn = { ...(x.hitsOn ?? {}), [e.id]: (x.hitsOn?.[e.id] ?? 0) + 1 };
+    // Monarch's Gaze (IL: MonarchsGazePower.AfterDamageGiven): every powered hit takes Strength for the enemy's turn.
+    if (gaze > 0 && e.alive && applyPower(s, e, "STRENGTH", -gaze)) addPower(e, "MONARCHS_GAZE_STRENGTH_DOWN", gaze);
+  },
+
+  // The runner's choices inside a fight, as the rules above make them.
+  combatSelect(source: string | undefined, _purpose: string, cards: readonly { id: string; type: string; keywords: readonly string[] }[]): number | undefined {
+    switch (source) {
+      case "GLIMMER":
+      case "PHOTON_CUT":
+        return putBackIndex(cards);
+      case "BEGONE":
+      case "CHARGE":
+        return worstIndex(cards);
+      case "COSMIC_INDIFFERENCE":
+        return topIndex(cards);
+      case "HEIRLOOM_HAMMER": {
+        const blade = cards.findIndex((c) => c.id === BLADE);
+        return blade >= 0 ? blade : undefined;
+      }
+      default:
+        return undefined;
     }
   },
 
@@ -735,11 +882,6 @@ export const REGENT: CharacterRules = {
     gainStars(next, power(next, "GENESIS"));
     gainStars(next, power(next, "STAR_NEXT_TURN"));
     delete next.player.powers["STAR_NEXT_TURN"];
-    // Void Form: the turn's first cards free, energy (the hand's costs) and stars.
-    if (power(next, "VOID_FORM") > 0) {
-      e.voidFree = power(next, "VOID_FORM");
-      next.hand = next.hand.map((c) => (c.cost > 0 ? { ...c, cost: 0, fullCost: c.fullCost ?? c.cost } : c));
-    }
     // Foregone Conclusion: the best of the draw pile into the hand (the game: before the draw; here after).
     const fc = power(next, "FOREGONE_CONCLUSION");
     for (let i = 0; i < fc && next.draw.length > 0 && next.hand.length < HAND_LIMIT; i++) {
@@ -774,12 +916,11 @@ export const REGENT: CharacterRules = {
   keyExt(s: State): string {
     const e = s.ext as unknown as Ext | undefined;
     if (!e) return "";
-    return `${e.stars}/${e.generated ?? 0}/${e.voidFree ?? 0}${e.ended ? "e" : ""}/${bladesKey(s)}`;
+    return `${e.stars}/${e.generated ?? 0}${e.ended ? "e" : ""}/${bladesKey(s)}`;
   },
 };
 
 const bladesKey = (s: State) => blades(s).map((b) => b.vars["Damage"] ?? 10).join(".");
 
-// Rule's star-cost Void Form bookkeeping, and the blade's Retain, need nothing else here: turn.ts keeps a
-// Retain card in the hand, and a Void Form hand's costs come back as each card leaves it (fullCost).
+// The blade's Retain needs nothing here: turn.ts keeps a Retain card in the hand.
 export const _forTests = { opening, forge, gainStars, spendStars, starCost };
