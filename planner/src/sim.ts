@@ -160,6 +160,11 @@ export interface State {
    * after a mid-turn rebuild — 4 block and an energy too many after an attack).
    */
   attacksBefore?: number;
+  /**
+   * Every card played this turn before the observation, in order (the runner's own plays; cards a
+   * card played for free are not in it): the Silent's first Shiv of the turn (Phantom Blades).
+   */
+  playedBefore?: readonly { id: string; type: string }[];
   /** Attacks and skills Nostalgia has put on top of the draw pile this turn; that many top cards are known. */
   onTop?: number;
   /** The Bombs ticking on the player: turns to go (it goes off at the end of the turn it reaches 1) and damage. */
@@ -349,6 +354,7 @@ function clone(s: State): State {
     ...(s.hurt ? { hurt: s.hurt } : {}),
     ...(s.attacks ? { attacks: s.attacks } : {}),
     ...(s.attacksBefore ? { attacksBefore: s.attacksBefore } : {}),
+    ...(s.playedBefore ? { playedBefore: s.playedBefore } : {}),
     ...(s.onTop ? { onTop: s.onTop } : {}),
     ...(s.bombs ? { bombs: s.bombs.map((b) => ({ ...b })) } : {}),
     ...(s.ended ? { ended: true } : {}),
@@ -558,12 +564,15 @@ export function setKnownDraws(on: boolean): void {
 
 export function draw(s: State, k: number): void {
   if (has(s.player, "NO_DRAW")) return;
+  let drawn = 0;
   for (let n = Math.min(k, HAND_LIMIT - s.hand.length - s.drawn); n > 0; n--) {
     const card = takeFromDraw(s);
-    if (!card) return;
+    if (!card) break;
     if (knownDraws) s.hand.push({ ...card, locked: false });
     else s.drawn++;
+    drawn++;
   }
+  if (drawn > 0) for (const f of rules().onDraw) f(s, drawn);
 }
 
 /** Some card off the draw pile, shuffling the discard pile in when it is empty. */
@@ -602,7 +611,9 @@ export function playable(s: State, card: Card): boolean {
 
 /** What playing it costs now: Free Attack (Unrelenting) makes the next attack free. */
 export function costOf(s: State, card: Card): number {
-  return card.type === "Attack" && has(s.player, "FREE_ATTACK") ? 0 : card.cost;
+  let cost = card.type === "Attack" && has(s.player, "FREE_ATTACK") ? 0 : card.cost;
+  for (const f of rules().cost) cost = f(s, card, cost);
+  return cost;
 }
 
 export function needsTarget(card: Card): boolean {
@@ -994,6 +1005,7 @@ export function strike(s: State, victims: readonly Enemy[], base: number, times:
       // Slow (Bygone Effigy): 10% more for every card played this turn, this one not yet counted.
       const slow = has(e, "SLOW") ? 1 + (powerVar(e, "SLOW", "SlowAmount", 0) + s.played) / 10 : 1;
       const lost = hit(e, attackDamage(base, attacker, e, slow));
+      for (const f of rules().afterHit) f(s, e, lost);
       // Personal Hive (Entomancer; IL: PersonalHivePower.AfterDamageReceived): every hit of the
       // player's attacks on it puts its amount of Dazed into the draw pile, blocked or not.
       if (has(e, "PERSONAL_HIVE")) s.dazedAdded = (s.dazedAdded ?? 0) + (e.powers["PERSONAL_HIVE"] ?? 0);
@@ -1857,6 +1869,16 @@ export function incomingHits(s: State): number[] {
   return incomingHitsBy(s).flat();
 }
 
+/**
+ * The HP an enemy loses as its turn starts, before it acts (characters/index.ts enemyTurnStart: the
+ * Silent's Poison); `powers`, its copy for the next turn, is left as the tick leaves it. 0 without one.
+ */
+export function enemyTurnStart(s: State, e: Enemy, powers?: Record<string, number>): number {
+  let lost = 0;
+  for (const f of rules().enemyTurnStart) lost += f(s, e, powers);
+  return lost;
+}
+
 /** The hits of each enemy (s.enemies' order) at the end of this turn. */
 export function incomingHitsBy(s: State): number[][] {
   const by: number[][] = [];
@@ -1877,6 +1899,8 @@ export function incomingHitsBy(s: State): number[][] {
       if (e.blowNow && (e.deathBlow ?? 0) > 0) hits.push(cut(e.deathBlow!));
       continue;
     }
+    // Dead of what its turn's start takes (Poison) before it acts.
+    if (e.hp - enemyTurnStart(s, e) <= 0) continue;
     const strength = (e.powers["STRENGTH"] ?? 0) - e.startStrength;
     // Surrounded (Kaiser Crab): the claw behind the player deals ×1.5; the shown damage has it if the
     // claw was behind at the observation. The player turned since: put it on, or take it off.

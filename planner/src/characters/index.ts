@@ -43,10 +43,16 @@ export interface CharacterRules {
   fromObservation?(obs: Observation, s: State): void;
   /** False: the card cannot be played now (a cost the core does not know, like the Regent's stars). */
   playable?(s: State, card: Card): boolean;
+  /** The energy a card costs now, given what the core says it costs (sim.ts costOf: the Silent's Free Skill). */
+  cost?(s: State, card: Card, cost: number): number;
   /** A card paid for, before it resolves (sim.ts play; after Intimidating Helmet). */
   beforePlay?(s: State, card: Card, target: Enemy | undefined): void;
   /** A card resolved (sim.ts resolve, after the relics' AfterCardPlayed, before it goes to its pile). */
   afterPlay?(s: State, card: Card, target: Enemy | undefined): void;
+  /** `n` cards were drawn in the turn (sim.ts draw), known or not: the Silent's Corrosive Wave, Speedster. */
+  onDraw?(s: State, n: number): void;
+  /** A hit of the player's attack landed on `e` and took `lost` HP (sim.ts strike): the Silent's Envenom. */
+  afterHit?(s: State, e: Enemy, lost: number): void;
   /** The player's turn started, after the draw (sim.ts startOfTurn). */
   startOfTurn?(s: State): void;
   /**
@@ -56,6 +62,12 @@ export interface CharacterRules {
   endOfTurn?: { needed(s: State): boolean; run(s: State): void };
   /** The next turn's state is built (turn.ts nextTurn), before its start-of-turn effects: `ext` carries over as it was. */
   nextTurn?(prev: State, next: State): void;
+  /**
+   * An enemy's turn starts, before it acts: the HP it loses then (the Silent's Poison). turn.ts nextTurn
+   * passes the enemy's powers for the next turn, to change as the tick leaves them; sim.ts
+   * incomingHitsBy asks without them, to know whether it lives to act.
+   */
+  enemyTurnStart?(s: State, e: Enemy, powers?: Record<string, number>): number;
   /** A term added to search.ts evaluate's score of a state that is neither won nor lost. */
   evaluate?(s: State, w: Weights): number;
   /**
@@ -67,6 +79,12 @@ export interface CharacterRules {
   cloneExt?(ext: Record<string, unknown>): Record<string, unknown>;
   /** What of `ext` makes two states different (sim.ts stateKey). */
   keyExt?(s: State): string;
+  /**
+   * A card select in a fight (run-fights' combatSelect, and the simulator's own guess of it): the index
+   * of the card to take from `cards`, for the select's `purpose` (the bridge's CardSelectCmd method:
+   * FromHand, FromHandForDiscard…) after playing `source`; undefined leaves it to the core (junkIndex).
+   */
+  combatSelect?(source: string | undefined, purpose: string, cards: readonly { id: string; type: string; keywords: readonly string[] }[]): number | undefined;
 
   /** choices.ts: the character's cards as CARDS rates the Ironclad's (tiers, pick %). */
   cards?: Record<string, CardRow>;
@@ -88,11 +106,16 @@ export interface Merged {
   counts: Record<string, Count>;
   fromObservation: NonNullable<CharacterRules["fromObservation"]>[];
   playable: NonNullable<CharacterRules["playable"]>[];
+  cost: NonNullable<CharacterRules["cost"]>[];
+  onDraw: NonNullable<CharacterRules["onDraw"]>[];
+  afterHit: NonNullable<CharacterRules["afterHit"]>[];
+  combatSelect: NonNullable<CharacterRules["combatSelect"]>[];
   beforePlay: NonNullable<CharacterRules["beforePlay"]>[];
   afterPlay: NonNullable<CharacterRules["afterPlay"]>[];
   startOfTurn: NonNullable<CharacterRules["startOfTurn"]>[];
   endOfTurn: NonNullable<CharacterRules["endOfTurn"]>[];
   nextTurn: NonNullable<CharacterRules["nextTurn"]>[];
+  enemyTurnStart: NonNullable<CharacterRules["enemyTurnStart"]>[];
   evaluate: NonNullable<CharacterRules["evaluate"]>[];
   soak: NonNullable<CharacterRules["soak"]>[];
   cloneExt: NonNullable<CharacterRules["cloneExt"]>[];
@@ -113,8 +136,8 @@ let merged: Merged | undefined;
 export function rules(): Merged {
   if (merged) return merged;
   const m: Merged = {
-    special: {}, counts: {}, fromObservation: [], playable: [], beforePlay: [], afterPlay: [], startOfTurn: [],
-    endOfTurn: [], nextTurn: [], evaluate: [], soak: [], cloneExt: [], keyExt: [],
+    special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
+    endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], soak: [], cloneExt: [], keyExt: [],
     cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(),
   };
   for (const r of ALL) {
@@ -124,7 +147,7 @@ export function rules(): Merged {
     }
     Object.assign(m.counts, r.counts ?? {});
     Object.assign(m.cards, r.cards ?? {});
-    for (const k of ["fromObservation", "playable", "beforePlay", "afterPlay", "startOfTurn", "endOfTurn", "nextTurn", "evaluate", "soak", "cloneExt", "keyExt"] as const) {
+    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "soak", "cloneExt", "keyExt", "combatSelect"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
     }
