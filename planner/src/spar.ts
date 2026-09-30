@@ -45,7 +45,17 @@ function cards(): Record<string, Omit<CardObs, "index" | "can_play">> {
     };
     catalog = read(CATALOG_FILE);
     if (process.env["SPIRE_JEV_CATALOG"] === undefined) {
-      for (const f of CHARACTER_CATALOGS) for (const [k, v] of Object.entries(read(f))) catalog[k] ??= v;
+      // The playing character's own catalogue before the Ironclad's: the Ironclad's has cards of other
+      // characters its runs met (a transform, Prismatic Shard) as an older bridge described them, with no
+      // star cost — Astral Pulse, Royal Gamble, Cloak of Stars, Crescent Spear played free in the Regent's
+      // bouts. The Ironclad's own play reads its catalogue first as before.
+      const own = character() === "IRONCLAD" ? undefined : dataFile("card-catalog.json");
+      for (const f of CHARACTER_CATALOGS) {
+        for (const [k, v] of Object.entries(read(f))) {
+          if (own !== undefined && path.resolve(f) === path.resolve(own)) catalog[k] = v;
+          else catalog[k] ??= v;
+        }
+      }
     }
   }
   return catalog;

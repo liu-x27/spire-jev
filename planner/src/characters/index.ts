@@ -39,6 +39,11 @@ export interface CharacterRules {
   special?: Record<string, Rule>;
   /** Calculated damage, by card id. */
   counts?: Record<string, Count>;
+  /**
+   * Potions whose effect is not what their numbers say (sim.ts POTION_SPECIAL), by potion id: `n` is its
+   * Cards var or else its first. The Regent's Star Potion (stars), King's Courage (Forge).
+   */
+  potions?: Record<string, (s: State, n: number) => void>;
   /** The state built from an observation (sim.ts fromObservation): fill `ext` from the bridge's fields. */
   fromObservation?(obs: Observation, s: State): void;
   /** False: the card cannot be played now (a cost the core does not know, like the Regent's stars). */
@@ -57,6 +62,11 @@ export interface CharacterRules {
   onDraw?(s: State, n: number): void;
   /** A hit of the player's attack landed on `e` and took `lost` HP (sim.ts strike): the Silent's Envenom. */
   afterHit?(s: State, e: Enemy, lost: number): void;
+  /**
+   * Where a played card goes instead of the discard pile (IL: GetResultLocationForCardPlay): "hand"
+   * (Particle Wall), "top" of the draw pile (Shining Strike); undefined for the discard pile.
+   */
+  resultPile?(s: State, card: Card): "hand" | "top" | undefined;
   /** The player's turn started, after the draw (sim.ts startOfTurn). */
   startOfTurn?(s: State): void;
   /**
@@ -101,6 +111,11 @@ export interface CharacterRules {
   /** choices.ts chooseUpgrade: upgraded first, in this order; and last. */
   smithFirst?: readonly string[];
   smithLast?: readonly string[];
+  /**
+   * choices.ts ancientPick: an Ancient's relics this character takes first (in order), and avoids,
+   * over the table's (the Ironclad's): the Regent takes Touch of Orobas (Divine Right → Divine Destiny).
+   */
+  ancients?: Readonly<Record<string, { first?: readonly string[]; avoid?: readonly string[] }>>;
 }
 
 export const ALL: readonly CharacterRules[] = [SILENT, NECROBINDER, REGENT, DEFECT];
@@ -108,6 +123,7 @@ export const ALL: readonly CharacterRules[] = [SILENT, NECROBINDER, REGENT, DEFE
 export interface Merged {
   special: Record<string, Rule>;
   counts: Record<string, Count>;
+  potions: Record<string, (s: State, n: number) => void>;
   fromObservation: NonNullable<CharacterRules["fromObservation"]>[];
   playable: NonNullable<CharacterRules["playable"]>[];
   cost: NonNullable<CharacterRules["cost"]>[];
@@ -118,6 +134,7 @@ export interface Merged {
   afterPlay: NonNullable<CharacterRules["afterPlay"]>[];
   extraPlays: NonNullable<CharacterRules["extraPlays"]>[];
   afterCard: NonNullable<CharacterRules["afterCard"]>[];
+  resultPile: NonNullable<CharacterRules["resultPile"]>[];
   startOfTurn: NonNullable<CharacterRules["startOfTurn"]>[];
   endOfTurn: NonNullable<CharacterRules["endOfTurn"]>[];
   nextTurn: NonNullable<CharacterRules["nextTurn"]>[];
@@ -134,6 +151,7 @@ export interface Merged {
   damage: Set<string>;
   smithFirst: string[];
   smithLast: Set<string>;
+  ancients: Record<string, { first: string[]; avoid: string[] }>;
 }
 
 let merged: Merged | undefined;
@@ -142,9 +160,9 @@ let merged: Merged | undefined;
 export function rules(): Merged {
   if (merged) return merged;
   const m: Merged = {
-    special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
+    special: {}, counts: {}, potions: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], resultPile: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
     endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], soak: [], cloneExt: [], keyExt: [],
-    cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(),
+    cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(), ancients: {},
   };
   for (const r of ALL) {
     for (const [id, f] of Object.entries(r.special ?? {})) {
@@ -152,13 +170,19 @@ export function rules(): Merged {
       m.special[id] = f;
     }
     Object.assign(m.counts, r.counts ?? {});
+    Object.assign(m.potions, r.potions ?? {});
     Object.assign(m.cards, r.cards ?? {});
-    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "soak", "cloneExt", "keyExt", "combatSelect"] as const) {
+    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "resultPile", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "soak", "cloneExt", "keyExt", "combatSelect"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
     }
     for (const k of ["always", "never", "aoe", "multiHit", "damage", "smithLast"] as const) for (const id of r[k] ?? []) m[k].add(id);
     m.smithFirst.push(...(r.smithFirst ?? []));
+    for (const [id, a] of Object.entries(r.ancients ?? {})) {
+      const to = (m.ancients[id] ??= { first: [], avoid: [] });
+      to.first.push(...(a.first ?? []));
+      to.avoid.push(...(a.avoid ?? []));
+    }
   }
   merged = m;
   return m;

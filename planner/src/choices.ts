@@ -1049,7 +1049,12 @@ function ancientPick(o: Observation, eventId: string | undefined, options: reado
   const table = eventId ? ANCIENTS[eventId] : undefined;
   const relics = options.filter((x) => x.relic);
   if (!table || relics.length === 0) return undefined;
+  // The characters' own (characters/index.ts ancients): taken before the table's order, or avoided.
+  const own = characterRules().ancients[eventId!];
   const rank = (x: EventOptionObs) => {
+    const first = own?.first.indexOf(x.relic!) ?? -1;
+    if (first >= 0) return -100 + first;
+    if (own?.avoid.includes(x.relic!)) return 3000;
     const i = table.order.findIndex(([id, ok]) => id === x.relic && ok(o));
     if (i >= 0) return i;
     if (table.avoid?.includes(x.relic!)) return 3000;
