@@ -19,11 +19,14 @@ import { type Card, cloneExt, type Enemy, endOfTurn, enemyTurnStart, endOfTurnBl
 /** Powers that last the turn they were played in. */
 // Ringing (the Ceremonial Beast's Beast Cry) is one turn's: the game's fights have it the turn after
 // the cry and not the one after that (bench val-f16-base); held for good, it left the bout a card a turn.
-const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED", "RINGING"];
+// The Silent's: Corrosive Wave, Burst and Shadowmeld are the turn's (IL: AfterSideTurnEnd, Remove).
+const TURN_ONLY = ["NO_DRAW", "ONE_TWO_PUNCH", "RAGE", "FLAME_BARRIER", "FREE_ATTACK", "COLOSSUS", "RETAIN_HAND", "DUPLICATION", "TAINTED", "RINGING", "CORROSIVE_WAVE", "BURST", "SHADOWMELD"];
 /** Powers that lose a stack every round. */
-const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN", "NO_BLOCK"];
+// Double Damage (the Silent's Shadow Step) goes a stack at the end of each of the player's turns.
+const TICKS = ["WEAK", "FRAIL", "VULNERABLE", "BLUR", "PLATING", "REGEN", "NO_BLOCK", "DOUBLE_DAMAGE"];
 /** Temporary Strength and Dexterity, and what they were added to. */
-const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"], ["REPTILE_TRINKET", "STRENGTH"], ["ANTICIPATE", "DEXTERITY"]];
+// Helical Dart (the Silent's; IL: HelicalDartPower, a TemporaryDexterityPower): a Dexterity a Shiv for the turn.
+const TEMPORARY: [string, string][] = [["SETUP_STRIKE", "STRENGTH"], ["FLEX_POTION", "STRENGTH"], ["SPEED_POTION", "DEXTERITY"], ["REPTILE_TRINKET", "STRENGTH"], ["ANTICIPATE", "DEXTERITY"], ["HELICAL_DART", "DEXTERITY"]];
 /** The part of `stat` (STRENGTH, DEXTERITY) that goes at the turn's end: Setup Strike's, Flex Potion's, Reptile Trinket's. */
 export const temporaryPart = (powers: Record<string, number>, stat: string): number =>
   TEMPORARY.reduce((a, [temp, of]) => (of === stat ? a + (powers[temp] ?? 0) : a), 0);
@@ -133,7 +136,8 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
   if (puzzle) extraDraw += relicVar("CENTENNIAL_PUZZLE", "Cards", 3);
   for (const k of ["ENERGY_NEXT_TURN", "DRAW_CARDS_NEXT_TURN", "BLOCK_NEXT_TURN"]) delete powers[k];
 
-  const keepAll = (s.player.powers["RETAIN_HAND"] ?? 0) > 0 || ((s.turn ?? 1) === 1 && s.relics.includes("RINGING_TRIANGLE"));
+  // Well-Laid Plans (the Silent's; IL: WellLaidPlansPower.ShouldFlush false): the whole hand kept, every turn.
+  const keepAll = (s.player.powers["RETAIN_HAND"] ?? 0) > 0 || (s.player.powers["WELL_LAID_PLANS"] ?? 0) > 0 || ((s.turn ?? 1) === 1 && s.relics.includes("RINGING_TRIANGLE"));
   const hand: Card[] = [];
   let discard = s.discard.slice();
   const exhaust = s.exhaust.slice();
@@ -197,7 +201,8 @@ export function nextTurn(s0: State, rng: () => number, foresee: (e: Enemy, turn:
     const ticked = enemyTurnStart(s, e, ep);
     if (e.hp - ticked <= 0) return { ...e, hp: 0, alive: false, powers: ep, intents: [] };
     // Strength taken for the turn (Mangle, Dark Shackles) comes back at the end of the enemy's turn.
-    for (const k of ["MANGLE", "DARK_SHACKLES"]) {
+    // Piercing Wail (the Silent's; IL: PiercingWailPower, a TemporaryStrengthPower) the same.
+    for (const k of ["MANGLE", "DARK_SHACKLES", "PIERCING_WAIL"]) {
       if ((ep[k] ?? 0) <= 0) continue;
       ep["STRENGTH"] = (ep["STRENGTH"] ?? 0) + ep[k]!;
       if (ep["STRENGTH"] === 0) delete ep["STRENGTH"];
