@@ -220,6 +220,8 @@ export function relicOpening(me: Player): Player {
   };
   if (has("VAJRA")) add("STRENGTH", v("VAJRA", "StrengthPower", 1));
   if (has("ODDLY_SMOOTH_STONE")) add("DEXTERITY", v("ODDLY_SMOOTH_STONE", "DexterityPower", 1));
+  // Data Disk (the Defect's; IL: AfterRoomEntered): 1 Focus.
+  if (has("DATA_DISK")) add("FOCUS", v("DATA_DISK", "FocusPower", 1));
   if (has("GORGET")) add("PLATING", v("GORGET", "PlatingPower", 4));
   if (has("BRONZE_SCALES")) add("THORNS", v("BRONZE_SCALES", "ThornsPower", 3));
   if (has("AKABEKO")) add("VIGOR", v("AKABEKO", "VigorPower", 8));

@@ -116,6 +116,9 @@ export interface Observation {
   player_stars?: number;
   /** The creatures on the player's side besides the player (the Necrobinder's Osty); absent with none. */
   player_allies?: AllyObs[];
+  /** The Defect's orbs, front (the next evoked) first: PassiveVal/EvokeVal now (Focus in) and their own fields; absent with no slots. */
+  player_orbs?: { id: string; passive: number; evoke: number; fields?: Record<string, number> }[];
+  orb_slots?: number;
   room: { room_type: string; options: string[]; details: Record<string, unknown> } | null;
 }
 

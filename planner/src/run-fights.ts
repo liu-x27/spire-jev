@@ -28,6 +28,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { character, characterOf, defaultLibrary, setCharacter } from "./character.ts";
 import { rules as characterRules } from "./characters/index.ts";
+import { orbKey } from "./characters/defect.ts";
 import { Game, savesDir, type StepResult } from "./bridge.ts";
 import { compare, type Mismatch } from "./differential.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
@@ -628,6 +629,9 @@ function compareTurnStart(p: State, a: State): { field: string; predicted: strin
   check("player.powers", powers(p.player.powers), powers(a.player.powers));
   // The Necrobinder's Osty after the enemies' turn and the turn's start (characters/necrobinder.ts).
   if (typeof a.ext?.["ostyHp"] === "number") check("osty", `${p.ext?.["ostyHp"]}/${p.ext?.["ostyMax"]}`, `${a.ext["ostyHp"]}/${a.ext["ostyMax"]}`);
+  // The Defect's orbs after the enemies' turn and the turn's start (characters/defect.ts).
+  const orbs = orbKey(a);
+  if (orbs !== undefined) check("orbs", orbKey(p) ?? "none", orbs);
   a.enemies.forEach((e, i) => {
     const q = p.enemies.find((x) => x.id === e.id);
     if (!q || !e.alive) return;
