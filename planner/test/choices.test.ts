@@ -245,3 +245,18 @@ test("rmstrike: a basic Strike removed before a card the rules would buy; nothin
     setFlags([]);
   }
 });
+
+test("rmspare: a Strike removed only with the gold left to buy what the shop would have bought", () => {
+  const regent = ["STRIKE_REGENT", "DEFEND_REGENT", "FALLING_STAR", "VENERATE"];
+  const removal = act("shop_buy:9:MerchantCardRemovalEntry", { entry_type: "MerchantCardRemovalEntry", item_id: "MerchantCardRemovalEntry", price: 75 });
+  const offering = act("shop_buy:0:OFFERING", { entry_type: "MerchantCardEntry", item_id: "OFFERING", price: 80 });
+  setFlags(["rmspare"]);
+  try {
+    assert.equal(chooseShop(obs({ phase: "shop", gold: 100, deck_cards: regent }), [offering, removal, act("shop_leave")]), offering.action_id);
+    assert.equal(chooseShop(obs({ phase: "shop", gold: 200, deck_cards: regent }), [offering, removal, act("shop_leave")]), removal.action_id);
+    // Nothing else to buy: the removal.
+    assert.equal(chooseShop(obs({ phase: "shop", gold: 80, deck_cards: regent }), [removal, act("shop_leave")]), removal.action_id);
+  } finally {
+    setFlags([]);
+  }
+});
