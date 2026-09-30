@@ -1391,6 +1391,34 @@ states, and only a simulator is fast enough for that.
      (act 2 finished over all f1 starts); act 2 hallway potions (search.ts:
      a 0.3 price whenever any enemy has 100+ max HP, so they go early),
      f16 to act 2's end, 120-150 pairs, 0.3-0.5 more potions into the boss.
+     The user chose all three.
+   - **Review 8's forks** (branches forks 676e18f / forks2 3749c2e, local;
+     SPIRE_JEV_FORK: at a fight's floor and turn the end of one kind among
+     the turn's — explore(diverse): block, damage, power, noPotion, focus on
+     one enemy — played card by card, matched by card and target, the bot
+     after; forks2's until keeps the kind up to a turn, a focus on the first
+     turn's enemy). Every bot arm (180) played its source fight play for
+     play. Round 1, the turn before each fight's worst enemy turn, one turn
+     off the bot's line: 90 points (60 lost act 2 boss fights of P1's, 30
+     act 2 elites of c2full-f16's), 63 with a distinct candidate: the Crab
+     14 all lost whatever was played, the Knowledge Demon 1 flip in 14, the
+     Insatiable 3 in 9 (block +5.5 ± 2.8), elites 18 won either way;
+     flips 5 up / 3 down; where all lost, a focus or a Power left the
+     enemies 21-25 HP more. Undecided: the points came when the fight was
+     mostly settled, and one turn off is undone the next. Round 2, turn 1,
+     the candidates kept up (the analysis session's design): two strata of
+     30, close losses (the enemies under 60 HP at the death) and close wins
+     (under 30% HP left), and the Crab's own 30 (15 lost, 15 won), focus
+     on one claw until it dies or turn 5; the test net flips (the losses a
+     candidate wins less the wins it loses: luck's regression to the mean
+     is about 0 there). Close fights: block -6 (won 1 of 13 losses, lost 7
+     of 14 wins), damage -4, power +1 (7), all -9; the Crab: focus on the
+     weaker claw -7, the other -8, all -15 (won 0 of 24, lost 15 of 23; HP
+     in the won fights -22 points), dev and held alike (-8 / -7). The bot's
+     own line beats these structural ones at the start as late: the kept-up
+     focus on the Crab is harmful, block and damage kept up do worse; what
+     loses is the state the fight begins in (the deck, the HP), which is
+     what the elite and the hallway-potion tests change.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
