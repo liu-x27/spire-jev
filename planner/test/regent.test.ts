@@ -31,6 +31,11 @@ function state(hand: Card[], stars = 3, enemies: Enemy[] = [foe(50)], over: Part
     turn: 1, ext: { stars }, ...over,
   };
 }
+/** A state no observation made (a spar bout's): no Regent state yet. */
+const noExt = (s: State): State => {
+  const { ext: _e, ...rest } = s;
+  return rest;
+};
 const withPowers = (s: State, powers: Record<string, number>): State => ({ ...s, player: { ...s.player, powers: { ...s.player.powers, ...powers } } });
 const at = (s: State, hand: number, target?: number) => play(s, { kind: "play", hand, ...(target !== undefined ? { target } : {}) });
 const next = (s: State) => nextTurn(s, seeded(1), () => [])!;
@@ -53,11 +58,11 @@ test("stars are kept from turn to turn, and a bout's start from Divine Right's 3
   const s = at(state([VENERATE, STRIKE], 3), 0);
   assert.equal(starsOf(s), 5);
   assert.equal(starsOf(next(s)), 5);
-  const bout = state([FALLING_STAR], 0, [foe(50)], { ext: undefined });
+  const bout = noExt(state([FALLING_STAR], 0));
   assert.equal(starsOf(bout), 3);
   assert.equal(starsOf(at(bout, 0, 1)), 1);
   // A bout's opening stars carry into the next turn though no star moved.
-  assert.equal(starsOf(next(state([STRIKE], 0, [foe(50)], { ext: undefined }))), 3);
+  assert.equal(starsOf(next(noExt(state([STRIKE], 0)))), 3);
 });
 
 test("Black Hole hits every enemy for every gain of stars and after every card that paid stars, past Strength", () => {

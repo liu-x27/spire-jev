@@ -101,6 +101,11 @@ export interface CharacterRules {
   /** choices.ts chooseUpgrade: upgraded first, in this order; and last. */
   smithFirst?: readonly string[];
   smithLast?: readonly string[];
+  /**
+   * choices.ts ancientPick: an Ancient's relics this character takes first (in order), and avoids,
+   * over the table's (the Ironclad's): the Regent takes Touch of Orobas (Divine Right → Divine Destiny).
+   */
+  ancients?: Readonly<Record<string, { first?: readonly string[]; avoid?: readonly string[] }>>;
 }
 
 export const ALL: readonly CharacterRules[] = [SILENT, NECROBINDER, REGENT, DEFECT];
@@ -134,6 +139,7 @@ export interface Merged {
   damage: Set<string>;
   smithFirst: string[];
   smithLast: Set<string>;
+  ancients: Record<string, { first: string[]; avoid: string[] }>;
 }
 
 let merged: Merged | undefined;
@@ -144,7 +150,7 @@ export function rules(): Merged {
   const m: Merged = {
     special: {}, counts: {}, fromObservation: [], playable: [], cost: [], beforePlay: [], afterPlay: [], resultPile: [], extraPlays: [], afterCard: [], onDraw: [], afterHit: [], combatSelect: [], startOfTurn: [],
     endOfTurn: [], nextTurn: [], enemyTurnStart: [], evaluate: [], cloneExt: [], keyExt: [],
-    cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(),
+    cards: {}, always: new Set(), never: new Set(), aoe: new Set(), multiHit: new Set(), damage: new Set(), smithFirst: [], smithLast: new Set(), ancients: {},
   };
   for (const r of ALL) {
     for (const [id, f] of Object.entries(r.special ?? {})) {
@@ -159,6 +165,11 @@ export function rules(): Merged {
     }
     for (const k of ["always", "never", "aoe", "multiHit", "damage", "smithLast"] as const) for (const id of r[k] ?? []) m[k].add(id);
     m.smithFirst.push(...(r.smithFirst ?? []));
+    for (const [id, a] of Object.entries(r.ancients ?? {})) {
+      const to = (m.ancients[id] ??= { first: [], avoid: [] });
+      to.first.push(...(a.first ?? []));
+      to.avoid.push(...(a.avoid ?? []));
+    }
   }
   merged = m;
   return m;

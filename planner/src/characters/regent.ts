@@ -549,6 +549,10 @@ function reflected(s: State): number {
 export const REGENT: CharacterRules = {
   special: SPECIAL,
   counts: COUNTS,
+  // Orobas: A10 Regents (Spire Codex, v0.111.0, 1523 runs) take Archaic Tooth (Falling Star into Meteor
+  // Shower) 62% of the times it is offered, winning 38.7% against 26.3% of those passing it, and Touch
+  // of Orobas (Divine Right into Divine Destiny: 7 stars on turn 1, not 3) 28%, 41.0% against 31.3%.
+  ancients: { OROBAS: { first: ["ARCHAIC_TOOTH", "TOUCH_OF_OROBAS"] } },
 
   fromObservation(obs: Observation, s: State): void {
     const regent = /REGENT/.test(String((obs as { character?: string }).character ?? ""));
