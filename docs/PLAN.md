@@ -1419,6 +1419,23 @@ states, and only a simulator is fast enough for that.
      focus on the Crab is harmful, block and damage kept up do worse; what
      loses is the state the fight begins in (the deck, the HP), which is
      what the elite and the hallway-potion tests change.
+   - **Floor 1 captures** (c2f1, main c1ac146, fresh seeds 2046-2245, 199
+     saves with sidecars, each run played only to its capture: every one
+     resumes, Neow's first choice already in it) and the C2 base from all
+     of them to act 2's end (bench-c2f1-base; 2165 / 2167 played again
+     after a port collision interrupted them, and played as before).
+   - **elite1** (the analysis session's p3-potions-elite 25de51f, off by
+     default: act 1's path aims at one elite more than pathdp's own plan,
+     set at the run's first map, dropped below half HP; C2 on this branch
+     played 3 f1 saves as the base, play for play): the 99 odd f1 saves
+     to act 2's end. Act 1's elites 0.60 -> 1.42 (+0.83 ± 0.05); act 2
+     finished 17 -> 19 (+12/-10, +2.0 ± 4.8 points; one-sided 95% bound
+     about +9.9), act 2's boss reached 52 -> 57; but act 1 paid: deaths
+     before its boss 2 -> 6 (+4.0 ± 2.0 points), its boss beaten 86 -> 79
+     (-7.1 ± 4.6), HP% at it (0 if not reached) -7.0 ± 2.2, upgrades
+     -0.28, for +0.81 relics and +0.36 cards. Stopped on budget, no check
+     half (0.4 SE): the relics did not turn into act 2's end, and pathdp's
+     caution about elites is not without reason.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
