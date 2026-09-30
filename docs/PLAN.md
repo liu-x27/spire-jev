@@ -1336,10 +1336,13 @@ states, and only a simulator is fast enough for that.
      Regent session's find: Vigor was added to Spiral's and One-Two
      Punch's replays too (VigorPower.AfterAttack spends it on the first
      play; a Spiral Strike at -2 Strength and 2 Vigor, 12 modelled, 10 in
-     the game), now spent after the first play. Known and fixed there, not
-     yet here: Ambergris (an extra turn, AmbergrisPower.ShouldTakeExtraTurn;
-     held in 76 of the baselines' 4,330 fights, drunk 28 times) in
-     b0edc12, checked with 221fa1b and 7fac83f before they come in.
+     the game), now spent after the first play. Then 221fa1b (hooks),
+     b0edc12 (Ambergris: an extra turn, AmbergrisPower.ShouldTakeExtraTurn;
+     held in 76 of the baselines' 4,330 fights, drunk 28 times, always on
+     act 1's boss by potions2) and 7fac83f (the Silent's core), merged
+     (b4e8f8f) after 17 saves without Ambergris played fight for fight as
+     main; of 6 whose base drank it, 3 part at that fight (its turn's loss
+     now predicted 0, not 5) and 3 play alike.
    - **sparengval** (the engval branch, 208769e; not in main: the user took
      only src/replay-rewards.ts from it, b3981ea): spar's bouts planned with
      engval too, so a deck's Powers are worth what they do in the turns to
