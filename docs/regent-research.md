@@ -309,3 +309,23 @@ Divine Destiny: the runs that traded it at Orobas (Touch of Orobas) won more.
 the runs taking it winning 38.7% against 26.3% of those passing it; Touch of Orobas 28%, 41.0% against
 31.3%. The Ironclad's table avoided Touch of Orobas (it would turn Burning Blood into Black Blood);
 the Regent takes both first (characters/regent.ts ancients).
+
+## 7. The bot's first results (2026-09-29/30)
+
+- **dev2** (C2, A10, fresh seeds 3001-3020, code 45d61d8): mean floor 29.4; act 1 boss 18/20 (14
+  clean), act 2 boss reached 6 times and won 4, one clear (3019, Queen at 9% HP — narrow). 3836
+  cards played, 91 fields off; end-of-turn HP loss exact 940/951.
+- **Where the HP goes**: act 1 hallways 4.1 a fight (humans 5.3), act 1 bosses 38.5 (humans 26 when
+  they win), act 2 hallways 15.7 (humans 8.5) — the same number of turns as the humans, more HP a
+  turn; 11 of the 19 deaths are act 2 hallways. At act 2's start the decks are the humans' shape
+  (17-19 cards, 9 skills, 2 block cards past Defend) but for the Strikes the humans removed.
+- **Card choice**: on 300 human winners' reward screens (human-rewards.ts), the rules tables agree
+  with the human 45%, C2's spar 30%, C2 + sparpick 36%. In the game, from the 20 f16 saves to floor
+  34: C2 lived through act 2 4 times, the rules tables once (3 to 0 paired), mean floor 27.6 against
+  27.2. C2 stays.
+- **The star and forge worth** (SPIRE_JEV_STAR_WORTH, SPIRE_JEV_FORGE_WORTH): 2.5 looked better on
+  dev1's 7 boss saves (36 → 40% of bouts won) and did not hold on dev2's 28 (64 → 65%); on act 2
+  hallway bouts every setting is within 0.6 HP a fight. Defaults kept (1, 0.25).
+- **Fixed on the way**: the Ironclad's catalogue shadowed the Regent's for 5 cards with no star cost
+  (spar played Astral Pulse free); Conqueror against Artifact; Orbit; Tyranny's exhaust; the
+  Regent's part of State.ext shared with other characters'.
