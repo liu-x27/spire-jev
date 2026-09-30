@@ -1475,6 +1475,21 @@ states, and only a simulator is fast enough for that.
      31 f1 saves that meet the Merc play as the base up to it in 30 (the
      last holds the Defect's Bulk Up, a foreign card); its fight -1.1 ± 0.9
      HP + 10 a potion (30, all won).
+   - **The deck's defence** (the analysis session's design, the user
+     approved): bench-c2full-f16-c1's f16 saves with 3 unupgraded Strikes
+     swapped (edit_deck.py) for a defence pack D (Flame Barrier, Shrug It
+     Off, Impervious) or an attack pack K of the same human act 1 pick rate
+     (Uppercut, Fight Me, Pommel Strike), C2 to act 2's end, the 153 odd
+     seeds. Act 2's hallway cost a fight (HP lost + 10 a potion, a save's
+     mean): A 21.1, D 17.7, K 19.7; D-A -3.65 ± 0.64, K-A -1.54 ± 0.64,
+     D-K -2.08 ± 0.57 (5.7 / 2.4 / 3.7 SE): past the registered bar (D-A
+     3 or more, D-K 2 or more), defence is the hallways' lever. Act 2
+     finished 30 -> 41 (D) / 42 (K) of 153 (+7.2 / +7.8 ± 4.0 points), act
+     1's boss won 128 -> 135 / 146: three Strikes for three good cards is
+     worth act 2's end either way, and the hallways' saved HP is not what
+     ends it. Played a hallway fight: Shrug It Off 0.87, Impervious 0.44,
+     Flame Barrier 0.29. Next: spar's worth of block cards (the analysis
+     session's).
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
