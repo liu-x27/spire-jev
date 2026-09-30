@@ -24,7 +24,7 @@ import {
   one, type Soak, type State, strike, targetable, type Unit, autoPlay, HAND_LIMIT,
 } from "../sim.ts";
 import type { Weights } from "../search.ts";
-import type { CharacterRules, Rule } from "./index.ts";
+import type { CardRow, CharacterRules, Rule } from "./index.ts";
 
 /** Her state on State.ext. */
 interface Necro {
@@ -548,6 +548,101 @@ const SPECIAL: Record<string, Rule> = {
   // Time's Up, Soul Storm: counts (below); Eradicate, Banshee's Cry, The Scythe: the core's own.
 };
 
+/**
+ * Her cards as choices.ts rates a reward's (CardRow): from the human v0.111 A10 solo runs (1,601, 397
+ * won; data/necrobinder). tiers: the card's A10 Elo against skipping (S +250, A +120, B 0, C -120, D
+ * -250) and its pick score in acts 1-3 (log-odds against skipping: S 2, A 1, B 0, C -1, D -2); pick:
+ * how often humans take it when offered, by act. Glimpse Beyond and Legion of Bone are multiplayer only.
+ */
+const CARDS: Record<string, CardRow> = {
+  AFTERLIFE: { tiers: "DBDD", pick: [22, 10, 9] },
+  BANSHEES_CRY: { tiers: "CABC", pick: [32, 28, 30] },
+  BLIGHT_STRIKE: { tiers: "FCFF", pick: [12, 2, 1] },
+  BODYGUARD: { tiers: "CCCC", pick: [10, 10, 10] },
+  BONE_SHARDS: { tiers: "DACF", pick: [46, 13, 3] },
+  BORROWED_TIME: { tiers: "AAAA", pick: [55, 59, 63] },
+  BURY: { tiers: "FCDD", pick: [12, 12, 8] },
+  CALCIFY: { tiers: "DBCC", pick: [23, 18, 19] },
+  CALL_OF_THE_VOID: { tiers: "ASAC", pick: [62, 54, 58] },
+  CAPTURE_SPIRIT: { tiers: "BABC", pick: [45, 45, 34] },
+  CLEANSE: { tiers: "BBCC", pick: [28, 20, 22] },
+  COUNTDOWN: { tiers: "CACC", pick: [39, 25, 24] },
+  DANSE_MACABRE: { tiers: "CBBB", pick: [25, 41, 40] },
+  DEATHBRINGER: { tiers: "CABC", pick: [57, 42, 24] },
+  DEATHS_DOOR: { tiers: "CBCC", pick: [31, 31, 37] },
+  DEATH_MARCH: { tiers: "FCDD", pick: [9, 6, 7] },
+  DEBILITATE: { tiers: "AABC", pick: [40, 33, 31] },
+  DEFEND_NECROBINDER: { tiers: "CCCC", pick: [10, 10, 10] },
+  DEFILE: { tiers: "FCFF", pick: [16, 3, 2] },
+  DEFY: { tiers: "BSAB", pick: [64, 55, 46] },
+  DELAY: { tiers: "BSAB", pick: [61, 56, 43] },
+  DEMESNE: { tiers: "SSSC", pick: [74, 81, 78] },
+  DEVOUR_LIFE: { tiers: "BBBC", pick: [18, 22, 20] },
+  DIRGE: { tiers: "BABB", pick: [40, 48, 35] },
+  DRAIN_POWER: { tiers: "FBFF", pick: [18, 1, 1] },
+  DREDGE: { tiers: "CBBB", pick: [22, 36, 40] },
+  EIDOLON: { tiers: "DCDC", pick: [9, 6, 8] },
+  END_OF_DAYS: { tiers: "BSBC", pick: [52, 28, 40] },
+  ENFEEBLING_TOUCH: { tiers: "SSAA", pick: [64, 69, 63] },
+  ERADICATE: { tiers: "BSBC", pick: [45, 25, 35] },
+  FEAR: { tiers: "DBDF", pick: [20, 9, 5] },
+  FETCH: { tiers: "CABC", pick: [52, 42, 33] },
+  FLATTEN: { tiers: "DBDF", pick: [21, 9, 3] },
+  FORBIDDEN_GRIMOIRE: { tiers: "CCCC", pick: [10, 10, 10] },
+  FRIENDSHIP: { tiers: "ASAB", pick: [59, 56, 49] },
+  GRAVEBLAST: { tiers: "CCCC", pick: [14, 16, 17] },
+  GRAVE_WARDEN: { tiers: "BABC", pick: [46, 36, 24] },
+  HANG: { tiers: "ASBC", pick: [39, 28, 34] },
+  HAUNT: { tiers: "DBCD", pick: [18, 19, 14] },
+  HIGH_FIVE: { tiers: "CACD", pick: [47, 27, 9] },
+  INVOKE: { tiers: "CBCC", pick: [27, 26, 20] },
+  LETHALITY: { tiers: "ASAB", pick: [64, 54, 36] },
+  MELANCHOLY: { tiers: "DBCD", pick: [29, 21, 13] },
+  MISERY: { tiers: "AACC", pick: [24, 16, 20] },
+  NECRO_MASTERY: { tiers: "CABC", pick: [23, 23, 23] },
+  NEGATIVE_PULSE: { tiers: "DBCD", pick: [33, 20, 9] },
+  NEUROSURGE: { tiers: "SSSC", pick: [70, 63, 66] },
+  NO_ESCAPE: { tiers: "BABC", pick: [38, 35, 26] },
+  OBLIVION: { tiers: "BABC", pick: [36, 34, 35] },
+  PAGESTORM: { tiers: "DCCC", pick: [13, 27, 24] },
+  PARSE: { tiers: "CCCC", pick: [12, 25, 22] },
+  POKE: { tiers: "DBDF", pick: [22, 8, 3] },
+  PROTECTOR: { tiers: "CCCC", pick: [10, 10, 10] },
+  PULL_AGGRO: { tiers: "DBDD", pick: [25, 11, 8] },
+  PULL_FROM_BELOW: { tiers: "DBCC", pick: [18, 17, 18] },
+  PUTREFY: { tiers: "BABB", pick: [50, 49, 37] },
+  RATTLE: { tiers: "DBCD", pick: [21, 16, 10] },
+  REANIMATE: { tiers: "ASAC", pick: [56, 50, 53] },
+  REAP: { tiers: "FBFF", pick: [25, 3, 2] },
+  REAPER_FORM: { tiers: "AAAC", pick: [34, 37, 36] },
+  REAVE: { tiers: "FCFF", pick: [14, 3, 1] },
+  RIGHT_HAND_HAND: { tiers: "DBDD", pick: [18, 11, 15] },
+  SACRIFICE: { tiers: "DBBC", pick: [14, 21, 18] },
+  SCOURGE: { tiers: "DBDD", pick: [19, 12, 7] },
+  SCULPTING_STRIKE: { tiers: "FCFF", pick: [10, 4, 3] },
+  SEANCE: { tiers: "ASBC", pick: [40, 32, 36] },
+  SENTRY_MODE: { tiers: "BSBC", pick: [40, 27, 34] },
+  SEVERANCE: { tiers: "DBCD", pick: [22, 15, 10] },
+  SHARED_FATE: { tiers: "BABC", pick: [30, 27, 28] },
+  SHROUD: { tiers: "CBCC", pick: [29, 32, 28] },
+  SIC_EM: { tiers: "DBDC", pick: [22, 13, 20] },
+  SLEIGHT_OF_FLESH: { tiers: "CABB", pick: [50, 42, 37] },
+  SNAP: { tiers: "DBCD", pick: [27, 15, 9] },
+  SOUL_STORM: { tiers: "CBCC", pick: [13, 14, 14] },
+  SOW: { tiers: "FBFF", pick: [20, 3, 0] },
+  SPIRIT_OF_ASH: { tiers: "BABC", pick: [32, 28, 30] },
+  SPUR: { tiers: "CBCC", pick: [29, 22, 22] },
+  SQUEEZE: { tiers: "CABC", pick: [28, 24, 26] },
+  STRIKE_NECROBINDER: { tiers: "CCCC", pick: [10, 10, 10] },
+  THE_SCYTHE: { tiers: "DACC", pick: [31, 9, 20] },
+  TIMES_UP: { tiers: "CBCC", pick: [17, 11, 14] },
+  TRANSFIGURE: { tiers: "ASAC", pick: [48, 37, 42] },
+  UNDEATH: { tiers: "BSBC", pick: [41, 31, 36] },
+  UNLEASH: { tiers: "CCCC", pick: [10, 10, 10] },
+  VEILPIERCER: { tiers: "DBCD", pick: [26, 16, 13] },
+  WISP: { tiers: "CCCC", pick: [14, 19, 19] },
+};
+
 const DEBUFF_KEYS = new Set(["WEAK", "VULNERABLE", "DOOM", "POISON", "HANG", "OBLIVION", "DEBILITATE", "SIC_EM", "FRAIL", "ENFEEBLING_TOUCH"]);
 
 /** Debuffs she put on an enemy by a card: a count each (Sleight of Flesh), and the Doom (Shroud). */
@@ -559,6 +654,12 @@ const beforePlays = new WeakMap<Card, Before>();
 
 export const NECROBINDER: CharacterRules = {
   special: SPECIAL,
+  cards: CARDS,
+  aoe: ["SOW", "NEGATIVE_PULSE", "DEATHBRINGER", "HIGH_FIVE", "BONE_SHARDS", "END_OF_DAYS", "BANSHEES_CRY"],
+  multiHit: ["RATTLE", "ERADICATE", "PULL_FROM_BELOW"],
+  // Rest sites: what human winners upgrade most, of the cards they held (and least).
+  smithFirst: ["SLEIGHT_OF_FLESH", "DEMESNE", "SENTRY_MODE", "LETHALITY", "BORROWED_TIME", "END_OF_DAYS", "ERADICATE", "DELAY", "CALL_OF_THE_VOID", "SCOURGE", "REAPER_FORM", "SHROUD", "PULL_FROM_BELOW", "TRANSFIGURE"],
+  smithLast: ["SEVERANCE", "SNAP", "SCULPTING_STRIKE", "UNLEASH", "POKE", "VEILPIERCER", "FLATTEN", "FETCH", "DEATHS_DOOR"],
   counts: {
     // Time's Up: the target's Doom.
     TIMES_UP: (_s, _c, t) => (t ? doomOf(t) : undefined),
