@@ -423,9 +423,14 @@ function outcomes(deck: readonly string[], boss: Boss, floor: number, me: Player
   }
   return out;
 }
-interface Paired {
+export interface Paired {
   mean: number;
   se: number;
+}
+/** replay-rewards: each option spar5Pick weighs, by its id (a card reward's action), and its paired difference. */
+let spar5Seen: ((id: string, p: Paired) => void) | undefined;
+export function watchSpar5(fn: ((id: string, p: Paired) => void) | undefined): void {
+  spar5Seen = fn;
 }
 /**
  * sparhall (act 2): each shuffle's difference in the HP kept in one of the act's ordinary fights too
@@ -485,6 +490,7 @@ function spar5Pick<T extends { change: (d: string[]) => string[]; gain: number }
   for (const x of options) {
     if (!Number.isFinite(x.gain)) continue;
     const p = spar5Gain(o, at, x.change);
+    spar5Seen?.(String((x as { id?: unknown }).id ?? ""), p);
     if (!best || p.mean > best.p.mean) best = { x, p };
   }
   return best && (lean ? best.p.mean + best.p.se > 0 : best.p.mean - best.p.se > 0) ? best.x : undefined;
