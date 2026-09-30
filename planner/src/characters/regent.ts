@@ -18,7 +18,7 @@
 import { character } from "../character.ts";
 import type { Weights } from "../search.ts";
 import {
-  addPower, applyPower, autoPlay, blockGain, type Card, counted, died, dmg, draw, type Enemy, exhaustCard, gainBlock, HAND_LIMIT,
+  addPower, applyPower, autoPlay, blockGain, type Card, costOf, counted, died, dmg, draw, type Enemy, exhaustCard, gainBlock, HAND_LIMIT,
   has, hit, incomingHitsBy, endOfTurnBlock, junkIndex, num, one, relicDamage, relicVar, setRelicVar, standard, type State, strike, targetable,
 } from "../sim.ts";
 import type { Observation } from "../obs.ts";
@@ -38,6 +38,9 @@ interface Ext {
   /** Mini Regent's Strength and Regalite's block, once a turn: used this turn. */
   miniUsed?: boolean;
   regaliteUsed?: boolean;
+  /** Energy paid for cards since the observation, and Orbit's triggers since (its counters at the observation are the bridge's). */
+  orbitSpent?: number;
+  orbitTriggers?: number;
   /** Void Form ended the turn: nothing more is played. */
   ended?: boolean;
   /** Monologue: Strength a card for the rest of the turn, and what it has given (taken back at the turn's end). */
@@ -309,9 +312,12 @@ const SPECIAL: Record<string, Rule> = {
     }
     forge(s, num(c, "Forge"));
   },
+  // Conqueror is a debuff: an Artifact stack takes it instead (the Punch Construct's, JEV00006).
   CONQUEROR: (s, c, t) => {
     forge(s, num(c, "Forge"));
-    if (t && targetable(t)) addPower(t, "CONQUEROR", 1);
+    if (!t || !targetable(t)) return;
+    if ((t.powers["ARTIFACT"] ?? 0) > 0) addPower(t, "ARTIFACT", -1);
+    else addPower(t, "CONQUEROR", 1);
   },
   // Forge its base, and its extra for every powered hit on the target this turn before it.
   BEAT_INTO_SHAPE: (s, c, t) => {
@@ -480,6 +486,28 @@ const SPECIAL: Record<string, Rule> = {
   PLOT: () => {},
   CONSTELLATION: () => {},
 };
+
+/**
+ * Orbit (IL: OrbitPower.AfterEnergySpent): the energy paid for a card counts, over the fight; every
+ * Energy (4) of it gives the power's amount in energy at once. An X card's pay is not known here (its X
+ * is): left out.
+ */
+function orbit(s: State, e: Ext, c: Card): void {
+  const amount = power(s, "ORBIT");
+  if (amount <= 0 || c.costsX) return;
+  const paid = costOf(s, c);
+  if (paid <= 0) return;
+  const v = s.player.powerVars?.["ORBIT"];
+  const every = v?.["Energy"] ?? 4;
+  const spent = (v?.["energySpent"] ?? 0) + (e.orbitSpent ?? 0) + paid;
+  const triggers = (v?.["triggerCount"] ?? 0) + (e.orbitTriggers ?? 0);
+  e.orbitSpent = (e.orbitSpent ?? 0) + paid;
+  const now = Math.floor(spent / every) - triggers;
+  if (now > 0) {
+    s.energy += amount * now;
+    e.orbitTriggers = (e.orbitTriggers ?? 0) + now;
+  }
+}
 
 /** Decisions, Decisions' skill: the one of most block and stars (3 a star) and forge (half a point). */
 function decisionsIndex(cards: readonly { id: string; type: string; keywords: readonly string[]; vars?: Readonly<Record<string, number>> }[]): number {
@@ -728,10 +756,11 @@ export const REGENT: CharacterRules = {
 
   beforePlay(s: State, c: Card): void {
     const paid = c.starCost !== undefined || c.starX ? starCost(s, c) : 0;
-    const e = s.ext || paid > 0 || c.starX || power(s, "THE_SEALED_THRONE") > 0 ? ext(s) : undefined;
+    const e = s.ext || paid > 0 || c.starX || power(s, "THE_SEALED_THRONE") > 0 || power(s, "ORBIT") > 0 ? ext(s) : undefined;
     if (!e) return;
     if (c.starCost !== undefined || c.starX) spendStars(s, paid);
     else e.spent = 0;
+    orbit(s, e, c);
     // The Sealed Throne (IL: BeforeCardPlayed, after the card was paid for): stars for every card.
     gainStars(s, power(s, "THE_SEALED_THRONE"));
   },

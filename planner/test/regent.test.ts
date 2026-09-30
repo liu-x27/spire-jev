@@ -248,3 +248,18 @@ test("an Ironclad's state gets no Regent state", () => {
   assert.equal(a.ext, undefined);
   assert.equal(endOfTurn(a).ext, undefined);
 });
+
+test("Conqueror on an enemy with Artifact: the Artifact goes, no Conqueror", () => {
+  const conq = card("CONQUEROR", "Skill", "AnyEnemy", { Forge: 3 });
+  const s = at(state([conq], 3, [foe(60, 1, { ARTIFACT: 1 })]), 0, 1);
+  assert.equal(s.enemies[0]!.powers["ARTIFACT"], 0);
+  assert.equal(s.enemies[0]!.powers["CONQUEROR"], undefined);
+});
+
+test("Orbit: every 4 energy paid for cards over the fight gives its amount, from the bridge's counters", () => {
+  const s = withPowers(state([STRIKE, DEFEND, STRIKE]), { ORBIT: 1 });
+  s.player.powerVars = { ORBIT: { Energy: 4, energySpent: 3, triggerCount: 0 } };
+  const a = at(s, 0, 1);
+  assert.equal(a.energy, 3);
+  assert.equal(at(a, 0).energy, 2);
+});
