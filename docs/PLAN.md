@@ -1316,6 +1316,30 @@ states, and only a simulator is fast enough for that.
      events2's and smithhuman's changes are mostly act 1's, which f16 saves
      have settled: their "neutral" is acts 2-3's. The next whole-run batch
      captures 4, 8, 12, 16, 32, 47 (with sidecars) for act 1's.
+     That batch (c2early, seeds 1846-2045, 6a0a9e8, 200 runs, no errors):
+     act 1's boss 159 / 193, act 2's 37 / 101, act 3's first 1 / 18, wins 0
+     (the second confirmation's 78.8% / 17.9% again). Act 1 from its f4
+     saves against a bench of all of them (bench-c2full-f4): events2 dev
+     +3.91 ± 2.71 HP at the boss (20), check -2.35 ± 3.43, pooled +0.95 ±
+     2.19 (40, the boss 33 vs 31); smithhuman dev +1.93 ± 1.63 (26), check
+     -1.06 ± 1.22, pooled +0.49 ± 1.04 (50, 42 vs 41; the Skills and Powers
+     upgraded +0.46 ± 0.13). Both dropped, in every act. **99 of the 200 f4
+     saves never resumed** (ECONNRESET on Staging11): each had a fight on
+     floor 4, and a capture resumes at its floor's room, so into the fight;
+     events, shops and rests resume. Capture act 1 at floor 1 (Neow), or
+     resume fights on the replays' bridge (Replay2).
+   - **The character adaptations' plumbing** (char-plumbing, the Regent,
+     Silent and Necrobinder sessions' shared branch; 31 files, the veteran
+     profile with the other four at A10): e94aeb7 played the Ironclad's
+     C2 fight for fight as main on 18 saves (6 f4, 12 f16; 100 fights;
+     the profile's maps checked by the Silent session), merged. Then the
+     Regent session's find: Vigor was added to Spiral's and One-Two
+     Punch's replays too (VigorPower.AfterAttack spends it on the first
+     play; a Spiral Strike at -2 Strength and 2 Vigor, 12 modelled, 10 in
+     the game), now spent after the first play. Known and fixed there, not
+     yet here: Ambergris (an extra turn, AmbergrisPower.ShouldTakeExtraTurn;
+     held in 76 of the baselines' 4,330 fights, drunk 28 times) in
+     b0edc12, checked with 221fa1b and 7fac83f before they come in.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
