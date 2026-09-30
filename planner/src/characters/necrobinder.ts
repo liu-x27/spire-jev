@@ -20,7 +20,7 @@
 
 import type { Observation } from "../obs.ts";
 import {
-  addPower, applyPower, blockGain, type Card, costOf, counted, died, dmg, downed, draw, type Enemy, gainBlock, has, hit, hpLoss,
+  addPower, applyPower, blockGain, type Card, costOf, counted, died, dmg, downed, draw, type Enemy, endOfTurn, endOfTurnBlock, gainBlock, has, hit, hpLoss, incomingHitsBy,
   one, type Soak, type State, strike, targetable, type Unit, autoPlay, HAND_LIMIT,
 } from "../sim.ts";
 import type { Weights } from "../search.ts";
@@ -857,6 +857,26 @@ export const NECROBINDER: CharacterRules = {
     summon(next, (next.relics.includes("BOUND_PHYLACTERY") ? 1 : 0) + (next.relics.includes("PHYLACTERY_UNBOUND") ? 2 : 0) + Math.max(0, p["SUMMON_NEXT_TURN"] ?? 0));
     delete p["SUMMON_NEXT_TURN"];
     for (let i = 0; i < (p["SENTRY_MODE"] ?? 0) && next.hand.length < HAND_LIMIT; i++) next.hand.push({ ...SWEEPING_GAZE });
+    // Call of the Void (IL: BeforeHandDraw): a random card of her pool, Ethereal, into the hand a stack —
+    // which is not known here: a draw pile card's Ethereal copy stands for it (the game's hands: one more).
+    for (let i = 0; i < (p["CALL_OF_THE_VOID"] ?? 0) && next.hand.length < HAND_LIMIT && next.draw.length > 0; i++) {
+      next.hand.push(withKeyword("Ethereal")({ ...next.draw[i % next.draw.length]!, locked: false }));
+    }
+    // Suck (the Fossil Stalker): its Strength only for the hits that got past her block and Osty (IL:
+    // receivers that are pets are dropped); scripts-act1.ts gave it for every hit.
+    const reached = hitsReaching(prev);
+    prev.enemies.forEach((before, i) => {
+      const e = next.enemies.find((o) => o.id === before.id);
+      const suck = e?.powers["SUCK"] ?? 0;
+      if (!e || suck <= 0 || !before.alive) return;
+      const hits = before.intents.filter((t) => t.type === "Attack").reduce((a, t) => a + Math.max(1, t.hits), 0);
+      const over = suck * (hits - reached[i]!);
+      if (over <= 0) return;
+      addPower(e, "STRENGTH", -over);
+      e.startStrength = e.powers["STRENGTH"] ?? 0;
+      // Its next attack as shown was worked out with that Strength: a hit's worth less each.
+      e.intents = e.intents.map((t) => (t.type === "Attack" ? { ...t, damage: Math.max(0, t.damage - over) } : t));
+    });
     // After the draw: Neurosurge's Doom on her, Countdown's on a random enemy (Shroud and Sleight of Flesh answer it).
     if ((p["NEUROSURGE"] ?? 0) > 0) addPower(next.player, "DOOM", p["NEUROSURGE"]!);
     const countdown = p["COUNTDOWN"] ?? 0;
@@ -908,6 +928,29 @@ function soaker(hp0: number): { take: Soak; left: () => number } {
     },
     left: () => hp,
   };
+}
+
+/**
+ * Each enemy's hits (prev.enemies' order) that get past her block and Osty to her, in the order hpLoss
+ * plays them: the turn's own damage into block first.
+ */
+function hitsReaching(s0: State): number[] {
+  const s = endOfTurn(s0);
+  const x = necro(s);
+  let hp = x?.ostyHp ?? 0;
+  const statuses = s.hand.reduce((a, c) => a + (c.type === "Status" ? c.vars["Damage"] ?? 0 : 0), 0);
+  let block = Math.max(0, endOfTurnBlock(s) - statuses - Math.max(0, s.player.powers["DISINTEGRATION"] ?? 0) - Math.max(0, s.player.powers["CONSTRICT"] ?? 0));
+  return incomingHitsBy(s).map((hits) => {
+    let n = 0;
+    for (const h of hits) {
+      const past = Math.max(0, h - block);
+      block = Math.max(0, block - h);
+      const took = Math.min(hp, past);
+      hp -= took;
+      if (past - took > 0) n++;
+    }
+    return n;
+  });
 }
 
 /** Osty's HP once the enemies' turn is over: the same hits hpLoss plays. */

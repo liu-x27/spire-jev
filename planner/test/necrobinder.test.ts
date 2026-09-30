@@ -228,3 +228,18 @@ test("banshee's cry and melancholy: their Energy is a cost cut, not energy; pull
   const f = at(state([fear, pfb], 1), 0, 1);
   assert.equal(hp(at(f, 0, 1)), 80 - 7 - Math.floor(5 * 1.5) * 3);
 });
+
+test("call of the void: a card more in every next hand, Ethereal", () => {
+  const s = state([], 3, { player: { hp: 50, maxHp: 66, block: 0, powers: { CALL_OF_THE_VOID: 1 } } });
+  const n = next(s);
+  assert.equal(n.hand.length, 6);
+  assert.ok(n.hand.some((c) => c.keywords.includes("Ethereal")));
+});
+
+test("suck: the Fossil Stalker's Strength only for hits that reach her past block and Osty", () => {
+  const stalker = { ...foe(55, 1, 14), model: "FOSSIL_STALKER", move: "LATCH_MOVE", powers: { SUCK: 3 } };
+  // Osty takes the 14: no Strength.
+  assert.equal(next(state([], 20, {}, [stalker])).enemies[0]!.powers["STRENGTH"] ?? 0, 0);
+  // Osty dead: it reaches her, +3.
+  assert.equal(next(state([], 0, {}, [stalker], 5)).enemies[0]!.powers["STRENGTH"], 3);
+});
