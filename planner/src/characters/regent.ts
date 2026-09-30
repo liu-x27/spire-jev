@@ -709,6 +709,7 @@ export const REGENT: CharacterRules = {
   // Orobas: A10 Regents (Spire Codex, v0.111.0, 1523 runs) take Archaic Tooth (Falling Star into Meteor
   // Shower) 62% of the times it is offered, winning 38.7% against 26.3% of those passing it, and Touch
   // of Orobas (Divine Right into Divine Destiny: 7 stars on turn 1, not 3) 28%, 41.0% against 31.3%.
+  character: "REGENT",
   ancients: { OROBAS: { first: ["ARCHAIC_TOOTH", "TOUCH_OF_OROBAS"] } },
   cards: CARDS,
   // The four lists' consensus and the humans' most-taken (65%+ of offers in act 1).

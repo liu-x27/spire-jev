@@ -18,6 +18,7 @@
 import type { Card, Enemy, Soak, State } from "../sim.ts";
 import type { Observation } from "../obs.ts";
 import type { Weights } from "../search.ts";
+import type { CharacterId } from "../character.ts";
 import { DEFECT } from "./defect.ts";
 import { NECROBINDER } from "./necrobinder.ts";
 import { REGENT } from "./regent.ts";
@@ -116,6 +117,8 @@ export interface CharacterRules {
    * over the table's (the Ironclad's): the Regent takes Touch of Orobas (Divine Right → Divine Destiny).
    */
   ancients?: Readonly<Record<string, { first?: readonly string[]; avoid?: readonly string[] }>>;
+  /** Whose rules these are: an Ancient's picks (ancients) are that character's alone, relic ids being everyone's. */
+  character?: CharacterId;
 }
 
 /** Every character's rules, asked for at call time: a module that imports one of them first (differential.ts the Defect's) closes the cycle before the list could be built at load. */
@@ -152,6 +155,7 @@ export interface Merged {
   damage: Set<string>;
   smithFirst: string[];
   smithLast: Set<string>;
+  /** By "<character>:<Ancient's event id>": what that character takes first there, and avoids. */
   ancients: Record<string, { first: string[]; avoid: string[] }>;
 }
 
@@ -180,7 +184,8 @@ export function rules(): Merged {
     for (const k of ["always", "never", "aoe", "multiHit", "damage", "smithLast"] as const) for (const id of r[k] ?? []) m[k].add(id);
     m.smithFirst.push(...(r.smithFirst ?? []));
     for (const [id, a] of Object.entries(r.ancients ?? {})) {
-      const to = (m.ancients[id] ??= { first: [], avoid: [] });
+      if (!r.character) throw new Error(`characters: an Ancient's picks (${id}) with no character`);
+      const to = (m.ancients[`${r.character}:${id}`] ??= { first: [], avoid: [] });
       to.first.push(...(a.first ?? []));
       to.avoid.push(...(a.avoid ?? []));
     }

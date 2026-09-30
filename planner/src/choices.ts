@@ -16,7 +16,7 @@ import { fromObservation, useSmartExhaust } from "./sim.ts";
 import { eloValue } from "./cardstats.ts";
 import { humanScore, humanSkipScore, humanTake } from "./takerates.ts";
 import { relicSurplus } from "./relics.ts";
-import { isBasic, isBasicDefend, isBasicStrike, starterExtras } from "./character.ts";
+import { character, isBasic, isBasicDefend, isBasicStrike, starterExtras } from "./character.ts";
 import { rules as characterRules } from "./characters/index.ts";
 import { bare, type Boss, bossFor, cardFromId, hallOutcomes, hallways, knownExactly, learnCard, modelledBoss, pairScore, type Player, sparOutcomes, sparScore, unknownCards, useBossTurns } from "./spar.ts";
 import type { CardObs, LegalAction, Observation } from "./obs.ts";
@@ -1077,8 +1077,8 @@ function ancientPick(o: Observation, eventId: string | undefined, options: reado
   const table = eventId ? ANCIENTS[eventId] : undefined;
   const relics = options.filter((x) => x.relic);
   if (!table || relics.length === 0) return undefined;
-  // The characters' own (characters/index.ts ancients): taken before the table's order, or avoided.
-  const own = characterRules().ancients[eventId!];
+  // The playing character's own (characters/index.ts ancients): taken before the table's order, or avoided.
+  const own = characterRules().ancients[`${character()}:${eventId!}`];
   const rank = (x: EventOptionObs) => {
     const first = own?.first.indexOf(x.relic!) ?? -1;
     if (first >= 0) return -100 + first;
