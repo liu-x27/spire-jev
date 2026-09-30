@@ -228,3 +228,20 @@ test("pantograph: the shop's Pantograph before anything else", () => {
     setFlags([]);
   }
 });
+
+test("rmstrike: a basic Strike removed before a card the rules would buy; nothing to remove, the rules as before", () => {
+  const regent = ["STRIKE_REGENT", "STRIKE_REGENT+", "DEFEND_REGENT", "FALLING_STAR", "VENERATE"];
+  const removal = act("shop_buy:9:MerchantCardRemovalEntry", { entry_type: "MerchantCardRemovalEntry", item_id: "MerchantCardRemovalEntry", price: 75 });
+  const offering = act("shop_buy:0:OFFERING", { entry_type: "MerchantCardEntry", item_id: "OFFERING", price: 80 });
+  setFlags(["rmstrike"]);
+  try {
+    assert.equal(chooseShop(obs({ phase: "shop", gold: 200, deck_cards: regent }), [offering, removal, act("shop_leave")]), removal.action_id);
+    // The removal's select takes the unupgraded Strike.
+    const select = obs({ phase: "card_select", deck_cards: regent, room: { room_type: "CardSelect", options: [], details: { purpose: "FromDeckForRemoval" } } });
+    const cards = ["STRIKE_REGENT+", "STRIKE_REGENT", "DEFEND_REGENT"].map((id, i) => act(`choose_card_select:${i}:${id}`));
+    assert.equal(chooseCardSelectFor(select, cards), "choose_card_select:1:STRIKE_REGENT");
+    assert.equal(chooseShop(obs({ phase: "shop", gold: 200, deck_cards: ["DEFEND_REGENT", "VENERATE"] }), [offering, removal, act("shop_leave")]), offering.action_id);
+  } finally {
+    setFlags([]);
+  }
+});
