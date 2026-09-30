@@ -262,6 +262,14 @@ test("creative ai: a card at the next turn's start the model cannot know", () =>
   assert.equal(n.drawn, 1);
 });
 
+test("a killed Waterfall Giant with its blow to come: the fight goes on, a channel still channels", () => {
+  const giant: Enemy = { ...foe(0, 1), model: "WATERFALL_GIANT", alive: false, deathBlow: 41, blowNow: true };
+  const s = at(state([ZAP], [L, L]), 0);
+  assert.equal(orbKey(s), "3:LIGHTNING LIGHTNING LIGHTNING");
+  const g = at(state([card("SHADOW_SHIELD", "Skill", "Self", { Block: 11 }, 2)], [L, L], [giant], {}, 2), 0);
+  assert.equal(orbKey(g), "2:LIGHTNING DARK6");
+});
+
 test("metronome: the fight's 7th channel deals 30 to every enemy, once", () => {
   const s = state([ZAP], [], [foe(60)], { relics: ["CRACKED_CORE", "METRONOME"], relicVars: { METRONOME: { _orbsChanneled: 6, Damage: 30 } } });
   assert.equal(at(s, 0).enemies[0]!.hp, 30);

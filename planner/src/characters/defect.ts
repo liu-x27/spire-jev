@@ -131,7 +131,12 @@ export function evokeOf(s: State, o: Orb, f = focus(s)): number {
 }
 
 const alive = (s: State) => s.enemies.filter((e) => e.alive);
-const fighting = (s: State) => s.enemies.some((e) => e.alive);
+/**
+ * The fight goes on (IL: CombatManager.IsOverOrEnding false): an enemy alive, or a killed Waterfall Giant
+ * with its blow still to come, a Test Subject to come back (JEV04001: a Dark channeled at the dying
+ * Giant, the model had the fight over and channeled nothing).
+ */
+const fighting = (s: State) => s.enemies.some((e) => e.alive || (e.deathBlow ?? 0) > 0 || (e.revive ?? 0) > 0);
 
 /** Unpowered damage to one enemy through its block (an orb's, Hailstorm's, Thunder's). */
 function zap(s: State, e: Enemy, n: number): void {
