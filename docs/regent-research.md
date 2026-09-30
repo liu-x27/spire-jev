@@ -329,3 +329,11 @@ the Regent takes both first (characters/regent.ts ancients).
 - **Fixed on the way**: the Ironclad's catalogue shadowed the Regent's for 5 cards with no star cost
   (spar played Astral Pulse free); Conqueror against Artifact; Orbit; Tyranny's exhaust; the
   Regent's part of State.ext shared with other characters'.
+- **Removing Strikes at shops** (2026-09-30; 20 fresh-seed pairs, same seed blocks, C2 against C2 + a
+  flag): A10 Regents who won removed at 24% / 43% / 47% of their shops, a Strike 252 times in 307
+  runs, and C2 never did. `rmstrike` (a Strike first whenever there is one): act 1 boss 18 → 14,
+  act 2 boss 4 → 1, the clear lost; 1.4 removals a run, cards bought 2.95 → 1.05, relics 0.5 → 0.1.
+  `rmspare` (only with the gold left for what the shop would have bought): act 1 boss 18 → 18, act 2
+  boss 4 → 0; 0.6 removals, cards 2.95 → 2.7, relics 0.5 → 0.2. Neither kept — the Ironclad's shoprm
+  showed the same (the removal's gold was worth more as the purchases it crowded out). The 8 seeds
+  rmspare never removed on played fight for fight as C2.
