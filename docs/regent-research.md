@@ -366,3 +366,26 @@ check is by numbers: dev3 / 7f08bdf / 7f08bdf with the old key — mean floor 29
 boss 18 / 13 / 16, act 2 boss 4 / 2 / 2, but HP a fight 4.1 / 4.3 / 4.7 in act 1's hallways and
 16.8 / 16.3 / 18.3 in act 2. No regression: a 20-seed run-level result moves this much on a perturbed
 seed alone, which is why the 60 fresh seeds above are the mod's numbers.
+
+## 9. The deck's defence, on the Regent (2026-10-01)
+
+The Ironclad's test (main PLAN, "The deck's defence") repeated as a second character's check: 60 fresh
+seeds (3201-3260) captured at f16 (C2, fdb990b), the 47 with three unupgraded Strikes; the three
+swapped (tools/edit_deck.py) for a defence pack D (Gather Light, Particle Wall, Glitterstream: A10
+Regents take them from 55 / 39 / 28% of act 1's offers) or an attack pack K of the same take rate
+(Bombardment, Gamma Blast, Collision Course: 47 / 42 / 28%), or taken out (R); every arm from the same
+saves, C2 to floor 34. Hallway cost: HP lost + 10 a potion, floors 18-32, not elites, a save's mean.
+
+| against A (47 pairs) | D | K | R |
+|---|---|---|---|
+| act 2 hallway cost | -3.2 ± 1.2 (2.7 SE) | -5.2 ± 1.9 (2.7 SE) | -1.8 ± 1.3 (1.3 SE) |
+| act 2 finished (A: 4) | 2 (-1.0 SE) | 10 (+2.2 SE) | 5 (+0.4 SE) |
+| act 1 boss beaten (A: 34) | 42 (+3.1 SE) | 42 (+2.2 SE) | 39 (+1.9 SE) |
+| turns a hallway fight (A: 6.2) | 6.7 | 4.8 | 5.6 |
+| the pack played a hallway fight | 2.47 | 2.32 | — |
+
+D-K: act 2 finished -0.17 ± 0.06 (-2.7 SE), hallway +1.3 ± 2.0 (0.7 SE). What carries over from the
+Ironclad: three Strikes for three good cards beat act 1's boss more often and cost less in act 2's
+hallways. What does not: defence as the hallways' own lever — the Regent's attack pack saved as much
+(by killing faster) and alone finished act 2 more often. 47 pairs (the Ironclad's 307); Bombardment
+is a rare, so the packs' take rates match but not necessarily their strength.
