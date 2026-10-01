@@ -1500,6 +1500,13 @@ states, and only a simulator is fast enough for that.
      ± 0.45): undecided by the registered bar (2 SE). The thinner deck
      looks like about half of act 2's gain and the good cards the other
      half, neither shown alone; the hallways' saving is the defence cards'.
+     On a second character (the Regent session, 47 fresh f16 saves, its
+     own packs by its humans' pick rates): good cards for three Strikes
+     again help (act 1's boss 34 -> 42 / 42, the hallways D -3.2, K -5.2),
+     but defence is not the hallways' own lever there — the attack pack
+     saves as much by killing sooner (4.8 turns a hallway fight against
+     6.2) and alone finishes act 2 more (4 -> 10). What carries over is the
+     deck's quality (good cards, fewer Strikes), not block as such.
      Next (the analysis session's, by the registered order): card picks and
      buys leaning to good cards first, a removal's price after.
    - **pick1** (the analysis session's p3 4de865c: sparhuman2's ranking —
