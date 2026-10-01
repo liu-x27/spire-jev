@@ -1495,11 +1495,13 @@ states, and only a simulator is fast enough for that.
      -3.83 ± 0.47, K-A -1.95, D-K -1.74 ± 0.44 (3.9 SE). Shown: three
      Strikes for three good cards finish act 2 more often, and defence is
      the hallways' own lever. A removal arm R (the 3 Strikes out, nothing
-     in; the odd seeds): act 2 finished +4.6 ± 3.6 (about 60% of D's and
-     K's, not shown), the hallway -1.0 ± 0.7 (R-D +2.6 ± 0.6): the thinner
-     deck may carry part of act 2's gain, the defence cards the hallways'.
-     Next (the analysis session's): spar's worth of block cards, and a
-     removal priced on one scale with a shop's buys.
+     in), both halves (307): act 2 finished 59 -> 73, +4.6 ± 2.6 (1.7 SE;
+     R-D -3.9 ± 2.7, R-K -4.9 ± 2.7), the hallway -1.05 ± 0.49 (R-D +2.58
+     ± 0.45): undecided by the registered bar (2 SE). The thinner deck
+     looks like about half of act 2's gain and the good cards the other
+     half, neither shown alone; the hallways' saving is the defence cards'.
+     Next (the analysis session's, by the registered order): card picks and
+     buys leaning to good cards first, a removal's price after.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
