@@ -337,3 +337,22 @@ the Regent takes both first (characters/regent.ts ancients).
   boss 4 → 0; 0.6 removals, cards 2.95 → 2.7, relics 0.5 → 0.2. Neither kept — the Ironclad's shoprm
   showed the same (the removal's gold was worth more as the purchases it crowded out). The 8 seeds
   rmspare never removed on played fight for fight as C2.
+
+## 8. The mod's level (2026-10-01): 60 fresh seeds, both modes
+
+60 fresh seeds (3101-3160), A10, code 7f08bdf (the mod's next snapshot), bridge StagingDefect; the
+mod's two modes exactly: 深度思考 (C2) and 快速 (pathdp, restbudget, potions2, sleep, powbonus,
+nopickrates). Share of all 60 starts (Wilson 95%); the humans' over all 1523 v0.111.0 A10 Regent runs.
+
+| | deep (C2) | fast (core) | humans |
+|---|---|---|---|
+| act 1 boss beaten | 45/60, 75% (63-84%) | 26/60, 43% (32-56%) | 65% |
+| act 2 boss beaten | 3/60, 5% (2-14%) | 0/60 (0-6%) | 35% |
+| cleared | 0/60 (0-6%) | 0/60 (0-6%) | 20% |
+| mean last floor | 26.5 | 19.7 | — |
+| HP a fight: act 1 hallway / elite / act 2 | 5.6 / 20.7 / 16.8 | 7.0 / 33.1 / 20.3 | 5.3 / 16.5 / 8.5–21.2 |
+
+Paired, deep against fast: act 1 boss 45 against 26 (21 seeds only deep beat, 2 only fast; p < 0.001).
+Deep's act 2 bosses: Kaiser Crab 0/10, Knowledge Demon 2/7, The Insatiable 1/5. The dev seeds
+(3001-3020, §7) were kinder: 18/20 and 4/20 — with the same definitions their HP a fight was 4.1
+hallway, 21.0 elite, 16.8 act 2, against 5.6, 20.7, 16.8 here.
