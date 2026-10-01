@@ -1518,6 +1518,16 @@ states, and only a simulator is fast enough for that.
      fit it better than pick rates drawn from whole runs. The deck test's
      gain was three Strikes out and good cards in; pick1 trades an attack
      for a skill on the same offer: not the same thing.
+   - **events2 again, on f1 saves** (the user's pick; p3 5d7d811 = c1ac146 +
+     events-main's commits; C2 there played 2 f1 saves as the base): the 90
+     of 199 affected.ts finds it can change, to act 2's end. Act 2 finished
+     15 -> 17 (+6/-4; +1.0 ± 1.6 points over 199, +2.2 ± 3.5 over the 90);
+     HP% at act 1's boss (0 if not reached) +4.1 ± 1.4 (2.9 SE; the f4
+     half's +5.5 ± 3.8 again), act 1's boss won 78 -> 74, the hallways -0.3
+     / -0.9. 105 of 880 event choices changed (Brain Leech 37, Abyssal Baths
+     26, Self-Help Book 16, Trash Heap 13). Undecided, the direction
+     repeated: about 4 points more HP into act 1's boss on two sets of
+     seeds, not yet act 1's boss won or act 2 finished.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
