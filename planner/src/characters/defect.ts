@@ -730,11 +730,36 @@ function startTurn(prev: State, next: State): void {
 
 // ---- The evaluation ----------------------------------------------------------------------------------
 
-/** Each turn later is worth this much less (the fight may end first), as the Silent's Poison. */
-const DECAY = 0.85;
-/** HP a point of block a turn to come is worth (not every point will be needed), and an energy. */
-const BLOCK_WORTH = 0.6;
-const ENERGY_WORTH = 2;
+/**
+ * The evaluation's numbers, each overridable for an experiment by SPIRE_JEV_ORB_TUNE (JSON, a key each);
+ * unset, these. decay: each turn later is worth this much less (the fight may end first), as the
+ * Silent's Poison; block, energy: HP a point of block a turn to come is worth (not every point will be
+ * needed), and an energy; passive: the orbs' passives to come, a factor on all; evoke: the share of an
+ * evoke still to come counted (dark: a Dark's, and its growth); focus: Focus's worth on the slots still
+ * empty; powers: a factor on the powers' gains; horizon: at most this many turns counted; cap: at most this.
+ */
+export interface OrbTune {
+  decay: number;
+  block: number;
+  energy: number;
+  passive: number;
+  evoke: number;
+  dark: number;
+  focus: number;
+  powers: number;
+  horizon: number;
+  cap: number;
+}
+export const ORB_TUNE_DEFAULT: OrbTune = { decay: 0.85, block: 0.6, energy: 2, passive: 1, evoke: 0.3, dark: 0.6, focus: 0.4, powers: 1, horizon: 4, cap: 80 };
+let tune: OrbTune = { ...ORB_TUNE_DEFAULT, ...readTune() };
+function readTune(): Partial<OrbTune> {
+  const raw = typeof process !== "undefined" ? process.env?.["SPIRE_JEV_ORB_TUNE"] : undefined;
+  return raw ? (JSON.parse(raw) as Partial<OrbTune>) : {};
+}
+/** Another tuning (offline experiments); undefined, back to the defaults and the environment's. */
+export function useOrbTune(t: Partial<OrbTune> | undefined): void {
+  tune = { ...ORB_TUNE_DEFAULT, ...(t ?? readTune()) };
+}
 
 /** Turns the fight will likely last after this one: the enemies' HP at the deck's pace, at most four. */
 function turnsLeft(s: State): number {
@@ -744,18 +769,18 @@ function turnsLeft(s: State): number {
   const damage = cards.reduce((a, c) => a + (c.type === "Attack" ? (c.vars["Damage"] ?? 0) * Math.max(1, c.vars["Repeat"] ?? 1) : 0), 0);
   const orbDamage = orbsOf(s).reduce((a, o) => a + (o.id === "LIGHTNING_ORB" ? passiveOf(s, o) : o.id === "GLASS_ORB" ? passiveOf(s, o) * live.length : 0), 0);
   const pace = Math.max(4, (damage / Math.max(1, cards.length)) * 5 * 0.75 + orbDamage);
-  return Math.min(4, Math.max(0, live.reduce((a, e) => a + e.hp, 0) / pace - 1));
+  return Math.min(tune.horizon, Math.max(0, live.reduce((a, e) => a + e.hp, 0) / pace - 1));
 }
-/** 1 + DECAY + DECAY² … over `t` turns (a part turn counted in part). */
+/** 1 + decay + decay² … over `t` turns (a part turn counted in part). */
 function discounted(t: number): number {
   let sum = 0;
-  for (let i = 0; i < Math.ceil(t); i++) sum += Math.pow(DECAY, i) * Math.min(1, t - i);
+  for (let i = 0; i < Math.ceil(t); i++) sum += Math.pow(tune.decay, i) * Math.min(1, t - i);
   return sum;
 }
 
 /**
  * What the orbs and the Defect's powers will give over the turns to come (this turn's end is already in
- * the state), on evaluate's scale: damage at enemyHp, block at BLOCK_WORTH, energy at ENERGY_WORTH, a
+ * the state), on evaluate's scale: damage at enemyHp, block at tune.block, energy at tune.energy, a
  * card at drawn. Every value at the Focus that lasts; an orb's evoke counted in part (it comes when an
  * orb is pushed out, or not at all).
  */
@@ -779,9 +804,9 @@ export function defectAhead(s: State, w: Weights): number {
     const v = passiveOf(s, o, f);
     switch (o.id) {
       case "LIGHTNING_ORB": return v * w.enemyHp;
-      case "FROST_ORB": return v * BLOCK_WORTH;
-      case "DARK_ORB": return v * 0.6 * w.enemyHp;
-      case "PLASMA_ORB": return v * ENERGY_WORTH;
+      case "FROST_ORB": return v * tune.block;
+      case "DARK_ORB": return v * tune.dark * w.enemyHp;
+      case "PLASMA_ORB": return v * tune.energy;
       case "GLASS_ORB": return 0;
     }
   };
@@ -795,18 +820,18 @@ export function defectAhead(s: State, w: Weights): number {
         for (let r = 0; r < times; r++) {
           const v = Math.max(0, base + f);
           if (v <= 0) break;
-          score += v * live.length * w.enemyHp * Math.pow(DECAY, k) * Math.min(1, t - k);
+          score += tune.passive * v * live.length * w.enemyHp * Math.pow(tune.decay, k) * Math.min(1, t - k);
           base = Math.max(0, base - 1);
         }
       }
-    } else score += perTurn(o) * times * d;
+    } else score += tune.passive * perTurn(o) * times * d;
     // The evoke still to come, in part: a Dark's is most of its worth.
     const ev = evokeOf(s, o, f);
-    score += o.id === "DARK_ORB" ? ev * 0.6 * w.enemyHp : o.id === "FROST_ORB" ? ev * BLOCK_WORTH * 0.3 : o.id === "PLASMA_ORB" ? ev * ENERGY_WORTH * 0.3 : ev * (o.id === "GLASS_ORB" ? live.length : 1) * w.enemyHp * 0.3;
+    score += o.id === "DARK_ORB" ? ev * tune.dark * w.enemyHp : o.id === "FROST_ORB" ? ev * tune.block * tune.evoke : o.id === "PLASMA_ORB" ? ev * tune.energy * tune.evoke : ev * (o.id === "GLASS_ORB" ? live.length : 1) * w.enemyHp * tune.evoke;
   });
   // Focus and slots for the orbs still to be channeled: half the empty slots filled, a point each a turn.
   const empty = Math.max(0, (st?.orbSlots ?? DEFECT_SLOTS) - orbs.length);
-  score += Math.max(0, f) * empty * 0.5 * 0.8 * d;
+  score += Math.max(0, f) * empty * tune.focus * d;
   // The powers: each one's gain a turn.
   const g = (k: string) => Math.max(0, p[k] ?? 0);
   const lightning = (3 + Math.max(0, f)) * w.enemyHp;
@@ -815,22 +840,22 @@ export function defectAhead(s: State, w: Weights): number {
   gain += g("STORM") * 0.3 * lightning;
   gain += g("HAILSTORM") * live.length * w.enemyHp * (orbs.some((o) => o.id === "FROST_ORB") ? 0.9 : 0.5);
   gain += g("SPINNER") * (4 + Math.max(0, f)) * live.length * w.enemyHp * 0.8;
-  gain += g("COOLANT") * Math.max(1, distinctOrbs(s)) * BLOCK_WORTH;
+  gain += g("COOLANT") * Math.max(1, distinctOrbs(s)) * tune.block;
   gain -= g("BIASED_COGNITION") * Math.max(1, orbs.length) * 0.8 * (t + 1) / 2;
   gain += g("MACHINE_LEARNING") * w.drawn;
   gain += g("ECHO_FORM") * 4;
   gain += g("THUNDER") * 0.4 * w.enemyHp;
-  gain += g("SUBROUTINE") * 0.3 * ENERGY_WORTH;
+  gain += g("SUBROUTINE") * 0.3 * tune.energy;
   gain += (g("TRASH_TO_TREASURE") * 0.3 * lightning) + g("SMOKESTACK") * 0.3 * live.length * w.enemyHp;
   gain += g("FERAL") * 0.5 * w.drawn;
   gain += g("CONSUMING_SHADOW") * 3 * w.enemyHp;
   gain += g("CREATIVE_AI") * 2;
   gain += g("ITERATION") * 0.3 * w.drawn;
-  score += gain * d;
+  score += tune.powers * gain * d;
   // Lightning Rod's Lightning for the turns it has left, Buffer's hits stopped (once each).
   score += Math.min(g("LIGHTNING_ROD"), Math.ceil(t)) * (lightning * Math.max(1, t / 2) + 8 * w.enemyHp * 0.3);
   score += g("BUFFER") * 6;
-  return Math.min(80, score);
+  return Math.min(tune.cap, score);
 }
 
 // ---- The hooks ---------------------------------------------------------------------------------------
