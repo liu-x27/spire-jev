@@ -1502,6 +1502,17 @@ states, and only a simulator is fast enough for that.
      half, neither shown alone; the hallways' saving is the defence cards'.
      Next (the analysis session's, by the registered order): card picks and
      buys leaning to good cards first, a removal's price after.
+   - **pick1** (the analysis session's p3 4de865c: sparhuman2's ranking —
+     spar5's loose veto, then A10 players' pick rates — on act 1's card
+     rewards alone; sparhuman, sparhuman2 and sparpick had been tried on
+     act 2's only): all 199 f1 saves to act 2's end against bench-c2f1-base
+     (C2 on this branch played 2 of them as the base). At 16, block cards
+     1.29 -> 1.74, attacks 6.52 -> 5.83 (not counting the basics), act 1's
+     skips 99 -> 66 of ~1,400; act 1's boss won 168 -> 155 (-6.5 ± 3.3,
+     2.0 SE), act 2 finished 33 -> 28 (+16/-21, -2.5 ± 3.1), the hallways
+     even (+0.05, +0.34). The humans' act 1 picks trade attacks for skills
+     and the act 1 boss pays; spar's picks, scored against that boss, fit it
+     better than pick rates drawn from whole runs.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
