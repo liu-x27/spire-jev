@@ -1510,9 +1510,14 @@ states, and only a simulator is fast enough for that.
      1.29 -> 1.74, attacks 6.52 -> 5.83 (not counting the basics), act 1's
      skips 99 -> 66 of ~1,400; act 1's boss won 168 -> 155 (-6.5 ± 3.3,
      2.0 SE), act 2 finished 33 -> 28 (+16/-21, -2.5 ± 3.1), the hallways
-     even (+0.05, +0.34). The humans' act 1 picks trade attacks for skills
-     and the act 1 boss pays; spar's picks, scored against that boss, fit it
-     better than pick rates drawn from whole runs.
+     even (+0.05, +0.34), act 2's boss reached 99 -> 90. Stopped on budget,
+     the sign against it (the main measure not clearly harmed; every measure
+     leans the wrong way, act 1's boss by 2 SE); no more variants of act 1's
+     picks by human pick rates. The humans' act 1 picks trade attacks for
+     skills and the act 1 boss pays; spar's picks, scored against that boss,
+     fit it better than pick rates drawn from whole runs. The deck test's
+     gain was three Strikes out and good cards in; pick1 trades an attack
+     for a skill on the same offer: not the same thing.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
