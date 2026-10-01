@@ -1488,8 +1488,18 @@ states, and only a simulator is fast enough for that.
      1's boss won 128 -> 135 / 146: three Strikes for three good cards is
      worth act 2's end either way, and the hallways' saved HP is not what
      ends it. Played a hallway fight: Shrug It Off 0.87, Impervious 0.44,
-     Flame Barrier 0.29. Next: spar's worth of block cards (the analysis
-     session's).
+     Flame Barrier 0.29. The check half (the 154 even seeds) agrees: act 2
+     finished D-A +9.7 ± 4.0, K-A +11.0 ± 4.1 points, the hallway D-K -1.40
+     ± 0.68. Both halves (307): act 2 finished 59 -> 85 (D) / 88 (K), +8.5
+     ± 2.8 / +9.4 ± 2.7 (3.1 / 3.5 SE), D-K -1.0 ± 3.0; the hallway D-A
+     -3.83 ± 0.47, K-A -1.95, D-K -1.74 ± 0.44 (3.9 SE). Shown: three
+     Strikes for three good cards finish act 2 more often, and defence is
+     the hallways' own lever. A removal arm R (the 3 Strikes out, nothing
+     in; the odd seeds): act 2 finished +4.6 ± 3.6 (about 60% of D's and
+     K's, not shown), the hallway -1.0 ± 0.7 (R-D +2.6 ± 0.6): the thinner
+     deck may carry part of act 2's gain, the defence cards the hallways'.
+     Next (the analysis session's): spar's worth of block cards, and a
+     removal priced on one scale with a shop's buys.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
