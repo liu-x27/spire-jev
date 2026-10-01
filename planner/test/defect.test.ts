@@ -1,7 +1,7 @@
 // The Defect's rules (src/characters/defect.ts), each from the game's IL (v0.111.0).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { type Card, type Enemy, endOfTurn, hpLoss, play, type State } from "../src/sim.ts";
+import { type Card, type Enemy, endOfTurn, hpLoss, play, type State, stateKey } from "../src/sim.ts";
 import { nextTurn, seeded } from "../src/turn.ts";
 import { evaluate } from "../src/search.ts";
 import { channel, hologramPick, type Orb, orbKey, orbsOf, orbState } from "../src/characters/defect.ts";
@@ -305,6 +305,13 @@ test("orbs to come count in the evaluation: a Frost held is worth more than none
   const without = state([], [], [foe(80, 1, {}, 5)]);
   const withFrost = state([], [F], [foe(80, 1, {}, 5)]);
   assert.ok(evaluate(withFrost) > evaluate(without));
+});
+
+test("the state's key: the Defect's part named, only where it has one; another character's key without it", () => {
+  const k = stateKey(state([], [L, F]));
+  assert.ok(k.endsWith("|DEFECT:3:LIGHTNING FROST/0/0/0"), k);
+  const ironclad = stateKey(noExt(state([], [], [foe(60)], { relics: [] })));
+  assert.ok(!ironclad.includes("|DEFECT") && !ironclad.endsWith("|"), ironclad);
 });
 
 test("another character's state: no Defect ext made by its plays", () => {

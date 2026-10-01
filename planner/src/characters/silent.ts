@@ -556,8 +556,10 @@ const SILENT_RULES: CharacterRules = {
   },
   evaluate: (s, w) => poisonAhead(s) * w.enemyHp,
   keyExt(s) {
+    // Only the Silent's own counters (State.ext is shared: another character's fields are not hers).
     const x = ext(s);
-    return s.ext ? `${x.discards ?? 0}/${x.draws ?? 0}/${x.shivs ?? 0}/${x.nightmare?.id ?? ""}` : "";
+    if (x.discards === undefined && x.draws === undefined && x.shivs === undefined && x.nightmare === undefined) return "";
+    return `${x.discards ?? 0}/${x.draws ?? 0}/${x.shivs ?? 0}/${x.nightmare?.id ?? ""}`;
   },
   // The runner's discards pick as the model does; Hand Trick's skill and Nightmare's card, the dearest.
   combatSelect(source, purpose, cards) {

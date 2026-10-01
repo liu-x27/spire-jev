@@ -189,9 +189,21 @@ export function rules(): Merged {
     }
     Object.assign(m.counts, r.counts ?? {});
     Object.assign(m.potions, r.potions ?? {});
-    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "resultPile", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "soak", "cloneExt", "keyExt", "combatSelect"] as const) {
+    for (const k of ["fromObservation", "playable", "cost", "beforePlay", "afterPlay", "resultPile", "extraPlays", "afterCard", "onDraw", "afterHit", "startOfTurn", "endOfTurn", "nextTurn", "enemyTurnStart", "evaluate", "soak", "cloneExt", "combatSelect"] as const) {
       const f = r[k];
       if (f) (m[k] as unknown[]).push(typeof f === "function" ? f.bind(r) : f);
+    }
+    // A character's part of the state's key, named by the character and only where it has one: another
+    // character's coming (or a keyExt of its) leaves this one's keys, and the look ahead's draws seeded by
+    // their hash (lookfix), as they were.
+    if (r.keyExt) {
+      if (!r.character) throw new Error("characters: a keyExt with no character");
+      const f = r.keyExt.bind(r);
+      const who = r.character;
+      m.keyExt.push((s) => {
+        const k = f(s);
+        return k === "" ? "" : `${who}:${k}`;
+      });
     }
     const tabled = r.cards || r.always || r.never || r.aoe || r.multiHit || r.damage || r.smithFirst || r.smithLast;
     if (tabled && !r.character) throw new Error("characters: choices' tables with no character");

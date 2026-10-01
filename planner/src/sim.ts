@@ -2085,8 +2085,10 @@ function extKey(s: State): string {
   // by its hash (lookfix), stay as they were before the other characters came. The Necrobinder's keyExt
   // ("" for the Ironclad) had added "|" to every Ironclad key: act 1's hallway look ahead drew other hands
   // and played otherwise (25 of 31 f1 saves parted from c1ac146's base before floor 16).
-  const parts = rules().keyExt.map((f) => f(s));
-  return parts.every((p) => p === "") ? "" : `|${parts.join(",")}`;
+  // Only the characters that have something, each named (characters/index.ts): one character's keys do
+  // not move when another is added or another's keyExt changes.
+  const parts = rules().keyExt.map((f) => f(s)).filter((p) => p !== "");
+  return parts.length === 0 ? "" : `|${parts.join(";")}`;
 }
 /** Relic flags and counters a play can change: states that differ in them are not the same. */
 const RELIC_FLAGS: [string, string][] = [
