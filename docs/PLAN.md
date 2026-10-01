@@ -1527,7 +1527,11 @@ states, and only a simulator is fast enough for that.
      / -0.9. 105 of 880 event choices changed (Brain Leech 37, Abyssal Baths
      26, Self-Help Book 16, Trash Heap 13). Undecided, the direction
      repeated: about 4 points more HP into act 1's boss on two sets of
-     seeds, not yet act 1's boss won or act 2 finished.
+     seeds, not yet act 1's boss won or act 2 finished (act 2's boss
+     reached 47 -> 43, relics -0.16: HP for relics, about even). Not
+     confirmed on its own (+1 point of act 2 finished is past 200 pairs'
+     reach); harmless, a candidate to ride along when a substantial one
+     goes to a fresh-seed confirmation.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
