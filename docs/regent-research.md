@@ -356,3 +356,13 @@ Paired, deep against fast: act 1 boss 45 against 26 (21 seeds only deep beat, 2 
 Deep's act 2 bosses: Kaiser Crab 0/10, Knowledge Demon 2/7, The Insatiable 1/5. The dev seeds
 (3001-3020, §7) were kinder: 18/20 and 4/20 — with the same definitions their HP a fight was 4.1
 hallway, 21.0 elite, 16.8 act 2, against 5.6, 20.7, 16.8 here.
+
+**The check on 7f08bdf** (same 20 dev seeds, deep): the two bridges (StagingDefect, StagingChars)
+played every run alike. Against ef04184 (dev3) half the seeds parted, each in an act 1 hallway fight
+around turn 2, from the same state and at the same HP that fight: the look ahead's draws are seeded by
+the state key's hash, and the merge changed the key (four characters' keyExt joined). With the old
+key restored the runs still parted (other merged changes reach the key or the look ahead), so the
+check is by numbers: dev3 / 7f08bdf / 7f08bdf with the old key — mean floor 29.4 / 24.8 / 26.6, act 1
+boss 18 / 13 / 16, act 2 boss 4 / 2 / 2, but HP a fight 4.1 / 4.3 / 4.7 in act 1's hallways and
+16.8 / 16.3 / 18.3 in act 2. No regression: a 20-seed run-level result moves this much on a perturbed
+seed alone, which is why the 60 fresh seeds above are the mod's numbers.
