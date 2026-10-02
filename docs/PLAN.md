@@ -1553,9 +1553,17 @@ states, and only a simulator is fast enough for that.
      random commons for three Strikes add little past the removal, where
      the D / K packs (cards of ~50% human pick rates) added +3.9 / +4.9 —
      the gain is in which cards. By card (SE ~5 points, 88-90 a card): Molten
-     Fist +16.3 ± 4.7 (3.5 SE, past a 20-card Bonferroni bar); the rest
-     within 2 SE (Armaments -9.9, Blood Wall -9.1, both 1.9 SE; Body Slam
-     +7.8, Tremble +6.7). The hallways (259 saves with both arms there):
+     Fist +16.3 ± 4.7 (3.5 SE); the rest within 2 SE (Armaments -9.9, Blood
+     Wall -9.1, both 1.9 SE; Body Slam +7.8, Tremble +6.7). The cards told
+     apart at all, by randomization (the draws shuffled among the saves
+     within an arm, 2,000 times; scratchpad randperm.py): the clustered
+     Wald statistic for 20 equal cards p 0.036, the largest card's |t| p
+     0.018 — on act 2's end the cards do differ, mostly by Molten Fist (the
+     Regent session's χ² on the same data, other SEs, p 0.12; the
+     hallways and act 1's boss: no card told apart, Wald p 0.34 / 0.63).
+     On the Regent (131 saves, three draws, a 10-card pool): no card told
+     apart on any outcome (p 0.91 / 0.25 / 0.16), the three cards against R
+     -1.1 points of act 2 (docs/regent-research.md §10). The hallways (259 saves with both arms there):
      rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
      (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
      1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
