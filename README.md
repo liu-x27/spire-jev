@@ -1,7 +1,33 @@
-# spire-jev
+<div align="center">
+
+<a href="https://liu-x27.github.io/spire-jev/">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.svg">
+  <img alt="spire-jev" src="docs/brand/lockup-light.svg" width="300">
+</picture>
+</a>
+
+### A narrow win, not a win rate.
 
 A bot that plays Slay the Spire 2 in the real game — all five characters, the Ironclad the
 longest worked on, whole runs, no human input.
+
+![TypeScript](https://img.shields.io/badge/planner-TypeScript,_no_dependencies-141311?style=flat-square&logo=typescript&logoColor=white)
+![C#](https://img.shields.io/badge/bridge-C%23_·_.NET_9-141311?style=flat-square)
+![Slay the Spire 2](https://img.shields.io/badge/Slay_the_Spire_2-beta_v0.111.0-141311?style=flat-square)
+[![Steam Workshop](https://img.shields.io/badge/Steam_Workshop-play_it_in_your_game-d7361f?style=flat-square&logo=steam&logoColor=white)](https://steamcommunity.com/sharedfiles/filedetails/?id=3808798192)
+[![License: MIT](https://img.shields.io/badge/license-MIT-141311?style=flat-square)](LICENSE)
+
+**[Project page](https://liu-x27.github.io/spire-jev/)** · [Where it stands](#where-it-stands) · [How it plays](#how-it-plays) · [Running it](#running-it) · [The working record](docs/PLAN.md) · [Characters](docs/CHARACTERS.md)
+
+</div>
+
+<br>
+
+| **2** | **0 of 90** | **0.09 ms** | **3,387 / 3,461** |
+|:---:|:---:|:---:|:---:|
+| wins at ascension 10: seed 849 from its floor-32 save, and the Regent's 3019 from floor 1 | runs won on the 90 confirmation seeds, which no change was tuned on | planning time per decision at the median (p95 1.3 ms) | turns whose end-of-turn HP loss the simulator predicted exactly |
+
 A mod bridges the game to a planner in TypeScript: each turn a simulator of the game's
 combat searches the order to play the hand in, well under a millisecond at the median, and
 the choices around the fights (card rewards, the path, rest sites, shops, events) are made

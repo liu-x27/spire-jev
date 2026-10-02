@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spire-jev</title>
+<meta name="description" content="A bot that plays Slay the Spire 2 in the real game, all five characters, whole runs, no human input: a combat simulator checked against the game card by card, and rules for the choices around the fights.">
+<meta property="og:title" content="spire-jev">
+<meta property="og:description" content="A narrow win, not a win rate. A bot that plays Slay the Spire 2 in the real game, and counts its results on seeds no change was tuned on.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://liu-x27.github.io/spire-jev/">
+<meta property="og:image" content="https://liu-x27.github.io/spire-jev/brand/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3efe6;
+    --panel: #fbf9f4;
+    --text: #141311;
+    --dim: #57534b;
+    --faint: #8f897d;
+    --line: rgba(20, 19, 17, 0.16);
+    --line-strong: rgba(20, 19, 17, 0.32);
+    --accent: #d7361f;
+    --ok: #3f6b3a;
+    --code-bg: #141311;
+    --code-text: #efe9dd;
+    --serif: "Instrument Serif", Georgia, serif;
+    --sans: "Inter", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12110f;
+      --panel: #1a1916;
+      --text: #efe9dd;
+      --dim: #b3ab9c;
+      --faint: #7f786c;
+      --line: rgba(239, 233, 221, 0.14);
+      --line-strong: rgba(239, 233, 221, 0.3);
+      --accent: #ff5a3c;
+      --ok: #8fbf7f;
+      --code-bg: #0a0a09;
+      --code-text: #efe9dd;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12110f;
+    --panel: #1a1916;
+    --text: #efe9dd;
+    --dim: #b3ab9c;
+    --faint: #7f786c;
+    --line: rgba(239, 233, 221, 0.14);
+    --line-strong: rgba(239, 233, 221, 0.3);
+    --accent: #ff5a3c;
+    --ok: #8fbf7f;
+    --code-bg: #0a0a09;
+    --code-text: #efe9dd;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--accent); }
+  code, pre { font-family: var(--mono); font-size: 0.86em; }
+  :not(pre) > code {
+    padding: 0.08em 0.36em;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    white-space: nowrap;
+  }
+  img { max-width: 100%; height: auto; display: block; }
+  @media (max-width: 640px) { :not(pre) > code { white-space: normal; overflow-wrap: anywhere; } }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 640px) { .wrap { padding: 0 16px; } }
+
+  /* masthead */
+  .masthead {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 20px 0 14px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand .mark { width: 30px; height: 30px; flex: none; }
+  .brand span { font: 26px/1 var(--serif); letter-spacing: -0.01em; }
+  .masthead nav { display: flex; gap: 20px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .masthead nav a { text-decoration: none; color: var(--dim); }
+  .masthead nav a:hover { color: var(--text); }
+  @media (max-width: 720px) { .masthead nav a:not(.gh) { display: none; } }
+
+  /* hero */
+  .hero { padding: 72px 0 40px; display: grid; gap: 28px; }
+  .eyebrow { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  .hero h1 {
+    margin: 0;
+    font: 400 clamp(44px, 7.4vw, 92px)/1.02 var(--serif);
+    letter-spacing: -0.02em;
+    max-width: 16ch;
+  }
+  .hero h1 code {
+    font: italic 400 0.9em var(--serif);
+    border: 0; background: none; padding: 0;
+    white-space: nowrap; overflow-wrap: normal;
+  }
+  .hero h1 .held { color: var(--accent); }
+  .lede { max-width: 62ch; font-size: 19px; color: var(--dim); margin: 0; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 18px; border-radius: 999px;
+    font-size: 15px; font-weight: 500; text-decoration: none;
+    border: 1px solid var(--line-strong);
+  }
+  .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn:hover { border-color: var(--accent); }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badges span {
+    font: 12px/1 var(--mono); padding: 6px 9px;
+    border: 1px solid var(--line); border-radius: 999px; color: var(--dim);
+  }
+
+  /* window frame around the recording */
+  .window {
+    border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 1px 0 var(--line), 0 24px 60px -30px rgba(0, 0, 0, 0.35);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 7px; padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font: 12px/1 var(--mono); color: var(--faint);
+  }
+  .window-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); display: inline-block; }
+  .window-bar i:first-child { background: var(--accent); }
+  .window-bar span { margin-left: 8px; }
+  .caption { font-size: 14px; color: var(--faint); margin: 12px 2px 0; max-width: 80ch; }
+
+  /* sections */
+  section { padding: 72px 0; border-top: 1px solid var(--line); }
+  .kicker { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+  .kicker b { font: 500 13px/1 var(--mono); color: var(--accent); }
+  .kicker span { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  h2 {
+    margin: 0 0 18px;
+    font: 400 clamp(32px, 4.4vw, 50px)/1.08 var(--serif);
+    letter-spacing: -0.01em; max-width: 22ch;
+  }
+  .prose { max-width: 66ch; color: var(--dim); font-size: 17px; }
+  .prose p { margin: 0 0 14px; }
+  .prose strong { color: var(--text); font-weight: 600; }
+
+  .grid { display: grid; gap: 16px; }
+  .grid > * { min-width: 0; }
+  .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 900px) { .g3, .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
+
+  .card {
+    border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+    padding: 20px;
+  }
+  .card h3 { margin: 0 0 6px; font: 500 16px/1.3 var(--sans); }
+  .card p { margin: 0; color: var(--dim); font-size: 15px; }
+  .card .tag { font: 12px/1 var(--mono); color: var(--faint); margin-bottom: 12px; display: block; }
+
+  /* the four questions */
+  .harm { border-top: 2px solid var(--text); padding-top: 14px; }
+  .harm code { border: 0; background: none; padding: 0; font-size: 14px; color: var(--accent); }
+  .harm p { margin: 8px 0 0; color: var(--dim); font-size: 15px; }
+  .rule-line {
+    margin-top: 28px; padding: 16px 20px; border-left: 3px solid var(--accent);
+    background: var(--panel); color: var(--dim); max-width: 78ch;
+  }
+
+  /* numbers */
+  .stat { border-top: 1px solid var(--line-strong); padding-top: 16px; }
+  .stat .n { font: 400 clamp(46px, 6vw, 72px)/1 var(--serif); letter-spacing: -0.02em; }
+  .stat .n small { font-size: 0.45em; color: var(--dim); }
+  .stat .n.red { color: var(--accent); }
+  .stat p { margin: 10px 0 0; color: var(--dim); font-size: 15px; }
+  .fineprint { margin-top: 26px; font-size: 14px; color: var(--faint); max-width: 80ch; }
+
+  /* ledger of what it found in itself */
+  .ledger { list-style: none; margin: 28px 0 0; padding: 0; border-top: 1px solid var(--line-strong); }
+  .ledger li {
+    display: grid; grid-template-columns: 3.2rem minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px;
+    padding: 16px 0; border-bottom: 1px solid var(--line);
+  }
+  .ledger .no { font: 500 13px/1.6 var(--mono); color: var(--accent); }
+  .ledger .what { font-weight: 500; }
+  .ledger .how { color: var(--dim); font-size: 15px; }
+  @media (max-width: 700px) {
+    .ledger li { grid-template-columns: 2.4rem minmax(0, 1fr); }
+    .ledger .how { grid-column: 2; }
+  }
+
+  /* path of one call */
+  .path { margin-top: 32px; overflow-x: auto; }
+  .path svg { min-width: 760px; width: 100%; height: auto; }
+
+  /* gallery */
+  .shot { margin: 0; }
+  .shot .frame { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+  .shot figcaption { margin-top: 10px; font-size: 14px; color: var(--dim); }
+  .shot figcaption b { color: var(--text); font-weight: 500; }
+
+  pre.term {
+    margin: 0; padding: 18px 20px; overflow-x: auto;
+    background: var(--code-bg); color: var(--code-text);
+    border-radius: 8px; font-size: 13px; line-height: 1.7;
+  }
+  .shot pre.term { white-space: pre-wrap; overflow-wrap: anywhere; }
+  pre.term .p { color: #8f897d; }
+  pre.term .r { color: #ff7a5f; }
+  pre.term .g { color: #9fcf8f; }
+
+  footer { padding: 40px 0 64px; border-top: 1px solid var(--line-strong); color: var(--faint); font-size: 14px; }
+  footer .row { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; }
+
+  .hero h1 em { font-style: italic; }
+  .hero .window { max-width: 760px; }
+  .window img { width: 100%; }
+  .hero .caption { max-width: 760px; }
+  .five { display: grid; gap: 16px; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 28px; }
+  .five > * { min-width: 0; }
+  @media (max-width: 900px) { .five { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .five { grid-template-columns: 1fr; } }
+  .five .harm b { display: block; font-weight: 600; }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 30px; }
+  table.cmp th, table.cmp td { text-align: left; padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.cmp th { font: 500 12px/1.3 var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: 0.06em; }
+  table.cmp td.num { font-family: var(--mono); white-space: nowrap; }
+  table.cmp tr.won td { color: var(--text); font-weight: 600; }
+  table.cmp tr.won td:first-child { color: var(--accent); }
+  .tablewrap { overflow-x: auto; }
+  .card strong { color: var(--text); font-weight: 600; }
+  kbd { font: 500 12px/1 var(--mono); padding: 3px 6px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; background: var(--panel); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <a class="brand" href="#top" aria-label="spire-jev home"><svg class="mark" aria-hidden="true" viewBox="0 0 512 512"><path fill="currentColor" d="M64 384H448V448H64ZM128 288H384V352H128ZM192 192H320V256H192Z"/><circle fill="var(--accent)" cx="256" cy="112" r="48"/></svg><span>spire-jev</span></a>
+    <nav aria-label="Sections">
+      <a href="#plays">How it plays</a>
+      <a href="#wins">The wins</a>
+      <a href="#held-out">Held out</a>
+      <a href="#didnt">What didn’t hold</a>
+      <a href="#workshop">In your game</a>
+      <a class="gh" href="https://github.com/liu-x27/spire-jev">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <div class="eyebrow">An open-source bot for Slay the Spire 2 · TypeScript planner · C# bridge</div>
+      <h1>A narrow win, <em class="held">not a win rate</em>.</h1>
+      <p class="lede">
+        spire-jev plays Slay the Spire 2 in the real game: all five characters, whole runs, no human input.
+        A mod bridges the game to a planner, where each turn a simulator of the combat, checked against the
+        game card by card, searches the order to play the hand in, <strong>well under a millisecond at the
+        median</strong>, and rules make the choices around the fights. It has won at Ascension 10 twice.
+        On the 90 seeds no change was tuned on, it has won <strong>none</strong>, and both numbers are on
+        this page.
+      </p>
+      <div class="ctas">
+        <a class="btn primary" href="https://github.com/liu-x27/spire-jev">View on GitHub</a>
+        <a class="btn" href="#workshop">Play it in your game</a>
+        <a class="btn" href="https://github.com/liu-x27/spire-jev/blob/main/docs/PLAN.md">The working record</a>
+      </div>
+      <div class="badges" aria-label="Built with">
+        <span>Slay the Spire 2 · beta v0.111.0</span><span>5 characters</span><span>headless sandboxes, several at once</span>
+        <span>Node 24 · no dependencies</span><span>.NET 9 bridge</span><span>MIT</span>
+      </div>
+
+      <div>
+        <div class="window">
+          <div class="window-bar"><i></i><i></i><i></i><span>Ascension 10 · seed 3019 · the Regent · floor 49, at 2×</span></div>
+          <img src="media/a10-regent-3019-floor49-2x.webp" width="600" height="373" alt="Floor 49: the Regent beats Torch Head Amalgam and the Queen with 6 HP left.">
+        </div>
+        <p class="caption">
+          The Regent’s last fight, the Queen falling with the bot on 6 of 66 HP. This run was played from floor 1
+          to floor 49 in one go, no save in between: 20 fights, 20 won, 456 cards in 560 decisions (p50 2.0 ms,
+          p95 122 ms). It is 1 of the 20 fresh seeds this configuration played, which reached floor 29.4 on average.
+        </p>
+      </div>
+    </div>
+
+    <section id="plays">
+      <div class="kicker"><b>01</b><span>How it plays</span></div>
+      <h2>Search for the fights, rules for the rest.</h2>
+      <div class="grid g3" style="margin-top: 8px">
+        <div class="card"><span class="tag">mod/Bridge · C#</span><h3>The bridge</h3><p>Loaded by the game’s own mod loader, it drives the game through its automated-play framework: it reports every decision the game waits on, with the cards’ real numbers, intents, powers and the draw pile, and plays the answer. Headless in sandboxes of its own, several at once.</p></div>
+        <div class="card"><span class="tag">sim.ts · search.ts · turn.ts</span><h3>Fights</h3><p>A simulator of the cards, powers, relics, potions and the bosses’ move scripts, and a search over the orders a hand can be played in, equal states merged. After every card, the simulator’s prediction is compared with the game.</p></div>
+        <div class="card"><span class="tag">choices.ts · path.ts · spar.ts</span><h3>Everything else</h3><p>Card values from tier lists and pick rates, a path chosen over the whole map, a budget for HP at rest sites, potions by rule, and card picks <strong>played out against the act’s boss</strong> in the simulator.</p></div>
+      </div>
+      <figure class="shot" style="margin-top: 28px">
+        <div class="frame"><img src="media/a10-849-card-reward-f35.jpg" width="1280" height="720" alt="A card reward on seed 849's floor 35: each offer played out against act 3's boss, Thunderclap +27.4, Blood Wall+ +25.3, Setup Strike +19.5, and Thunderclap taken." loading="lazy"></div>
+        <figcaption><b>A card pick, played out.</b> Seed 849, floor 35. Each offer is added to the deck and the deck fights the act’s boss in the simulator, 32 shuffles, and 128 more for an offer near the line or near the best. Thunderclap, from 512 bouts in 13 s.</figcaption>
+      </figure>
+    </section>
+
+    <section id="wins">
+      <div class="kicker"><b>02</b><span>The wins</span></div>
+      <h2>Two wins at Ascension 10, each with how narrow it was.</h2>
+      <div class="grid g2" style="margin-top: 8px">
+        <figure class="shot">
+          <div class="frame"><img src="media/a10-849-floor48-49-2x.webp" width="600" height="373" alt="Seed 849, the last two floors: Aeonglass, then the Test Subject." loading="lazy"></div>
+          <figcaption><b>The Ironclad, seed 849.</b> The first A10 win. Aeonglass took it from 100 HP to 3; Burning Blood and Pantograph brought it to 34 for the Test Subject, beaten with 18 left. Replayed from the run’s floor-32 save: <b>1 of 97</b> such saves that was won.</figcaption>
+        </figure>
+        <figure class="shot">
+          <div class="frame"><img src="media/a10-regent-3019-floor49-2x.webp" width="600" height="373" alt="Seed 3019, floor 49: the Regent against Torch Head Amalgam and the Queen." loading="lazy"></div>
+          <figcaption><b>The Regent, seed 3019.</b> The first win from floor 1, with no save between. Its bosses, HP going in and left: Kin Priest 57 → 55, Crusher and Rocket 51 → 12, Aeonglass 60 → 16, the last pair 14 → 6. <b>1 of 20</b> fresh seeds.</figcaption>
+        </figure>
+      </div>
+      <p class="rule-line">
+        Both recordings match a headless run fight for fight. The whole runs are in the repository as video, with
+        what the bot decided beside the game: every card it played, the positions its search expanded, the
+        milliseconds that took. <a href="https://github.com/liu-x27/spire-jev/blob/main/docs/RECORDING.md">How they were recorded.</a>
+      </p>
+    </section>
+
+    <section id="held-out">
+      <div class="kicker"><b>03</b><span>On seeds nobody tuned on</span></div>
+      <h2>The confirmation set: 90 seeds, and the numbers as they fell.</h2>
+      <div class="prose">
+        <p>
+          The Ironclad at Ascension 10, on the best configuration published here, over seeds 496–585, which no change
+          was tuned on. Changes are developed on other seeds; these 90 are kept for confirming them.
+        </p>
+      </div>
+      <div class="grid g4" style="margin-top: 26px">
+        <div class="stat"><div class="n red">0<small>/90</small></div><p>runs won. The two wins above were on newer rules than these.</p></div>
+        <div class="stat"><div class="n">25.0</div><p>mean floor reached of 49, where it was 22.0 on the same seeds before card picks were played out.</p></div>
+        <div class="stat"><div class="n">71<small>%</small></div><p>of the runs reaching act 1’s boss beat it, 56 of 79. Act 2’s boss: 7 of 30.</p></div>
+        <div class="stat"><div class="n">0.09<small>ms</small></div><p>planning per decision at the median; p95 1.3 ms, the slowest 385 ms.</p></div>
+      </div>
+      <div class="tablewrap">
+        <table class="cmp">
+          <thead><tr><th>seed</th><th>rules</th><th>how far</th><th>fights won</th><th>decisions, p50 / p95</th></tr></thead>
+          <tbody>
+            <tr><td class="num">707</td><td>before card picks were played out</td><td>floor 48: died to the Queen, 279 HP left in her</td><td class="num">21 of 22</td><td class="num">0.14 / 2.4 ms</td></tr>
+            <tr><td class="num">497</td><td>picks played out against the act’s boss</td><td>floor 49: died to the Test Subject, one fight short</td><td class="num">19 of 20</td><td class="num">0.13 / 1.1 ms</td></tr>
+            <tr class="won"><td class="num">849</td><td>a closer look; floors 32–49 from its save</td><td>floor 49 of 49: won</td><td class="num">24 of 24</td><td class="num">0.21 / 7.9 ms</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="fineprint">
+        The three runs that reached act 3’s bosses, each on the code of its time and counted from its own logs. Across the
+        90, 850 of 937 fights were won, and the end-of-turn HP loss was predicted exactly on 3,387 of 3,461 turns. 34 of
+        the 90 end in act 1; past it, the deck is the limit more than the play.
+      </p>
+    </section>
+
+    <section id="didnt">
+      <div class="kicker"><b>04</b><span>What didn’t hold up</span></div>
+      <h2>Most changes were noise. Some made it worse.</h2>
+      <div class="prose">
+        <p>
+          The <a href="https://github.com/liu-x27/spire-jev/blob/main/docs/PLAN.md">working record</a> keeps every change
+          measured, including the ones that were noise and the ones that hurt. A few of them:
+        </p>
+      </div>
+      <ol class="ledger">
+        <li><span class="no">01</span><span class="what">Every A10 run stopped one fight short</span><span class="how">The game’s automated-play framework gives up at floor 49, where A10 puts a second boss, so until the bridge was fixed no A10 run could be won. Replayed with the fix, 497 met the Test Subject with 48 HP and died on its fourth turn.</span></li>
+        <li><span class="no">02</span><span class="what">A look ahead that only worked where it was tuned</span><span class="how">A term for the rest of the fight took floors reached from 18.3 to 21.3 on seeds 1–15. On held-out seeds 16–45 it was no better and lost 7–10% more HP. It stays in the code, off.</span></li>
+        <li><span class="no">03</span><span class="what">The simulator, on cards it hadn’t met</span><span class="how">2,482 cards on 15 seeds left 42 fields that differed from the game, all on four things approximated on purpose. Over the 90 confirmation runs, 13,068 cards left 746.</span></li>
+        <li><span class="no">04</span><span class="what">Resting the way the winning runs did</span><span class="how">Copying the winners’ rest-site thresholds: on 60 saves, act 2’s boss beaten 12 times against 22, for 1.25 more upgrades. Harmful.</span></li>
+        <li><span class="no">05</span><span class="what">Taking the shop’s card removal back</span><span class="how">A removal takes the gold the buys had. With its curses-only form, 3 boss fights turned won and 14 turned lost. Harmful.</span></li>
+        <li><span class="no">06</span><span class="what">Nine candidates that read as zero</span><span class="how">Reviewed again, they were not worthless: undecided, stopped on budget, or harmful. Small nudges read on distant, noisy measures stay under the bar.</span></li>
+      </ol>
+    </section>
+
+    <section id="characters">
+      <div class="kicker"><b>05</b><span>Five characters</span></div>
+      <h2>Each with its own rules, checked card by card.</h2>
+      <div class="five">
+        <div class="harm"><code>Ironclad</code><p><b>Strength, Block, Exhaust.</b> The longest worked on; every number above is its.</p></div>
+        <div class="harm"><code>Silent</code><p><b>Poison and Shivs.</b> Poison ticks turn by turn; discards and Shivs are searched like any card.</p></div>
+        <div class="harm"><code>Necrobinder</code><p><b>Osty and Doom.</b> Summons and Doom resolve in the game’s order.</p></div>
+        <div class="harm"><code>Regent</code><p><b>Stars and the Sovereign Blade.</b> 20 fresh seeds: floor 29.4 on average, one won.</p></div>
+        <div class="harm"><code>Defect</code><p><b>Orbs and Focus.</b> 6 fresh seeds: all beat act 1’s boss, all died in act 2.</p></div>
+      </div>
+      <p class="rule-line">
+        The rules for each are written from the game’s code and live in <code>planner/src/characters/</code>. When they came in,
+        the Ironclad was replayed from 18 saves fight for fight and differed only where its deck held another character’s
+        card, from a transform or a Prismatic Shard, which that character’s rules now model.
+        <a href="https://github.com/liu-x27/spire-jev/blob/main/docs/CHARACTERS.md">The characters.</a>
+      </p>
+    </section>
+
+    <section id="workshop">
+      <div class="kicker"><b>06</b><span>In your game</span></div>
+      <h2>The same planner, from the Steam Workshop.</h2>
+      <div class="grid g2" style="margin-top: 8px">
+        <div class="prose">
+          <p>
+            <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3808798192"><strong>Jev 自动爬塔</strong></a> puts the bot
+            inside your own game. Start a run as usual, and switch at any time: play it yourself, ask for its
+            suggestion with <kbd>F7</kbd>, or hand it the run with <kbd>F9</kbd> and watch it explain each card, pick,
+            buy and path as it goes.
+          </p>
+          <p>
+            It runs this repository’s TypeScript in an embedded V8, with no network and nothing else to install, and on
+            the same seed it plays the same run as the bot here, card for card. It plays only through the game’s normal
+            choices and changes no numbers. At Ascension 10 it mostly falls in act 1 or 2.
+          </p>
+        </div>
+        <div class="grid" style="align-content: start">
+          <div class="card"><span class="tag">F7</span><h3>Suggestions</h3><p>The side panel shows what it would do from here; play a card and it plans again.</p></div>
+          <div class="card"><span class="tag">F9</span><h3>Hand it the run</h3><p>It carries on from the current position at full speed, writing down why. F9 again takes it back.</p></div>
+          <div class="card"><span class="tag">co-op</span><h3>Multiplayer</h3><p>Each player’s copy plays for that player alone, with single-player logic.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="start">
+      <div class="kicker"><b>07</b><span>Running it</span></div>
+      <h2>A local install, a bridge, and Node.</h2>
+      <div class="grid g2" style="margin-top: 8px">
+        <pre class="term"><span class="p">$</span> cd mod/Bridge &amp;&amp; dotnet build -c Release
+<span class="p">$</span> cd planner
+<span class="p">$</span> npm test        <span class="p"># the simulator's rules, no game needed</span>
+<span class="p">$</span> node src/run-fights.ts --seed 316 --runs 1 \
+    --port 47100 --cards take --choices rules2 \
+    --ascension 10 \
+    --flags pathdp,restbudget,potions2,sleep,spar
+<span class="p">$</span> node src/record.ts --seed 316 --ascension 10</pre>
+        <div class="prose">
+          <p><strong>Requirements.</strong> Slay the Spire 2 at the beta v0.111.0, the .NET 9 SDK for the bridge, and Node 24; the planner runs its TypeScript directly, with no dependencies.</p>
+          <p><strong>Sandboxes.</strong> Each run gets <code>sandbox/p&lt;port&gt;</code>: hard links to the game’s files, its own mods folder and profile, so the real install and saves are never touched.</p>
+          <p><strong>On screen.</strong> <code>SPIRE_JEV_VISUAL=1</code> runs the game visibly; <code>record.ts</code> records one run.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="row">
+      <span>spire-jev · <a href="https://github.com/liu-x27/spire-jev/blob/main/LICENSE">MIT</a> · by <a href="https://github.com/liu-x27">liu-x27</a></span>
+      <span>
+        <a href="https://github.com/liu-x27/spire-jev">Source</a> ·
+        <a href="https://github.com/liu-x27/spire-jev#readme">README</a> ·
+        <a href="https://github.com/liu-x27/spire-jev/blob/main/docs/PLAN.md">Working record</a>
+      </span>
+    </div>
+    <p style="margin: 18px 0 0; max-width: 90ch">
+      Slay the Spire 2 is Mega Crit’s, and its art and text appear in the recordings; this project is not affiliated with
+      Mega Crit, and the repository holds no game files. The name is for the shape of a “System One” decision layer;
+      nothing here calls TypeSafe’s Jev API, and no model is involved.
+    </p>
+  </footer>
+</div>
+</body>
+</html>

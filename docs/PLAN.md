@@ -1500,6 +1500,13 @@ states, and only a simulator is fast enough for that.
      ± 0.45): undecided by the registered bar (2 SE). The thinner deck
      looks like about half of act 2's gain and the good cards the other
      half, neither shown alone; the hallways' saving is the defence cards'.
+     On a second character (the Regent session, 47 fresh f16 saves, its
+     own packs by its humans' pick rates): good cards for three Strikes
+     again help (act 1's boss 34 -> 42 / 42, the hallways D -3.2, K -5.2),
+     but defence is not the hallways' own lever there — the attack pack
+     saves as much by killing sooner (4.8 turns a hallway fight against
+     6.2) and alone finishes act 2 more (4 -> 10). What carries over is the
+     deck's quality (good cards, fewer Strikes), not block as such.
      Next (the analysis session's, by the registered order): card picks and
      buys leaning to good cards first, a removal's price after.
    - **pick1** (the analysis session's p3 4de865c: sparhuman2's ranking —
@@ -1518,6 +1525,49 @@ states, and only a simulator is fast enough for that.
      fit it better than pick rates drawn from whole runs. The deck test's
      gain was three Strikes out and good cards in; pick1 trades an attack
      for a skill on the same offer: not the same thing.
+   - **events2 again, on f1 saves** (the user's pick; p3 5d7d811 = c1ac146 +
+     events-main's commits; C2 there played 2 f1 saves as the base): the 90
+     of 199 affected.ts finds it can change, to act 2's end. Act 2 finished
+     15 -> 17 (+6/-4; +1.0 ± 1.6 points over 199, +2.2 ± 3.5 over the 90);
+     HP% at act 1's boss (0 if not reached) +4.1 ± 1.4 (2.9 SE; the f4
+     half's +5.5 ± 3.8 again), act 1's boss won 78 -> 74, the hallways -0.3
+     / -0.9. 105 of 880 event choices changed (Brain Leech 37, Abyssal Baths
+     26, Self-Help Book 16, Trash Heap 13). Undecided, the direction
+     repeated: about 4 points more HP into act 1's boss on two sets of
+     seeds, not yet act 1's boss won or act 2 finished (act 2's boss
+     reached 47 -> 43, relics -0.16: HP for relics, about even). Not
+     confirmed on its own (+1 point of act 2 finished is past 200 pairs'
+     reach); harmless, a candidate to ride along when a substantial one
+     goes to a fresh-seed confirmation.
+   - **The randomized swaps** (the analysis session's design, the user
+     approved; the deck value model's v1 had D's sign wrong — the bot takes
+     block only when a run is already going badly, so its own decks cannot
+     say what block is worth): the 296 f16 saves with 3+ unupgraded
+     Strikes, those 3 out (as R) and 3 different cards of a 20-card pool
+     in (the bot's 18 most offered act 1-2 commons, without Havoc and
+     Perfected Strike, + Flame Barrier and Colossus; balanced and seeded,
+     44-45 a card an arm; runs/rand-swap-manifest.json), two arms (two
+     draws a save), p3 5d7d811, C2 to stop 34. Registered: y_rand - y_R on
+     the 3 cards' indicators, no intercept, SEs clustered by save. Act 2
+     finished: rand - R +1.7 ± 2.0 points (rand - A +6.1 ± 1.8): three
+     random commons for three Strikes add little past the removal, where
+     the D / K packs (cards of ~50% human pick rates) added +3.9 / +4.9 —
+     the gain is in which cards. By card (SE ~5 points, 88-90 a card): Molten
+     Fist +16.3 ± 4.7 (3.5 SE, past a 20-card Bonferroni bar); the rest
+     within 2 SE (Armaments -9.9, Blood Wall -9.1, both 1.9 SE; Body Slam
+     +7.8, Tremble +6.7). The hallways (259 saves with both arms there):
+     rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
+     (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
+     1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
+     (1.6). D's cards in the pool (Flame Barrier + Shrug It Off) -9.0 ±
+     7.8 on act 2, -0.1 ± 1.2 in the hallways; K's Pommel Strike -6.9 ±
+     5.3: not what the packs measured, within 2 SE. Each estimate is a
+     card added to a thinned deck, played by C2. Run with
+     sandbox/persave.mjs (bench.ts's replay, written a save at a time;
+     the first try with bench.ts was cut off at 111 of 592 and kept
+     nothing). Next (the analysis session's): the estimates as anchors
+     for the deck value model, then whether it predicts D; Molten Fist's
+     +16 confirmed before it moves any pick.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
