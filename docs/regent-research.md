@@ -329,3 +329,70 @@ the Regent takes both first (characters/regent.ts ancients).
 - **Fixed on the way**: the Ironclad's catalogue shadowed the Regent's for 5 cards with no star cost
   (spar played Astral Pulse free); Conqueror against Artifact; Orbit; Tyranny's exhaust; the
   Regent's part of State.ext shared with other characters'.
+- **Removing Strikes at shops** (2026-09-30; 20 fresh-seed pairs, same seed blocks, C2 against C2 + a
+  flag): A10 Regents who won removed at 24% / 43% / 47% of their shops, a Strike 252 times in 307
+  runs, and C2 never did. `rmstrike` (a Strike first whenever there is one): act 1 boss 18 → 14,
+  act 2 boss 4 → 1, the clear lost; 1.4 removals a run, cards bought 2.95 → 1.05, relics 0.5 → 0.1.
+  `rmspare` (only with the gold left for what the shop would have bought): act 1 boss 18 → 18, act 2
+  boss 4 → 0; 0.6 removals, cards 2.95 → 2.7, relics 0.5 → 0.2. Neither kept — the Ironclad's shoprm
+  showed the same (the removal's gold was worth more as the purchases it crowded out). The 8 seeds
+  rmspare never removed on played fight for fight as C2.
+
+## 8. The mod's level (2026-10-01): 60 fresh seeds, both modes
+
+60 fresh seeds (3101-3160), A10, code 7f08bdf (the mod's next snapshot), bridge StagingDefect; the
+mod's two modes exactly: 深度思考 (C2) and 快速 (pathdp, restbudget, potions2, sleep, powbonus,
+nopickrates). Share of all 60 starts (Wilson 95%); the humans' over all 1523 v0.111.0 A10 Regent runs.
+
+| | deep (C2) | fast (core) | humans |
+|---|---|---|---|
+| act 1 boss beaten | 45/60, 75% (63-84%) | 26/60, 43% (32-56%) | 65% |
+| act 2 boss beaten | 3/60, 5% (2-14%) | 0/60 (0-6%) | 35% |
+| cleared | 0/60 (0-6%) | 0/60 (0-6%) | 20% |
+| mean last floor | 26.5 | 19.7 | — |
+| HP a fight: act 1 hallway / elite / act 2 | 5.6 / 20.7 / 16.8 | 7.0 / 33.1 / 20.3 | 5.3 / 16.5 / 8.5–21.2 |
+
+Paired, deep against fast: act 1 boss 45 against 26 (21 seeds only deep beat, 2 only fast; p < 0.001).
+Deep's act 2 bosses: Kaiser Crab 0/10, Knowledge Demon 2/7, The Insatiable 1/5. The dev seeds
+(3001-3020, §7) were kinder: 18/20 and 4/20 — with the same definitions their HP a fight was 4.1
+hallway, 21.0 elite, 16.8 act 2, against 5.6, 20.7, 16.8 here.
+
+**The check on 7f08bdf** (same 20 dev seeds, deep): the two bridges (StagingDefect, StagingChars)
+played every run alike. Against ef04184 (dev3) half the seeds parted, each in an act 1 hallway fight
+around turn 2, from the same state and at the same HP that fight: the look ahead's draws are seeded by
+the state key's hash, and the merge changed the key (four characters' keyExt joined). With the old
+key restored the runs still parted (other merged changes reach the key or the look ahead), so the
+check is by numbers: dev3 / 7f08bdf / 7f08bdf with the old key — mean floor 29.4 / 24.8 / 26.6, act 1
+boss 18 / 13 / 16, act 2 boss 4 / 2 / 2, but HP a fight 4.1 / 4.3 / 4.7 in act 1's hallways and
+16.8 / 16.3 / 18.3 in act 2. No regression: a 20-seed run-level result moves this much on a perturbed
+seed alone, which is why the 60 fresh seeds above are the mod's numbers.
+
+## 9. The deck's defence, on the Regent (2026-10-01)
+
+The Ironclad's test (main PLAN, "The deck's defence") repeated as a second character's check: 60 fresh
+seeds (3201-3260) captured at f16 (C2, fdb990b), the 47 with three unupgraded Strikes; the three
+swapped (tools/edit_deck.py) for a defence pack D (Gather Light, Particle Wall, Glitterstream: A10
+Regents take them from 55 / 39 / 28% of act 1's offers) or an attack pack K of the same take rate
+(Bombardment, Gamma Blast, Collision Course: 47 / 42 / 28%), or taken out (R); every arm from the same
+saves, C2 to floor 34. Hallway cost: HP lost + 10 a potion, floors 18-32, not elites, a save's mean.
+
+| against A (47 pairs) | D | K | R |
+|---|---|---|---|
+| act 2 hallway cost | -3.2 ± 1.2 (2.7 SE) | -5.2 ± 1.9 (2.7 SE) | -1.8 ± 1.3 (1.3 SE) |
+| act 2 finished (A: 4) | 2 (-1.0 SE) | 10 (+2.2 SE) | 5 (+0.4 SE) |
+| act 1 boss beaten (A: 34) | 42 (+3.1 SE) | 42 (+2.2 SE) | 39 (+1.9 SE) |
+| turns a hallway fight (A: 6.2) | 6.7 | 4.8 | 5.6 |
+| the pack played a hallway fight | 2.47 | 2.32 | — |
+
+D-K: act 2 finished -0.17 ± 0.06 (-2.7 SE), hallway +1.3 ± 2.0 (0.7 SE). What carries over from the
+Ironclad: three Strikes for three good cards beat act 1's boss more often and cost less in act 2's
+hallways. What does not: defence as the hallways' own lever — the Regent's attack pack saved as much
+(by killing faster) and alone finished act 2 more often. 47 pairs (the Ironclad's 307); Bombardment
+is a rare, so the packs' take rates match but not necessarily their strength.
+
+**The Kaiser Crab** (2026-10-01): 41 distinct Regent fights across every log, 10 won (24%; the
+Ironclad's fixed set 18%), end-of-turn HP loss predicted exactly in all of them — the deck's, not the
+model's. The pack test's four arms met it on the same saves 3230/3240/3245/…: R won 4 of 4, A 1 of
+4, D 0 of 4; offline, the same f16 decks against the Crab (47 saves × 16 shuffles, full HP) win 0.4%
+(A) to 2.7% (D), the arms within 2 points of each other — act 1 decks, and no sign that a thinner
+deck answers the Crab. R's four were its runs' later choices, not the thinning; not pursued.
