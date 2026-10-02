@@ -1577,7 +1577,19 @@ states, and only a simulator is fast enough for that.
      (predicted +16.5; the largest of 20 is likely high). Act 2 finished,
      paired over all saves: confirmed at 2 SE or more, harmful at -2 SE or
      less, undecided between; also act 1's boss, act 2's hallway cost. The
-     bot takes Molten Fist at 38-54% of its rewards' offers now. The hallways (259 saves with both arms there):
+     bot takes Molten Fist at 38-54% of its rewards' offers now. Done
+     18:46 (182 pairs, none failed; scratchpad mfcmp.py): act 2 finished
+     M 57 against N 48, +4.9 ± 3.2 points (1.5 SE; M only 22, N only
+     13): undecided by the registered bar, the sign as found and a
+     third the size (the largest of 20 was high, as expected). Around it:
+     act 1's boss 167 -> 174 (+3.9 ± 1.8, 2.1 SE), act 2's boss reached
+     +6.0 ± 3.9, the furthest floor +0.95 ± 0.38 (2.5 SE), the hallways
+     -0.5 ± 0.5; Molten Fist played in every M run (1,149 plays). Read:
+     Molten Fist is likely a good card for these decks, worth some points
+     rather than 16; not shown on act 2's end. Not extended (an extension
+     after an undecided result would need its own, stricter bar); as one
+     card's pick it is worth little alone — the line is the picks as a
+     whole (the deck value model with these anchors). The hallways (259 saves with both arms there):
      rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
      (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
      1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
