@@ -1539,6 +1539,35 @@ states, and only a simulator is fast enough for that.
      confirmed on its own (+1 point of act 2 finished is past 200 pairs'
      reach); harmless, a candidate to ride along when a substantial one
      goes to a fresh-seed confirmation.
+   - **The randomized swaps** (the analysis session's design, the user
+     approved; the deck value model's v1 had D's sign wrong — the bot takes
+     block only when a run is already going badly, so its own decks cannot
+     say what block is worth): the 296 f16 saves with 3+ unupgraded
+     Strikes, those 3 out (as R) and 3 different cards of a 20-card pool
+     in (the bot's 18 most offered act 1-2 commons, without Havoc and
+     Perfected Strike, + Flame Barrier and Colossus; balanced and seeded,
+     44-45 a card an arm; runs/rand-swap-manifest.json), two arms (two
+     draws a save), p3 5d7d811, C2 to stop 34. Registered: y_rand - y_R on
+     the 3 cards' indicators, no intercept, SEs clustered by save. Act 2
+     finished: rand - R +1.7 ± 2.0 points (rand - A +6.1 ± 1.8): three
+     random commons for three Strikes add little past the removal, where
+     the D / K packs (cards of ~50% human pick rates) added +3.9 / +4.9 —
+     the gain is in which cards. By card (SE ~5 points, 88-90 a card): Molten
+     Fist +16.3 ± 4.7 (3.5 SE, past a 20-card Bonferroni bar); the rest
+     within 2 SE (Armaments -9.9, Blood Wall -9.1, both 1.9 SE; Body Slam
+     +7.8, Tremble +6.7). The hallways (259 saves with both arms there):
+     rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
+     (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
+     1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
+     (1.6). D's cards in the pool (Flame Barrier + Shrug It Off) -9.0 ±
+     7.8 on act 2, -0.1 ± 1.2 in the hallways; K's Pommel Strike -6.9 ±
+     5.3: not what the packs measured, within 2 SE. Each estimate is a
+     card added to a thinned deck, played by C2. Run with
+     sandbox/persave.mjs (bench.ts's replay, written a save at a time;
+     the first try with bench.ts was cut off at 111 of 592 and kept
+     nothing). Next (the analysis session's): the estimates as anchors
+     for the deck value model, then whether it predicts D; Molten Fist's
+     +16 confirmed before it moves any pick.
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
