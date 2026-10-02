@@ -1835,7 +1835,9 @@ export function resolve(s: State, card: Card, target: Enemy | undefined, x: numb
     // Bolas, Thrumming Hatchet (IL: BeforeHandDraw): played this turn, back in the hand before the next draw.
     : RETURNING.has(card.id) ? { ...card, returns: true } : card;
   // A free-this-turn star cost is spent by the play: a Particle Wall back in the hand costs its 2 stars
-  // again (else it is played for nothing until the search runs out of stack).
+  // again (else it is played for nothing until the search runs out of stack). Touch of Insanity's free
+  // for the combat (SetToFreeThisCombat) looks the same in the observation and is given back too: the
+  // model underplays it, and still comes back.
   if (after.fullStarCost !== undefined) {
     const { fullStarCost, ...rest } = after;
     after = { ...rest, starCost: fullStarCost };
