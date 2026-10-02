@@ -396,3 +396,47 @@ model's. The pack test's four arms met it on the same saves 3230/3240/3245/…: 
 4, D 0 of 4; offline, the same f16 decks against the Crab (47 saves × 16 shuffles, full HP) win 0.4%
 (A) to 2.7% (D), the arms within 2 points of each other — act 1 decks, and no sign that a thinner
 deck answers the Crab. R's four were its runs' later choices, not the thinning; not pursued.
+
+## 10. The random swap test, on the Regent (2026-10-02)
+
+The analysis session's Ironclad design (rand1/rand2: three Strikes out, three random commons in, the
+cards balanced over the saves), repeated with a 10-card Regent pool: Glitterstream, Know Thy Place,
+Gather Light, Glow, Hidden Cache, Patter, Wrought in War, Photon Cut, Collision Course, Astral Pulse.
+120 more fresh seeds (3261-3380) captured at f16 beside §9's 60: 131 saves with three unupgraded
+Strikes; R (the three out, nothing in) on all 131, and three arms rand1-3 (R's deck plus three
+distinct pool cards a save, each card 39-40 times an arm; tools/rand_swap.py, seed 1). C2 to floor
+34, fdb990b for every arm. The registered fit: per save and arm, y_rand - y_R on the cards' 10
+indicators, no intercept; 4 replays an arm stopped twice and are left out (below), 125 pairs an arm.
+
+| per card (rand - R, 375 rows) | act 2 finished (points) | act 2 hallway cost (HP) | act 1 boss (points) |
+|---|---|---|---|
+| Know Thy Place | +3.8 ± 4.3 | -1.9 ± 0.8 (2.2 SE) | +0.9 ± 3.5 |
+| Collision Course | -2.5 ± 4.2 | -1.3 ± 0.8 | +2.1 ± 3.4 |
+| Wrought in War | -7.1 ± 4.3 | -0.7 ± 0.8 | +6.4 ± 3.5 |
+| Glitterstream | -1.1 ± 4.2 | +0.0 ± 0.8 | +6.1 ± 3.4 |
+| Hidden Cache | +0.2 ± 4.3 | +1.2 ± 0.8 | -5.3 ± 3.5 |
+| the others (5) | -0.2 to +1.8 | -0.9 to +0.9 | -4.4 to +4.8 |
+| cards differ? (chi-square, 9 df) | 4.1, p 0.91 | 11.4, p 0.25 | 13.0, p 0.16 |
+
+| the three cards together (rand - R) | rand1 | rand2 | rand3 |
+|---|---|---|---|
+| act 2 finished (points) | +1.6 ± 3.4 | -0.8 ± 4.0 | -4.0 ± 3.5 |
+| act 2 hallway cost (HP) | -0.3 ± 0.8 | -1.1 ± 0.7 | -2.1 ± 0.7 |
+| act 1 boss (points) | +1.6 ± 3.0 | +3.2 ± 2.8 | +1.6 ± 3.2 |
+
+No common card of the ten is told from the others in any outcome; three random commons on top of
+R's deck finish act 2 no more often (the mean of the arms -1.1 points) and cost a hallway fight
+about an HP less. The arms seen one and two at a time read stronger (after rand1 Know Thy Place
++11.8 points and Photon Cut -15.0 on act 2 finished, after rand2 Wrought in War -16.3, 3.1 SE): the
+third arm took them back, 10 cards x 3 outcomes being 30 coefficients. The same script on the
+Ironclad's rand1/rand2 (20 cards, 296 pairs an arm): no difference either (chi-square 26.5, 16.7,
+16.7 on 19 df; p 0.12, 0.61, 0.61), its largest single card Molten Fist +16.3 ± 5.4 on act 2
+finished; three random commons +1.7 points on act 2 finished in both arms. With §9: what helped there
+was the packs' cards (K's Bombardment and Gamma Blast; the Ironclad's chosen packs), not any three
+cards for three Strikes; among commons, at these counts, the card does not show.
+
+The stopped replays: a planner stack overflow in 3236 and 3376 in every arm, 3282 in R, 3315 in
+rand1, 3304 in rand2; a lost connection (the game gone) in 3331 in R, 3284 in rand1-3 (floors
+20-22 each time, not looked into), 3249 in rand3. The overflow: a Particle Wall a Skill Potion or Discovery made free this turn came back into the hand
+still free and the turn search played it without end (the game spends a free-this-turn cost when the
+card is played); fixed in sim (c7cbdae, 864a5d7), after this test.
