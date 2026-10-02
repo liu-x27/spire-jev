@@ -49,6 +49,11 @@ export interface Card {
   returns?: boolean;
   /** The Regent's star cost now (the bridge's current_star_cost); absent for a card without one. */
   starCost?: number;
+  /**
+   * Its star cost before a free-this-turn (IL: SetToFreeThisTurn, from a Skill Potion, Discovery and
+   * the like: a TemporaryCardCost cleared at the turn's end and when played), given back once played.
+   */
+  fullStarCost?: number;
   /** An X star cost (Stardust): every star there is. */
   starX?: boolean;
 }
@@ -237,6 +242,7 @@ export function cardOf(c: CardObs, energy?: number): Card {
     ...(c.fields && Object.keys(c.fields).length > 0 ? { fields: c.fields } : {}),
     ...(c.affliction === "BOUND" ? { bound: true } : {}),
     ...(c.star_cost_x ? { starX: true } : (c.current_star_cost ?? c.star_cost ?? -1) >= 0 ? { starCost: c.current_star_cost ?? c.star_cost ?? 0 } : {}),
+    ...(!c.star_cost_x && (c.current_star_cost ?? -1) >= 0 && (c.star_cost ?? -1) > c.current_star_cost! ? { fullStarCost: c.star_cost! } : {}),
   };
 }
 
@@ -1828,6 +1834,12 @@ export function resolve(s: State, card: Card, target: Enemy | undefined, x: numb
     : card.id === "FRANTIC_ESCAPE" ? { ...card, cost: card.cost + 1 }
     // Bolas, Thrumming Hatchet (IL: BeforeHandDraw): played this turn, back in the hand before the next draw.
     : RETURNING.has(card.id) ? { ...card, returns: true } : card;
+  // A free-this-turn star cost is spent by the play: a Particle Wall back in the hand costs its 2 stars
+  // again (else it is played for nothing until the search runs out of stack).
+  if (after.fullStarCost !== undefined) {
+    const { fullStarCost, ...rest } = after;
+    after = { ...rest, starCost: fullStarCost };
+  }
   for (const f of rules().afterCard) after = f(s, after);
   if (card.type === "Power") {
     // In play for the rest of the combat; not in any pile.

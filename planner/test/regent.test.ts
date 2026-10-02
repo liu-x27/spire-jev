@@ -2,9 +2,10 @@
 // Sovereign Blade, the cards and powers built on them.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { actions, type Card, drink, endOfTurn, type Enemy, play, stateKey, type State } from "../src/sim.ts";
+import { actions, type Card, cardOf, drink, endOfTurn, type Enemy, play, stateKey, type State } from "../src/sim.ts";
+import type { CardObs } from "../src/obs.ts";
 import { nextTurn, seeded } from "../src/turn.ts";
-import { evaluate } from "../src/search.ts";
+import { evaluate, planTurn } from "../src/search.ts";
 import { starsOf } from "../src/characters/regent.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1, keywords: string[] = [], extra: Partial<Card> = {}): Card => ({
@@ -163,6 +164,21 @@ test("Particle Wall comes back into the hand", () => {
   assert.equal(s.hand[0]!.id, "PARTICLE_WALL");
   assert.equal(s.player.block, 9);
   assert.equal(starsOf(at(s, 0)), 0);
+});
+
+test("A Particle Wall made free this turn costs its stars again once played; the search comes back", () => {
+  // JEV03236/03282/03376: a Skill Potion's or Discovery's Particle Wall (current_star_cost 0, star_cost 2)
+  // came back into the hand still free, and planTurn played it until the stack ran out.
+  const wall = cardOf({
+    card_id: "PARTICLE_WALL", cost: 0, current_cost: 0, costs_x: false, card_type: "Skill", target_type: "Self", keywords: [],
+    vars: { Block: 9 }, upgrades: 0, can_play: true, glows: false, star_cost: 2, current_star_cost: 0, star_cost_x: false,
+  } as unknown as CardObs, 3);
+  assert.equal(wall.starCost, 0);
+  const s = at(state([wall, DEFEND], 3, [foe(200, 1, {}, 30)]), 0);
+  assert.equal(s.hand.at(-1)!.starCost, 2);
+  assert.equal(starsOf(s), 3);
+  const plan = planTurn(state([wall, DEFEND, DEFEND], 3, [foe(200, 1, {}, 30)]));
+  assert.deepEqual(plan.actions.filter((a) => a.kind === "play").length, 4);
 });
 
 test("Guiding Star and Glow: next turn's draw, not now; Hegemony's energy next turn", () => {
