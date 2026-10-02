@@ -202,6 +202,9 @@ function playSly(s: State, sly: readonly Card[]): void {
   for (const c of sly) autoPlay(s, c);
 }
 
+/** The Silent's cards whose select is a discard (IL: CardSelectCmd.FromHandForDiscard). */
+const DISCARDS = new Set(["SURVIVOR", "DAGGER_THROW", "ACROBATICS", "PREPARED", "HIDDEN_DAGGERS"]);
+
 /** Discard `n`, then play the Sly ones: a card's discard with nothing after it. */
 const discardThenSly = (s: State, n: number, unseen: Card[] = []) => playSly(s, discardCards(s, n, unseen));
 
@@ -561,10 +564,18 @@ const SILENT_RULES: CharacterRules = {
     if (x.discards === undefined && x.draws === undefined && x.shivs === undefined && x.nightmare === undefined) return "";
     return `${x.discards ?? 0}/${x.draws ?? 0}/${x.shivs ?? 0}/${x.nightmare?.id ?? ""}`;
   },
-  // The runner's discards pick as the model does; Hand Trick's skill and Nightmare's card, the dearest.
+  // The runner's selects pick as the model does: a discard by discardIndex, Hand Trick's skill and
+  // Nightmare's card the dearest. The bridge names every one of them FromHand (FromHandForDiscard calls
+  // FromHand, whose name is the last one set): the card played says which it is. With none (the turn's
+  // start: Tools of the Trade; a potion: Gambler's Brew) it is a discard.
   combatSelect(source, purpose, cards) {
-    if (cards.length === 0) return undefined;
-    if (purpose === "FromHandForDiscard") return discardIndex(cards);
+    if (cards.length === 0 || !/^FromHand(ForDiscard)?$/.test(purpose)) return undefined;
+    const id = source?.replace(/\+$/, "");
+    if (id === "HAND_TRICK" || id === "NIGHTMARE") {
+      const i = dearest(cards.map((c) => ({ cost: c.cost ?? 0, type: c.type })), id === "HAND_TRICK");
+      return i >= 0 ? i : undefined;
+    }
+    if (id === undefined || DISCARDS.has(id)) return discardIndex(cards);
     return undefined;
   },
 };
