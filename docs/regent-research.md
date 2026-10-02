@@ -408,15 +408,22 @@ distinct pool cards a save, each card 39-40 times an arm; tools/rand_swap.py, se
 34, fdb990b for every arm. The registered fit: per save and arm, y_rand - y_R on the cards' 10
 indicators, no intercept; 4 replays an arm stopped twice and are left out (below), 125 pairs an arm.
 
-| per card (rand - R, 375 rows) | act 2 finished (points) | act 2 hallway cost (HP) | act 1 boss (points) |
+| per card (rand - R, 375 rows; SE clustered by save) | act 2 finished (points) | act 2 hallway cost (HP) | act 1 boss (points) |
 |---|---|---|---|
-| Know Thy Place | +3.8 ± 4.3 | -1.9 ± 0.8 (2.2 SE) | +0.9 ± 3.5 |
-| Collision Course | -2.5 ± 4.2 | -1.3 ± 0.8 | +2.1 ± 3.4 |
-| Wrought in War | -7.1 ± 4.3 | -0.7 ± 0.8 | +6.4 ± 3.5 |
-| Glitterstream | -1.1 ± 4.2 | +0.0 ± 0.8 | +6.1 ± 3.4 |
-| Hidden Cache | +0.2 ± 4.3 | +1.2 ± 0.8 | -5.3 ± 3.5 |
+| Know Thy Place | +3.8 ± 4.5 | -1.9 ± 0.7 (2.7 SE) | +0.9 ± 5.1 |
+| Collision Course | -2.5 ± 3.7 | -1.3 ± 0.7 (2.0 SE) | +2.1 ± 2.9 |
+| Wrought in War | -7.1 ± 4.6 | -0.7 ± 1.1 | +6.4 ± 3.9 |
+| Glitterstream | -1.1 ± 3.6 | +0.0 ± 0.8 | +6.1 ± 3.6 |
+| Hidden Cache | +0.2 ± 3.7 | +1.2 ± 0.8 | -5.3 ± 3.5 |
 | the others (5) | -0.2 to +1.8 | -0.9 to +0.9 | -4.4 to +4.8 |
-| cards differ? (chi-square, 9 df) | 4.1, p 0.91 | 11.4, p 0.25 | 13.0, p 0.16 |
+| cards differ? Wald (9 df) / its randomization p | 4.3 / 0.92 | 14.4 / 0.17 | 13.4 / 0.15 |
+| the largest \|t\| about the mean / its randomization p | 1.45 / 0.75 | 2.13 / 0.25 | 1.72 / 0.55 |
+
+The tests as the experiment session reads the Ironclad's (tools/rand_swap_extra.py; the same numbers as
+its own scripts on these data): the Wald statistic for every coefficient the same, with the save's
+arms clustered (they share its y_R), and both it and the largest |t| against 2000 shuffles of the
+3-card draws among the saves within each arm (the cards were given at random, so under no difference
+any shuffle is as likely).
 
 | the three cards together (rand - R) | rand1 | rand2 | rand3 |
 |---|---|---|---|
@@ -428,15 +435,18 @@ No common card of the ten is told from the others in any outcome; three random c
 R's deck finish act 2 no more often (the mean of the arms -1.1 points) and cost a hallway fight
 about an HP less. The arms seen one and two at a time read stronger (after rand1 Know Thy Place
 +11.8 points and Photon Cut -15.0 on act 2 finished, after rand2 Wrought in War -16.3, 3.1 SE): the
-third arm took them back, 10 cards x 3 outcomes being 30 coefficients. The same script on the
-Ironclad's rand1/rand2 (20 cards, 296 pairs an arm): no difference either (chi-square 26.5, 16.7,
-16.7 on 19 df; p 0.12, 0.61, 0.61), its largest single card Molten Fist +16.3 ± 5.4 on act 2
-finished; three random commons +1.7 points on act 2 finished in both arms. With §9: what helped there
-was the packs' cards (K's Bombardment and Gamma Blast; the Ironclad's chosen packs), not any three
-cards for three Strikes; among commons, at these counts, the card does not show.
+third arm took them back, 10 cards x 3 outcomes being 30 coefficients. The Ironclad's rand1/rand2
+(20 cards, 296 pairs an arm; the experiment session's reading): act 2 finished does tell its cards
+apart (Wald 33.5 on 19 df, randomization p 0.036; the largest |t| p 0.018), Molten Fist above the
+rest; its hallways and act 1 boss do not (p 0.34, 0.63). The Regent's rows a card (about 112) are
+more than the Ironclad's (about 89), its SEs no larger: the Regent's "no" is not the smaller test's.
+So: on the Ironclad one common stands out on finishing act 2, on the Regent none of these ten does;
+on both, the hallways do not tell commons apart. With §9: what helped there was the packs' cards
+(K's Bombardment and Gamma Blast), not any three cards for three Strikes.
 
 The stopped replays: a planner stack overflow in 3236 and 3376 in every arm, 3282 in R, 3315 in
 rand1, 3304 in rand2; a lost connection (the game gone) in 3331 in R, 3284 in rand1-3 (floors
-20-22 each time, not looked into), 3249 in rand3. The overflow: a Particle Wall a Skill Potion or Discovery made free this turn came back into the hand
-still free and the turn search played it without end (the game spends a free-this-turn cost when the
-card is played); fixed in sim (c7cbdae, 864a5d7), after this test.
+20-22 each time, not looked into), 3249 in rand3. The overflow: a Particle Wall a Skill Potion or
+Discovery made free this turn came back into the hand still free and the turn search played it
+without end (the game spends a free-this-turn cost when the card is played); fixed in sim (c7cbdae,
+864a5d7), after this test.
