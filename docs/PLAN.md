@@ -1566,7 +1566,18 @@ states, and only a simulator is fast enough for that.
      apart on any outcome (p 0.92 / 0.17 / 0.15; the hallways' largest,
      Know Thy Place -1.9 ± 0.7, p 0.25 as the largest of 10), the three
      cards against R -1.1 points of act 2 (docs/regent-research.md §10) —
-     not for want of power: its SEs are no larger than the Ironclad's. The hallways (259 saves with both arms there):
+     not for want of power: its SEs are no larger than the Ironclad's.
+   - **Molten Fist's confirmation** (registered 2026-10-02 15:11, before
+     any result; scratchpad mfconf.py): fresh seeds, the 182 S2 f16 saves
+     (1846-2045, base6a saves-c2early) with 3+ unupgraded Strikes; per
+     save M = the 3 Strikes out, two pool cards (balanced, seeded, Molten
+     Fist left out) and Molten Fist in, N = the same two and a third pool
+     card; p3 5d7d811, C2 to stop 34 (runs/bench-mfM, bench-mfN;
+     mf-conf-manifest.json). M - N is the regression's own contrast
+     (predicted +16.5; the largest of 20 is likely high). Act 2 finished,
+     paired over all saves: confirmed at 2 SE or more, harmful at -2 SE or
+     less, undecided between; also act 1's boss, act 2's hallway cost. The
+     bot takes Molten Fist at 38-54% of its rewards' offers now. The hallways (259 saves with both arms there):
      rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
      (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
      1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
