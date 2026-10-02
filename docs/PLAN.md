@@ -1559,11 +1559,14 @@ states, and only a simulator is fast enough for that.
      within an arm, 2,000 times; scratchpad randperm.py): the clustered
      Wald statistic for 20 equal cards p 0.036, the largest card's |t| p
      0.018 — on act 2's end the cards do differ, mostly by Molten Fist (the
-     Regent session's χ² on the same data, other SEs, p 0.12; the
-     hallways and act 1's boss: no card told apart, Wald p 0.34 / 0.63).
-     On the Regent (131 saves, three draws, a 10-card pool): no card told
-     apart on any outcome (p 0.91 / 0.25 / 0.16), the three cards against R
-     -1.1 points of act 2 (docs/regent-research.md §10). The hallways (259 saves with both arms there):
+     Regent session's first χ², classical SEs and the diagonal only, p
+     0.12); the hallways and act 1's boss: no card told apart
+     (randomization p 0.46 / 0.73). On the Regent (131 saves, three
+     draws, a 10-card pool, ~112 rows a card, the same test): no card told
+     apart on any outcome (p 0.92 / 0.17 / 0.15; the hallways' largest,
+     Know Thy Place -1.9 ± 0.7, p 0.25 as the largest of 10), the three
+     cards against R -1.1 points of act 2 (docs/regent-research.md §10) —
+     not for want of power: its SEs are no larger than the Ironclad's. The hallways (259 saves with both arms there):
      rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
      (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
      1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
