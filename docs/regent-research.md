@@ -389,3 +389,10 @@ Ironclad: three Strikes for three good cards beat act 1's boss more often and co
 hallways. What does not: defence as the hallways' own lever — the Regent's attack pack saved as much
 (by killing faster) and alone finished act 2 more often. 47 pairs (the Ironclad's 307); Bombardment
 is a rare, so the packs' take rates match but not necessarily their strength.
+
+**The Kaiser Crab** (2026-10-01): 41 distinct Regent fights across every log, 10 won (24%; the
+Ironclad's fixed set 18%), end-of-turn HP loss predicted exactly in all of them — the deck's, not the
+model's. The pack test's four arms met it on the same saves 3230/3240/3245/…: R won 4 of 4, A 1 of
+4, D 0 of 4; offline, the same f16 decks against the Crab (47 saves × 16 shuffles, full HP) win 0.4%
+(A) to 2.7% (D), the arms within 2 points of each other — act 1 decks, and no sign that a thinner
+deck answers the Crab. R's four were its runs' later choices, not the thinning; not pursued.
