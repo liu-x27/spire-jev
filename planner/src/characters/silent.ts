@@ -27,6 +27,7 @@ import {
   num, one, relicDamage, relicVar, resolve, type State, strike,
 } from "../sim.ts";
 import { deckPace } from "../search.ts";
+import { character } from "../character.ts";
 
 /** The Silent's counters since the observation, on State.ext: cards discarded and drawn, Shivs played; Nightmare's card. */
 interface SilentExt {
@@ -575,7 +576,10 @@ const SILENT_RULES: CharacterRules = {
       const i = dearest(cards.map((c) => ({ cost: c.cost ?? 0, type: c.type })), id === "HAND_TRICK");
       return i >= 0 ? i : undefined;
     }
-    if (id === undefined || DISCARDS.has(id)) return discardIndex(cards);
+    if (DISCARDS.has(id ?? "")) return discardIndex(cards);
+    // No card to say whose select it is: the Silent's only while she plays (the hooks of every
+    // character are asked in turn; another character's run keeps its own choice).
+    if (id === undefined) return character() === "SILENT" ? discardIndex(cards) : undefined;
     return undefined;
   },
 };

@@ -5,6 +5,7 @@ import { type Card, type Enemy, hpLoss, incomingHits, junkIndex, play, type Stat
 import { nextTurn, seeded } from "../src/turn.ts";
 import { evaluate } from "../src/search.ts";
 import { discardIndex, poisonAhead, SILENT } from "../src/characters/silent.ts";
+import { setCharacter } from "../src/character.ts";
 
 const card = (id: string, type: string, target: string, vars: Record<string, number>, cost = 1, keywords: string[] = [], extra: Partial<Card> = {}): Card => ({
   id, cost, costsX: false, type, target, keywords, vars, upgrades: 0, locked: false, glows: false, ...extra,
@@ -227,7 +228,11 @@ test("the runner's selects: the bridge says FromHand for a discard too; the card
   const hand = [{ id: "ASCENDERS_BANE", type: "Curse", keywords: ["Unplayable"], cost: -1 }, { id: "RICOCHET", type: "Attack", keywords: ["Sly"], cost: 2 }, { id: "DEFEND_SILENT", type: "Skill", keywords: [], cost: 1 }];
   const select = SILENT.combatSelect!;
   assert.equal(select("SURVIVOR", "FromHand", hand), 1);
+  setCharacter("SILENT");
   assert.equal(select(undefined, "FromHand", hand), 1);
+  // Another character's run: a select with no card played is its own (the Ironclad's junkIndex, the Regent's).
+  setCharacter("IRONCLAD");
+  assert.equal(select(undefined, "FromHand", hand), undefined);
   assert.equal(select("HAND_TRICK", "FromHand", hand), 2);
   // Not the Silent's discard (True Grit+, Burning Pact): the core's choice.
   assert.equal(select("TRUE_GRIT", "FromHand", hand), undefined);
