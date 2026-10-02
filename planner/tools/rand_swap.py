@@ -87,9 +87,14 @@ ELITE = re.compile(r"^(DECIMILLIPEDE_SEGMENT_\w+|INFESTED_PRISM|ENTOMANCER|FLAIL
 
 
 def outcomes(paths):
-    res = {}
+    """Per save: the three outcomes; a replay bench recorded as failed (stopped twice on a lost
+    connection) is left out, its fights being only the part before the stop."""
+    res, failed = {}, []
     for p in paths.split(","):
         for r in json.load(open(p, encoding="utf8"))["results"]:
+            if r.get("status") == "failed":
+                failed.append(r["save"])
+                continue
             fs = r.get("fights") or []
             pots = lambda f: sum(1 for s in f.get("sequence") or [] if ":POTION:" in s)
             cost = [(f["hpLost"] if f["won"] else f["hpStart"]) + 10 * pots(f) for f in fs
@@ -99,6 +104,8 @@ def outcomes(paths):
                 "hall": sum(cost) / len(cost) if cost else None,
                 "boss1": float(any(f["floor"] == 17 and f["won"] for f in fs)),
             })
+    if failed:
+        print(f"{paths}: {len(failed)} failed replays left out: {' '.join(sorted(failed))}")
     return res
 
 
