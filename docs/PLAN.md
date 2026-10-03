@@ -1620,6 +1620,30 @@ states, and only a simulator is fast enough for that.
      (seeds with a divergence) reported. Stop: not better than C2 on the
      held-out, act 1 eating the gain, or coverage too low; too wide is
      undecided, not extended. 120 pairs detect ~11 points, no less.
+   - **xpick's development round** (10-03; 459 points, every fork clean:
+     identical to its baseline up to the screen, C2's choice there the
+     baseline's): a random other option at a random real reward does worse
+     than C2's own — act 2's rewards (S1, 260): act 2 finished 60 -> 40,
+     -7.7 ± 2.6 points; act 1's (S3, 199): -2.5 ± 2.8, act 2's boss
+     reached -6.5 ± 4.1. C2's picks carry real value. The model (ridge on
+     the registered features, 10-fold CV, one point a seed): CV correlation
+     with the label +0.05 / +0.00 / -0.04 (lambda 10 / 100 / 1000); the
+     policy against C2 by inverse propensity +2.0 ± 2.0 at best of nine
+     settings, the rest nearer 0 — no offline signal. Each spar variant
+     alone as a picker does worse than C2: C2's own -2.6 ± 1.6, the pilot
+     aligned (sparpow, sparpots) -2.6 ± 1.3, with the hallways -1.3 ± 1.6,
+     against the next act's bosses -2.0 ± 1.5; where an option outscored
+     C2's choice by spar, it did worse in the game (C2's spar: -23.5 ±
+     13.6, 17 points; aligned: -17.9 ± 9.0, 28) — C2's departures from
+     spar are good, and spar's margins do not rank real outcomes. The
+     other outcomes (act 2's boss reached, the furthest floor; exploratory)
+     show no signal either (CV correlations -0.06 to -0.12). Not taken to
+     the held-out: a frozen picker with no offline signal would be a
+     random departure from C2, which these points price at about -8. A
+     decision's effect is small against a label's noise (sd ~40 points):
+     a feature worth 5 points in a fifth of the decisions needs ~1,600
+     points to show at 2 SE. The S4 base (200 f1 saves, C2 to stop 34,
+     every reward's observation) is kept for whatever comes next.
    - **Review 9's item 2, one fight mechanism** (the Regent session, on the
      Ironclad, 10-03; offline only, no slot): an engine Power drawn in act
      2's boss fight and kept in hand (Demon Form, Barricade, Unmovable,
