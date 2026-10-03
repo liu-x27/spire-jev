@@ -1619,7 +1619,25 @@ states, and only a simulator is fast enough for that.
      original starts the main measure, act 1 finished the risk, coverage
      (seeds with a divergence) reported. Stop: not better than C2 on the
      held-out, act 1 eating the gain, or coverage too low; too wide is
-     undecided, not extended. 120 pairs detect ~11 points, no less. The hallways (259 saves with both arms there):
+     undecided, not extended. 120 pairs detect ~11 points, no less.
+   - **Review 9's item 2, one fight mechanism** (the Regent session, on the
+     Ironclad, 10-03; offline only, no slot): an engine Power drawn in act
+     2's boss fight and kept in hand (Demon Form, Barricade, Unmovable,
+     Eternal Armor, Juggernaut, Mayhem, Feel No Pain): in 54 of the 307 f32
+     saves' boss fights (71 turns; those fights won 22% against 32%), and in
+     C2's fresh seeds (Demon Form drawn in 12 act 2 boss fights, played in
+     6). Offline counterexample test on the single-enemy bosses (Knowledge
+     Demon, the Insatiable; 48 turns rebuilt from the logs, 46 with the
+     energy): A the boss planner as played, B the held Power first, both
+     fought out by continueBout on the same shuffles, 16 a turn: B - A wins
+     -0.1 ± 0.4 points (the 17 turns the offline planner holds it too: -0.7
+     ± 0.9); the method's reach shown by B = end the turn at once, -26.4 ±
+     5.2. No credible counterexample in a day: stopped, by the item's own
+     rule. The losses there are a damage race lost by far (the Insatiable's
+     losses all by HP, none to the pit; the Demon's at turns 6-7 with it at
+     100-300 HP), not a combination left unused. The Crab's 23 turns not
+     rebuilt (the claws' targets are not logged). Scripts: the Regent
+     session's scratchpad mech/ (bossdecks.py, heldforks.mts). The hallways (259 saves with both arms there):
      rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
      (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
      1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
