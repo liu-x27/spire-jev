@@ -1644,6 +1644,9 @@ states, and only a simulator is fast enough for that.
      a feature worth 5 points in a fifth of the decisions needs ~1,600
      points to show at 2 SE. The S4 base (200 f1 saves, C2 to stop 34,
      every reward's observation) is kept for whatever comes next.
+     Stopped 10-03 by the user's choice (of: stop; 1,000-1,500 more points
+     on a smaller feature set; a new direction): item 1 in this form ends
+     as "no signal on the development set".
    - **Review 9's item 2, one fight mechanism** (the Regent session, on the
      Ironclad, 10-03; offline only, no slot): an engine Power drawn in act
      2's boss fight and kept in hand (Demon Form, Barricade, Unmovable,
