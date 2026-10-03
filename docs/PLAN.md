@@ -1416,9 +1416,10 @@ states, and only a simulator is fast enough for that.
      weaker claw -7, the other -8, all -15 (won 0 of 24, lost 15 of 23; HP
      in the won fights -22 points), dev and held alike (-8 / -7). The bot's
      own line beats these structural ones at the start as late: the kept-up
-     focus on the Crab is harmful, block and damage kept up do worse; what
-     loses is the state the fight begins in (the deck, the HP), which is
-     what the elite and the hallway-potion tests change.
+     focus on the Crab is harmful, block and damage kept up do worse. This
+     rules out these alternatives only, not the bot's play as a whole
+     (review 9 §5.8: "the state the fight begins in" was too strong a
+     reading).
    - **Floor 1 captures** (c2f1, main c1ac146, fresh seeds 2046-2245, 199
      saves with sidecars, each run played only to its capture: every one
      resumes, Neow's first choice already in it) and the C2 base from all
@@ -1549,7 +1550,9 @@ states, and only a simulator is fast enough for that.
      44-45 a card an arm; runs/rand-swap-manifest.json), two arms (two
      draws a save), p3 5d7d811, C2 to stop 34. Registered: y_rand - y_R on
      the 3 cards' indicators, no intercept, SEs clustered by save. Act 2
-     finished: rand - R +1.7 ± 2.0 points (rand - A +6.1 ± 1.8): three
+     finished: rand - R +1.7 ± 2.4 points (rand - A +6.1 ± 2.2; a save's
+     two draws averaged first — the ± 2.0 / 1.8 first written here took
+     the 592 rows as independent, review 9 §5.1): three
      random commons for three Strikes add little past the removal, where
      the D / K packs (cards of ~50% human pick rates) added +3.9 / +4.9 —
      the gain is in which cards. By card (SE ~5 points, 88-90 a card): Molten
@@ -1565,8 +1568,9 @@ states, and only a simulator is fast enough for that.
      draws, a 10-card pool, ~112 rows a card, the same test): no card told
      apart on any outcome (p 0.92 / 0.17 / 0.15; the hallways' largest,
      Know Thy Place -1.9 ± 0.7, p 0.25 as the largest of 10), the three
-     cards against R -1.1 points of act 2 (docs/regent-research.md §10) —
-     not for want of power: its SEs are no larger than the Ironclad's.
+     cards against R -1.1 points of act 2 (docs/regent-research.md §10).
+     SEs like the Ironclad's do not make it a power-proof null: a smaller
+     true difference would still be missed (review 9 §5.8).
    - **Molten Fist's confirmation** (registered 2026-10-02 15:11, before
      any result; scratchpad mfconf.py): fresh seeds, the 182 S2 f16 saves
      (1846-2045, base6a saves-c2early) with 3+ unupgraded Strikes; per
