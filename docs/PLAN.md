@@ -1593,7 +1593,33 @@ states, and only a simulator is fast enough for that.
      rather than 16; not shown on act 2's end. Not extended (an extension
      after an undecided result would need its own, stricter bar); as one
      card's pick it is worth little alone — the line is the picks as a
-     whole (the deck value model with these anchors). The hallways (259 saves with both arms there):
+     whole (the deck value model with these anchors).
+   - **xpick, the cross-act card picker** (review 9's item 1, the user
+     adopted it 10-03; registered 10-03 before any result). Only card
+     rewards change, C2 the base; compared only at real reward screens —
+     take what the screen offers or skip, no free removal. Branch xpick
+     (p3 5d7d811 + d41f21c: SPIRE_JEV_PICK forks one reward after C2 has
+     chosen, and each card reward logs its whole observation; with no fork
+     4 saves, f16 and f1, play as their baselines fight for fight).
+     Development: one decision point a source seed, a random screen of the
+     C2 baseline's own run and a random other option on it (a card or
+     skip): S1's act 2 rewards (260 f16 saves) and S3's act 1 rewards (199
+     f1 saves), the C2 arm being the baseline itself; label alt - C2 on act
+     2 finished (floor 33 won), act 1's boss as the risk, act 2's boss
+     reached and the furthest floor besides. Features offline from the
+     logged observation (src/xpfeat.ts): C2's spar5 against this act's
+     boss, the same with the pilot aligned (sparpow, sparpots), with the
+     hallways (sparhall), against the next act's three bosses; the card's
+     type, block and damage an energy, AoE, Vulnerable / Strength sources,
+     draw, like cards in the deck, the act, HP%. Model: a ridge residual on
+     C2 (or a very shallow tree), cross-validated by seed; a current-boss
+     harm bound as a constraint, unknown mechanics back to C2. Held out:
+     fresh S4 (2246-2445, f1 captures), the frozen picker's first
+     divergence a seed forced, the rest C2; act 2 finished over the
+     original starts the main measure, act 1 finished the risk, coverage
+     (seeds with a divergence) reported. Stop: not better than C2 on the
+     held-out, act 1 eating the gain, or coverage too low; too wide is
+     undecided, not extended. 120 pairs detect ~11 points, no less. The hallways (259 saves with both arms there):
      rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
      (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
      1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
