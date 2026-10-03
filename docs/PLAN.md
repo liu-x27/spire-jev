@@ -1571,6 +1571,19 @@ states, and only a simulator is fast enough for that.
      cards against R -1.1 points of act 2 (docs/regent-research.md §10).
      SEs like the Ironclad's do not make it a power-proof null: a smaller
      true difference would still be missed (review 9 §5.8).
+     The hallways (259 saves with both arms there):
+     rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
+     (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
+     1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
+     (1.6). D's cards in the pool (Flame Barrier + Shrug It Off) -9.0 ±
+     7.8 on act 2, -0.1 ± 1.2 in the hallways; K's Pommel Strike -6.9 ±
+     5.3: not what the packs measured, within 2 SE. Each estimate is a
+     card added to a thinned deck, played by C2. Run with
+     sandbox/persave.mjs (bench.ts's replay, written a save at a time;
+     the first try with bench.ts was cut off at 111 of 592 and kept
+     nothing). Next (the analysis session's): the estimates as anchors
+     for the deck value model, then whether it predicts D; Molten Fist's
+     +16 confirmed before it moves any pick.
    - **Molten Fist's confirmation** (registered 2026-10-02 15:11, before
      any result; scratchpad mfconf.py): fresh seeds, the 182 S2 f16 saves
      (1846-2045, base6a saves-c2early) with 3+ unupgraded Strikes; per
@@ -1664,19 +1677,7 @@ states, and only a simulator is fast enough for that.
      losses all by HP, none to the pit; the Demon's at turns 6-7 with it at
      100-300 HP), not a combination left unused. The Crab's 23 turns not
      rebuilt (the claws' targets are not logged). Scripts: the Regent
-     session's scratchpad mech/ (bossdecks.py, heldforks.mts). The hallways (259 saves with both arms there):
-     rand - R -0.48 ± 0.30 a fight; Thunderclap -1.9 (2.3 SE), Anger -1.5
-     (2.1), Armaments +1.5 (2.1 SE worse). Act 1's boss: rand - R +2.2 ±
-     1.2; Colossus +6.3, Cinder +5.8 (2.0 / 2.1 SE), Twin Strike -6.2
-     (1.6). D's cards in the pool (Flame Barrier + Shrug It Off) -9.0 ±
-     7.8 on act 2, -0.1 ± 1.2 in the hallways; K's Pommel Strike -6.9 ±
-     5.3: not what the packs measured, within 2 SE. Each estimate is a
-     card added to a thinned deck, played by C2. Run with
-     sandbox/persave.mjs (bench.ts's replay, written a save at a time;
-     the first try with bench.ts was cut off at 111 of 592 and kept
-     nothing). Next (the analysis session's): the estimates as anchors
-     for the deck value model, then whether it predicts D; Molten Fist's
-     +16 confirmed before it moves any pick.
+     session's scratchpad mech/ (bossdecks.py, heldforks.mts).
    - **Direction** (Astra, review 6, docs/astra-review-6.md; the user sent
      it): the limit is a bounded pilot and a biased bout, which spar then
      uses to decide the deck — self-reinforcing; more switches on the same
