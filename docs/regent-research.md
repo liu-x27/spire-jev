@@ -364,8 +364,9 @@ the state key's hash, and the merge changed the key (four characters' keyExt joi
 key restored the runs still parted (other merged changes reach the key or the look ahead), so the
 check is by numbers: dev3 / 7f08bdf / 7f08bdf with the old key — mean floor 29.4 / 24.8 / 26.6, act 1
 boss 18 / 13 / 16, act 2 boss 4 / 2 / 2, but HP a fight 4.1 / 4.3 / 4.7 in act 1's hallways and
-16.8 / 16.3 / 18.3 in act 2. No regression: a 20-seed run-level result moves this much on a perturbed
-seed alone, which is why the 60 fresh seeds above are the mod's numbers.
+16.8 / 16.3 / 18.3 in act 2. No regression confirmed, which is not one ruled out: a 20-seed run-level
+result moves this much on a perturbed seed alone, so these 20 seeds cannot tell either way; the 60
+fresh seeds above are the mod's numbers.
 
 ## 9. The deck's defence, on the Regent (2026-10-01)
 
@@ -391,11 +392,12 @@ hallways. What does not: defence as the hallways' own lever — the Regent's att
 is a rare, so the packs' take rates match but not necessarily their strength.
 
 **The Kaiser Crab** (2026-10-01): 41 distinct Regent fights across every log, 10 won (24%; the
-Ironclad's fixed set 18%), end-of-turn HP loss predicted exactly in all of them — the deck's, not the
-model's. The pack test's four arms met it on the same saves 3230/3240/3245/…: R won 4 of 4, A 1 of
-4, D 0 of 4; offline, the same f16 decks against the Crab (47 saves × 16 shuffles, full HP) win 0.4%
-(A) to 2.7% (D), the arms within 2 points of each other — act 1 decks, and no sign that a thinner
-deck answers the Crab. R's four were its runs' later choices, not the thinning; not pursued.
+Ironclad's fixed set 18%), end-of-turn HP loss predicted exactly in all of them. That checks one
+transition only — not the others, the candidates the search weighs, or the plays' long-run worth — so
+it does not tell the deck's part in the losses from the model's. The pack test's four arms met it
+on the same saves 3230/3240/3245/…: R won 4 of 4, A 1 of 4, D 0 of 4; offline, the same f16 decks
+against the Crab (47 saves × 16 shuffles, full HP) win 0.4% (A) to 2.7% (D), the arms within 2 points
+of each other — act 1 decks, and no sign that a thinner deck answers the Crab. R's four were its runs' later choices, not the thinning; not pursued.
 
 ## 10. The random swap test, on the Regent (2026-10-02)
 
@@ -438,11 +440,15 @@ about an HP less. The arms seen one and two at a time read stronger (after rand1
 third arm took them back, 10 cards x 3 outcomes being 30 coefficients. The Ironclad's rand1/rand2
 (20 cards, 296 pairs an arm; the experiment session's reading): act 2 finished does tell its cards
 apart (Wald 33.5 on 19 df, randomization p 0.036; the largest |t| p 0.018), Molten Fist above the
-rest; its hallways and act 1 boss do not (p 0.34, 0.63). The Regent's rows a card (about 112) are
-more than the Ironclad's (about 89), its SEs no larger: the Regent's "no" is not the smaller test's.
-So: on the Ironclad one common stands out on finishing act 2, on the Regent none of these ten does;
-on both, the hallways do not tell commons apart. With §9: what helped there was the packs' cards
-(K's Bombardment and Gamma Blast), not any three cards for three Strikes.
+rest; its hallways and act 1 boss do not (randomization p 0.46, 0.73). Molten Fist's confirmation
+(182 new pairs, the experiment session): +4.9 ± 3.2 points on act 2 finished (1.5 SE), undecided,
+about a third of the first reading, as the largest of 20 is expected to shrink. The Regent's rows a
+card (about 112) are more than the Ironclad's (about 89) and its SEs no larger, but that does not make
+its "no" a negative: a true difference among these commons smaller than the Ironclad's would be
+missed at these SEs as well. So: on the Ironclad one common read above the rest on finishing act 2
+and shrank when tested again; on the Regent none of these ten is told apart; on neither do the
+hallways tell commons apart. With §9: the packs that helped there held cards chosen as good
+(K's Bombardment and Gamma Blast) — a lead, not shown to be the packs' cards rather than chance.
 
 The stopped replays: a planner stack overflow in 3236 and 3376 in every arm, 3282 in R, 3315 in
 rand1, 3304 in rand2; a lost connection (the game gone) in 3331 in R, 3284 in rand1-3 (floors
