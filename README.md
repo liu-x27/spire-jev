@@ -18,7 +18,7 @@ longest worked on, whole runs, no human input.
 [![Steam Workshop](https://img.shields.io/badge/Steam_Workshop-play_it_in_your_game-d7361f?style=flat-square&logo=steam&logoColor=white)](https://steamcommunity.com/sharedfiles/filedetails/?id=3808798192)
 [![License: MIT](https://img.shields.io/badge/license-MIT-141311?style=flat-square)](LICENSE)
 
-**[Project page](https://liu-x27.github.io/spire-jev/)** · [Where it stands](#where-it-stands) · [How it plays](#how-it-plays) · [Running it](#running-it) · [The working record](docs/PLAN.md) · [Characters](docs/CHARACTERS.md)
+**[Project page](https://liu-x27.github.io/spire-jev/)** · [Where it stands](#where-it-stands) · [How it compares](#how-it-compares) · [How it plays](#how-it-plays) · [Running it](#running-it) · [The working record](docs/PLAN.md) · [Characters](docs/CHARACTERS.md)
 
 </div>
 
@@ -153,6 +153,32 @@ by what they add against the act's own boss, played out in the simulator), was d
 seeds 316–495, where it took act 1's boss from 48% to 63% and the mean floor from 20.1 to
 23.8, paired. The working record — every change measured, the ones that were noise, the ones
 that made things worse — is [docs/PLAN.md](docs/PLAN.md).
+
+## How it compares
+
+Two published evaluations play the same genre. Neither is the same test as this one. C2 is
+the best configuration in the working record ([docs/PLAN.md](docs/PLAN.md)), a later one
+than the 90-seed table above, run whole on 330 fresh seeds (1516–1845).
+
+| | this bot, C2 | [Epoch's SpireClimb](https://epoch.ai/publications/ai-systems-are-improving-rapidly-at-slay-the-spire-and-its-sequel) (2026-10-14) | [SpireBench](https://arxiv.org/abs/2610.12596) (Lowe et al.) |
+|---|---|---|---|
+| game | Slay the Spire 2, beta v0.111.0 | Slay the Spire 2, v0.107.1, frozen | Slay the Spire **1** |
+| player | search over a simulator, and rules | LLM agents playing from screenshots, with the wiki | 20 LLMs |
+| difficulty | ascension 10 | ascension 10 | the highest |
+| runs | 330 fresh seeds, the Ironclad | 15 per character | |
+| won | **0 of 330** (95% Wilson 0–1.2%) | GPT-6 Astra 35%: the Ironclad 6 of 15 (20–64%), the Regent 8 of 15 (30–75%); GPT-6.1 Sol 29%; Opus 5.5 7%; top humans about 95% | frontier models above heuristic baselines, level with average players, far below experts |
+
+On the same character and ascension, Astra won 6 of 15 where C2 has won none of 330, and the
+two intervals do not meet. The game versions differ, v0.107.1 there and v0.111.0 here.
+SpireBench is the first game, so nothing here compares with it directly; what its abstract
+reports is that strong models differ from weak ones in how each fight is played, and that
+every model guards its HP too much.
+
+What this bot has that those runs do not: on the configuration of the 90-seed table, a
+decision takes 0.09 ms at the median (p95 1.3 ms) and the simulator predicted 3,387 of 3,461
+end-of-turn HP losses exactly; and with no model calls, a run costs nothing. What it lacks
+is the deck. On the 330 seeds C2 beat act 1's boss in 260 runs, act 2's in 59 and act 3's
+first in 3: a fast tactical engine whose weak part is building.
 
 ## How it plays
 
